@@ -3,28 +3,28 @@ flowchart TB
         A[Web App / Mobile App / Admin Portal]
     end
 
-    A --> B[API Gateway--(Ingress Controller)]
+    A --> B[API Gateway\n Ingress Controller]
 
     subgraph K8s[Kubernetes Cluster]
         subgraph CoreServices[Core Microservices]
-            B --> C1[Auth Service--(JWT/OAuth2)]
-            B --> C2[User Mgmt--(Profiles, RBAC)]
-            B --> C3[Notification Service--(Email, SMS, WhatsApp)]
-            B --> C4[Payment Service--(PCI DSS, Wallet)]
-            B --> C5[Loyalty Service--(Points, Vouchers)]
-            B --> C6[Reporting Service--(MIS, BI)]
-            B --> C7[File/Doc Service--(S3, OCR, MinIO)]
-            B --> C8[Audit & Compliance--(GDPR, Trails)]
-            B --> C9[Scheduler/Job Service--(Quartz, Batch)]
+            B --> C1[Auth Service\n(JWT/OAuth2)]
+            B --> C2[User Mgmt\n(Profiles, RBAC)]
+            B --> C3[Notification Service\n(Email, SMS, WhatsApp)]
+            B --> C4[Payment Service\n(PCI DSS, Wallet)]
+            B --> C5[Loyalty Service\n(Points, Vouchers)]
+            B --> C6[Reporting Service\n(MIS, BI)]
+            B --> C7[File/Doc Service\n(S3, OCR, MinIO)]
+            B --> C8[Audit & Compliance\n(GDPR, Trails)]
+            B --> C9[Scheduler/Job Service\n(Quartz, Batch)]
         end
 
         subgraph SharedInfra[Shared Infrastructure]
-            D1[Service Registry--(Eureka/Consul)]
-            D2[Config Server--(Spring Cloud Config)]
-            D3[Message Broker--(Kafka/RabbitMQ)]
-            D4[Cache--(Redis Cluster)]
-            D5[Search Engine--(Elasticsearch)]
-            D6[Secrets Mgmt--(Vault)]
+            D1[Service Registry\n(Eureka/Consul)]
+            D2[Config Server\n(Spring Cloud Config)]
+            D3[Message Broker\n(Kafka/RabbitMQ)]
+            D4[Cache\n(Redis Cluster)]
+            D5[Search Engine\n(Elasticsearch)]
+            D6[Secrets Mgmt\n(Vault)]
         end
     end
 
@@ -36,19 +36,19 @@ flowchart TB
     end
 
     subgraph ExternalSaaS[External SaaS / 3rd Party APIs]
-        S1[Payment Gateway API--(Stripe/Razorpay/PayPal)]
-        S2[SMS/WhatsApp Provider--(Twilio, Meta API)]
-        S3[Email Provider--(SendGrid, SES)]
+        S1[Payment Gateway API\n(Stripe/Razorpay/PayPal)]
+        S2[SMS/WhatsApp Provider\n(Twilio, Meta API)]
+        S3[Email Provider\n(SendGrid, SES)]
     end
 
     subgraph Observability[Observability & Monitoring]
-        O1[Logging--(ELK/EFK Stack)]
-        O2[Monitoring--(Prometheus+Grafana)]
-        O3[Tracing--(OpenTelemetry+Jaeger)]
+        O1[Logging\n(ELK/EFK Stack)]
+        O2[Monitoring\n(Prometheus+Grafana)]
+        O3[Tracing\n(OpenTelemetry+Jaeger)]
     end
 
     subgraph DevOps[CI/CD & Platform Layer]
-        V1[CI/CD--(Jenkins/GitHub Actions)]
+        V1[CI/CD\n(Jenkins/GitHub Actions)]
         V2[Container Registry]
         V3[Helm Deployments]
     end
