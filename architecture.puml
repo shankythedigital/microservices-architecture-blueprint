@@ -4,31 +4,31 @@
 actor User as U
 
 node "Kubernetes Cluster" {
-  node "API Gateway\n(Ingress)" as APIGW
+  node "API Gateway\n Ingress " as APIGW
   
   node "Core Microservices" {
-    [Auth Service\n(JWT/OAuth2)] as Auth
-    [User Mgmt\n(Profiles, RBAC)] as UserMgmt
-    [Notification Service\n(Email/SMS/WhatsApp)] as Notify
-    [Payment Service\n(PCI DSS, Wallet)] as Payment
-    [Loyalty Service\n(Points, Vouchers)] as Loyalty
-    [Reporting Service\n(MIS, BI)] as Reporting
-    [File/Doc Service\n(S3, OCR, MinIO)] as FileDoc
-    [Audit & Compliance\n(GDPR, Trails)] as Audit
-    [Scheduler/Job Service\n(Quartz, Batch)] as Scheduler
+    [Auth Service\n JWT/OAuth2 ] as Auth
+    [User Mgmt\n Profiles, RBAC ] as UserMgmt
+    [Notification Service\n Email/SMS/WhatsApp ] as Notify
+    [Payment Service\n PCI DSS, Wallet ] as Payment
+    [Loyalty Service\n Points, Vouchers ] as Loyalty
+    [Reporting Service\n MIS, BI ] as Reporting
+    [File/Doc Service\n S3, OCR, MinIO ] as FileDoc
+    [Audit & Compliance\n GDPR, Trails ] as Audit
+    [Scheduler/Job Service\n Quartz, Batch ] as Scheduler
   }
   
   node "Shared Infrastructure" {
-    [Service Registry\n(Eureka/Consul)]
-    [Config Server\n(Spring Cloud Config)]
-    [Message Broker\n(Kafka/RabbitMQ)]
-    [Cache\n(Redis Cluster)]
-    [Search Engine\n(Elasticsearch)]
-    [Secrets Mgmt\n(Vault)]
+    [Service Registry\n Eureka/Consul ]
+    [Config Server\n Spring Cloud Config ]
+    [Message Broker\n Kafka/RabbitMQ ]
+    [Cache\n Redis Cluster ]
+    [Search Engine\n Elasticsearch ]
+    [Secrets Mgmt\n Vault ]
   }
 }
 
-node "Databases\n(Polyglot Persistence)" {
+node "Databases\n Polyglot Persistence " {
   database "PostgreSQL/MySQL" as SQL
   database "MongoDB" as NoSQL
   database "Redis Cache" as Redis
@@ -36,19 +36,19 @@ node "Databases\n(Polyglot Persistence)" {
 }
 
 node "External SaaS / 3rd Party APIs" {
-  [Payment Gateway API\n(Stripe/Razorpay/PayPal)] as PayAPI
-  [SMS/WhatsApp Provider\n(Twilio, Meta API)] as SMSAPI
-  [Email Provider\n(SendGrid, SES)] as MailAPI
+  [Payment Gateway API\n Stripe/Razorpay/PayPal ] as PayAPI
+  [SMS/WhatsApp Provider\n Twilio, Meta API ] as SMSAPI
+  [Email Provider\n SendGrid, SES ] as MailAPI
 }
 
 node "Observability" {
-  [Logging\n(ELK/EFK)]
-  [Monitoring\n(Prometheus+Grafana)]
-  [Tracing\n(OpenTelemetry+Jaeger)]
+  [Logging\n ELK/EFK ]
+  [Monitoring\n Prometheus+Grafana ]
+  [Tracing\n OpenTelemetry+Jaeger ]
 }
 
 node "DevOps Platform" {
-  [CI/CD\n(Jenkins/GitHub Actions)] as CICD
+  [CI/CD\n Jenkins/GitHub Actions ] as CICD
   [Container Registry]
   [Helm Deployments]
 }
