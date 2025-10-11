@@ -1,0 +1,918 @@
+{
+	"info": {
+		"_postman_id": "32f01cba-5896-4d0d-868e-e33f6c343574",
+		"name": "M1 v1.3 Auth Service Full Extended (Fixed)",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "32725094"
+	},
+	"item": [
+		{
+			"name": "1. Register User",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"username\": \"{{username}}\",\n  \"password\": \"{{password}}\",\n  \"email\": \"{{email}}\",\n  \"mobile\": \"{{mobile}}\",\n  \"projectType\": \"{{projectType}}\"\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/auth/register",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"auth",
+						"register"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "1. Register Admin User",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"username\": \"{{username}}\",\n  \"password\": \"{{password}}\",\n  \"email\": \"{{email}}\",\n  \"mobile\": \"{{mobile}}\",\n  \"projectType\": \"{{projectType}}\"\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/auth/adminregister",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"auth",
+						"adminregister"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "2. Login with Password",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"let json = pm.response.json();",
+							"pm.collectionVariables.set('accessToken', json.accessToken);",
+							"pm.collectionVariables.set('refreshToken', json.refreshToken);"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"loginType\": \"PASSWORD\",\n  \"username\": \"{{username}}\",\n  \"password\": \"{{password}}\",\n  \"deviceInfo\": \"Postman\"\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/auth/login",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"auth",
+						"login"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "3.a 🔐 Generate OTP - LOGIN (Existing Mobile)",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"userId\": {{userId}},\n  \"channel\": \"SMS\",\n  \"templateCode\": \"OTP_SMS\",\n  \"mobile\": \"{{mobile}}\",\n  \"type\": \"SMS\",\n  \"purpose\": \"LOGIN\",\n  \"placeholders\": { \"otp\": \"{{otpCode}}\" },\n  \"audit\": {\n    \"ipAddress\": \"{{ipAddress}}\",\n    \"userAgent\": \"PostmanRuntime\",\n    \"url\": \"/api/notifications\",\n    \"httpMethod\": \"POST\"\n  }\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/auth/otp/send",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"auth",
+						"otp",
+						"send"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "3.b 📧 Generate OTP - EMAIL LOGIN",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"userId\": {{userId}},\n  \"channel\": \"EMAIL\",\n  \"templateCode\": \"OTP_EMAIL\",\n  \"email\": \"{{email}}\",\n  \"type\": \"EMAIL\",\n  \"purpose\": \"LOGIN\",\n  \"placeholders\": { \"otp\": \"{{otpCode}}\" },\n  \"audit\": {\n    \"ipAddress\": \"{{ipAddress}}\",\n    \"userAgent\": \"PostmanRuntime\",\n    \"url\": \"/api/notifications\",\n    \"httpMethod\": \"POST\"\n  }\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/auth/otp/send",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"auth",
+						"otp",
+						"send"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "4. Login with OTP",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"loginType\": \"OTP\",\n  \"username\": \"{{mobile}}\",\n  \"otp\": \"{{otp}}\",\n  \"deviceInfo\": \"Postman\"\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/auth/login",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"auth",
+						"login"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "5. Register MPIN",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Authorization",
+						"value": "Bearer {{accessToken}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"userId\": {{userId}},\n  \"mpin\": \"{{mpin}}\",\n  \"deviceInfo\": \"Postman\"\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/auth/mpin/register",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"auth",
+						"mpin",
+						"register"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "6. Verify MPIN",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Authorization",
+						"value": "Bearer {{accessToken}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"userId\": {{userId}},\n  \"mpin\": \"{{mpin}}\",\n  \"deviceInfo\": \"Postman\"\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/auth/mpin/verify",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"auth",
+						"mpin",
+						"verify"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "7. Refresh Access Token",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/auth/refresh?refreshToken={{refreshToken}}",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"auth",
+						"refresh"
+					],
+					"query": [
+						{
+							"key": "refreshToken",
+							"value": "{{refreshToken}}"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "8. Admin - Get Audit Logs",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{accessToken}}"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/admin/audit/logs",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"admin",
+						"audit",
+						"logs"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "9. Register RSA Credential",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Authorization",
+						"value": "Bearer {{accessToken}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"userId\": {{userId}},\n  \"type\": \"RSA\",\n  \"credentialId\": \"rsa-{{userId}}\",\n  \"publicKey\": \"MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAyxVqufays3Jm0ukeX3eOAgPCF7vqajUooVqiMX+uI5EICf6Wlnf0rR+0unDOUP4VyYhDxW6wo4RMNRxlU1exrhTwUXJUEpSBUR547kphet/GeuKdCZXS+sVbbOhzJix6SWP85VRhf/jYJ5Zx0uDvHbODv4PNolcQzYDw5LGVwwaDt0x6y+r+D3lrmffNWh20uyIF6cRMfhY8ySi/4ff0LH9JPw4WhsHzWw42fvXRncwPCozxqa3fSCamLMO2NSJsf/aHcDDjrtqh6e9/Wp+4Q6rNdZQ/RrrUrOWkUvAJsZyM3yDbNhSCwfKIaTXBKc6JdH9956MyVuKeoRev/TmiEQIDAQAB\" \n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/auth/credential/register",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"auth",
+						"credential",
+						"register"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "9. RSA - Get Challenge",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{accessToken}}"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/auth/credential/rsa/challenge/{{userId}}",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"auth",
+						"credential",
+						"rsa",
+						"challenge",
+						"{{userId}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "10. RSA - Verify Signature",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Authorization",
+						"value": "Bearer {{accessToken}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"userId\": {{userId}},\n   \"challenge\": \"{{rsaChallenge}}\",\n  \"signature\": \"{{rsaSignature}}\"\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/auth/credential/rsa/verify",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"auth",
+						"credential",
+						"rsa",
+						"verify"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "11. RSA - Login with RSA",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"loginType\": \"RSA\",\n  \"username\": \"{{userId}}\",\n  \"rsaChallenge\": \"{{rsaChallenge}}\",\n  \"signature\": \"{{rsaSignature}}\",\n  \"deviceInfo\": \"Postman\"\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/auth/login",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"auth",
+						"login"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "12. Passkey - Get WebAuthn Challenge",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{accessToken}}"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/auth/credential/webauthn/challenge/{{userId}}",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"auth",
+						"credential",
+						"webauthn",
+						"challenge",
+						"{{userId}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "13. Passkey - Verify Response",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Authorization",
+						"value": "Bearer {{accessToken}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"userId\": {{userId}},\n  \"credentialId\": \"replace-with-cred-id\",\n  \"signature\": \"{{webauthnChallenge}}\"\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/auth/credential/webauthn/verify",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"auth",
+						"credential",
+						"webauthn",
+						"verify"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "14. Login with Passkey",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"loginType\": \"PASSKEY\",\n  \"username\": \"{{userId}}\",\n  \"credentialId\": \"replace-with-cred-id\",\n  \"signature\": \"{{webauthnChallenge}}\",\n  \"deviceInfo\": \"Postman\"\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/auth/login",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"auth",
+						"login"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "15.a 🔐 Generate OTP - (Existing Mobile)",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"userId\": {{userId}},\n  \"channel\": \"SMS\",\n  \"templateCode\": \"OTP_SMS\",\n  \"mobile\": \"{{mobile}}\",\n  \"type\": \"SMS\",\n  \"purpose\": \"LOGIN\",\n  \"placeholders\": { \"otp\": \"{{otpCode}}\" },\n  \"audit\": {\n    \"ipAddress\": \"{{ipAddress}}\",\n    \"userAgent\": \"PostmanRuntime\",\n    \"url\": \"/api/notifications\",\n    \"httpMethod\": \"POST\"\n  }\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/auth/otp/send",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"auth",
+						"otp",
+						"send"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "15.b Request Email/Mobile Change",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Authorization",
+						"value": "Bearer {{accessToken}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"userId\": {{userId}},\n  \"oldValue\": \"{{mobile}}\",\n  \"otp\": \"{{otp}}\",\n  \"type\": \"MOBILE\"\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/auth/contact/change/request",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"auth",
+						"contact",
+						"change",
+						"request"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "16.a 🔁 Generate OTP - MOBILE CHANGE",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"userId\": {{userId}},\n  \"channel\": \"SMS\",\n  \"templateCode\": \"OTP_SMS_CHANGE\",\n  \"mobile\": \"{{newMobile}}\",\n  \"type\": \"SMS\",\n  \"purpose\": \"CHANGE\",\n  \"placeholders\": { \"otp\": \"{{otpCode}}\" },\n  \"audit\": {\n    \"ipAddress\": \"{{ipAddress}}\",\n    \"userAgent\": \"PostmanRuntime\",\n    \"url\": \"/api/notifications\",\n    \"httpMethod\": \"POST\"\n  }\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/auth/otp/send",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"auth",
+						"otp",
+						"send"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "16.b Confirm Email/Mobile Change",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Authorization",
+						"value": "Bearer {{accessToken}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"resetToken\": \"{{changeToken}}\",\n  \"newValue\": \"{{newMobile}}\",\n  \"otp\": \"{{newotp}}\"\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/auth/contact/change/confirm",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"auth",
+						"contact",
+						"change",
+						"confirm"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "17.a ❌ Negative Test - Invalid Mobile",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"userId\": {{userId}},\n  \"channel\": \"SMS\",\n  \"templateCode\": \"OTP_SMS\",\n  \"mobile\": \"\",\n  \"type\": \"SMS\",\n  \"purpose\": \"LOGIN\"\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/auth/otp/send",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"auth",
+						"otp",
+						"send"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "17.b ❌ Negative Test - Invalid Channel",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"userId\": {{userId}},\n  \"channel\": \"PIGEON\",\n  \"mobile\": \"{{mobile}}\",\n  \"purpose\": \"LOGIN\"\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/auth/otp/send",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"auth",
+						"otp",
+						"send"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "17. Get My Profile",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{accessToken}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/users/me",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"users",
+						"me"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "18. Get User By Id",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{accessToken}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/users/{{userId}}",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"users",
+						"{{userId}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "19. List Users (Admin)",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{accessToken}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/admin/users",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"admin",
+						"users"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "20. List Audit Logs",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{accessToken}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/admin/audit/logs",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"admin",
+						"audit",
+						"logs"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "21. Paged Audit Logs",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{accessToken}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/admin/audit/logs/paged",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"admin",
+						"audit",
+						"logs",
+						"paged"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "22. Export Audit Logs CSV",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{accessToken}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/admin/audit/logs/csv",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"admin",
+						"audit",
+						"logs",
+						"csv"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "23. Export Audit Logs Excel",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{accessToken}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/admin/audit/logs/excel",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"admin",
+						"audit",
+						"logs",
+						"excel"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:8081/api"
+		},
+		{
+			"key": "username",
+			"value": "admin"
+		},
+		{
+			"key": "password",
+			"value": "Admin@123"
+		},
+		{
+			"key": "email",
+			"value": "admin@example.com"
+		},
+		{
+			"key": "mobile",
+			"value": "9999999999"
+		},
+		{
+			"key": "projectType",
+			"value": "ECOM"
+		},
+		{
+			"key": "userId",
+			"value": "1"
+		},
+		{
+			"key": "mpin",
+			"value": "1234"
+		},
+		{
+			"key": "authCode",
+			"value": "AUTH1234"
+		},
+		{
+			"key": "otp",
+			"value": ""
+		},
+		{
+			"key": "accessToken",
+			"value": ""
+		},
+		{
+			"key": "refreshToken",
+			"value": ""
+		},
+		{
+			"key": "rsaChallenge",
+			"value": ""
+		},
+		{
+			"key": "webauthnChallenge",
+			"value": ""
+		},
+		{
+			"key": "changeToken",
+			"value": ""
+		}
+	]
+}

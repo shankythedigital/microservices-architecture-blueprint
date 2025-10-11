@@ -1,0 +1,8 @@
+/Users/neilnaik/Documents/Shashank/Asset-LifeCycle-Management/Complete-Asset-Management/Github/microservices-architecture-blueprint/common-lib/src/main/java/com/example/common/MainClass.java
+/Users/neilnaik/Documents/Shashank/Asset-LifeCycle-Management/Complete-Asset-Management/Github/microservices-architecture-blueprint/common-lib/src/main/java/com/example/common/converter/OtpConverter.java
+/Users/neilnaik/Documents/Shashank/Asset-LifeCycle-Management/Complete-Asset-Management/Github/microservices-architecture-blueprint/common-lib/src/main/java/com/example/common/dto/UserDto.java
+/Users/neilnaik/Documents/Shashank/Asset-LifeCycle-Management/Complete-Asset-Management/Github/microservices-architecture-blueprint/common-lib/src/main/java/com/example/common/util/JwtTokenUtil.java
+/Users/neilnaik/Documents/Shashank/Asset-LifeCycle-Management/Complete-Asset-Management/Github/microservices-architecture-blueprint/common-lib/src/main/java/com/example/common/config/FeignAuthConfig.java
+/Users/neilnaik/Documents/Shashank/Asset-LifeCycle-Management/Complete-Asset-Management/Github/microservices-architecture-blueprint/common-lib/src/main/java/com/example/common/converter/AesAttributeConverter.java
+/Users/neilnaik/Documents/Shashank/Asset-LifeCycle-Management/Complete-Asset-Management/Github/microservices-architecture-blueprint/common-lib/src/main/java/com/example/common/util/OtpUtils.java
+/Users/neilnaik/Documents/Shashank/Asset-LifeCycle-Management/Complete-Asset-Management/Github/microservices-architecture-blueprint/common-lib/src/main/java/com/example/common/projection/UsersProjection.java

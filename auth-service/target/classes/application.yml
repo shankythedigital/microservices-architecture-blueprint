@@ -1,0 +1,53 @@
+server:
+  port: 8081
+
+notification:
+  service:
+    url: http://localhost:8082/api/notifications
+
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/authdb?useSSL=false&serverTimezone=UTC
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:Snmysql@1110}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    open-in-view: false
+
+encryption:
+  key: ${ENCRYPTION_KEY:ChangeThisTo32ByteKey_ReplaceInProd!}
+hmac:
+  key: ${HMAC_KEY:ChangeThisToAnotherKeyForHMAC_ReplaceInProd!}
+
+jwt:
+  private-key-path: classpath:keys/jwt-private.pem
+  public-key-path: classpath:keys/jwt-public.pem
+  access-token-validity-seconds: 900
+  refresh-token-validity-seconds: 1209600
+auth:
+  enc:
+    key: ${AUTH_ENC_KEY:default_auth_enc_key}   # fallback if not provided
+  hmac:
+    key: ${AUTH_HMAC_KEY:default_auth_hmac_key}
+
+
+
+# logging:
+#     level:
+#         root: INFO
+#         com.example.authservice: DEBUG
+#         org.springframework.web: INFO
+#         org.hibernate.SQL: DEBUG
+#         org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+#         org.springframework.security: DEBUG
+#         org.springframework.cloud.openfeign: DEBUG
+#         org.hibernate.tool.hbm2ddl: DEBUG
+#         org.hibernate.orm.deprecation: WARN
+#         org.springframework.orm.jpa: DEBUG
+#         org.springframework.transaction: DEBUG
+#         org.springframework.jdbc.core: DEBUG
+#         org.springframework.context.support.PostProcessorRegistrationDelegate$BeanPostProcessorChecker: off
+
+

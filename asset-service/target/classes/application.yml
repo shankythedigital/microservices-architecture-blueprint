@@ -1,0 +1,45 @@
+server:
+  port: 8083
+  servlet:
+    context-path: /asset-service
+
+spring:
+  application:
+    name: asset-service
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/assetdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    username: root
+    password: Snmysql@1110
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 10
+      connection-timeout: 20000
+
+  jpa:
+    hibernate:
+      ddl-auto: update    # instead of 'validate'
+    database-platform: org.hibernate.dialect.MySQL8Dialect
+    show-sql: false
+
+services:
+  auth:
+    base-url: http://localhost:8081
+  notification:
+    base-url: http://localhost:8082
+
+security:
+  jwt:
+    public-key-path: classpath:keys/jwt-public.pem
+    issuer: "auth-service"
+    audience: "asset-service"
+
+management:
+  endpoints:
+    web:
+      exposure: health,info
+
+logging:
+  level:
+    root: INFO
+    com.example.asset: DEBUG
