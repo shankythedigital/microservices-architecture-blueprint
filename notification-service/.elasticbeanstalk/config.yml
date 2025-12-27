@@ -1,0 +1,7 @@
+branch-defaults:
+  default:
+    environment: notification-service-env
+global:
+  application_name: notification-service
+  default_region: ap-south-1
+  profile: eb-deployer
