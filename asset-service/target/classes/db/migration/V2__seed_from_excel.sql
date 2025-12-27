@@ -1,4 +1,0 @@
--- V2__seed_from_excel.sql
--- This file is a placeholder. The setup script will generate a V2 seed by converting your Excel "Asset Registration" sheet.
--- If you want automatic generation, ensure the Excel is present at repository root and re-run the Excel conversion step separately.
--- For now, DataInitializer will seed basic reference data.
