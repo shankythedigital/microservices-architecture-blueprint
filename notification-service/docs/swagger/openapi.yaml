@@ -1,0 +1,207 @@
+openapi: 3.0.3
+info:
+  title: Notification Service API
+  description: |
+    Notification Service API
+    
+    Provides multi-channel notification capabilities including SMS, Email, WhatsApp, and In-App notifications.
+    Supports template-based notifications with dynamic content resolution.
+  version: 1.0.0
+  contact:
+    name: API Support
+    email: support@example.com
+
+servers:
+  - url: http://localhost:8081
+    description: Local development server
+  - url: https://api.example.com/notification-service
+    description: Production server
+
+tags:
+  - name: Notifications
+    description: Send notifications via multiple channels
+
+paths:
+  # ============================================================
+  # NOTIFICATION ENDPOINTS
+  # ============================================================
+  /api/notifications:
+    post:
+      tags:
+        - Notifications
+      summary: Send notification
+      description: |
+        Send a notification via the specified channel (SMS, EMAIL, WHATSAPP, INAPP).
+        The notification will be queued and processed asynchronously.
+        Supports template-based notifications with dynamic variable substitution.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NotificationRequest'
+            examples:
+              sms_example:
+                summary: SMS Notification
+                value:
+                  channel: SMS
+                  templateCode: OTP_SMS
+                  recipient: "+1234567890"
+                  variables:
+                    otp: "123456"
+                    expiry: "3"
+              email_example:
+                summary: Email Notification
+                value:
+                  channel: EMAIL
+                  templateCode: WELCOME_EMAIL
+                  recipient: "user@example.com"
+                  variables:
+                    name: "John Doe"
+                    activationLink: "https://example.com/activate"
+              whatsapp_example:
+                summary: WhatsApp Notification
+                value:
+                  channel: WHATSAPP
+                  templateCode: ORDER_CONFIRMATION
+                  recipient: "+1234567890"
+                  variables:
+                    orderId: "ORD-12345"
+                    amount: "99.99"
+              inapp_example:
+                summary: In-App Notification
+                value:
+                  channel: INAPP
+                  templateCode: ASSIGNMENT_NOTIFICATION
+                  recipient: "user123"
+                  variables:
+                    assetName: "Laptop-001"
+                    assignedBy: "Admin"
+      responses:
+        '202':
+          description: Notification accepted and queued
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "SMS Notification accepted"
+        '400':
+          description: Bad request (invalid channel, missing required fields, etc.)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized (missing or invalid token)
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    NotificationRequest:
+      type: object
+      required:
+        - channel
+        - templateCode
+        - recipient
+      properties:
+        channel:
+          type: string
+          enum: [SMS, EMAIL, WHATSAPP, INAPP]
+          description: |
+            Notification channel:
+            - SMS: Send via SMS
+            - EMAIL: Send via Email
+            - WHATSAPP: Send via WhatsApp
+            - INAPP: Send in-app notification
+          example: "SMS"
+        templateCode:
+          type: string
+          description: Template code to use for the notification
+          example: "OTP_SMS"
+        recipient:
+          type: string
+          description: |
+            Recipient identifier:
+            - For SMS/WhatsApp: Phone number (e.g., "+1234567890")
+            - For EMAIL: Email address (e.g., "user@example.com")
+            - For INAPP: User ID or username
+          example: "+1234567890"
+        variables:
+          type: object
+          description: |
+            Dynamic variables to substitute in the template.
+            Keys should match template variable placeholders (e.g., {{name}}, {{otp}}).
+          additionalProperties:
+            type: string
+          example:
+            otp: "123456"
+            expiry: "3"
+            name: "John Doe"
+        priority:
+          type: string
+          enum: [LOW, NORMAL, HIGH, URGENT]
+          default: NORMAL
+          description: Notification priority level
+        metadata:
+          type: object
+          description: Additional metadata for the notification
+          additionalProperties:
+            type: string
+          example:
+            source: "auth-service"
+            eventType: "OTP_SENT"
+
+    ErrorResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: "error"
+        message:
+          type: string
+          example: "Invalid template code"
+        timestamp:
+          type: string
+          format: date-time
+          example: "2024-01-15T10:30:00Z"
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+              message:
+                type: string
+
+    NotificationResponse:
+      type: object
+      properties:
+        notificationId:
+          type: string
+          description: Unique identifier for the notification
+        status:
+          type: string
+          enum: [QUEUED, PROCESSING, SENT, FAILED]
+        channel:
+          type: string
+        recipient:
+          type: string
+        templateCode:
+          type: string
+        queuedAt:
+          type: string
+          format: date-time

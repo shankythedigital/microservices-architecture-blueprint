@@ -1,0 +1,1301 @@
+openapi: 3.0.3
+info:
+  title: Auth Service API
+  description: |
+    Authentication and Authorization Service API
+    
+    Provides user registration, authentication, credential management, and user profile management.
+    Supports multiple authentication methods including password, OTP, MPIN, RSA, and WebAuthn/Passkey.
+  version: 1.0.0
+  contact:
+    name: API Support
+    email: support@example.com
+
+servers:
+  - url: http://localhost:8080
+    description: Local development server
+  - url: https://api.example.com/auth-service
+    description: Production server
+
+tags:
+  - name: Authentication
+    description: User authentication and registration
+  - name: Credentials
+    description: Credential management (RSA, WebAuthn, MPIN)
+  - name: Users
+    description: User profile management
+  - name: Admin
+    description: Administrative operations
+  - name: Project Types
+    description: Project type management
+
+paths:
+  # ============================================================
+  # AUTHENTICATION ENDPOINTS
+  # ============================================================
+  /api/auth/register:
+    post:
+      tags:
+        - Authentication
+      summary: Register a new user
+      description: Register a new user with username, password, email, mobile, and project type
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '200':
+          description: User registered successfully
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "registered"
+        '400':
+          description: Bad request (validation error or duplicate user)
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "Username already exists"
+
+  /api/auth/adminregister:
+    post:
+      tags:
+        - Authentication
+      summary: Register a new admin user
+      description: Register a new admin user with admin privileges
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '200':
+          description: Admin user registered successfully
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "registered"
+        '400':
+          description: Bad request
+
+  /api/auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: User login
+      description: |
+        Login with various authentication methods:
+        - PASSWORD: Username and password
+        - OTP: Username and OTP code
+        - MPIN: User ID and MPIN
+        - RSA: User ID, challenge, and signature
+        - PASSKEY: User ID, credential ID, and signature
+        - AUTHCODE: User ID and auth code
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          description: Unauthorized (invalid credentials)
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "Invalid credentials"
+        '400':
+          description: Bad request
+
+  /api/auth/refresh:
+    post:
+      tags:
+        - Authentication
+      summary: Refresh access token
+      description: Refresh an expired access token using a refresh token
+      parameters:
+        - name: refreshToken
+          in: query
+          required: true
+          schema:
+            type: string
+          description: The refresh token
+      responses:
+        '200':
+          description: Token refreshed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          description: Invalid or expired refresh token
+
+  /api/auth/otp/send:
+    post:
+      tags:
+        - Authentication
+      summary: Send OTP
+      description: Send OTP via SMS or Email for authentication or password reset
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - userId
+                - purpose
+                - channel
+              properties:
+                userId:
+                  type: integer
+                  format: int64
+                  description: User ID
+                purpose:
+                  type: string
+                  enum: [LOGIN, RESET_PASSWORD, CHANGE_MOBILE, CHANGE_EMAIL]
+                  description: Purpose of OTP
+                channel:
+                  type: string
+                  enum: [SMS, EMAIL]
+                  description: Channel to send OTP
+      responses:
+        '200':
+          description: OTP sent successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "success"
+                  message:
+                    type: string
+                    example: "OTP sent successfully via SMS"
+                  userId:
+                    type: integer
+                    format: int64
+                  channel:
+                    type: string
+                  otp:
+                    type: string
+                    description: OTP code (for dev/debug only)
+                  expiresInMinutes:
+                    type: integer
+                    example: 3
+        '500':
+          description: Internal server error
+
+  # ============================================================
+  # CREDENTIAL MANAGEMENT ENDPOINTS
+  # ============================================================
+  /api/auth/credential/register:
+    post:
+      tags:
+        - Credentials
+      summary: Register a credential
+      description: Register a new credential (RSA, WebAuthn, MPIN) for a user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CredentialRegisterRequest'
+      responses:
+        '200':
+          description: Credential registered successfully
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "Credential registered"
+        '400':
+          description: Bad request
+
+  /api/auth/credential/rsa/challenge/{userId}:
+    get:
+      tags:
+        - Credentials
+      summary: Get RSA challenge
+      description: Get a challenge string for RSA signature verification
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Challenge generated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  userId:
+                    type: integer
+                    format: int64
+                  challenge:
+                    type: string
+
+  /api/auth/credential/rsa/verify:
+    post:
+      tags:
+        - Credentials
+      summary: Verify RSA signature
+      description: Verify an RSA signature against a challenge
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RsaVerifyRequest'
+      responses:
+        '200':
+          description: Signature verified successfully
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "RSA signature verified successfully"
+        '401':
+          description: Invalid signature
+
+  /api/auth/credential/webauthn/challenge/{userId}:
+    get:
+      tags:
+        - Credentials
+      summary: Get WebAuthn challenge
+      description: Get a challenge for WebAuthn/Passkey authentication
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Challenge generated
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /api/auth/credential/webauthn/verify:
+    post:
+      tags:
+        - Credentials
+      summary: Verify WebAuthn response
+      description: Verify a WebAuthn/Passkey authentication response
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CredentialChallengeResponse'
+      responses:
+        '200':
+          description: Verification successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  userId:
+                    type: integer
+                    format: int64
+                  verified:
+                    type: boolean
+
+  # ============================================================
+  # MPIN ENDPOINTS
+  # ============================================================
+  /api/auth/mpin/register:
+    post:
+      tags:
+        - Credentials
+      summary: Register or reset MPIN
+      description: Register a new MPIN or reset an existing one
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MpinRegisterRequest'
+      responses:
+        '200':
+          description: MPIN registered/reset successfully
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "MPIN registered/reset"
+        '400':
+          description: Bad request
+
+  /api/auth/mpin/verify:
+    post:
+      tags:
+        - Credentials
+      summary: Verify MPIN
+      description: Verify MPIN and login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MpinVerifyRequest'
+      responses:
+        '200':
+          description: MPIN verified, login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          description: Invalid MPIN
+
+  /api/auth/mpin/reset/request:
+    post:
+      tags:
+        - Credentials
+      summary: Request MPIN reset
+      description: Request MPIN reset using OTP verification
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MpinResetRequest'
+      responses:
+        '200':
+          description: Reset token generated
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "reset-token-xyz"
+        '401':
+          description: Invalid OTP or user
+
+  /api/auth/mpin/reset/confirm:
+    post:
+      tags:
+        - Credentials
+      summary: Confirm MPIN reset
+      description: Confirm MPIN reset with new MPIN
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MpinResetConfirmRequest'
+      responses:
+        '200':
+          description: MPIN reset successful
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "MPIN reset successful"
+        '401':
+          description: Invalid reset token
+
+  # ============================================================
+  # CONTACT CHANGE ENDPOINTS
+  # ============================================================
+  /api/auth/contact/change/request:
+    post:
+      tags:
+        - Authentication
+      summary: Request contact change
+      description: Request to change email or mobile number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmailMobileChangeRequest'
+      responses:
+        '200':
+          description: OTP sent for verification
+        '400':
+          description: Bad request
+
+  /api/auth/contact/change/confirm:
+    post:
+      tags:
+        - Authentication
+      summary: Confirm contact change
+      description: Confirm contact change with OTP
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmailMobileChangeConfirmRequest'
+      responses:
+        '200':
+          description: Contact changed successfully
+        '401':
+          description: Invalid OTP
+
+  # ============================================================
+  # PASSWORD MANAGEMENT ENDPOINTS
+  # ============================================================
+  /api/auth/password/change:
+    post:
+      tags:
+        - Authentication
+      summary: Change password
+      description: Change user password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangePasswordRequest'
+      responses:
+        '200':
+          description: Password changed successfully
+        '401':
+          description: Invalid current password
+
+  /api/auth/password/forgot:
+    post:
+      tags:
+        - Authentication
+      summary: Forgot password
+      description: Request password reset via OTP
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ForgotPasswordRequest'
+      responses:
+        '200':
+          description: OTP sent for password reset
+        '400':
+          description: User not found
+
+  # ============================================================
+  # USER PROFILE ENDPOINTS
+  # ============================================================
+  /api/users/me:
+    get:
+      tags:
+        - Users
+      summary: Get current user profile
+      description: Get the profile of the currently authenticated user
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: User profile retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserDto'
+        '401':
+          description: Unauthorized
+
+  /api/users/{id}:
+    get:
+      tags:
+        - Users
+      summary: Get user by ID
+      description: Get user profile by ID (admin or self only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: User profile retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserDto'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden (not admin or not self)
+
+  # ============================================================
+  # ADMIN ENDPOINTS
+  # ============================================================
+  /api/admin/users:
+    get:
+      tags:
+        - Admin
+      summary: List all users
+      description: Get a list of all users (admin only)
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserDto'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden (not admin)
+
+  /api/admin/audit/logs:
+    get:
+      tags:
+        - Admin
+      summary: Get audit logs
+      description: Get audit logs with optional filters (admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: userId
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: action
+          in: query
+          schema:
+            type: string
+        - name: url
+          in: query
+          schema:
+            type: string
+        - name: method
+          in: query
+          schema:
+            type: string
+        - name: from
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: to
+          in: query
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: Audit logs retrieved
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AuditLog'
+        '401':
+          description: Unauthorized
+
+  /api/admin/audit/logs/paged:
+    get:
+      tags:
+        - Admin
+      summary: Get paginated audit logs
+      description: Get audit logs with pagination (admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: userId
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: action
+          in: query
+          schema:
+            type: string
+        - name: url
+          in: query
+          schema:
+            type: string
+        - name: method
+          in: query
+          schema:
+            type: string
+        - name: from
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: to
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: size
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: sort
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Paginated audit logs
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  content:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AuditLog'
+                  totalElements:
+                    type: integer
+                  totalPages:
+                    type: integer
+                  number:
+                    type: integer
+                  size:
+                    type: integer
+
+  /api/admin/audit/logs/csv:
+    get:
+      tags:
+        - Admin
+      summary: Export audit logs as CSV
+      description: Export audit logs as CSV file (admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: userId
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: action
+          in: query
+          schema:
+            type: string
+        - name: url
+          in: query
+          schema:
+            type: string
+        - name: method
+          in: query
+          schema:
+            type: string
+        - name: from
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: to
+          in: query
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: CSV file
+          content:
+            text/csv:
+              schema:
+                type: string
+                format: binary
+
+  /api/admin/audit/logs/excel:
+    get:
+      tags:
+        - Admin
+      summary: Export audit logs as Excel
+      description: Export audit logs as Excel file (admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: userId
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: action
+          in: query
+          schema:
+            type: string
+        - name: url
+          in: query
+          schema:
+            type: string
+        - name: method
+          in: query
+          schema:
+            type: string
+        - name: from
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: to
+          in: query
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: Excel file
+          content:
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+                format: binary
+
+  # ============================================================
+  # PROJECT TYPE ENDPOINTS
+  # ============================================================
+  /api/auth/v1/project-types:
+    get:
+      tags:
+        - Project Types
+      summary: Get all active project types
+      description: Get a list of all active project types
+      responses:
+        '200':
+          description: List of project types
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ProjectType'
+        '500':
+          description: Internal server error
+
+    post:
+      tags:
+        - Project Types
+      summary: Create a new project type
+      description: Create a new project type
+      parameters:
+        - name: code
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: name
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: description
+          in: query
+          schema:
+            type: string
+        - name: displayOrder
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: createdBy
+          in: query
+          schema:
+            type: string
+            default: SYSTEM
+      responses:
+        '201':
+          description: Project type created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectType'
+        '400':
+          description: Bad request
+
+  /api/auth/v1/project-types/{projectTypeId}:
+    get:
+      tags:
+        - Project Types
+      summary: Get project type by ID
+      description: Get a project type by its ID
+      parameters:
+        - name: projectTypeId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Project type found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectType'
+        '404':
+          description: Project type not found
+
+    put:
+      tags:
+        - Project Types
+      summary: Update project type
+      description: Update an existing project type
+      parameters:
+        - name: projectTypeId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: name
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: description
+          in: query
+          schema:
+            type: string
+        - name: displayOrder
+          in: query
+          schema:
+            type: integer
+        - name: updatedBy
+          in: query
+          schema:
+            type: string
+            default: SYSTEM
+      responses:
+        '200':
+          description: Project type updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectType'
+        '400':
+          description: Bad request
+        '404':
+          description: Project type not found
+
+    delete:
+      tags:
+        - Project Types
+      summary: Delete project type
+      description: Soft delete a project type
+      parameters:
+        - name: projectTypeId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: deletedBy
+          in: query
+          schema:
+            type: string
+            default: SYSTEM
+      responses:
+        '200':
+          description: Project type deleted
+        '404':
+          description: Project type not found
+
+  /api/auth/v1/project-types/code/{code}:
+    get:
+      tags:
+        - Project Types
+      summary: Get project type by code
+      description: Get a project type by its code
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Project type found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectType'
+        '404':
+          description: Project type not found
+
+  /api/auth/v1/project-types/validate/{code}:
+    get:
+      tags:
+        - Project Types
+      summary: Validate project type code
+      description: Check if a project type code exists
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Validation result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                  exists:
+                    type: boolean
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    RegisterRequest:
+      type: object
+      required:
+        - username
+        - password
+        - projectType
+      properties:
+        username:
+          type: string
+          example: "john.doe"
+        password:
+          type: string
+          format: password
+          example: "SecurePass123!"
+        email:
+          type: string
+          format: email
+          example: "john.doe@example.com"
+        mobile:
+          type: string
+          example: "+1234567890"
+        projectType:
+          type: string
+          example: "ECOM"
+
+    LoginRequest:
+      type: object
+      required:
+        - loginType
+      properties:
+        loginType:
+          type: string
+          enum: [PASSWORD, OTP, MPIN, RSA, PASSKEY, AUTHCODE]
+        username:
+          type: string
+        password:
+          type: string
+        otp:
+          type: string
+        mpin:
+          type: string
+        rsaChallenge:
+          type: string
+        signature:
+          type: string
+        credentialId:
+          type: string
+        authCode:
+          type: string
+        deviceInfo:
+          type: string
+
+    AuthResponse:
+      type: object
+      properties:
+        accessToken:
+          type: string
+        refreshToken:
+          type: string
+        tokenType:
+          type: string
+          example: "Bearer"
+        expiresIn:
+          type: integer
+          example: 3600
+        userId:
+          type: integer
+          format: int64
+        username:
+          type: string
+        roles:
+          type: array
+          items:
+            type: string
+
+    CredentialRegisterRequest:
+      type: object
+      required:
+        - userId
+        - type
+        - credentialId
+        - publicKey
+      properties:
+        userId:
+          type: integer
+          format: int64
+        type:
+          type: string
+          enum: [RSA, WEBAUTHN, MPIN]
+        credentialId:
+          type: string
+        publicKey:
+          type: string
+
+    RsaVerifyRequest:
+      type: object
+      required:
+        - userId
+        - challenge
+        - signature
+      properties:
+        userId:
+          type: integer
+          format: int64
+        challenge:
+          type: string
+        signature:
+          type: string
+
+    CredentialChallengeResponse:
+      type: object
+      required:
+        - userId
+        - credentialId
+        - signature
+      properties:
+        userId:
+          type: integer
+          format: int64
+        credentialId:
+          type: string
+        signature:
+          type: string
+
+    MpinRegisterRequest:
+      type: object
+      required:
+        - userId
+        - mpin
+      properties:
+        userId:
+          type: integer
+          format: int64
+        mpin:
+          type: string
+        deviceInfo:
+          type: string
+
+    MpinVerifyRequest:
+      type: object
+      required:
+        - userId
+        - mpin
+      properties:
+        userId:
+          type: integer
+          format: int64
+        mpin:
+          type: string
+        deviceInfo:
+          type: string
+
+    MpinResetRequest:
+      type: object
+      required:
+        - userId
+        - mobile
+        - otp
+      properties:
+        userId:
+          type: integer
+          format: int64
+        mobile:
+          type: string
+        otp:
+          type: string
+
+    MpinResetConfirmRequest:
+      type: object
+      required:
+        - resetToken
+        - newMpin
+      properties:
+        resetToken:
+          type: string
+        newMpin:
+          type: string
+        deviceInfo:
+          type: string
+
+    EmailMobileChangeRequest:
+      type: object
+      required:
+        - userId
+        - newValue
+        - type
+      properties:
+        userId:
+          type: integer
+          format: int64
+        newValue:
+          type: string
+        type:
+          type: string
+          enum: [EMAIL, MOBILE]
+
+    EmailMobileChangeConfirmRequest:
+      type: object
+      required:
+        - userId
+        - otp
+        - newValue
+        - type
+      properties:
+        userId:
+          type: integer
+          format: int64
+        otp:
+          type: string
+        newValue:
+          type: string
+        type:
+          type: string
+          enum: [EMAIL, MOBILE]
+
+    ChangePasswordRequest:
+      type: object
+      required:
+        - userId
+        - currentPassword
+        - newPassword
+      properties:
+        userId:
+          type: integer
+          format: int64
+        currentPassword:
+          type: string
+        newPassword:
+          type: string
+
+    ForgotPasswordRequest:
+      type: object
+      required:
+        - username
+        - projectType
+      properties:
+        username:
+          type: string
+        projectType:
+          type: string
+
+    UserDto:
+      type: object
+      properties:
+        userId:
+          type: integer
+          format: int64
+        username:
+          type: string
+        email:
+          type: string
+        mobile:
+          type: string
+        projectType:
+          type: string
+        enabled:
+          type: boolean
+        roles:
+          type: array
+          items:
+            type: string
+        lastLoginDate:
+          type: string
+          format: date-time
+
+    AuditLog:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        userId:
+          type: integer
+          format: int64
+        action:
+          type: string
+        url:
+          type: string
+        method:
+          type: string
+        ipAddress:
+          type: string
+        userAgent:
+          type: string
+        eventTime:
+          type: string
+          format: date-time
+
+    ProjectType:
+      type: object
+      properties:
+        projectTypeId:
+          type: integer
+          format: int64
+        code:
+          type: string
+          example: "ECOM"
+        name:
+          type: string
+          example: "E-Commerce"
+        description:
+          type: string
+          example: "E-Commerce Platform"
+        displayOrder:
+          type: integer
+          example: 1
+        active:
+          type: boolean
+        createdBy:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedBy:
+          type: string
+        updatedAt:
+          type: string
+          format: date-time

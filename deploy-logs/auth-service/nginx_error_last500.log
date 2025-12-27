@@ -1,0 +1,2 @@
+INFO: Running ssh -i /Users/neilnaik/.ssh/eb-keypair-auth -o IdentitiesOnly yes ec2-user@3.109.253.73 sudo tail -n 500 /var/log/nginx/error.log
+

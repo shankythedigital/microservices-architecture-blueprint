@@ -2,7 +2,7 @@ package com.example.authservice.service.impl;
 
 import com.example.authservice.model.AuditLog;
 import com.example.authservice.repository.AuditLogRepository;
-import com.example.authservice.util.RequestContext;
+import com.example.common.util.RequestContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

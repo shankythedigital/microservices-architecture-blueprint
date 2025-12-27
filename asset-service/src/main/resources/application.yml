@@ -1,45 +1,72 @@
+# Asset-service
 server:
-  port: 8083
-  servlet:
-    context-path: /asset-service
+  port: 6003
+
+auth:
+  service:
+    url: http://13.127.199.97:6001
+notification:
+  service:
+    url: http://13.233.230.24:6002/api/notifications
+asset:
+  service:
+    url: http://13.127.199.97:6003
+  upload:
+    dir: /asset-uploads/amc-docs
 
 spring:
   application:
     name: asset-service
-
   datasource:
-    url: jdbc:mysql://localhost:3306/assetdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
-    username: root
-    password: Snmysql@1110
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    hikari:
-      maximum-pool-size: 10
-      connection-timeout: 20000
-
+    url: jdbc:mysql://db-auth.c5csym0gc4my.ap-south-1.rds.amazonaws.com:3306/assetdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    username: adminAuth
+    password: AuthPass123
   jpa:
     hibernate:
-      ddl-auto: update    # instead of 'validate'
-    database-platform: org.hibernate.dialect.MySQL8Dialect
+      ddl-auto: update
     show-sql: false
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 50MB
+      max-request-size: 50MB
 
 services:
   auth:
-    base-url: http://localhost:8081
+    base-url: http://13.127.199.97:6001
   notification:
-    base-url: http://localhost:8082
+    base-url: http://13.233.230.24:6002
 
 security:
   jwt:
-    public-key-path: classpath:keys/jwt-public.pem
+    public-key-path: classpath:keys/jwt-private.pem
     issuer: "auth-service"
     audience: "asset-service"
 
-management:
-  endpoints:
-    web:
-      exposure: health,info
+common:
+  notification:
+    enabled: true
 
-logging:
-  level:
-    root: INFO
-    com.example.asset: DEBUG
+JWT_PUBLIC_KEY_PATH: classpath:keys/jwt-public.pem
+JWT_SECRET: yNnC7M3ZqgV4bD0lFJm9Q2w5tSe8XpR1pWc7UjK4oHs=
+AUTH_ENC_KEY: SLOqKf8lS2hidTDsXQe25ZSaoaGcczUX6gySXUxjE1M=
+AUTH_HMAC_KEY: krFcA7/MYPXQWbtSGMM87Dzxu2euOsRckVFeUyOC6dw=
+AUTH_SERVICE_URL: http://13.127.199.97:6001
+NOTIFICATION_SERVICE_URL: http://13.233.230.24:6002
+
+# Swagger/OpenAPI Configuration
+springdoc:
+  api-docs:
+    path: /api-docs
+    enabled: true
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+    operations-sorter: method
+    tags-sorter: alpha
+    try-it-out-enabled: true
+  show-actuator: false
+  group-configs:
+    - group: 'asset-service'
+      display-name: 'Asset Service API'
+      paths-to-match: '/api/**'

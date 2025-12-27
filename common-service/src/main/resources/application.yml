@@ -1,0 +1,25 @@
+spring:
+  application:
+    name: common-service
+
+auth:
+  service:
+    url: http://localhost:8081
+
+asset:
+  service:
+    url: http://localhost:8083
+
+
+notification:
+  service:
+    url: http://localhost:8082/api/notifications
+
+
+JWT_PRIVATE_KEY_PATH: classpath:keys/jwt-private.pem
+JWT_PUBLIC_KEY_PATH: classpath:keys/jwt-public.pem
+JWT_SECRET: yNnC7M3ZqgV4bD0lFJm9Q2w5tSe8XpR1pWc7UjK4oHs=
+JWT_ACCESS_TOKEN_VALIDITY_SECONDS: 900
+JWT_REFRESH_TOKEN_VALIDITY_SECONDS: 1209600
+AUTH_ENC_KEY: SLOqKf8lS2hidTDsXQe25ZSaoaGcczUX6gySXUxjE1M=
+AUTH_HMAC_KEY: krFcA7/MYPXQWbtSGMM87Dzxu2euOsRckVFeUyOC6dw=

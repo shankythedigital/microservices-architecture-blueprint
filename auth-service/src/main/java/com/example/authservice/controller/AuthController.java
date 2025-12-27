@@ -115,6 +115,7 @@ public class AuthController {
             String templateCode = (String) payload.getOrDefault("templateCode", "OTP_SMS");
             String mobile = payload.get("mobile") != null ? payload.get("mobile").toString() : null;
             String email = payload.get("email") != null ? payload.get("email").toString() : null;
+            String projecttype = payload.get("projecttype") != null ? payload.get("projecttype").toString() : null;
             String type = (String) payload.getOrDefault("type", "SMS");
             String purpose = (String) payload.getOrDefault("purpose", "LOGIN");
 
@@ -173,7 +174,9 @@ public class AuthController {
                     email,
                     type,
                     channel,
-                    templateCode // Notice: templateCode instead of purpose
+                    templateCode, // Notice: templateCode instead of purpose
+                    purpose, 
+                    projecttype
             );
 
             // -----------------------------------

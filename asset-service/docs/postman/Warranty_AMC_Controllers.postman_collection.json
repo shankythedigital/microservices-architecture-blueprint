@@ -1,0 +1,432 @@
+{
+	"info": {
+		"_postman_id": "warranty-amc-controllers-collection",
+		"name": "Warranty & AMC Controllers - Complete API Collection",
+		"description": "Complete API collection for AssetWarrantyController and AssetAmcController with detailed environment and body variables.\n\n**Controllers:**\n- AssetWarrantyController: `/api/asset/v1/warranty`\n- AssetAmcController: `/api/asset/v1/amc`\n\n**Features:**\n- Full CRUD operations for Warranty and AMC entities\n- JSON-only requests (document uploads handled separately via DocumentController)\n- Comprehensive validation and error handling\n\n**Environment Variables Required:**\n- assetbaseUrl: Base URL (default: http://localhost:8083)\n- accessToken: JWT Bearer token from auth-service\n- userId, username: User context for operations\n- assetId, componentId: Asset/Component IDs for linking\n- warrantyId, amcId: Warranty/AMC IDs for operations\n- warrantyStatus, amcStatus: Status values\n- warrantyProvider: Warranty provider name\n- warrantyTerms: Warranty terms description\n- startDate, endDate: Date values (format: yyyy-MM-dd)\n- documentId, docType: Optional document linkage",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "32725094"
+	},
+	"item": [
+		{
+			"name": "1. Warranty Operations",
+			"item": [
+				{
+					"name": "Create Warranty",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}",
+								"type": "text",
+								"description": "JWT Bearer token from auth-service"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"userId\": {{userId}},\n  \"username\": \"{{username}}\",\n  \"projectType\": \"{{projectType}}\",\n  \"assetId\": {{assetId}},\n  \"componentId\": {{componentId}},\n  \"warrantyStatus\": \"{{warrantyStatus}}\",\n  \"warrantyProvider\": \"{{warrantyProvider}}\",\n  \"warrantyTerms\": \"{{warrantyTerms}}\",\n  \"startDate\": \"{{startDate}}\",\n  \"endDate\": \"{{endDate}}\",\n  \"documentId\": {{documentId}},\n  \"docType\": \"{{docType}}\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{assetbaseUrl}}/api/asset/v1/warranty",
+							"host": ["{{assetbaseUrl}}"],
+							"path": ["api", "asset", "v1", "warranty"]
+						},
+						"description": "Create a new warranty record for an asset or component.\n\n**Request Body Variables:**\n- userId: User ID ({{userId}}) - Required\n- username: Username ({{username}}) - Required\n- projectType: Project type ({{projectType}}) - Optional\n- assetId: Asset ID ({{assetId}}) - Required\n- componentId: Component ID ({{componentId}}) - Optional\n- warrantyStatus: Warranty status ({{warrantyStatus}}) - Required\n- warrantyProvider: Warranty provider name ({{warrantyProvider}}) - Optional\n- warrantyTerms: Warranty terms description ({{warrantyTerms}}) - Optional\n- startDate: Warranty start date ({{startDate}}) - Required, format: yyyy-MM-dd\n- endDate: Warranty end date ({{endDate}}) - Required, format: yyyy-MM-dd\n- documentId: Document ID for warranty document ({{documentId}}) - Optional\n- docType: Document type ({{docType}}) - Optional\n\n**Note:** Document uploads are handled separately via DocumentController."
+					},
+					"response": []
+				},
+				{
+					"name": "Update Warranty",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"userId\": {{userId}},\n  \"username\": \"{{username}}\",\n  \"projectType\": \"{{projectType}}\",\n  \"assetId\": {{assetId}},\n  \"componentId\": {{componentId}},\n  \"warrantyStatus\": \"{{warrantyStatus}}\",\n  \"warrantyProvider\": \"{{warrantyProvider}}\",\n  \"warrantyTerms\": \"{{warrantyTerms}}\",\n  \"startDate\": \"{{startDate}}\",\n  \"endDate\": \"{{endDate}}\",\n  \"documentId\": {{documentId}},\n  \"docType\": \"{{docType}}\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{assetbaseUrl}}/api/asset/v1/warranty/{{warrantyId}}",
+							"host": ["{{assetbaseUrl}}"],
+							"path": ["api", "asset", "v1", "warranty", "{{warrantyId}}"]
+						},
+						"description": "Update an existing warranty record.\n\n**Path Parameters:**\n- warrantyId: Warranty ID ({{warrantyId}}) - Required\n\n**Request Body Variables:**\nSame as Create Warranty. All fields are optional for update, but provide the fields you want to update."
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Warranty",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"userId\": {{userId}},\n  \"username\": \"{{username}}\",\n  \"projectType\": \"{{projectType}}\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{assetbaseUrl}}/api/asset/v1/warranty/{{warrantyId}}",
+							"host": ["{{assetbaseUrl}}"],
+							"path": ["api", "asset", "v1", "warranty", "{{warrantyId}}"]
+						},
+						"description": "Soft delete a warranty record.\n\n**Path Parameters:**\n- warrantyId: Warranty ID ({{warrantyId}}) - Required\n\n**Request Body Variables:**\n- userId: User ID ({{userId}}) - Required\n- username: Username ({{username}}) - Required\n- projectType: Project type ({{projectType}}) - Optional\n\n**Note:** This performs a soft delete, marking the warranty as inactive rather than removing it from the database."
+					},
+					"response": []
+				},
+				{
+					"name": "List All Warranties",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{assetbaseUrl}}/api/asset/v1/warranty",
+							"host": ["{{assetbaseUrl}}"],
+							"path": ["api", "asset", "v1", "warranty"]
+						},
+						"description": "Get all warranty records.\n\n**Response:** Returns a list of all warranty records with their details."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Warranty by ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{assetbaseUrl}}/api/asset/v1/warranty/{{warrantyId}}",
+							"host": ["{{assetbaseUrl}}"],
+							"path": ["api", "asset", "v1", "warranty", "{{warrantyId}}"]
+						},
+						"description": "Get a specific warranty record by ID.\n\n**Path Parameters:**\n- warrantyId: Warranty ID ({{warrantyId}}) - Required\n\n**Response:** Returns warranty details if found, 404 if not found."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "2. AMC Operations",
+			"item": [
+				{
+					"name": "Create AMC",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}",
+								"type": "text",
+								"description": "JWT Bearer token from auth-service"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"userId\": {{userId}},\n  \"username\": \"{{username}}\",\n  \"projectType\": \"{{projectType}}\",\n  \"assetId\": {{assetId}},\n  \"componentId\": {{componentId}},\n  \"amcStatus\": \"{{amcStatus}}\",\n  \"startDate\": \"{{startDate}}\",\n  \"endDate\": \"{{endDate}}\",\n  \"documentId\": {{documentId}},\n  \"docType\": \"{{docType}}\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{assetbaseUrl}}/api/asset/v1/amc",
+							"host": ["{{assetbaseUrl}}"],
+							"path": ["api", "asset", "v1", "amc"]
+						},
+						"description": "Create a new AMC (Annual Maintenance Contract) record for an asset or component.\n\n**Request Body Variables:**\n- userId: User ID ({{userId}}) - Optional\n- username: Username ({{username}}) - Optional\n- projectType: Project type ({{projectType}}) - Optional\n- assetId: Asset ID ({{assetId}}) - Optional\n- componentId: Component ID ({{componentId}}) - Optional\n- amcStatus: AMC status ({{amcStatus}}) - Optional\n- startDate: AMC start date ({{startDate}}) - Optional, format: yyyy-MM-dd\n- endDate: AMC end date ({{endDate}}) - Optional, format: yyyy-MM-dd\n- documentId: Document ID for AMC document ({{documentId}}) - Optional\n- docType: Document type ({{docType}}) - Optional\n\n**Note:** Document uploads are handled separately via DocumentController."
+					},
+					"response": []
+				},
+				{
+					"name": "Update AMC",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"userId\": {{userId}},\n  \"username\": \"{{username}}\",\n  \"projectType\": \"{{projectType}}\",\n  \"assetId\": {{assetId}},\n  \"componentId\": {{componentId}},\n  \"amcStatus\": \"{{amcStatus}}\",\n  \"startDate\": \"{{startDate}}\",\n  \"endDate\": \"{{endDate}}\",\n  \"documentId\": {{documentId}},\n  \"docType\": \"{{docType}}\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{assetbaseUrl}}/api/asset/v1/amc/{{amcId}}",
+							"host": ["{{assetbaseUrl}}"],
+							"path": ["api", "asset", "v1", "amc", "{{amcId}}"]
+						},
+						"description": "Update an existing AMC record.\n\n**Path Parameters:**\n- amcId: AMC ID ({{amcId}}) - Required\n\n**Request Body Variables:**\nSame as Create AMC. All fields are optional for update, but provide the fields you want to update."
+					},
+					"response": []
+				},
+				{
+					"name": "Delete AMC",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"userId\": {{userId}},\n  \"username\": \"{{username}}\",\n  \"projectType\": \"{{projectType}}\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{assetbaseUrl}}/api/asset/v1/amc/{{amcId}}",
+							"host": ["{{assetbaseUrl}}"],
+							"path": ["api", "asset", "v1", "amc", "{{amcId}}"]
+						},
+						"description": "Soft delete an AMC record.\n\n**Path Parameters:**\n- amcId: AMC ID ({{amcId}}) - Required\n\n**Request Body Variables:**\n- userId: User ID ({{userId}}) - Optional\n- username: Username ({{username}}) - Optional\n- projectType: Project type ({{projectType}}) - Optional\n\n**Note:** This performs a soft delete, marking the AMC as inactive rather than removing it from the database."
+					},
+					"response": []
+				},
+				{
+					"name": "List All AMCs",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{assetbaseUrl}}/api/asset/v1/amc",
+							"host": ["{{assetbaseUrl}}"],
+							"path": ["api", "asset", "v1", "amc"]
+						},
+						"description": "Get all AMC records.\n\n**Response:** Returns a list of all AMC records with their details."
+					},
+					"response": []
+				},
+				{
+					"name": "Get AMC by ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{assetbaseUrl}}/api/asset/v1/amc/{{amcId}}",
+							"host": ["{{assetbaseUrl}}"],
+							"path": ["api", "asset", "v1", "amc", "{{amcId}}"]
+						},
+						"description": "Get a specific AMC record by ID.\n\n**Path Parameters:**\n- amcId: AMC ID ({{amcId}}) - Required\n\n**Response:** Returns AMC details if found, 404 if not found."
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "assetbaseUrl",
+			"value": "http://localhost:8083",
+			"type": "string",
+			"description": "Base URL for Asset Service API. Default: http://localhost:8083"
+		},
+		{
+			"key": "accessToken",
+			"value": "",
+			"type": "string",
+			"description": "JWT Bearer token obtained from auth-service login endpoint. Format: Bearer <token>"
+		},
+		{
+			"key": "userId",
+			"value": "1",
+			"type": "string",
+			"description": "User ID for operations"
+		},
+		{
+			"key": "username",
+			"value": "admin",
+			"type": "string",
+			"description": "Username for operations"
+		},
+		{
+			"key": "projectType",
+			"value": "ASSET_SERVICE",
+			"type": "string",
+			"description": "Project type for operations"
+		},
+		{
+			"key": "assetId",
+			"value": "1",
+			"type": "string",
+			"description": "Asset ID for linking warranty/AMC"
+		},
+		{
+			"key": "componentId",
+			"value": "1",
+			"type": "string",
+			"description": "Component ID for linking warranty/AMC (optional)"
+		},
+		{
+			"key": "warrantyId",
+			"value": "1",
+			"type": "string",
+			"description": "Warranty ID for operations"
+		},
+		{
+			"key": "amcId",
+			"value": "1",
+			"type": "string",
+			"description": "AMC ID for operations"
+		},
+		{
+			"key": "warrantyStatus",
+			"value": "ACTIVE",
+			"type": "string",
+			"description": "Warranty status (e.g., ACTIVE, EXPIRED, PENDING)"
+		},
+		{
+			"key": "amcStatus",
+			"value": "ACTIVE",
+			"type": "string",
+			"description": "AMC status (e.g., ACTIVE, EXPIRED, PENDING)"
+		},
+		{
+			"key": "warrantyProvider",
+			"value": "Dell Inc",
+			"type": "string",
+			"description": "Warranty provider name"
+		},
+		{
+			"key": "warrantyTerms",
+			"value": "3 years standard warranty",
+			"type": "string",
+			"description": "Warranty terms description"
+		},
+		{
+			"key": "startDate",
+			"value": "2024-01-01",
+			"type": "string",
+			"description": "Start date in format yyyy-MM-dd"
+		},
+		{
+			"key": "endDate",
+			"value": "2027-01-01",
+			"type": "string",
+			"description": "End date in format yyyy-MM-dd"
+		},
+		{
+			"key": "documentId",
+			"value": "1",
+			"type": "string",
+			"description": "Document ID for warranty/AMC document (optional)"
+		},
+		{
+			"key": "docType",
+			"value": "PDF",
+			"type": "string",
+			"description": "Document type (e.g., PDF, IMAGE, RECEIPT)"
+		}
+	]
+}
+

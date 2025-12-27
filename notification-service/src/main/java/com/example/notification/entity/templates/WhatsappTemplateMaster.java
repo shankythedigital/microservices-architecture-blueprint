@@ -1,7 +1,8 @@
 package com.example.notification.entity.templates;
 
-import com.example.notification.entity.BaseEntity;
+
 import jakarta.persistence.*;
+import com.example.common.jpa.BaseEntity;
 
 @Entity
 @Table(name = "whatsapp_template_master")

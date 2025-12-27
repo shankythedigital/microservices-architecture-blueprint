@@ -1,0 +1,27 @@
+# Ignore EVERYTHING except JAR, Procfile, .ebextensions
+*
+
+!target/*.jar
+!Procfile
+!.ebextensions/**
+
+# Ignore unnecessary folders
+node_modules/
+.git/
+.vscode/
+.idea/
+*.md
+*.log
+*.tmp
+*.swp
+*.iml
+**/target/**
+
+# Prevent massive uploads
+logs/
+build/
+dist/
+docker/
+images/
+tmp/
+coverage/

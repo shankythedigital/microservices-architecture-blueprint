@@ -1,6 +1,6 @@
 package com.example.authservice.security;
 
-import com.example.authservice.util.RequestContext;
+import com.example.common.util.RequestContext;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;

@@ -3,7 +3,7 @@ package com.example.notification.service;
 import com.example.notification.dto.NotificationRequest;
 import com.example.notification.entity.*;
 import com.example.notification.repository.*;
-import com.example.notification.util.HashUtil;
+import com.example.common.util.HashUtil;
 import com.example.notification.util.TemplateEngineUtil;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

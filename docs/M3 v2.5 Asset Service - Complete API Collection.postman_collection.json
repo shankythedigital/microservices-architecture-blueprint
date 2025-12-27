@@ -1,0 +1,4686 @@
+{
+  "info": {
+    "_postman_id": "5f0d976e-2c98-40ec-be61-ab4ffc97a04e",
+    "name": "M3 v2.5 Asset Service - Complete API Collection",
+    "description": "Complete API collection for Asset Management Service with detailed environment and body variables.\n\n**Environment Variables:**\n- assetbaseUrl: Base URL (default: http://localhost:8083)\n- accessToken: JWT Bearer token from auth-service\n- userId, username, projectType: User context\n- categoryId, subCategoryId, makeId, modelId, vendorId, outletId, componentId, assetId, warrantyId, amcId, documentId: Entity IDs\n- targetUserId, targetUsername: Target user for linking operations\n- entityType, entityId: Entity type and ID for compliance/document operations\n- searchKeyword: Search keyword for asset search\n- filename: File name for download operations\n\n**Body Variables:**\nAll request bodies use environment variables for dynamic values. Examples are provided with {{variableName}} syntax.\n\n**Features:**\n- All endpoints use /api/asset/v1 base path\n- Bulk upload endpoints for all master data entities\n- Excel bulk upload with column name-based parsing\n- Document bulk upload with entity linkage\n- Asset bulk upload with component row-based handling\n- Comprehensive error handling and validation",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "32725094"
+  },
+  "item": [
+    {
+      "name": "1. Categories",
+      "item": [
+        {
+          "name": "Create Category",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"username\": \"{{username}}\",\n  \"projectType\": \"{{projectType}}\",\n  \"category\": {\n    \"categoryName\": \"Electronics\",\n    \"description\": \"Electronic devices and equipment\"\n  }\n}",
+              "description": "Request body with environment variables. Update {{variableName}} values as needed."
+            },
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/categories",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "categories"
+              ]
+            },
+            "description": "Create a new product category"
+          },
+          "response": [],
+          "description": ""
+        },
+        {
+          "name": "List All Categories",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/categories",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "categories"
+              ]
+            },
+            "description": "Get all categories"
+          },
+          "response": [],
+          "description": ""
+        },
+        {
+          "name": "Get Category by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/categories/{{categoryId}}",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "categories",
+                "{{categoryId}}"
+              ]
+            },
+            "description": "Get category by ID"
+          },
+          "response": [],
+          "description": ""
+        },
+        {
+          "name": "Update Category",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"username\": \"{{username}}\",\n  \"projectType\": \"{{projectType}}\",\n  \"category\": {\n    \"categoryName\": \"Electronics Updated 1\",\n    \"description\": \"Updated description\"\n  }\n}",
+              "description": "Request body with environment variables. Update {{variableName}} values as needed."
+            },
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/categories/{{categoryId}}",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "categories",
+                "{{categoryId}}"
+              ]
+            },
+            "description": "Update a category"
+          },
+          "response": [],
+          "description": ""
+        },
+        {
+          "name": "Delete Category",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"username\": \"{{username}}\",\n  \"projectType\": \"{{projectType}}\"\n}",
+              "description": "Request body with environment variables. Update {{variableName}} values as needed."
+            },
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/categories/{{categoryId}}",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "categories",
+                "{{categoryId}}"
+              ]
+            },
+            "description": "Soft delete a category"
+          },
+          "response": [],
+          "description": ""
+        },
+        {
+          "name": "Bulk Create Categories",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"username\": \"{{username}}\",\n  \"projectType\": \"{{projectType}}\",\n  \"categories\": [\n    {\n      \"categoryName\": \"Category 1\",\n      \"description\": \"Description for Category 1\"\n    },\n    {\n      \"categoryName\": \"Category 2\",\n      \"description\": \"Description for Category 2\"\n    }\n  ]\n}",
+              "description": "Request body with environment variables. Update {{variableName}} values as needed."
+            },
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/categories/bulk",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "categories",
+                "bulk"
+              ]
+            },
+            "description": "Create multiple categories"
+          },
+          "response": [],
+          "description": ""
+        },
+        {
+          "name": "Bulk Upload Categories (Excel)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": []
+                },
+                {
+                  "key": "userId",
+                  "value": "{{userId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "username",
+                  "value": "{{username}}",
+                  "type": "text"
+                },
+                {
+                  "key": "projectType",
+                  "value": "{{projectType}}",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/categories/bulk/excel",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "categories",
+                "bulk",
+                "excel"
+              ]
+            },
+            "description": "Upload Excel file for bulk category creation"
+          },
+          "response": [],
+          "description": ""
+        }
+      ]
+    },
+    {
+      "name": "2. SubCategories",
+      "item": [
+        {
+          "name": "Create SubCategory",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"username\": \"{{username}}\",\n  \"projectType\": \"{{projectType}}\",\n  \"subCategory\": {\n    \"subCategoryName\": \"Laptops\",\n    \"description\": \"Laptop computers\",\n    \"category\": {\n      \"categoryId\": \"{{categoryId}}\"\n    }\n  }\n}",
+              "description": "Request body with environment variables. Update {{variableName}} values as needed."
+            },
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/subcategories",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "subcategories"
+              ]
+            },
+            "description": "Create a new subcategory"
+          },
+          "response": [],
+          "description": ""
+        },
+        {
+          "name": "List All SubCategories",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/subcategories",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "subcategories"
+              ]
+            },
+            "description": "Get all subcategories"
+          },
+          "response": [],
+          "description": ""
+        },
+        {
+          "name": "Get SubCategory by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/subcategories/{{subCategoryId}}",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "subcategories",
+                "{{subCategoryId}}"
+              ]
+            },
+            "description": "Get subcategory by ID"
+          },
+          "response": [],
+          "description": ""
+        },
+        {
+          "name": "Update SubCategory",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"username\": \"{{username}}\",\n  \"projectType\": \"{{projectType}}\",\n  \"subCategory\": {\n    \"subCategoryName\": \"Laptops Updated\",\n    \"description\": \"Updated description\"\n  }\n}",
+              "description": "Request body with environment variables. Update {{variableName}} values as needed."
+            },
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/subcategories/{{subCategoryId}}",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "subcategories",
+                "{{subCategoryId}}"
+              ]
+            },
+            "description": "Update a subcategory"
+          },
+          "response": [],
+          "description": ""
+        },
+        {
+          "name": "Delete SubCategory",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"username\": \"{{username}}\",\n  \"projectType\": \"{{projectType}}\"\n}",
+              "description": "Request body with environment variables. Update {{variableName}} values as needed."
+            },
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/subcategories/{{subCategoryId}}",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "subcategories",
+                "{{subCategoryId}}"
+              ]
+            },
+            "description": "Soft delete a subcategory"
+          },
+          "response": [],
+          "description": ""
+        },
+        {
+          "name": "Bulk Create SubCategories",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"username\": \"{{username}}\",\n  \"projectType\": \"{{projectType}}\",\n  \"subCategories\": [\n    {\n      \"subCategoryName\": \"SubCategory 1\",\n      \"description\": \"Desc 1\",\n      \"category\": {\n        \"categoryId\": \"{{categoryId}}\"\n      }\n    },\n    {\n      \"subCategoryName\": \"SubCategory 2\",\n      \"description\": \"Desc 2\",\n      \"category\": {\n        \"categoryId\": \"{{categoryId}}\"\n      }\n    }\n  ]\n}",
+              "description": "Request body with environment variables. Update {{variableName}} values as needed."
+            },
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/subcategories/bulk",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "subcategories",
+                "bulk"
+              ]
+            },
+            "description": "Create multiple subcategories"
+          },
+          "response": [],
+          "description": ""
+        },
+        {
+          "name": "Bulk Upload SubCategories (Excel)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": []
+                },
+                {
+                  "key": "userId",
+                  "value": "{{userId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "username",
+                  "value": "{{username}}",
+                  "type": "text"
+                },
+                {
+                  "key": "projectType",
+                  "value": "{{projectType}}",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/subcategories/bulk/excel",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "subcategories",
+                "bulk",
+                "excel"
+              ]
+            },
+            "description": "Upload Excel file"
+          },
+          "response": [],
+          "description": ""
+        }
+      ]
+    },
+    {
+      "name": "3. Makes",
+      "item": [
+        {
+          "name": "Create Make",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"username\": \"{{username}}\",\n  \"projectType\": \"{{projectType}}\",\n  \"make\": {\n    \"makeName\": \"Dell\",\n    \"subCategory\": {\n      \"subCategoryId\": \"{{subCategoryId}}\"\n    }\n  }\n}",
+              "description": "Request body with environment variables. Update {{variableName}} values as needed."
+            },
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/makes",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "makes"
+              ]
+            },
+            "description": "Create a new make"
+          },
+          "response": [],
+          "description": ""
+        },
+        {
+          "name": "List All Makes",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/makes",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "makes"
+              ]
+            },
+            "description": "Get all makes"
+          },
+          "response": [],
+          "description": ""
+        },
+        {
+          "name": "Get Make by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/makes/{{makeId}}",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "makes",
+                "{{makeId}}"
+              ]
+            },
+            "description": "Get make by ID"
+          },
+          "response": [],
+          "description": ""
+        },
+        {
+          "name": "Update Make",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"username\": \"{{username}}\",\n  \"projectType\": \"{{projectType}}\",\n  \"make\": {\n    \"makeName\": \"Dell Updated\"\n  }\n}",
+              "description": "Request body with environment variables. Update {{variableName}} values as needed."
+            },
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/makes/{{makeId}}",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "makes",
+                "{{makeId}}"
+              ]
+            },
+            "description": "Update a make"
+          },
+          "response": [],
+          "description": ""
+        },
+        {
+          "name": "Delete Make",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"username\": \"{{username}}\",\n  \"projectType\": \"{{projectType}}\"\n}",
+              "description": "Request body with environment variables. Update {{variableName}} values as needed."
+            },
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/makes/{{makeId}}",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "makes",
+                "{{makeId}}"
+              ]
+            },
+            "description": "Soft delete a make"
+          },
+          "response": [],
+          "description": ""
+        },
+        {
+          "name": "Bulk Create Makes",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"username\": \"{{username}}\",\n  \"projectType\": \"{{projectType}}\",\n  \"makes\": [\n    {\n      \"makeName\": \"Make 1\",\n      \"subCategory\": {\n        \"subCategoryId\": \"{{subCategoryId}}\"\n      }\n    },\n    {\n      \"makeName\": \"Make 2\",\n      \"subCategory\": {\n        \"subCategoryId\": \"{{subCategoryId}}\"\n      }\n    }\n  ]\n}",
+              "description": "Request body with environment variables. Update {{variableName}} values as needed."
+            },
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/makes/bulk",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "makes",
+                "bulk"
+              ]
+            },
+            "description": "Create multiple makes"
+          },
+          "response": [],
+          "description": ""
+        },
+        {
+          "name": "Bulk Upload Makes (Excel)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": []
+                },
+                {
+                  "key": "userId",
+                  "value": "{{userId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "username",
+                  "value": "{{username}}",
+                  "type": "text"
+                },
+                {
+                  "key": "projectType",
+                  "value": "{{projectType}}",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/makes/bulk/excel",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "makes",
+                "bulk",
+                "excel"
+              ]
+            },
+            "description": "Upload Excel file"
+          },
+          "response": [],
+          "description": ""
+        }
+      ]
+    },
+    {
+      "name": "4. Models",
+      "item": [
+        {
+          "name": "Create Model",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"username\": \"{{username}}\",\n  \"projectType\": \"{{projectType}}\",\n  \"model\": {\n    \"modelName\": \"XPS 15\",\n    \"description\": \"Dell XPS 15 Laptop\",\n    \"make\": {\n      \"makeId\": \"{{makeId}}\"\n    }\n  }\n}",
+              "description": "Request body with environment variables. Update {{variableName}} values as needed."
+            },
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/models",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "models"
+              ]
+            },
+            "description": "Create a new model"
+          },
+          "response": [],
+          "description": ""
+        },
+        {
+          "name": "List All Models",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/models",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "models"
+              ]
+            },
+            "description": "Get all models"
+          },
+          "response": [],
+          "description": ""
+        },
+        {
+          "name": "Get Model by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/models/{{modelId}}",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "models",
+                "{{modelId}}"
+              ]
+            },
+            "description": "Get model by ID"
+          },
+          "response": [],
+          "description": ""
+        },
+        {
+          "name": "Update Model",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"username\": \"{{username}}\",\n  \"projectType\": \"{{projectType}}\",\n  \"model\": {\n    \"modelName\": \"XPS 15 Updated\",\n    \"description\": \"Updated description\"\n  }\n}",
+              "description": "Request body with environment variables. Update {{variableName}} values as needed."
+            },
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/models/{{modelId}}",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "models",
+                "{{modelId}}"
+              ]
+            },
+            "description": "Update a model"
+          },
+          "response": [],
+          "description": ""
+        },
+        {
+          "name": "Delete Model",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"username\": \"{{username}}\",\n  \"projectType\": \"{{projectType}}\"\n}",
+              "description": "Request body with environment variables. Update {{variableName}} values as needed."
+            },
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/models/{{modelId}}",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "models",
+                "{{modelId}}"
+              ]
+            },
+            "description": "Soft delete a model"
+          },
+          "response": [],
+          "description": ""
+        },
+        {
+          "name": "Bulk Create Models",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"username\": \"{{username}}\",\n  \"projectType\": \"{{projectType}}\",\n  \"models\": [\n    {\n      \"modelName\": \"Model 1\",\n      \"make\": {\n        \"makeId\": \"{{makeId}}\"\n      }\n    },\n    {\n      \"modelName\": \"Model 2\",\n      \"make\": {\n        \"makeId\": \"{{makeId}}\"\n      }\n    }\n  ]\n}",
+              "description": "Request body with environment variables. Update {{variableName}} values as needed."
+            },
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/models/bulk",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "models",
+                "bulk"
+              ]
+            },
+            "description": "Create multiple models"
+          },
+          "response": [],
+          "description": ""
+        },
+        {
+          "name": "Bulk Upload Models (Excel)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": []
+                },
+                {
+                  "key": "userId",
+                  "value": "{{userId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "username",
+                  "value": "{{username}}",
+                  "type": "text"
+                },
+                {
+                  "key": "projectType",
+                  "value": "{{projectType}}",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/models/bulk/excel",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "models",
+                "bulk",
+                "excel"
+              ]
+            },
+            "description": "Upload Excel file"
+          },
+          "response": [],
+          "description": ""
+        }
+      ]
+    },
+    {
+      "name": "5. Components",
+      "item": [
+        {
+          "name": "Create Component",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"username\": \"{{username}}\",\n  \"projectType\": \"{{projectType}}\",\n  \"component\": {\n    \"componentName\": \"RAM Module\",\n    \"description\": \"16GB DDR4 RAM\"\n  }\n}",
+              "description": "Request body with environment variables. Update {{variableName}} values as needed."
+            },
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/components",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "components"
+              ]
+            },
+            "description": "Create a new component"
+          },
+          "response": [],
+          "description": ""
+        },
+        {
+          "name": "List All Components",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/components",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "components"
+              ]
+            },
+            "description": "Get all components"
+          },
+          "response": [],
+          "description": ""
+        },
+        {
+          "name": "Get Component by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/components/{{componentId}}",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "components",
+                "{{componentId}}"
+              ]
+            },
+            "description": "Get component by ID"
+          },
+          "response": [],
+          "description": ""
+        },
+        {
+          "name": "Update Component",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"username\": \"{{username}}\",\n  \"projectType\": \"{{projectType}}\",\n  \"component\": {\n    \"componentName\": \"RAM Module Updated\",\n    \"description\": \"32GB DDR4 RAM\"\n  }\n}",
+              "description": "Request body with environment variables. Update {{variableName}} values as needed."
+            },
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/components/{{componentId}}",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "components",
+                "{{componentId}}"
+              ]
+            },
+            "description": "Update a component"
+          },
+          "response": [],
+          "description": ""
+        },
+        {
+          "name": "Delete Component",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"username\": \"{{username}}\",\n  \"projectType\": \"{{projectType}}\"\n}",
+              "description": "Request body with environment variables. Update {{variableName}} values as needed."
+            },
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/components/{{componentId}}",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "components",
+                "{{componentId}}"
+              ]
+            },
+            "description": "Soft delete a component"
+          },
+          "response": [],
+          "description": ""
+        },
+        {
+          "name": "Bulk Create Components",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"username\": \"{{username}}\",\n  \"projectType\": \"{{projectType}}\",\n  \"components\": [\n    {\n      \"componentName\": \"Component 1\",\n      \"description\": \"Desc 1\"\n    },\n    {\n      \"componentName\": \"Component 2\",\n      \"description\": \"Desc 2\"\n    }\n  ]\n}",
+              "description": "Request body with environment variables. Update {{variableName}} values as needed."
+            },
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/components/bulk",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "components",
+                "bulk"
+              ]
+            },
+            "description": "Create multiple components"
+          },
+          "response": [],
+          "description": ""
+        },
+        {
+          "name": "Bulk Upload Components (Excel)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": []
+                },
+                {
+                  "key": "userId",
+                  "value": "{{userId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "username",
+                  "value": "{{username}}",
+                  "type": "text"
+                },
+                {
+                  "key": "projectType",
+                  "value": "{{projectType}}",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/components/bulk/excel",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "components",
+                "bulk",
+                "excel"
+              ]
+            },
+            "description": "Upload Excel file"
+          },
+          "response": [],
+          "description": ""
+        }
+      ]
+    },
+    {
+      "name": "6. Assets",
+      "item": [
+        {
+          "name": "Create Asset",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"username\": \"{{username}}\",\n  \"projectType\": \"{{projectType}}\",\n  \"asset\": {\n    \"assetNameUdv\": \"ASSET-{{$randomInt}}\",\n    \"assetStatus\": \"AVAILABLE\",\n    \"category\": {\n      \"categoryId\": \"{{categoryId}}\"\n    },\n    \"subCategory\": {\n      \"subCategoryId\": \"{{subCategoryId}}\"\n    },\n    \"make\": {\n      \"makeId\": \"{{makeId}}\"\n    },\n    \"model\": {\n      \"modelId\": \"{{modelId}}\"\n    }\n  }\n}",
+              "description": "Request body with environment variables. Update {{variableName}} values as needed."
+            },
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/assets",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "assets"
+              ]
+            },
+            "description": "Create a new asset"
+          },
+          "response": [],
+          "description": ""
+        },
+        {
+          "name": "Get Asset by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/assets/{{assetId}}",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "assets",
+                "{{assetId}}"
+              ]
+            },
+            "description": "Get asset details by ID"
+          },
+          "response": [],
+          "description": ""
+        },
+        {
+          "name": "Update Asset",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"username\": \"{{username}}\",\n  \"projectType\": \"{{projectType}}\",\n  \"asset\": {\n    \"assetNameUdv\": \"ASSET-UPDATED\",\n    \"assetStatus\": \"IN_USE\"\n  }\n}",
+              "description": "Request body with environment variables. Update {{variableName}} values as needed."
+            },
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/assets/{{assetId}}",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "assets",
+                "{{assetId}}"
+              ]
+            },
+            "description": "Update an existing asset"
+          },
+          "response": [],
+          "description": ""
+        },
+        {
+          "name": "Delete Asset",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"username\": \"{{username}}\",\n  \"projectType\": \"{{projectType}}\"\n}",
+              "description": "Request body with environment variables. Update {{variableName}} values as needed."
+            },
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/assets/{{assetId}}",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "assets",
+                "{{assetId}}"
+              ]
+            },
+            "description": "Soft delete an asset"
+          },
+          "response": [],
+          "description": ""
+        },
+        {
+          "name": "Search Assets",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/assets/search?keyword={{searchKeyword}}&page=0&size=20",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "assets",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "keyword",
+                  "value": "{{searchKeyword}}"
+                },
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "Search assets with pagination"
+          },
+          "response": [],
+          "description": ""
+        }
+      ]
+    },
+    {
+      "name": "7. Documents",
+      "item": [
+        {
+          "name": "Upload Document",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": []
+                },
+                {
+                  "key": "entityType",
+                  "value": "ASSET",
+                  "type": "text"
+                },
+                {
+                  "key": "entityId",
+                  "value": "{{assetId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "userId",
+                  "value": "{{userId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "username",
+                  "value": "{{username}}",
+                  "type": "text"
+                },
+                {
+                  "key": "projectType",
+                  "value": "{{projectType}}",
+                  "type": "text"
+                },
+                {
+                  "key": "docType",
+                  "value": "PDF",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/documents/upload",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "documents",
+                "upload"
+              ]
+            },
+            "description": "Upload a document for an entity"
+          },
+          "response": [],
+          "description": ""
+        },
+        {
+          "name": "Get Document by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/documents/{{documentId}}",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "documents",
+                "{{documentId}}"
+              ]
+            },
+            "description": "Get document details by ID"
+          },
+          "response": [],
+          "description": ""
+        },
+        {
+          "name": "Download Document",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/documents/download/{{documentId}}",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "documents",
+                "download",
+                "{{documentId}}"
+              ]
+            },
+            "description": "Download a document"
+          },
+          "response": [],
+          "description": ""
+        },
+        {
+          "name": "Delete Document",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"username\": \"{{username}}\",\n  \"projectType\": \"{{projectType}}\",\n  \"entityType\": \"ASSET\",\n  \"entityId\": \"{{assetId}}\"\n}",
+              "description": "Request body with environment variables. Update {{variableName}} values as needed."
+            },
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/documents/{{documentId}}",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "documents",
+                "{{documentId}}"
+              ]
+            },
+            "description": "Soft delete a document"
+          },
+          "response": [],
+          "description": ""
+        },
+        {
+          "name": "Download File",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/files/download?filename={{filename}}&inline=false",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "files",
+                "download"
+              ],
+              "query": [
+                {
+                  "key": "filename",
+                  "value": "{{filename}}",
+                  "description": "File name to download"
+                },
+                {
+                  "key": "inline",
+                  "value": "false",
+                  "description": "true for inline view, false for download"
+                }
+              ]
+            },
+            "description": "Download or view a file by filename"
+          },
+          "response": [],
+          "description": ""
+        }
+      ]
+    },
+    {
+      "name": "8. Vendors",
+      "item": [
+        {
+          "name": "Create Vendor",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"username\": \"{{username}}\",\n  \"projectType\": \"{{projectType}}\",\n  \"vendor\": {\n    \"vendorName\": \"ABC Suppliers\",\n    \"contactPerson\": \"John Doe\",\n    \"email\": \"john@abc.com\",\n    \"mobile\": \"+1234567890\",\n    \"address\": \"123 Main St\"\n  }\n}",
+              "description": "Request body with environment variables. Update {{variableName}} values as needed."
+            },
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/vendors",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "vendors"
+              ]
+            },
+            "description": "Create a new vendor"
+          },
+          "response": [],
+          "description": ""
+        },
+        {
+          "name": "List All Vendors",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/vendors",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "vendors"
+              ]
+            },
+            "description": "Get all vendors"
+          },
+          "response": [],
+          "description": ""
+        },
+        {
+          "name": "Get Vendor by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/vendors/{{vendorId}}",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "vendors",
+                "{{vendorId}}"
+              ]
+            },
+            "description": "Get vendor by ID"
+          },
+          "response": [],
+          "description": ""
+        },
+        {
+          "name": "Update Vendor",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"username\": \"{{username}}\",\n  \"projectType\": \"{{projectType}}\",\n  \"vendor\": {\n    \"vendorName\": \"ABC Suppliers Updated\",\n    \"contactPerson\": \"Jane Doe\",\n    \"email\": \"jane@abc.com\"\n  }\n}",
+              "description": "Request body with environment variables. Update {{variableName}} values as needed."
+            },
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/vendors/{{vendorId}}",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "vendors",
+                "{{vendorId}}"
+              ]
+            },
+            "description": "Update a vendor"
+          },
+          "response": [],
+          "description": ""
+        },
+        {
+          "name": "Delete Vendor",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"username\": \"{{username}}\",\n  \"projectType\": \"{{projectType}}\"\n}",
+              "description": "Request body with environment variables. Update {{variableName}} values as needed."
+            },
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/vendors/{{vendorId}}",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "vendors",
+                "{{vendorId}}"
+              ]
+            },
+            "description": "Soft delete a vendor"
+          },
+          "response": [],
+          "description": ""
+        },
+        {
+          "name": "Bulk Create Vendors",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"username\": \"{{username}}\",\n  \"projectType\": \"{{projectType}}\",\n  \"vendors\": [\n    {\n      \"vendorName\": \"Vendor 1\",\n      \"contactPerson\": \"Person 1\",\n      \"email\": \"v1@test.com\"\n    },\n    {\n      \"vendorName\": \"Vendor 2\",\n      \"contactPerson\": \"Person 2\",\n      \"email\": \"v2@test.com\"\n    }\n  ]\n}",
+              "description": "Request body with environment variables. Update {{variableName}} values as needed."
+            },
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/vendors/bulk",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "vendors",
+                "bulk"
+              ]
+            },
+            "description": "Create multiple vendors"
+          },
+          "response": [],
+          "description": ""
+        },
+        {
+          "name": "Bulk Upload Vendors (Excel)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": []
+                },
+                {
+                  "key": "userId",
+                  "value": "{{userId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "username",
+                  "value": "{{username}}",
+                  "type": "text"
+                },
+                {
+                  "key": "projectType",
+                  "value": "{{projectType}}",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/vendors/bulk/excel",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "vendors",
+                "bulk",
+                "excel"
+              ]
+            },
+            "description": "Upload Excel file"
+          },
+          "response": [],
+          "description": ""
+        }
+      ]
+    },
+    {
+      "name": "9. Outlets",
+      "item": [
+        {
+          "name": "Create Outlet",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"username\": \"{{username}}\",\n  \"projectType\": \"{{projectType}}\",\n  \"outlet\": {\n    \"outletName\": \"Main Store\",\n    \"outletAddress\": \"456 Oak Ave\",\n    \"contactInfo\": \"+1234567890\",\n    \"vendor\": {\n      \"vendorId\": \"{{vendorId}}\"\n    }\n  }\n}",
+              "description": "Request body with environment variables. Update {{variableName}} values as needed."
+            },
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/outlets",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "outlets"
+              ]
+            },
+            "description": "Create a new outlet"
+          },
+          "response": [],
+          "description": ""
+        },
+        {
+          "name": "List All Outlets",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/outlets",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "outlets"
+              ]
+            },
+            "description": "Get all outlets"
+          },
+          "response": [],
+          "description": ""
+        },
+        {
+          "name": "Get Outlet by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/outlets/{{outletId}}",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "outlets",
+                "{{outletId}}"
+              ]
+            },
+            "description": "Get outlet by ID"
+          },
+          "response": [],
+          "description": ""
+        },
+        {
+          "name": "Update Outlet",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"username\": \"{{username}}\",\n  \"projectType\": \"{{projectType}}\",\n  \"outlet\": {\n    \"outletName\": \"Main Store Updated\",\n    \"outletAddress\": \"Updated address\"\n  }\n}",
+              "description": "Request body with environment variables. Update {{variableName}} values as needed."
+            },
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/outlets/{{outletId}}",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "outlets",
+                "{{outletId}}"
+              ]
+            },
+            "description": "Update an outlet"
+          },
+          "response": [],
+          "description": ""
+        },
+        {
+          "name": "Delete Outlet",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"username\": \"{{username}}\",\n  \"projectType\": \"{{projectType}}\"\n}",
+              "description": "Request body with environment variables. Update {{variableName}} values as needed."
+            },
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/outlets/{{outletId}}",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "outlets",
+                "{{outletId}}"
+              ]
+            },
+            "description": "Soft delete an outlet"
+          },
+          "response": [],
+          "description": ""
+        },
+        {
+          "name": "Bulk Create Outlets",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"username\": \"{{username}}\",\n  \"projectType\": \"{{projectType}}\",\n  \"outlets\": [\n    {\n      \"outletName\": \"Outlet 1\",\n      \"outletAddress\": \"Address 1\",\n      \"vendor\": {\n        \"vendorId\": \"{{vendorId}}\"\n      }\n    },\n    {\n      \"outletName\": \"Outlet 2\",\n      \"outletAddress\": \"Address 2\",\n      \"vendor\": {\n        \"vendorId\": \"{{vendorId}}\"\n      }\n    }\n  ]\n}",
+              "description": "Request body with environment variables. Update {{variableName}} values as needed."
+            },
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/outlets/bulk",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "outlets",
+                "bulk"
+              ]
+            },
+            "description": "Create multiple outlets"
+          },
+          "response": [],
+          "description": ""
+        },
+        {
+          "name": "Bulk Upload Outlets (Excel)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": []
+                },
+                {
+                  "key": "userId",
+                  "value": "{{userId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "username",
+                  "value": "{{username}}",
+                  "type": "text"
+                },
+                {
+                  "key": "projectType",
+                  "value": "{{projectType}}",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/outlets/bulk/excel",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "outlets",
+                "bulk",
+                "excel"
+              ]
+            },
+            "description": "Upload Excel file"
+          },
+          "response": [],
+          "description": ""
+        }
+      ]
+    },
+    {
+      "name": "10. User Links",
+      "item": [
+        {
+          "name": "Link Asset to User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"username\": \"{{username}}\",\n  \"link\": {\n    \"asset\": {\n      \"assetId\": \"{{assetId}}\",\n      \"assetuserId\": \"{{targetUserId}}\",\n      \"assetusername\": \"{{targetUsername}}\"\n    }\n  }\n}",
+              "description": "Request body with environment variables. Update {{variableName}} values as needed."
+            },
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/userlinks/link",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "userlinks",
+                "link"
+              ]
+            },
+            "description": "Link an asset to a user"
+          },
+          "response": [],
+          "description": ""
+        },
+        {
+          "name": "Delink Asset from User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"username\": \"{{username}}\",\n  \"link\": {\n    \"asset\": {\n      \"assetId\": \"{{assetId}}\",\n      \"assetuserId\": \"{{targetUserId}}\"\n    }\n  }\n}",
+              "description": "Request body with environment variables. Update {{variableName}} values as needed."
+            },
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/userlinks/delink",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "userlinks",
+                "delink"
+              ]
+            },
+            "description": "Delink an asset from a user"
+          },
+          "response": [],
+          "description": ""
+        },
+        {
+          "name": "Link Multiple Assets",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"username\": \"{{username}}\",\n  \"links\": [\n    {\n      \"assetId\": \"{{assetId}}\",\n      \"assetuserId\": \"{{targetUserId}}\",\n      \"assetusername\": \"{{targetUsername}}\"\n    },\n    {\n      \"assetId\": \"{{assetId2}}\",\n      \"assetuserId\": \"{{targetUserId}}\",\n      \"assetusername\": \"{{targetUsername}}\"\n    }\n  ]\n}",
+              "description": "Request body with environment variables. Update {{variableName}} values as needed."
+            },
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/userlinks/link-multiple",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "userlinks",
+                "link-multiple"
+              ]
+            },
+            "description": "Link multiple assets to a user"
+          },
+          "response": [],
+          "description": ""
+        },
+        {
+          "name": "Delink Multiple Assets",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"username\": \"{{username}}\",\n  \"links\": [\n    {\n      \"assetId\": \"{{assetId}}\",\n      \"assetuserId\": \"{{targetUserId}}\"\n    },\n    {\n      \"assetId\": \"{{assetId2}}\",\n      \"assetuserId\": \"{{targetUserId}}\"\n    }\n  ]\n}",
+              "description": "Request body with environment variables. Update {{variableName}} values as needed."
+            },
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/userlinks/delink-multiple",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "userlinks",
+                "delink-multiple"
+              ]
+            },
+            "description": "Delink multiple assets from a user"
+          },
+          "response": [],
+          "description": ""
+        },
+        {
+          "name": "Get Assigned Assets",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/userlinks/assigned-assets?userId={{targetUserId}}",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "userlinks",
+                "assigned-assets"
+              ],
+              "query": [
+                {
+                  "key": "userId",
+                  "value": "{{targetUserId}}"
+                }
+              ]
+            },
+            "description": "Get all assets assigned to a user"
+          },
+          "response": [],
+          "description": ""
+        },
+        {
+          "name": "Get Asset Link Info",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/userlinks/asset?assetId={{assetId}}",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "userlinks",
+                "asset"
+              ],
+              "query": [
+                {
+                  "key": "assetId",
+                  "value": "{{assetId}}"
+                }
+              ]
+            },
+            "description": "Get link information for an asset"
+          },
+          "response": [],
+          "description": ""
+        },
+        {
+          "name": "Get Users by SubCategory",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/userlinks/by-subcategory?subCategoryId={{subCategoryId}}",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "userlinks",
+                "by-subcategory"
+              ],
+              "query": [
+                {
+                  "key": "subCategoryId",
+                  "value": "{{subCategoryId}}"
+                }
+              ]
+            },
+            "description": "Get users linked to assets in a subcategory"
+          },
+          "response": [],
+          "description": ""
+        }
+      ]
+    },
+    {
+      "name": "11. Warranty",
+      "item": [
+        {
+          "name": "Create Warranty",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"username\": \"{{username}}\",\n  \"projectType\": \"{{projectType}}\",\n  \"warranty\": {\n    \"asset\": {\n      \"assetId\": \"{{assetId}}\"\n    },\n    \"warrantyProvider\": \"Dell Inc\",\n    \"warrantyStartDate\": \"2024-01-01\",\n    \"warrantyEndDate\": \"2027-01-01\",\n    \"warrantyTerms\": \"3 years standard warranty\"\n  }\n}",
+              "description": "Request body with environment variables. Update {{variableName}} values as needed."
+            },
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/warranty",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "warranty"
+              ]
+            },
+            "description": "Create warranty for an asset"
+          },
+          "response": [],
+          "description": ""
+        },
+        {
+          "name": "List All Warranties",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/warranty",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "warranty"
+              ]
+            },
+            "description": "Get all warranties"
+          },
+          "response": [],
+          "description": ""
+        },
+        {
+          "name": "Get Warranty by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/warranty/{{warrantyId}}",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "warranty",
+                "{{warrantyId}}"
+              ]
+            },
+            "description": "Get warranty by ID"
+          },
+          "response": [],
+          "description": ""
+        },
+        {
+          "name": "Update Warranty",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"username\": \"{{username}}\",\n  \"projectType\": \"{{projectType}}\",\n  \"warranty\": {\n    \"warrantyProvider\": \"Dell Inc Updated\",\n    \"warrantyTerms\": \"Extended warranty\"\n  }\n}",
+              "description": "Request body with environment variables. Update {{variableName}} values as needed."
+            },
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/warranty/{{warrantyId}}",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "warranty",
+                "{{warrantyId}}"
+              ]
+            },
+            "description": "Update a warranty"
+          },
+          "response": [],
+          "description": ""
+        },
+        {
+          "name": "Delete Warranty",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"username\": \"{{username}}\",\n  \"projectType\": \"{{projectType}}\"\n}",
+              "description": "Request body with environment variables. Update {{variableName}} values as needed."
+            },
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/warranty/{{warrantyId}}",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "warranty",
+                "{{warrantyId}}"
+              ]
+            },
+            "description": "Soft delete a warranty"
+          },
+          "response": [],
+          "description": ""
+        }
+      ]
+    },
+    {
+      "name": "12. AMC",
+      "item": [
+        {
+          "name": "Create AMC",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"username\": \"{{username}}\",\n  \"projectType\": \"{{projectType}}\",\n  \"amc\": {\n    \"asset\": {\n      \"assetId\": \"{{assetId}}\"\n    },\n    \"amcProvider\": \"Service Provider Inc\",\n    \"amcStartDate\": \"2024-01-01\",\n    \"amcEndDate\": \"2025-01-01\",\n    \"amcCost\": 5000.0,\n    \"amcTerms\": \"Annual maintenance contract\"\n  }\n}",
+              "description": "Request body with environment variables. Update {{variableName}} values as needed."
+            },
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/amc",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "amc"
+              ]
+            },
+            "description": "Create AMC for an asset"
+          },
+          "response": [],
+          "description": ""
+        },
+        {
+          "name": "List All AMCs",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/amc",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "amc"
+              ]
+            },
+            "description": "Get all AMCs"
+          },
+          "response": [],
+          "description": ""
+        },
+        {
+          "name": "Get AMC by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/amc/{{amcId}}",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "amc",
+                "{{amcId}}"
+              ]
+            },
+            "description": "Get AMC by ID"
+          },
+          "response": [],
+          "description": ""
+        },
+        {
+          "name": "Update AMC",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"username\": \"{{username}}\",\n  \"projectType\": \"{{projectType}}\",\n  \"amc\": {\n    \"amcProvider\": \"Service Provider Inc Updated\",\n    \"amcCost\": 6000.0\n  }\n}",
+              "description": "Request body with environment variables. Update {{variableName}} values as needed."
+            },
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/amc/{{amcId}}",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "amc",
+                "{{amcId}}"
+              ]
+            },
+            "description": "Update an AMC"
+          },
+          "response": [],
+          "description": ""
+        },
+        {
+          "name": "Delete AMC",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"username\": \"{{username}}\",\n  \"projectType\": \"{{projectType}}\"\n}",
+              "description": "Request body with environment variables. Update {{variableName}} values as needed."
+            },
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/amc/{{amcId}}",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "amc",
+                "{{amcId}}"
+              ]
+            },
+            "description": "Soft delete an AMC"
+          },
+          "response": [],
+          "description": ""
+        }
+      ]
+    },
+    {
+      "name": "13. Compliance",
+      "item": [
+        {
+          "name": "Validate Entity",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"entityType\": \"{{entityType}}\",\n  \"entityId\": \"{{entityId}}\",\n  \"autoResolve\": false\n}",
+              "description": "Request body with environment variables. Update {{variableName}} values as needed."
+            },
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/compliance/validate",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "compliance",
+                "validate"
+              ]
+            },
+            "description": "Validate an entity against compliance rules"
+          },
+          "response": [],
+          "description": ""
+        },
+        {
+          "name": "Validate Entity by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/compliance/validate/{{entityType}}/{{entityId}}",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "compliance",
+                "validate",
+                "{{entityType}}",
+                "{{entityId}}"
+              ]
+            },
+            "description": "Validate entity by type and ID"
+          },
+          "response": [],
+          "description": ""
+        },
+        {
+          "name": "Get Compliance Status",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/compliance/status/{{entityType}}/{{entityId}}",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "compliance",
+                "status",
+                "{{entityType}}",
+                "{{entityId}}"
+              ]
+            },
+            "description": "Get compliance status for an entity"
+          },
+          "response": [],
+          "description": ""
+        },
+        {
+          "name": "Get Violations",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/compliance/violations/{{entityType}}/{{entityId}}",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "compliance",
+                "violations",
+                "{{entityType}}",
+                "{{entityId}}"
+              ]
+            },
+            "description": "Get all violations for an entity"
+          },
+          "response": [],
+          "description": ""
+        },
+        {
+          "name": "Resolve Violation",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"resolvedBy\": \"{{username}}\",\n  \"notes\": \"Violation resolved\",\n  \"status\": \"RESOLVED\"\n}",
+              "description": "Request body with environment variables. Update {{variableName}} values as needed."
+            },
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/compliance/violations/{{violationId}}/resolve",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "compliance",
+                "violations",
+                "{{violationId}}",
+                "resolve"
+              ]
+            },
+            "description": "Resolve a compliance violation"
+          },
+          "response": [],
+          "description": ""
+        },
+        {
+          "name": "Bulk Validate",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "[\n  1,\n  2,\n  3\n]",
+              "description": "Request body with environment variables. Update {{variableName}} values as needed."
+            },
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/compliance/validate/bulk/{{entityType}}",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "compliance",
+                "validate",
+                "bulk",
+                "{{entityType}}"
+              ]
+            },
+            "description": "Validate multiple entities in bulk"
+          },
+          "response": [],
+          "description": ""
+        },
+        {
+          "name": "Get Compliance Metrics",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/compliance/metrics",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "compliance",
+                "metrics"
+              ]
+            },
+            "description": "Get overall compliance metrics"
+          },
+          "response": [],
+          "description": ""
+        },
+        {
+          "name": "Get Metrics by Entity Type",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/compliance/metrics/{{entityType}}",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "compliance",
+                "metrics",
+                "{{entityType}}"
+              ]
+            },
+            "description": "Get compliance metrics for entity type"
+          },
+          "response": [],
+          "description": ""
+        }
+      ]
+    },
+    {
+      "name": "14. Compliance Rules",
+      "item": [
+        {
+          "name": "List All Rules",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/compliance/rules",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "compliance",
+                "rules"
+              ]
+            },
+            "description": "Get all compliance rules"
+          },
+          "response": [],
+          "description": ""
+        },
+        {
+          "name": "Get Rules by Entity Type",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/compliance/rules/entity-type/{{entityType}}",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "compliance",
+                "rules",
+                "entity-type",
+                "{{entityType}}"
+              ]
+            },
+            "description": "Get rules for entity type"
+          },
+          "response": [],
+          "description": ""
+        },
+        {
+          "name": "Get Rule by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/compliance/rules/{{ruleId}}",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "compliance",
+                "rules",
+                "{{ruleId}}"
+              ]
+            },
+            "description": "Get rule by ID"
+          },
+          "response": [],
+          "description": ""
+        },
+        {
+          "name": "Create Rule",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ruleCode\": \"ASSET_NAME_REQUIRED\",\n  \"ruleName\": \"Asset Name Required\",\n  \"description\": \"Asset must have a name\",\n  \"entityType\": \"ASSET\",\n  \"ruleType\": {\n    \"ruleTypeId\": 1\n  },\n  \"severity\": {\n    \"severityId\": 2\n  },\n  \"ruleExpression\": \"{\\\"field\\\": \\\"assetNameUdv\\\", \\\"operator\\\": \\\"notEmpty\\\"}\"\n}",
+              "description": "Request body with environment variables. Update {{variableName}} values as needed."
+            },
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/compliance/rules",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "compliance",
+                "rules"
+              ]
+            },
+            "description": "Create a new compliance rule"
+          },
+          "response": [],
+          "description": ""
+        },
+        {
+          "name": "Update Rule",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ruleName\": \"Asset Name Required Updated\",\n  \"description\": \"Updated description\"\n}",
+              "description": "Request body with environment variables. Update {{variableName}} values as needed."
+            },
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/compliance/rules/{{ruleId}}",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "compliance",
+                "rules",
+                "{{ruleId}}"
+              ]
+            },
+            "description": "Update a compliance rule"
+          },
+          "response": [],
+          "description": ""
+        },
+        {
+          "name": "Delete Rule",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/compliance/rules/{{ruleId}}",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "compliance",
+                "rules",
+                "{{ruleId}}"
+              ]
+            },
+            "description": "Soft delete a compliance rule"
+          },
+          "response": [],
+          "description": ""
+        }
+      ]
+    },
+    {
+      "name": "15. Entity Types",
+      "item": [
+        {
+          "name": "List All Entity Types",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/entity-types",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "entity-types"
+              ]
+            },
+            "description": "Get all entity types"
+          },
+          "response": [],
+          "description": ""
+        },
+        {
+          "name": "List Active Entity Types",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/entity-types/active",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "entity-types",
+                "active"
+              ]
+            },
+            "description": "Get active entity types"
+          },
+          "response": [],
+          "description": ""
+        },
+        {
+          "name": "Get Entity Type by Code",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/entity-types/code/{{entityTypeCode}}",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "entity-types",
+                "code",
+                "{{entityTypeCode}}"
+              ]
+            },
+            "description": "Get entity type by code"
+          },
+          "response": [],
+          "description": ""
+        },
+        {
+          "name": "Get Entity Type by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/entity-types/{{entityTypeId}}",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "entity-types",
+                "{{entityTypeId}}"
+              ]
+            },
+            "description": "Get entity type by ID"
+          },
+          "response": [],
+          "description": ""
+        },
+        {
+          "name": "Initialize Entity Types",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/entity-types/initialize",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "entity-types",
+                "initialize"
+              ]
+            },
+            "description": "Initialize default entity types"
+          },
+          "response": [],
+          "description": ""
+        }
+      ]
+    },
+    {
+      "name": "16. Status",
+      "item": [
+        {
+          "name": "List All Statuses",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/statuses",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "statuses"
+              ]
+            },
+            "description": "Get all statuses"
+          },
+          "response": [],
+          "description": ""
+        },
+        {
+          "name": "List Active Statuses",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/statuses/active",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "statuses",
+                "active"
+              ]
+            },
+            "description": "Get active statuses"
+          },
+          "response": [],
+          "description": ""
+        },
+        {
+          "name": "Get Statuses by Category",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/statuses/category/{{statusCategory}}",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "statuses",
+                "category",
+                "{{statusCategory}}"
+              ]
+            },
+            "description": "Get statuses by category"
+          },
+          "response": [],
+          "description": ""
+        },
+        {
+          "name": "Get Status by Code",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/statuses/code/{{statusCode}}",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "statuses",
+                "code",
+                "{{statusCode}}"
+              ]
+            },
+            "description": "Get status by code"
+          },
+          "response": [],
+          "description": ""
+        },
+        {
+          "name": "Get Status by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/statuses/{{statusId}}",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "statuses",
+                "{{statusId}}"
+              ]
+            },
+            "description": "Get status by ID"
+          },
+          "response": [],
+          "description": ""
+        },
+        {
+          "name": "Initialize Statuses",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/statuses/initialize",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "statuses",
+                "initialize"
+              ]
+            },
+            "description": "Initialize default statuses"
+          },
+          "response": [],
+          "description": ""
+        }
+      ]
+    },
+    {
+      "name": "17. Master Data Agent",
+      "item": [
+        {
+          "name": "Create Category (Agent)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"categoryName\": \"Electronics\",\n  \"description\": \"Electronic devices\",\n  \"createdBy\": \"{{username}}\"\n}",
+              "description": "Request body with environment variables. Update {{variableName}} values as needed."
+            },
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/masters/categories",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "masters",
+                "categories"
+              ]
+            },
+            "description": "Create category via master data agent"
+          },
+          "response": [],
+          "description": ""
+        },
+        {
+          "name": "Create SubCategory (Agent)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"subCategoryName\": \"Laptops\",\n  \"categoryId\": \"{{categoryId}}\",\n  \"createdBy\": \"{{username}}\"\n}",
+              "description": "Request body with environment variables. Update {{variableName}} values as needed."
+            },
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/masters/subcategories",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "masters",
+                "subcategories"
+              ]
+            },
+            "description": "Create subcategory via master data agent"
+          },
+          "response": [],
+          "description": ""
+        },
+        {
+          "name": "Create Make (Agent)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"makeName\": \"Dell\",\n  \"subCategoryId\": \"{{subCategoryId}}\",\n  \"createdBy\": \"{{username}}\"\n}",
+              "description": "Request body with environment variables. Update {{variableName}} values as needed."
+            },
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/masters/makes",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "masters",
+                "makes"
+              ]
+            },
+            "description": "Create make via master data agent"
+          },
+          "response": [],
+          "description": ""
+        },
+        {
+          "name": "Create Model (Agent)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"modelName\": \"XPS 15\",\n  \"makeId\": \"{{makeId}}\",\n  \"createdBy\": \"{{username}}\"\n}",
+              "description": "Request body with environment variables. Update {{variableName}} values as needed."
+            },
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/masters/models",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "masters",
+                "models"
+              ]
+            },
+            "description": "Create model via master data agent"
+          },
+          "response": [],
+          "description": ""
+        },
+        {
+          "name": "Create Vendor (Agent)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"vendorName\": \"ABC Suppliers\",\n  \"contactPerson\": \"John Doe\",\n  \"email\": \"john@abc.com\",\n  \"createdBy\": \"{{username}}\"\n}",
+              "description": "Request body with environment variables. Update {{variableName}} values as needed."
+            },
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/masters/vendors",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "masters",
+                "vendors"
+              ]
+            },
+            "description": "Create vendor via master data agent"
+          },
+          "response": [],
+          "description": ""
+        },
+        {
+          "name": "Create Outlet (Agent)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"outletName\": \"Main Store\",\n  \"outletAddress\": \"123 Main St\",\n  \"vendorId\": \"{{vendorId}}\",\n  \"createdBy\": \"{{username}}\"\n}",
+              "description": "Request body with environment variables. Update {{variableName}} values as needed."
+            },
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/masters/outlets",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "masters",
+                "outlets"
+              ]
+            },
+            "description": "Create outlet via master data agent"
+          },
+          "response": [],
+          "description": ""
+        },
+        {
+          "name": "Get Master Data Summary",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/masters/summary",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "masters",
+                "summary"
+              ]
+            },
+            "description": "Get summary of all master data"
+          },
+          "response": [],
+          "description": ""
+        }
+      ]
+    },
+    {
+      "name": "18. User Asset Link Agent",
+      "item": [
+        {
+          "name": "Link Asset",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"assetId\": \"{{assetId}}\",\n  \"userId\": \"{{targetUserId}}\",\n  \"username\": \"{{targetUsername}}\",\n  \"createdBy\": \"{{username}}\"\n}",
+              "description": "Request body with environment variables. Update {{variableName}} values as needed."
+            },
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/user-asset-links/link-asset",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "user-asset-links",
+                "link-asset"
+              ]
+            },
+            "description": "Link asset to user via agent"
+          },
+          "response": [],
+          "description": ""
+        },
+        {
+          "name": "Link Component",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"componentId\": \"{{componentId}}\",\n  \"userId\": \"{{targetUserId}}\",\n  \"username\": \"{{targetUsername}}\",\n  \"createdBy\": \"{{username}}\"\n}",
+              "description": "Request body with environment variables. Update {{variableName}} values as needed."
+            },
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/user-asset-links/link-component",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "user-asset-links",
+                "link-component"
+              ]
+            },
+            "description": "Link component to user via agent"
+          },
+          "response": [],
+          "description": ""
+        },
+        {
+          "name": "Get User Assets",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/user-asset-links/user/{{targetUserId}}/assets",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "user-asset-links",
+                "user",
+                "{{targetUserId}}",
+                "assets"
+              ]
+            },
+            "description": "Get all assets linked to a user"
+          },
+          "response": [],
+          "description": ""
+        },
+        {
+          "name": "Get Asset Link History",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/user-asset-links/asset/{{assetId}}/history",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "user-asset-links",
+                "asset",
+                "{{assetId}}",
+                "history"
+              ]
+            },
+            "description": "Get link history for an asset"
+          },
+          "response": [],
+          "description": ""
+        },
+        {
+          "name": "Bulk Link Assets",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"assetIds\": [\n    \"{{assetId}}\",\n    \"{{assetId2}}\"\n  ],\n  \"userId\": \"{{targetUserId}}\",\n  \"username\": \"{{targetUsername}}\",\n  \"createdBy\": \"{{username}}\"\n}",
+              "description": "Request body with environment variables. Update {{variableName}} values as needed."
+            },
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/user-asset-links/bulk-link-assets",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "user-asset-links",
+                "bulk-link-assets"
+              ]
+            },
+            "description": "Bulk link multiple assets to a user"
+          },
+          "response": [],
+          "description": ""
+        }
+      ]
+    },
+    {
+      "name": "19. Audit Agent",
+      "item": [
+        {
+          "name": "Create Audit Log",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"entityType\": \"ASSET\",\n  \"entityId\": \"{{assetId}}\",\n  \"action\": \"CREATE\",\n  \"userId\": \"{{userId}}\",\n  \"username\": \"{{username}}\",\n  \"oldValues\": {},\n  \"newValues\": {\n    \"assetNameUdv\": \"ASSET-001\"\n  }\n}",
+              "description": "Request body with environment variables. Update {{variableName}} values as needed."
+            },
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/audit/log",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "audit",
+                "log"
+              ]
+            },
+            "description": "Create an audit log entry"
+          },
+          "response": [],
+          "description": ""
+        },
+        {
+          "name": "List Audit Logs",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/audit",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "audit"
+              ]
+            },
+            "description": "Get all audit logs"
+          },
+          "response": [],
+          "description": ""
+        },
+        {
+          "name": "Get Logs by Username",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/audit/username/{{username}}",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "audit",
+                "username",
+                "{{username}}"
+              ]
+            },
+            "description": "Get audit logs by username"
+          },
+          "response": [],
+          "description": ""
+        },
+        {
+          "name": "Get Logs by Entity Type",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/audit/entity-type/{{entityType}}",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "audit",
+                "entity-type",
+                "{{entityType}}"
+              ]
+            },
+            "description": "Get audit logs by entity type"
+          },
+          "response": [],
+          "description": ""
+        },
+        {
+          "name": "Get Logs by Date Range",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/audit/date-range?startDate=2024-01-01&endDate=2024-12-31",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "audit",
+                "date-range"
+              ],
+              "query": [
+                {
+                  "key": "startDate",
+                  "value": "2024-01-01"
+                },
+                {
+                  "key": "endDate",
+                  "value": "2024-12-31"
+                }
+              ]
+            },
+            "description": "Get audit logs in date range"
+          },
+          "response": [],
+          "description": ""
+        },
+        {
+          "name": "Get Audit Statistics",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{assetbaseUrl}}/api/asset/v1/audit/statistics",
+              "host": [
+                "{{assetbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "asset",
+                "v1",
+                "audit",
+                "statistics"
+              ]
+            },
+            "description": "Get audit statistics"
+          },
+          "response": [],
+          "description": ""
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "assetbaseUrl",
+      "value": "http://localhost:8083",
+      "type": "string",
+      "description": "Base URL for Asset Service API. Default: http://localhost:8083"
+    },
+    {
+      "key": "accessToken",
+      "value": "",
+      "type": "string",
+      "description": "JWT Bearer token obtained from auth-service login endpoint. Format: Bearer <token>"
+    }
+  ]
+}

@@ -1,7 +1,0 @@
-branch-defaults:
-  default:
-    environment: auth-service-env
-global:
-  application_name: auth-service
-  default_region: ap-south-1
-  profile: eb-deployer

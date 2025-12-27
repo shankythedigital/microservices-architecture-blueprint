@@ -1,0 +1,502 @@
+{
+	"info": {
+		"_postman_id": "compliance-agent-api-collection",
+		"name": "Compliance Agent API",
+		"description": "Complete API collection for Validation and Compliance Agent",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Compliance Validation",
+			"item": [
+				{
+					"name": "Validate Entity",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"entityType\": \"ASSET\",\n  \"entityId\": 1,\n  \"autoResolve\": false\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/asset/v1/compliance/validate",
+							"host": ["{{baseUrl}}"],
+							"path": ["asset", "v1", "compliance", "validate"]
+						},
+						"description": "Validate an entity against compliance rules"
+					}
+				},
+				{
+					"name": "Validate Entity by ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/asset/v1/compliance/validate/{{entityType}}/{{entityId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["asset", "v1", "compliance", "validate", "{{entityType}}", "{{entityId}}"]
+						},
+						"description": "Validate entity by type and ID"
+					}
+				},
+				{
+					"name": "Bulk Validation",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "[\n  1,\n  2,\n  3\n]"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/asset/v1/compliance/validate/bulk/{{entityType}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["asset", "v1", "compliance", "validate", "bulk", "{{entityType}}"]
+						},
+						"description": "Validate multiple entities in bulk"
+					}
+				}
+			]
+		},
+		{
+			"name": "Compliance Status",
+			"item": [
+				{
+					"name": "Get Compliance Status",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/asset/v1/compliance/status/{{entityType}}/{{entityId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["asset", "v1", "compliance", "status", "{{entityType}}", "{{entityId}}"]
+						},
+						"description": "Get compliance status for an entity"
+					}
+				}
+			]
+		},
+		{
+			"name": "Compliance Violations",
+			"item": [
+				{
+					"name": "Get Violations",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/asset/v1/compliance/violations/{{entityType}}/{{entityId}}?unresolvedOnly=true",
+							"host": ["{{baseUrl}}"],
+							"path": ["asset", "v1", "compliance", "violations", "{{entityType}}", "{{entityId}}"],
+							"query": [
+								{
+									"key": "unresolvedOnly",
+									"value": "true",
+									"description": "Only return unresolved violations"
+								}
+							]
+						},
+						"description": "Get compliance violations for an entity"
+					}
+				},
+				{
+					"name": "Resolve Violation",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/asset/v1/compliance/violations/{{violationId}}/resolve?resolvedBy={{username}}&notes=Resolved%20manually",
+							"host": ["{{baseUrl}}"],
+							"path": ["asset", "v1", "compliance", "violations", "{{violationId}}", "resolve"],
+							"query": [
+								{
+									"key": "resolvedBy",
+									"value": "{{username}}",
+									"description": "User who resolved the violation"
+								},
+								{
+									"key": "notes",
+									"value": "Resolved manually",
+									"description": "Resolution notes"
+								}
+							]
+						},
+						"description": "Resolve a compliance violation"
+					}
+				},
+				{
+					"name": "Get Violations Summary",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/asset/v1/compliance/violations/summary",
+							"host": ["{{baseUrl}}"],
+							"path": ["asset", "v1", "compliance", "violations", "summary"]
+						},
+						"description": "Get summary of all violations"
+					}
+				}
+			]
+		},
+		{
+			"name": "Compliance Reports",
+			"item": [
+				{
+					"name": "Generate Compliance Report",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/asset/v1/compliance/report/{{entityType}}/{{entityId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["asset", "v1", "compliance", "report", "{{entityType}}", "{{entityId}}"]
+						},
+						"description": "Generate detailed compliance report for an entity"
+					}
+				}
+			]
+		},
+		{
+			"name": "Compliance Metrics",
+			"item": [
+				{
+					"name": "Get Overall Metrics",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/asset/v1/compliance/metrics",
+							"host": ["{{baseUrl}}"],
+							"path": ["asset", "v1", "compliance", "metrics"]
+						},
+						"description": "Get overall compliance metrics"
+					}
+				},
+				{
+					"name": "Get Metrics by Entity Type",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/asset/v1/compliance/metrics/{{entityType}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["asset", "v1", "compliance", "metrics", "{{entityType}}"]
+						},
+						"description": "Get compliance metrics for a specific entity type"
+					}
+				}
+			]
+		},
+		{
+			"name": "Compliance Rules",
+			"item": [
+				{
+					"name": "List All Rules",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/asset/v1/compliance/rules",
+							"host": ["{{baseUrl}}"],
+							"path": ["asset", "v1", "compliance", "rules"]
+						},
+						"description": "List all compliance rules"
+					}
+				},
+				{
+					"name": "List Rules by Entity Type",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/asset/v1/compliance/rules/entity-type/{{entityType}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["asset", "v1", "compliance", "rules", "entity-type", "{{entityType}}"]
+						},
+						"description": "List compliance rules for a specific entity type"
+					}
+				},
+				{
+					"name": "Get Rule by ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/asset/v1/compliance/rules/{{ruleId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["asset", "v1", "compliance", "rules", "{{ruleId}}"]
+						},
+						"description": "Get compliance rule by ID"
+					}
+				},
+				{
+					"name": "Create Rule",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"ruleCode\": \"VENDOR_EMAIL_FORMAT\",\n  \"ruleName\": \"Vendor Email Format Validation\",\n  \"description\": \"Vendor email must be in valid format\",\n  \"entityType\": \"VENDOR\",\n  \"ruleType\": {\n    \"code\": \"FORMAT_VALIDATION\"\n  },\n  \"severity\": {\n    \"code\": \"MEDIUM\"\n  },\n  \"ruleExpression\": \"{\\\"field\\\": \\\"email\\\", \\\"pattern\\\": \\\"^[A-Za-z0-9+_.-]+@(.+)$\\\"}\",\n  \"errorMessage\": \"Vendor email must be in valid format\",\n  \"blocksOperation\": false,\n  \"priority\": 50\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/asset/v1/compliance/rules?createdBy={{username}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["asset", "v1", "compliance", "rules"],
+							"query": [
+								{
+									"key": "createdBy",
+									"value": "{{username}}",
+									"description": "User creating the rule"
+								}
+							]
+						},
+						"description": "Create a new compliance rule"
+					}
+				},
+				{
+					"name": "Update Rule",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"ruleCode\": \"VENDOR_EMAIL_FORMAT\",\n  \"ruleName\": \"Vendor Email Format Validation (Updated)\",\n  \"description\": \"Vendor email must be in valid format\",\n  \"entityType\": \"VENDOR\",\n  \"ruleType\": {\n    \"code\": \"FORMAT_VALIDATION\"\n  },\n  \"severity\": {\n    \"code\": \"HIGH\"\n  },\n  \"ruleExpression\": \"{\\\"field\\\": \\\"email\\\", \\\"pattern\\\": \\\"^[A-Za-z0-9+_.-]+@(.+)$\\\"}\",\n  \"errorMessage\": \"Vendor email must be in valid format\",\n  \"blocksOperation\": true,\n  \"priority\": 30\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/asset/v1/compliance/rules/{{ruleId}}?updatedBy={{username}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["asset", "v1", "compliance", "rules", "{{ruleId}}"],
+							"query": [
+								{
+									"key": "updatedBy",
+									"value": "{{username}}",
+									"description": "User updating the rule"
+								}
+							]
+						},
+						"description": "Update an existing compliance rule"
+					}
+				},
+				{
+					"name": "Delete Rule",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/asset/v1/compliance/rules/{{ruleId}}?deletedBy={{username}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["asset", "v1", "compliance", "rules", "{{ruleId}}"],
+							"query": [
+								{
+									"key": "deletedBy",
+									"value": "{{username}}",
+									"description": "User deleting the rule"
+								}
+							]
+						},
+						"description": "Delete (soft delete) a compliance rule"
+					}
+				},
+				{
+					"name": "Get Rule Templates",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/asset/v1/compliance/rules/templates",
+							"host": ["{{baseUrl}}"],
+							"path": ["asset", "v1", "compliance", "rules", "templates"]
+						},
+						"description": "Get available compliance rule templates"
+					}
+				},
+				{
+					"name": "Initialize Default Rules",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/asset/v1/compliance/rules/initialize?createdBy={{username}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["asset", "v1", "compliance", "rules", "initialize"],
+							"query": [
+								{
+									"key": "createdBy",
+									"value": "{{username}}",
+									"description": "User initializing the rules"
+								}
+							]
+						},
+						"description": "Initialize default compliance rules"
+					}
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:8083/api",
+			"type": "string"
+		},
+		{
+			"key": "authToken",
+			"value": "your-jwt-token-here",
+			"type": "string"
+		},
+		{
+			"key": "entityType",
+			"value": "ASSET",
+			"type": "string"
+		},
+		{
+			"key": "entityId",
+			"value": "1",
+			"type": "string"
+		},
+		{
+			"key": "ruleId",
+			"value": "1",
+			"type": "string"
+		},
+		{
+			"key": "violationId",
+			"value": "1",
+			"type": "string"
+		},
+		{
+			"key": "username",
+			"value": "admin",
+			"type": "string"
+		}
+	]
+}

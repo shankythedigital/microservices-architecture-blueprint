@@ -1,38 +1,73 @@
+# Notification-service
+server:
+  port: 6002
+
+notification:
+  service:
+    url: http://13.233.230.24:6002/api/notifications
+
+asset:
+  service:
+    url: http://13.127.199.97:6003
+  upload:
+    dir: /asset-uploads/amc-docs
+
+fileupload:
+  type: standard
+
 spring:
+  application:
+    name: notification-service
   datasource:
-    url: jdbc:mysql://localhost:3306/notificationdb?useSSL=false&allowPublicKeyRetrieval=true
-    username: ${DB_USERNAME:root}
-    password: ${DB_PASSWORD:Snmysql@1110}
+    url: jdbc:mysql://db-auth.c5csym0gc4my.ap-south-1.rds.amazonaws.com:3306/notificationdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    username: adminAuth
+    password: AuthPass123
   jpa:
     hibernate:
       ddl-auto: update
-    properties:
-      hibernate:
-        format_sql: false
-  <!-- flyway: 
-      enabled: true
-      locations: classpath:db/migration -->
-
-notify:
-  encryption:
-    key: ${NOTIFY_ENC_KEY:ChangeThisTo32ByteKey_ReplaceInProd!}
-  hmac:
-    key: ${NOTIFY_HMAC_KEY:ChangeThisToAnotherKeyForHMAC_ReplaceInProd!}
-
-security:
-  access-token: ${ACCESS_TOKEN:change_this_token}
-
-server:
-  port: 8082
-  
-jwt:
-  public-key-path: classpath:keys/jwt-public.pem
-
-
+    show-sql: false
 
 auth:
   service:
-    url: http://localhost:8081/api/
+    url: http://13.127.199.97:6001/api/
   client-id: notification-service
   client-secret: notify-secret
 
+notify:
+  enc:
+    key: yfwZM8WwHraV8LhcSNFZ7UuIpLwxpX6lthpH4CflI3U=
+  hmac:
+    key: SyHeAe8KeKETQihKAGFfpKipF9mysIjTsh01NaDiDpc=
+
+jwt:
+  public-key-path: classpath:keys/jwt-public.pem
+
+JWT_SECRET: yNnC7M3ZqgV4bD0lFJm9Q2w5tSe8XpR1pWc7UjK4oHs=
+JWT_PUBLIC_KEY_PATH: classpath:keys/jwt-public.pem
+JWT_ACCESS_TOKEN_VALIDITY_SECONDS: 900
+JWT_REFRESH_TOKEN_VALIDITY_SECONDS: 1209600
+
+logging:
+  level:
+    com.example: DEBUG
+
+common:
+  notification:
+    enabled: true
+
+# Swagger/OpenAPI Configuration
+springdoc:
+  api-docs:
+    path: /api-docs
+    enabled: true
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+    operations-sorter: method
+    tags-sorter: alpha
+    try-it-out-enabled: true
+  show-actuator: false
+  group-configs:
+    - group: 'notification-service'
+      display-name: 'Notification Service API'
+      paths-to-match: '/api/**'

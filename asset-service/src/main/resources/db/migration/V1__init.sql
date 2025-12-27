@@ -1,6 +1,35 @@
 -- V1__init.sql
 -- Full schema for asset-service
 
+-- ============================
+-- ENTITY TYPE MASTER
+-- ============================
+CREATE TABLE IF NOT EXISTS entity_type_master (
+  entity_type_id INT AUTO_INCREMENT PRIMARY KEY,
+  code VARCHAR(50) NOT NULL UNIQUE,
+  description VARCHAR(255),
+  created_by VARCHAR(255),
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_by VARCHAR(255),
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  active BOOLEAN DEFAULT TRUE
+);
+
+-- ============================
+-- STATUS MASTER
+-- ============================
+CREATE TABLE IF NOT EXISTS status_master (
+  status_id INT AUTO_INCREMENT PRIMARY KEY,
+  code VARCHAR(100) NOT NULL UNIQUE,
+  description VARCHAR(255),
+  category VARCHAR(50) NOT NULL,
+  created_by VARCHAR(255),
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_by VARCHAR(255),
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  active BOOLEAN DEFAULT TRUE
+);
+
 CREATE TABLE IF NOT EXISTS product_category (
   category_id BIGINT AUTO_INCREMENT PRIMARY KEY,
   category_name VARCHAR(255),
@@ -191,4 +220,111 @@ CREATE TABLE IF NOT EXISTS audit_log (
   updated_by VARCHAR(255),
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   active BOOLEAN DEFAULT TRUE
+);
+
+-- ============================
+-- COMPLIANCE RULE TYPE MASTER
+-- ============================
+CREATE TABLE IF NOT EXISTS compliance_rule_type_master (
+  rule_type_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  code VARCHAR(50) NOT NULL UNIQUE,
+  name VARCHAR(255) NOT NULL,
+  description VARCHAR(1000),
+  category VARCHAR(50),
+  priority INT DEFAULT 100,
+  created_by VARCHAR(255),
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_by VARCHAR(255),
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  active BOOLEAN DEFAULT TRUE
+);
+
+-- ============================
+-- COMPLIANCE SEVERITY MASTER
+-- ============================
+CREATE TABLE IF NOT EXISTS compliance_severity_master (
+  severity_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  code VARCHAR(20) NOT NULL UNIQUE,
+  name VARCHAR(100) NOT NULL,
+  description VARCHAR(500),
+  level INT NOT NULL,
+  blocks_operation BOOLEAN DEFAULT FALSE,
+  created_by VARCHAR(255),
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_by VARCHAR(255),
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  active BOOLEAN DEFAULT TRUE
+);
+
+-- ============================
+-- COMPLIANCE STATUS MASTER
+-- ============================
+CREATE TABLE IF NOT EXISTS compliance_status_master (
+  status_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  code VARCHAR(50) NOT NULL UNIQUE,
+  name VARCHAR(100) NOT NULL,
+  description VARCHAR(500),
+  is_resolved BOOLEAN DEFAULT FALSE,
+  created_by VARCHAR(255),
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_by VARCHAR(255),
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  active BOOLEAN DEFAULT TRUE
+);
+
+-- ============================
+-- COMPLIANCE RULE
+-- ============================
+CREATE TABLE IF NOT EXISTS compliance_rule (
+  rule_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  rule_code VARCHAR(100) NOT NULL,
+  rule_name VARCHAR(255) NOT NULL,
+  description VARCHAR(1000),
+  entity_type VARCHAR(50) NOT NULL,
+  rule_type_id BIGINT NOT NULL,
+  severity_id BIGINT NOT NULL,
+  rule_expression TEXT,
+  error_message VARCHAR(500),
+  blocks_operation BOOLEAN DEFAULT FALSE,
+  priority INT DEFAULT 100,
+  created_by VARCHAR(255),
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_by VARCHAR(255),
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  active BOOLEAN DEFAULT TRUE,
+  UNIQUE KEY uk_rule_code_entity_type (rule_code, entity_type),
+  FOREIGN KEY (rule_type_id) REFERENCES compliance_rule_type_master(rule_type_id),
+  FOREIGN KEY (severity_id) REFERENCES compliance_severity_master(severity_id)
+);
+
+-- ============================
+-- COMPLIANCE VIOLATION
+-- ============================
+CREATE TABLE IF NOT EXISTS compliance_violation (
+  violation_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  rule_id BIGINT NOT NULL,
+  entity_type VARCHAR(50) NOT NULL,
+  entity_id BIGINT NOT NULL,
+  severity_id BIGINT NOT NULL,
+  status_id BIGINT NOT NULL,
+  violation_message VARCHAR(1000),
+  violated_field VARCHAR(100),
+  expected_value VARCHAR(500),
+  actual_value VARCHAR(500),
+  detected_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  resolved_at DATETIME,
+  resolved_by VARCHAR(255),
+  resolution_notes VARCHAR(1000),
+  created_by VARCHAR(255),
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_by VARCHAR(255),
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  active BOOLEAN DEFAULT TRUE,
+  FOREIGN KEY (rule_id) REFERENCES compliance_rule(rule_id),
+  FOREIGN KEY (severity_id) REFERENCES compliance_severity_master(severity_id),
+  FOREIGN KEY (status_id) REFERENCES compliance_status_master(status_id),
+  INDEX idx_entity_type_id (entity_type, entity_id),
+  INDEX idx_status_id (status_id),
+  INDEX idx_severity_id (severity_id),
+  INDEX idx_detected_at (detected_at)
 );

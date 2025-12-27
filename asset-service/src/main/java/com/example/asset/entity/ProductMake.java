@@ -1,6 +1,8 @@
 package com.example.asset.entity;
 
 import jakarta.persistence.*;
+import com.example.common.jpa.BaseEntity;
+
 
 @Entity
 @Table(name = "product_make")

@@ -1,8 +1,10 @@
 package com.example.authservice.model;
 
-import com.example.authservice.crypto.JpaAttributeEncryptor;
-import com.example.authservice.util.HmacUtil;
+import com.example.common.converter.JpaAttributeEncryptor;
+import com.example.common.util.HmacUtil;
 import jakarta.persistence.*;
+
+import com.example.common.jpa.BaseEntity;
 import java.time.LocalDateTime;
 
 @Entity

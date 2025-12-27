@@ -1,12 +1,11 @@
 package com.example.authservice.service.impl;
 
-import com.example.authservice.client.NotificationClient;
 import com.example.authservice.model.OtpLog;
 import com.example.authservice.repository.OtpLogRepository;
-import com.example.authservice.security.JwtUtil;
 import com.example.authservice.service.UserService;
-import com.example.authservice.util.HmacUtil;
-import com.example.authservice.util.RequestContext;
+import com.example.common.service.SafeNotificationHelper;
+import com.example.common.util.HmacUtil;
+import com.example.common.util.RequestContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -16,7 +15,8 @@ import java.util.*;
 
 /**
  * ✅ OTP Service Implementation
- * Handles OTP generation, persistence, validation, and cross-channel notification dispatch.
+ * Handles OTP generation, storage, validation, and notification.
+ * Integrated with SafeNotificationHelper for reliable async notifications.
  */
 @Service
 public class OtpServiceImpl {
@@ -27,10 +27,7 @@ public class OtpServiceImpl {
     private OtpLogRepository otpLogRepository;
 
     @Autowired
-    private NotificationClient notificationClient;
-
-    @Autowired
-    private JwtUtil jwtUtil;
+    private SafeNotificationHelper safeNotificationHelper;
 
     @Autowired
     private UserService userService;
@@ -39,149 +36,147 @@ public class OtpServiceImpl {
     private PasswordEncoder passwordEncoder;
 
     /**
-     * ✅ Generate OTP, persist in DB, and send via notification channels
-     *
-     * @param userId       User ID (can be null or 0 for change requests)
-     * @param username     Username or identifier
-     * @param mobile       Mobile number
-     * @param email        Email address
-     * @param type         Primary type of OTP trigger (SMS/EMAIL/WHATSAPP)
-     * @param channel      Notification channel
-     * @param purpose      OTP purpose (LOGIN, CHANGE, etc.)
-     * @return Generated OTP code
+     * ✅ Generate and send OTP securely with bearer validation.
      */
-    public String generateOtp(String userId, String username, String mobile,
-                              String email, String type, String channel, String purpose) {
+    public String generateOtp(String userId,
+                              String username,
+                              String mobile,
+                              String email,
+                              String type,
+                              String channel,
+                              String templateCode,
+                              String purpose,
+                              String projectType) {
 
-        StringBuilder errorMessage = new StringBuilder();
+        // ------------------------------------------------------------------------
+        // 1️⃣ Generate OTP
+        // ------------------------------------------------------------------------
         String otpStr = String.format("%06d", new Random().nextInt(1_000_000));
 
-        // -----------------------------------
-        // 1️⃣ Persist OTP in DB
-        // -----------------------------------
-        OtpLog log = new OtpLog();
-        log.setMobileHash(HmacUtil.hmacHex(mobile == null ? username : mobile));
-        log.setOtpHash(HmacUtil.hmacHex(otpStr));
-        log.setExpiresAt(LocalDateTime.now().plusMinutes(EXPIRY_MINUTES));
-        log.setUsed(false);
-        log.setCreatedBy(username != null ? username : "system");
-        otpLogRepository.save(log);
+        // ------------------------------------------------------------------------
+        // 2️⃣ Persist OTP (hashed)
+        // ------------------------------------------------------------------------
+        OtpLog otp = new OtpLog();
+        otp.setMobileHash(HmacUtil.hmacHex(mobile == null ? username : mobile));
+        otp.setOtpHash(HmacUtil.hmacHex(otpStr));
+        otp.setExpiresAt(LocalDateTime.now().plusMinutes(EXPIRY_MINUTES));
+        otp.setUsed(false);
+        otp.setCreatedBy(username != null ? username : "system");
+        otpLogRepository.save(otp);
 
-        // -----------------------------------
-        // 2️⃣ Prepare placeholders & audit
-        // -----------------------------------
-        Map<String, Object> placeholders = new HashMap<>();
+        // ------------------------------------------------------------------------
+        // 3️⃣ Prepare placeholders
+        // ------------------------------------------------------------------------
+        Map<String, Object> placeholders = new LinkedHashMap<>();
         placeholders.put("otp", otpStr);
         placeholders.put("purpose", purpose);
 
-        Map<String, Object> audit = new HashMap<>();
-        audit.put("ipAddress", RequestContext.getIp());
-        audit.put("userAgent", RequestContext.getUserAgent());
-        audit.put("url", "/api/notifications");
-        audit.put("httpMethod", "POST");
-
-        // -----------------------------------
-        // 3️⃣ Fetch Access Token (if available)
-        // -----------------------------------
+        // ------------------------------------------------------------------------
+        // 4️⃣ Resolve user & token
+        // ------------------------------------------------------------------------
         Long uid = null;
         try {
-            uid = (userId != null) ? Long.valueOf(userId) : null;
-        } catch (Exception ignored) {}
+            uid = (userId != null && !userId.isBlank()) ? Long.parseLong(userId) : null;
+        } catch (NumberFormatException ignored) {}
 
-        String token = null;
-        if (uid != null && uid > 0) {
-            token = userService.getLatestAccessTokenByUserId(uid).orElse(null);
+        String finalChannel = (channel != null && !channel.isBlank()) ? channel.toUpperCase() : "SMS";
+        String finalTemplate = (templateCode != null && !templateCode.isBlank())
+                ? templateCode
+                : "OTP_" + finalChannel;
+        String finalProject = (projectType != null) ? projectType : "AUTH_SERVICE";
+
+        // ------------------------------------------------------------------------
+        // 5️⃣ Resolve bearer token (required)
+        // ------------------------------------------------------------------------
+        String token = userService
+                .getLatestAccessToken(RequestContext.getSessionId(), username, uid)
+                .orElse(null);
+
+        if (token == null || token.isBlank()) {
+            String message = String.format("❌ Missing or invalid bearer token while generating OTP for user=%s", username);
+            System.err.println(message);
+            throw new RuntimeException(message);
         }
 
-        // -----------------------------------
-        // 4️⃣ Determine Template Code Dynamically
-        // -----------------------------------
-        String templateCode = "OTP_" + (channel != null ? channel.toUpperCase() : "SMS");
+        String bearer = token.startsWith("Bearer ") ? token : "Bearer " + token;
 
-        // -----------------------------------
-        // 5️⃣ Send OTP Notification(s)
-        // -----------------------------------
+        // ------------------------------------------------------------------------
+        // 6️⃣ Send main notification (required)
+        // ------------------------------------------------------------------------
         try {
-            // Primary channel notification (e.g., SMS / EMAIL)
-            sendNotification(token, userId, username, mobile, email, channel, templateCode, placeholders, audit);
+            safeNotificationHelper.safeNotify(
+                    bearer,
+                    uid,
+                    username,
+                    email,
+                    mobile,
+                    finalChannel,
+                    finalTemplate,
+                    placeholders,
+                    finalProject
+            );
 
-            // If channel supports secondary fallback (optional logic)
-            if (!"INAPP".equalsIgnoreCase(channel)) {
-                if ("SMS".equalsIgnoreCase(channel) && email != null) {
-                    sendNotification(token, userId, username, mobile, email, "EMAIL", "OTP_EMAIL", placeholders, audit);
-                } else if ("EMAIL".equalsIgnoreCase(channel) && mobile != null) {
-                    sendNotification(token, userId, username, mobile, email, "SMS", "OTP_SMS", placeholders, audit);
-                }
+            System.out.printf("📤 OTP notification sent via %s for user=%s (%s)%n",
+                    finalChannel, username, finalProject);
+
+        } catch (Exception e) {
+            throw new RuntimeException("❌ Failed to send main OTP notification: " + e.getMessage(), e);
+        }
+
+        // ------------------------------------------------------------------------
+        // 7️⃣ Optional fallback (secondary channel)
+        // ------------------------------------------------------------------------
+        try {
+            if ("SMS".equalsIgnoreCase(finalChannel) && email != null) {
+                safeNotificationHelper.safeNotifyAsync(
+                        bearer, uid, username, email, mobile,
+                        "EMAIL", "OTP_EMAIL", placeholders, finalProject
+                );
+                System.out.printf("📧 Fallback EMAIL OTP sent to %s%n", email);
+            } else if ("EMAIL".equalsIgnoreCase(finalChannel) && mobile != null) {
+                safeNotificationHelper.safeNotifyAsync(
+                        bearer, uid, username, email, mobile,
+                        "SMS", "OTP_SMS", placeholders, finalProject
+                );
+                System.out.printf("📱 Fallback SMS OTP sent to %s%n", mobile);
             }
-
         } catch (Exception ex) {
-            errorMessage.append("\n❌ Notification send failed: ").append(ex.getMessage());
+            System.err.printf("⚠️ OTP fallback notification failed: %s%n", ex.getMessage());
         }
 
-        // -----------------------------------
-        // 6️⃣ Error Handling
-        // -----------------------------------
-        if (errorMessage.length() > 0) {
-            throw new RuntimeException(errorMessage.toString());
-        }
+        // ------------------------------------------------------------------------
+        // 8️⃣ Audit Log
+        // ------------------------------------------------------------------------
+        System.out.printf("✅ OTP %s generated successfully for %s via %s (purpose=%s)%n",
+                otpStr, username, finalChannel, purpose);
 
-        System.out.println("✅ OTP " + otpStr + " generated for " + username + " (" + channel + ")");
         return otpStr;
     }
 
     /**
-     * ✅ Send notification through Feign client
-     */
-    private void sendNotification(String token,
-                                  String userId,
-                                  String username,
-                                  String mobile,
-                                  String email,
-                                  String channel,
-                                  String templateCode,
-                                  Map<String, Object> placeholders,
-                                  Map<String, Object> audit) {
-        try {
-            Map<String, Object> req = new LinkedHashMap<>();
-            req.put("userId", userId);
-            req.put("username", username);
-            req.put("mobile", mobile);
-            req.put("email", email);
-            req.put("channel", channel.toUpperCase());
-            req.put("templateCode", templateCode);
-            req.put("placeholders", placeholders);
-            req.put("audit", audit);
-
-            String bearer = (token != null && !token.isBlank())
-                    ? (token.startsWith("Bearer ") ? token : "Bearer " + token)
-                    : null;
-
-            notificationClient.sendNotification(req, bearer);
-            System.out.println("📤 Notification sent via " + channel + " → " + username);
-
-        } catch (Exception ex) {
-            throw new RuntimeException("Failed to send " + channel + " notification: " + ex.getMessage(), ex);
-        }
-    }
-
-    /**
-     * ✅ Validate OTP input against latest unused DB entry
+     * ✅ Validate OTP input against stored entry.
      */
     public boolean validateOtp(String mobile, String otpInput) {
         String mobileHash = HmacUtil.hmacHex(mobile);
 
-        OtpLog log = otpLogRepository.findTopByMobileHashAndUsedFalseOrderByCreatedAtDesc(mobileHash)
+        OtpLog otp = otpLogRepository
+                .findTopByMobileHashAndUsedFalseOrderByCreatedAtDesc(mobileHash)
                 .orElseThrow(() -> new RuntimeException("No OTP found or expired"));
 
-        if (log.isUsed() || log.getExpiresAt().isBefore(LocalDateTime.now())) {
+        if (otp.isUsed() || otp.getExpiresAt().isBefore(LocalDateTime.now())) {
+            System.err.printf("⚠️ OTP expired or already used for mobile=%s%n", mobile);
             return false;
         }
 
-        boolean valid = HmacUtil.hmacHex(otpInput).equals(log.getOtpHash());
+        boolean valid = HmacUtil.hmacHex(otpInput).equals(otp.getOtpHash());
         if (valid) {
-            log.setUsed(true);
-            otpLogRepository.save(log);
+            otp.setUsed(true);
+            otpLogRepository.save(otp);
+            System.out.printf("✅ OTP validated successfully for mobile=%s%n", mobile);
+        } else {
+            System.err.printf("❌ Invalid OTP attempt for mobile=%s%n", mobile);
         }
+
         return valid;
     }
 }

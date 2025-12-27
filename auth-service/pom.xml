@@ -3,18 +3,18 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
  
-  <!-- Inherit from the aggregator/parent POM -->
+  <!-- Inherit from the aggregator/parent POM -->  
   <parent>
     <groupId>com.example</groupId>
     <artifactId>microservices-architecture-blueprint</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+  <version>0.0.5-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
-  </parent>
+</parent>
 
+  <groupId>com.example</groupId>
   <artifactId>auth-service</artifactId>
-  <version>0.0.2-SNAPSHOT</version>
-  <name>Auth Service</name>
-  <description>Authentication microservice with session management and PII encryption</description>
+  <version>0.0.5-SNAPSHOT</version>
+  <name>auth-service</name>
 
   
   <properties>
@@ -122,10 +122,17 @@
     </dependency>
 
     <dependency>
-    <groupId>org.apache.poi</groupId>
-    <artifactId>poi-ooxml</artifactId>
-    <version>5.2.3</version>
+        <groupId>org.apache.poi</groupId>
+        <artifactId>poi-ooxml</artifactId>
+        <version>5.2.3</version>
     </dependency>
+
+    <dependency>
+        <groupId>org.yaml</groupId>
+        <artifactId>snakeyaml</artifactId>
+        <version>2.2</version>
+    </dependency>
+
   
     <dependency>
       <groupId>org.springframework.boot</groupId>
@@ -134,8 +141,15 @@
     <!-- Common lib -->
     <dependency>
       <groupId>com.example</groupId>
-      <artifactId>common-lib</artifactId>
-      <version>0.0.1-SNAPSHOT</version>
+      <artifactId>common-service</artifactId>
+      <version>0.0.5-SNAPSHOT</version>
+    </dependency>
+
+    <!-- 🟢 Swagger / OpenAPI UI -->
+    <dependency>
+      <groupId>org.springdoc</groupId>
+      <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+      <version>2.3.0</version>
     </dependency>
 
     <dependency>
@@ -150,14 +164,36 @@
 
     
   </dependencies>
+  
   <build>
     <plugins>
+      
+        <!-- ✅ Required to create BOOT-INF structure -->
+        <plugin>
+          <groupId>org.springframework.boot</groupId>
+          <artifactId>spring-boot-maven-plugin</artifactId>
+          
+          <executions>
+              <execution>
+                  <goals>
+                      <goal>repackage</goal>
+                  </goals>
+              </execution>
+          </executions>
+      </plugin>
+
+      <!-- Optional: Ensure Java 17+ -->
       <plugin>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-maven-plugin</artifactId>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-compiler-plugin</artifactId>
+          <configuration>
+              <source>17</source>
+              <target>17</target>
+          </configuration>
       </plugin>
     </plugins>
   </build>
+  
 </project>
 
 

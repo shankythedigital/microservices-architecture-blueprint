@@ -1,7 +1,9 @@
 package com.example.notification.entity;
 
 // import com.example.notification.crypto.JpaAttributeEncryptor;
+
 import jakarta.persistence.*;
+import com.example.common.jpa.BaseEntity;
 
 @Entity
 @Table(name = "notification_log")

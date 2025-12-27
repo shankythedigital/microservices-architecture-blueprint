@@ -3,7 +3,7 @@ package com.example.authservice.init;
 
 import com.example.authservice.model.*;
 import com.example.authservice.repository.*;
-import com.example.authservice.util.HmacUtil;
+import com.example.common.util.HmacUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -22,6 +22,7 @@ public class DataInitializer implements CommandLineRunner {
     @Autowired private RoleRepository roleRepo;
     @Autowired private UserRepository userRepo;
     @Autowired private UserDetailMasterRepository udmRepo;
+    @Autowired private ProjectTypeRepository projectTypeRepo;
 
     private final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
 
@@ -39,8 +40,42 @@ public class DataInitializer implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
+        seedProjectTypes();
         seedRoles();
         seedDefaultAdmins();
+    }
+
+    // =====================================================
+    // PROJECT TYPE SEEDING
+    // =====================================================
+    private void seedProjectTypes() {
+        Map<String, String> projectTypeDescriptions = Map.of(
+            "ECOM", "E-Commerce Platform",
+            "ASSET", "Asset Management System",
+            "PORTAL", "Customer Portal",
+            "ADMIN_CONSOLE", "Administration Console"
+        );
+
+        int[] order = {1}; // Use array to make it effectively final
+        for (String projectTypeCode : PROJECT_TYPES) {
+            final int currentOrder = order[0]; // Capture current order value
+            projectTypeRepo.findByCodeIgnoreCase(projectTypeCode).or(() -> {
+                ProjectType projectType = new ProjectType();
+                projectType.setCode(projectTypeCode);
+                projectType.setName(projectTypeCode.replace("_", " "));
+                projectType.setDescription(projectTypeDescriptions.getOrDefault(
+                    projectTypeCode, 
+                    "Project type: " + projectTypeCode
+                ));
+                projectType.setDisplayOrder(currentOrder);
+                projectType.setCreatedBy("system");
+                projectType.setActive(true);
+                projectTypeRepo.save(projectType);
+                System.out.println("✅ ProjectType created: " + projectTypeCode);
+                return Optional.of(projectType);
+            });
+            order[0]++;
+        }
     }
 
     // =====================================================

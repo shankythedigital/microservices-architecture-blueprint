@@ -1,7 +1,8 @@
+
 package com.example.notification.entity.templates;
 
-import com.example.notification.entity.BaseEntity;
 import jakarta.persistence.*;
+import com.example.common.jpa.BaseEntity;
 
 @Entity
 @Table(name = "sms_template_master")
@@ -15,6 +16,8 @@ public class SmsTemplateMaster extends BaseEntity {
     private String templateCode;
 
     private String name;
+
+    private String subject;
 
     @Column(columnDefinition = "TEXT")
     private String body;
@@ -32,6 +35,8 @@ public class SmsTemplateMaster extends BaseEntity {
     public void setTemplateCode(String templateCode) { this.templateCode = templateCode; }
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
+    public String getSubject() { return subject; }
+    public void setSubject(String subject) { this.subject = subject; }
     public String getBody() { return body; }
     public void setBody(String body) { this.body = body; }
     public String getPlaceholders() { return placeholders; }
@@ -41,3 +46,4 @@ public class SmsTemplateMaster extends BaseEntity {
     public String getProjectType() { return projectType; }
     public void setProjectType(String projectType) { this.projectType = projectType; }
 }
+

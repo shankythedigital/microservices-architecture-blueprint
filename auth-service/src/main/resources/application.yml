@@ -1,53 +1,62 @@
+# Auth-service
 server:
-  port: 8081
+  port: 6001  # CLOUD uses EB port, LOCAL uses 8081
+
+auth:
+  service:
+    url: http://13.127.199.97:6001
 
 notification:
   service:
-    url: http://localhost:8082/api/notifications
+    url: http://13.233.230.24:6002/api/notifications
+
+asset:
+  service:
+    url: http://13.127.199.97:6003
 
 spring:
+  application:
+    name: auth-service
   datasource:
-    url: jdbc:mysql://localhost:3306/authdb?useSSL=false&serverTimezone=UTC
-    username: ${DB_USERNAME:root}
-    password: ${DB_PASSWORD:Snmysql@1110}
+    url: jdbc:mysql://db-auth.c5csym0gc4my.ap-south-1.rds.amazonaws.com:3306/authdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    username: adminAuth
+    password: AuthPass123
   jpa:
     hibernate:
       ddl-auto: update
     show-sql: false
-    open-in-view: false
 
-encryption:
-  key: ${ENCRYPTION_KEY:ChangeThisTo32ByteKey_ReplaceInProd!}
-hmac:
-  key: ${HMAC_KEY:ChangeThisToAnotherKeyForHMAC_ReplaceInProd!}
+common:
+  notification:
+    enabled: true
 
-jwt:
-  private-key-path: classpath:keys/jwt-private.pem
-  public-key-path: classpath:keys/jwt-public.pem
-  access-token-validity-seconds: 900
-  refresh-token-validity-seconds: 1209600
-auth:
-  enc:
-    key: ${AUTH_ENC_KEY:default_auth_enc_key}   # fallback if not provided
-  hmac:
-    key: ${AUTH_HMAC_KEY:default_auth_hmac_key}
+JWT_PRIVATE_KEY_PATH: classpath:keys/jwt-private.pem
+JWT_PUBLIC_KEY_PATH: classpath:keys/jwt-public.pem
+JWT_SECRET: yNnC7M3ZqgV4bD0lFJm9Q2w5tSe8XpR1pWc7UjK4oHs=
+JWT_ACCESS_TOKEN_VALIDITY_SECONDS: 900
+JWT_REFRESH_TOKEN_VALIDITY_SECONDS: 1209600
+AUTH_ENC_KEY: SLOqKf8lS2hidTDsXQe25ZSaoaGcczUX6gySXUxjE1M=
+AUTH_HMAC_KEY: krFcA7/MYPXQWbtSGMM87Dzxu2euOsRckVFeUyOC6dw=
+ENCRYPTION_KEY: SLOqKf8lS2hidTDsXQe25ZSaoaGcczUX6gySXUxjE1M=
+ACCESS_TOKEN: change_this_token
+FEIGN_ACCESS_TOKEN:
+logging:
+  level:
+    com.example: DEBUG
 
-
-
-# logging:
-#     level:
-#         root: INFO
-#         com.example.authservice: DEBUG
-#         org.springframework.web: INFO
-#         org.hibernate.SQL: DEBUG
-#         org.hibernate.type.descriptor.sql.BasicBinder: TRACE
-#         org.springframework.security: DEBUG
-#         org.springframework.cloud.openfeign: DEBUG
-#         org.hibernate.tool.hbm2ddl: DEBUG
-#         org.hibernate.orm.deprecation: WARN
-#         org.springframework.orm.jpa: DEBUG
-#         org.springframework.transaction: DEBUG
-#         org.springframework.jdbc.core: DEBUG
-#         org.springframework.context.support.PostProcessorRegistrationDelegate$BeanPostProcessorChecker: off
-
-
+# Swagger/OpenAPI Configuration
+springdoc:
+  api-docs:
+    path: /api-docs
+    enabled: true
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+    operations-sorter: method
+    tags-sorter: alpha
+    try-it-out-enabled: true
+  show-actuator: false
+  group-configs:
+    - group: 'auth-service'
+      display-name: 'Auth Service API'
+      paths-to-match: '/api/**'

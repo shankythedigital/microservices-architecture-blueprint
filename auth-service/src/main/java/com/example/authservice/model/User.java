@@ -1,19 +1,19 @@
+
 package com.example.authservice.model;
 
 import jakarta.persistence.*;
+import com.example.common.jpa.BaseEntity;
 import java.util.Set;
 
-/**
- * ✅ User Entity with embedded composite attributes and auto-generated primary key.
- * Uses logical hashes and project type for uniqueness constraints.
- */
 @Entity
 @Table(
     name = "users",
     uniqueConstraints = {
         @UniqueConstraint(columnNames = {"username_hash", "project_type"}),
         @UniqueConstraint(columnNames = {"email_hash", "project_type"}),
-        @UniqueConstraint(columnNames = {"mobile_hash", "project_type"})
+        @UniqueConstraint(columnNames = {"mobile_hash", "project_type"}),
+        @UniqueConstraint(columnNames = {"username_hash", "mobile_hash", "project_type"}),
+        @UniqueConstraint(columnNames = {"username_hash", "email_hash", "project_type"})
     }
 )
 public class User extends BaseEntity {
@@ -21,10 +21,10 @@ public class User extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "user_id")
-    private Long userId;  // Primary key
+    private Long userId;
 
     @Embedded
-    private UserId compositeId; // Logical composite identifiers (hashes + projectType)
+    private UserId compositeId;
 
     @Column(name = "username_enc", length = 2048)
     private String usernameEnc;
@@ -43,7 +43,7 @@ public class User extends BaseEntity {
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
         name = "user_roles",
-        joinColumns = @JoinColumn(name = "user_id"), // uses PK
+        joinColumns = @JoinColumn(name = "user_id"),
         inverseJoinColumns = @JoinColumn(name = "role_id")
     )
     private Set<Role> roles;
@@ -51,9 +51,7 @@ public class User extends BaseEntity {
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
     private UserDetailMaster detail;
 
-    // ----------------------
-    // Constructors
-    // ----------------------
+    // Constructors, getters, setters
     public User() {}
 
     public User(UserId compositeId, String usernameEnc, String emailEnc, String mobileEnc, String password, Boolean enabled) {
@@ -65,9 +63,6 @@ public class User extends BaseEntity {
         this.enabled = enabled;
     }
 
-    // ----------------------
-    // Getters & Setters
-    // ----------------------
     public Long getUserId() { return userId; }
     public void setUserId(Long userId) { this.userId = userId; }
 
@@ -95,9 +90,7 @@ public class User extends BaseEntity {
     public UserDetailMaster getDetail() { return detail; }
     public void setDetail(UserDetailMaster detail) { this.detail = detail; }
 
-    // ----------------------
     // Convenience Accessors
-    // ----------------------
     public String getUsernameHash() { return compositeId != null ? compositeId.getUsernameHash() : null; }
     public String getEmailHash() { return compositeId != null ? compositeId.getEmailHash() : null; }
     public String getMobileHash() { return compositeId != null ? compositeId.getMobileHash() : null; }

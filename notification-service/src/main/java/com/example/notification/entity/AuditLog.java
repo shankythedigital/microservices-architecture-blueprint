@@ -1,6 +1,8 @@
 package com.example.notification.entity;
 
+
 import jakarta.persistence.*;
+import com.example.common.jpa.BaseEntity;
 
 @Entity
 @Table(name = "audit_log")

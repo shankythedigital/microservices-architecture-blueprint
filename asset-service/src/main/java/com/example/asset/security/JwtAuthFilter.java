@@ -1,6 +1,7 @@
 package com.example.asset.security;
 
 import io.jsonwebtoken.Claims;
+import com.example.common.security.JwtVerifier;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -27,7 +28,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             String token = authHeader.substring(7);
             try {
-                Claims claims = jwtVerifier.validateToken(token);
+                Claims claims = jwtVerifier.parseToken(token).getBody();
                 String userId = claims.getSubject();
                 UsernamePasswordAuthenticationToken authentication =
                         new UsernamePasswordAuthenticationToken(userId, token, Collections.emptyList());
@@ -41,3 +42,4 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 }
+

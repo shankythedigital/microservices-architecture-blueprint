@@ -8,8 +8,8 @@ import com.example.authservice.model.UserDetailMaster;
 import com.example.authservice.repository.RefreshTokenRepository;
 import com.example.authservice.repository.UserDetailMasterRepository;
 import com.example.authservice.repository.UserRepository;
-import com.example.authservice.util.HmacUtil;
-import com.example.authservice.util.RequestContext;
+import com.example.common.util.HmacUtil;
+import com.example.common.util.RequestContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -130,28 +130,66 @@ public class UserService {
         // if (opt.isPresent()) return opt.get().getUsername();
         return null;
     }
+    // =====================================================
+    // PATCH: Get Latest Access Token by sessionId, username, or userId
+    // =====================================================
 
     /**
-     * Best-effort: return the latest non-expired access token found in refresh tokens table.
-     * This is a helper for notification/OTP flows when a token is required to call other services.
-     */
-    public java.util.Optional<String> getLatestAccessTokenByUserId(Long userId) {
+    * Fetch the latest valid access token based on the strongest unique context available:
+    * Priority: sessionId → username → userId → global fallback.
+    */
+    public Optional<String> getLatestAccessToken(Long sessionId, String username, Long userId) {
+        LocalDateTime now = LocalDateTime.now();
+
         try {
-            // 1) attempt to find any refresh token whose session belongs to the user and is active
-            var now = LocalDateTime.now();
-            var optional = refreshRepo.findTopByActiveIsTrueAndExpiryDateAfterOrderByCreatedAtDesc(now);
-            if (optional.isPresent()) {
-                var rt = optional.get();
-                if (rt.getSession() != null && rt.getSession().getUser() != null
-                        && rt.getSession().getUser().getUserId().equals(userId)) {
-                    return java.util.Optional.ofNullable(rt.getAccessToken());
-                }
+            // 1️⃣ Lookup by Session ID — always unique
+            if (sessionId != null && sessionId > 0) {
+                return refreshRepo
+                        .findTopBySession_IdAndActiveIsTrueAndExpiryDateAfterOrderByCreatedAtDesc(sessionId, now)
+                        .map(token -> {
+                            System.out.println("✅ [UserService] Found token by sessionId=" + sessionId);
+                            return token.getAccessToken();
+                        });
             }
-        } catch (Exception e) {
-            // swallow and return empty
+
+            // 2️⃣ Lookup by Username — unique within project scope
+            if (username != null && !username.isBlank()) {
+                var tokenOpt = refreshRepo
+                        .findTopBySession_User_Detail_UsernameIgnoreCaseAndActiveIsTrueAndExpiryDateAfterOrderByCreatedAtDesc(username, now)
+                        .map(token -> {
+                            System.out.println("✅ [UserService] Found token by username=" + username);
+                            return token.getAccessToken();
+                        });
+                if (tokenOpt.isPresent()) return tokenOpt;
+            }
+
+            // 3️⃣ Lookup by User ID — globally unique per user
+            if (userId != null && userId > 0) {
+                var tokenOpt = refreshRepo
+                        .findTopBySession_User_UserIdAndActiveIsTrueAndExpiryDateAfterOrderByCreatedAtDesc(userId, now)
+                        .map(token -> {
+                            System.out.println("✅ [UserService] Found token by userId=" + userId);
+                            return token.getAccessToken();
+                        });
+                if (tokenOpt.isPresent()) return tokenOpt;
+            }
+
+            // 4️⃣ Fallback — any global valid token (use with caution)
+            return refreshRepo
+                    .findTopByActiveIsTrueAndExpiryDateAfterOrderByCreatedAtDesc(now)
+                    .map(token -> {
+                        System.out.println("⚠️ [UserService] Fallback to latest global valid token");
+                        return token.getAccessToken();
+                    });
+
+        } catch (Exception ex) {
+            System.err.println("❌ [UserService] Token lookup failed: " + ex.getMessage());
         }
-        return java.util.Optional.empty();
+
+        return Optional.empty();
     }
+
+
 }
 
 

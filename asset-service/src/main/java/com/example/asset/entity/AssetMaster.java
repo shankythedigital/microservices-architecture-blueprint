@@ -1,103 +1,130 @@
 package com.example.asset.entity;
 
+import com.example.common.jpa.BaseEntity;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
-import java.util.Set;
 import java.util.HashSet;
-import java.util.Date;
+import java.util.Set;
 
+/**
+ * AssetMaster — master record for an asset.
+ * Keeps relationships to category, subcategory, make, model, components, documents,
+ * warranty, amc and user links (one-to-many).
+ *
+ * Uses BaseEntity for audit fields: createdBy, createdAt, updatedBy, updatedAt, active.
+ */
 @Entity
 @Table(name = "asset_master")
+@JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
 public class AssetMaster extends BaseEntity {
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "asset_id")
     private Long assetId;
 
+    @Column(name = "asset_name_udv", nullable = false, unique = true, length = 255)
     private String assetNameUdv;
 
-    @ManyToOne @JoinColumn(name="category_id")
+    // CATEGORY / SUBCATEGORY
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id")
+    @JsonIgnoreProperties({ "assets", "subCategories" })
     private ProductCategory category;
 
-    @ManyToOne @JoinColumn(name="sub_category_id")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "sub_category_id")
+    @JsonIgnoreProperties({ "assets" })
     private ProductSubCategory subCategory;
 
-    @ManyToOne @JoinColumn(name="make_id")
+    // MAKE / MODEL
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "make_id")
+    @JsonIgnoreProperties({ "assets" })
     private ProductMake make;
 
-    @ManyToOne @JoinColumn(name="model_id")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "model_id")
+    @JsonIgnoreProperties({ "assets" })
     private ProductModel model;
 
-    private String makeUdv;
-    private String modelUdv;
-    private String purchaseMode;
-    @ManyToOne @JoinColumn(name="purchase_outlet_id")
-    private PurchaseOutlet purchaseOutlet;
-    private String purchaseOutletUdv;
-    private String purchaseOutletAddressUdv;
-    private Date purchaseDate;
-    private String assetStatus;
-    private Date soldOnDate;
-    private String salesChannelName;
-    private Date createdDate;
+    // WARRANTY & AMC (one-to-one)
+    @OneToOne(mappedBy = "asset", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore
+    private AssetWarranty warranty;
 
+    @OneToOne(mappedBy = "asset", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore
+    private AssetAmc amc;
+
+    // USER LINKS — an asset may have multiple link records (historical + active)
+    @OneToMany(mappedBy = "asset", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonIgnore
+    private Set<AssetUserLink> userLinks = new HashSet<>();
+
+    // COMPONENTS (many-to-many join table)
     @ManyToMany
     @JoinTable(
-        name = "asset_component_link",               // ✅ clearer join table name
-        joinColumns = @JoinColumn(name = "asset_id"),
-        inverseJoinColumns = @JoinColumn(name = "component_id")
+            name = "asset_component_link",
+            joinColumns = @JoinColumn(name = "asset_id"),
+            inverseJoinColumns = @JoinColumn(name = "component_id")
     )
+    @JsonIgnoreProperties({ "assets" })
     private Set<AssetComponent> components = new HashSet<>();
 
+    // DOCUMENTS
+    @OneToMany(mappedBy = "asset", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonIgnore
+    private Set<AssetDocument> documents = new HashSet<>();
 
-    public Long getAssetId(){ return assetId; }
-    public void setAssetId(Long assetId){ this.assetId = assetId; }
+    @Transient
+    private String displayName;
 
-    public String getAssetNameUdv(){ return assetNameUdv; }
-    public void setAssetNameUdv(String assetNameUdv){ this.assetNameUdv = assetNameUdv; }
+    @Column(name = "asset_status")
+    private String assetStatus;
 
-    public ProductCategory getCategory(){ return category; }
-    public void setCategory(ProductCategory category){ this.category = category; }
+    // ------------------------
+    // Getters / Setters
+    // ------------------------
+    public Long getAssetId() { return assetId; }
+    public void setAssetId(Long assetId) { this.assetId = assetId; }
 
-    public ProductSubCategory getSubCategory(){ return subCategory; }
-    public void setSubCategory(ProductSubCategory subCategory){ this.subCategory = subCategory; }
+    public String getAssetNameUdv() { return assetNameUdv; }
+    public void setAssetNameUdv(String assetNameUdv) { this.assetNameUdv = assetNameUdv; }
 
-    public ProductMake getMake(){ return make; }
-    public void setMake(ProductMake make){ this.make = make; }
+    public ProductCategory getCategory() { return category; }
+    public void setCategory(ProductCategory category) { this.category = category; }
 
-    public ProductModel getModel(){ return model; }
-    public void setModel(ProductModel model){ this.model = model; }
+    public ProductSubCategory getSubCategory() { return subCategory; }
+    public void setSubCategory(ProductSubCategory subCategory) { this.subCategory = subCategory; }
 
-    public String getMakeUdv(){ return makeUdv; }
-    public void setMakeUdv(String makeUdv){ this.makeUdv = makeUdv; }
+    public ProductMake getMake() { return make; }
+    public void setMake(ProductMake make) { this.make = make; }
 
-    public String getModelUdv(){ return modelUdv; }
-    public void setModelUdv(String modelUdv){ this.modelUdv = modelUdv; }
+    public ProductModel getModel() { return model; }
+    public void setModel(ProductModel model) { this.model = model; }
 
-    public String getPurchaseMode(){ return purchaseMode; }
-    public void setPurchaseMode(String purchaseMode){ this.purchaseMode = purchaseMode; }
+    public AssetWarranty getWarranty() { return warranty; }
+    public void setWarranty(AssetWarranty warranty) { this.warranty = warranty; }
 
-    public PurchaseOutlet getPurchaseOutlet(){ return purchaseOutlet; }
-    public void setPurchaseOutlet(PurchaseOutlet purchaseOutlet){ this.purchaseOutlet = purchaseOutlet; }
+    public AssetAmc getAmc() { return amc; }
+    public void setAmc(AssetAmc amc) { this.amc = amc; }
 
-    public String getPurchaseOutletUdv(){ return purchaseOutletUdv; }
-    public void setPurchaseOutletUdv(String purchaseOutletUdv){ this.purchaseOutletUdv = purchaseOutletUdv; }
+    public Set<AssetUserLink> getUserLinks() { return userLinks; }
+    public void setUserLinks(Set<AssetUserLink> userLinks) { this.userLinks = userLinks; }
 
-    public String getPurchaseOutletAddressUdv(){ return purchaseOutletAddressUdv; }
-    public void setPurchaseOutletAddressUdv(String purchaseOutletAddressUdv){ this.purchaseOutletAddressUdv = purchaseOutletAddressUdv; }
+    public Set<AssetComponent> getComponents() { return components; }
+    public void setComponents(Set<AssetComponent> components) { this.components = components; }
 
-    public Date getPurchaseDate(){ return purchaseDate; }
-    public void setPurchaseDate(Date purchaseDate){ this.purchaseDate = purchaseDate; }
+    public Set<AssetDocument> getDocuments() { return documents; }
+    public void setDocuments(Set<AssetDocument> documents) { this.documents = documents; }
 
-    public String getAssetStatus(){ return assetStatus; }
-    public void setAssetStatus(String assetStatus){ this.assetStatus = assetStatus; }
+    public String getDisplayName() { return displayName; }
+    public void setDisplayName(String displayName) { this.displayName = displayName; }
 
-    public Date getSoldOnDate(){ return soldOnDate; }
-    public void setSoldOnDate(Date soldOnDate){ this.soldOnDate = soldOnDate; }
-
-    public String getSalesChannelName(){ return salesChannelName; }
-    public void setSalesChannelName(String salesChannelName){ this.salesChannelName = salesChannelName; }
-
-    public Date getCreatedDate(){ return createdDate; }
-    public void setCreatedDate(Date createdDate){ this.createdDate = createdDate; }
-
-    public Set<AssetComponent> getComponents(){ return components; }
-    public void setComponents(Set<AssetComponent> components){ this.components = components; }
+    public String getAssetStatus() { return assetStatus; }
+    public void setAssetStatus(String assetStatus) { this.assetStatus = assetStatus; }
 }
+
+

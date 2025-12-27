@@ -19,6 +19,7 @@ CREATE TABLE IF NOT EXISTS sms_template_master (
   id BIGINT AUTO_INCREMENT PRIMARY KEY,
   template_code VARCHAR(100) UNIQUE NOT NULL,
   name VARCHAR(255),
+  subject VARCHAR(255),
   body TEXT NOT NULL,
   placeholders JSON,
   active BOOLEAN DEFAULT TRUE,
@@ -51,6 +52,7 @@ CREATE TABLE IF NOT EXISTS inapp_template_master (
   template_code VARCHAR(100) UNIQUE NOT NULL,
   name VARCHAR(255),
   title VARCHAR(255),
+  subject VARCHAR(255),
   body TEXT NOT NULL,
   placeholders JSON,
   active BOOLEAN DEFAULT TRUE,
@@ -148,3 +150,4 @@ CREATE TABLE IF NOT EXISTS audit_log (
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   active BOOLEAN DEFAULT TRUE
 );
+

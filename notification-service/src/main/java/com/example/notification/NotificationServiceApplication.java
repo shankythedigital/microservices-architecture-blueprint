@@ -1,32 +1,24 @@
+
 package com.example.notification;
 
-// import com.example.notification.crypto.JpaAttributeEncryptor;
-import com.example.notification.util.HashUtil;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.boot.autoconfigure.domain.EntityScan;
+import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+import org.springframework.cloud.openfeign.EnableFeignClients;
 
-import jakarta.annotation.PostConstruct;
-import java.util.Base64;
-
+/**
+ * Main application entry. Explicitly scans the common module packages so shared beans
+ * (NotificationHelper, repositories, entities, clients) are discovered.
+ */
 @SpringBootApplication
+@ComponentScan(basePackages = {"com.example.notification", "com.example.common"})
+@EntityScan(basePackages = {"com.example.notification.entity", "com.example.common.entity"})
+@EnableJpaRepositories(basePackages = {"com.example.notification.repository", "com.example.common.repository"})
+@EnableFeignClients(basePackages = {"com.example.common.client", "com.example.notification.client"})
 public class NotificationServiceApplication {
-
-    // @Value("${notify.enc.key}")
-    // private String notifyEncKey;
-
-    // @Value("${notify.hmac.key}")
-    // private String notifyHmacKey;
-
     public static void main(String[] args) {
         SpringApplication.run(NotificationServiceApplication.class, args);
     }
-
-    // @PostConstruct
-    // public void initCrypto() {
-    //     byte[] enc = Base64.getDecoder().decode(notifyEncKey);
-    //     JpaAttributeEncryptor.init(enc);
-    //     HashUtil.init(notifyHmacKey); // base64 string
-    // }
 }
-

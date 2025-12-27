@@ -1,6 +1,7 @@
 package com.example.authservice.model;
 
 import jakarta.persistence.*;
+import com.example.common.jpa.BaseEntity;
 import java.time.LocalDateTime;
 
 @Entity

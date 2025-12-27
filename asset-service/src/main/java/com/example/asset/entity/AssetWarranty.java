@@ -1,43 +1,194 @@
 package com.example.asset.entity;
 
+import com.example.common.jpa.BaseEntity;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
-import java.util.Date;
+import java.io.Serializable;
+import java.time.LocalDate;
 
+/**
+ * ✅ AssetWarranty Entity
+ * Represents warranty details for an asset.
+ * Linked with AssetMaster and optionally an AssetDocument.
+ * Handles null-safe document_id persistence.
+ */
 @Entity
 @Table(name = "asset_warranty")
-public class AssetWarranty extends BaseEntity {
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "asset"})
+public class AssetWarranty extends BaseEntity implements Serializable {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "warranty_id")
     private Long warrantyId;
 
-    @ManyToOne @JoinColumn(name="asset_id")
-    private AssetMaster asset;
+    @Column(name = "warranty_status")
+    private String warrantyStatus;
 
-    @ManyToOne @JoinColumn(name="component_id")
-    private AssetComponent component;
+    @Column(name = "warranty_provider")
+    private String warrantyProvider;
 
-    private String warrantyType;
-    private Date startDate;
-    private Date endDate;
-    private String documentPath;
-    private String userId;
+    @Column(name = "warranty_terms", length = 1000)
+    private String warrantyTerms;
+
+    @Column(name = "start_date")
+    private LocalDate warrantyStartDate;
+
+    @Column(name = "end_date")
+    private LocalDate warrantyEndDate;
+
+    @Column(name = "user_id")
+    private Long userId;
+
+    @Column(name = "username")
     private String username;
 
-    public Long getWarrantyId(){ return warrantyId; }
-    public void setWarrantyId(Long warrantyId){ this.warrantyId = warrantyId; }
-    public AssetMaster getAsset(){ return asset; }
-    public void setAsset(AssetMaster asset){ this.asset = asset; }
-    public AssetComponent getComponent(){ return component; }
-    public void setComponent(AssetComponent component){ this.component = component; }
-    public String getWarrantyType(){ return warrantyType; }
-    public void setWarrantyType(String warrantyType){ this.warrantyType = warrantyType; }
-    public Date getStartDate(){ return startDate; }
-    public void setStartDate(Date startDate){ this.startDate = startDate; }
-    public Date getEndDate(){ return endDate; }
-    public void setEndDate(Date endDate){ this.endDate = endDate; }
-    public String getDocumentPath(){ return documentPath; }
-    public void setDocumentPath(String documentPath){ this.documentPath = documentPath; }
-    public String getUserId(){ return userId; }
-    public void setUserId(String userId){ this.userId = userId; }
-    public String getUsername(){ return username; }
-    public void setUsername(String username){ this.username = username; }
+    @Column(name = "component_id")
+    private Long componentId;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "asset_id")
+    @JsonIgnoreProperties({"warranties", "hibernateLazyInitializer", "handler"})
+    private AssetMaster asset;
+
+    // ✅ Persisted foreign key to AssetDocument table
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "document_id", referencedColumnName = "document_id", nullable = true)
+    private AssetDocument document;
+
+    // ============================================================
+    // 🔧 Getters & Setters
+    // ============================================================
+
+    public Long getWarrantyId() {
+        return warrantyId;
+    }
+
+    public void setWarrantyId(Long warrantyId) {
+        this.warrantyId = warrantyId;
+    }
+
+    public String getWarrantyStatus() {
+        return warrantyStatus;
+    }
+
+    public void setWarrantyStatus(String warrantyStatus) {
+        this.warrantyStatus = warrantyStatus;
+    }
+
+    public String getWarrantyProvider() {
+        return warrantyProvider;
+    }
+
+    public void setWarrantyProvider(String warrantyProvider) {
+        this.warrantyProvider = warrantyProvider;
+    }
+
+    public String getWarrantyTerms() {
+        return warrantyTerms;
+    }
+
+    public void setWarrantyTerms(String warrantyTerms) {
+        this.warrantyTerms = warrantyTerms;
+    }
+
+    public LocalDate getWarrantyStartDate() {
+        return warrantyStartDate;
+    }
+
+    public void setWarrantyStartDate(LocalDate warrantyStartDate) {
+        this.warrantyStartDate = warrantyStartDate;
+    }
+
+    public LocalDate getWarrantyEndDate() {
+        return warrantyEndDate;
+    }
+
+    public void setWarrantyEndDate(LocalDate warrantyEndDate) {
+        this.warrantyEndDate = warrantyEndDate;
+    }
+
+    public Long getUserId() {
+        return userId;
+    }
+
+    public void setUserId(Long userId) {
+        this.userId = userId;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public Long getComponentId() {
+        return componentId;
+    }
+
+    public void setComponentId(Long componentId) {
+        this.componentId = componentId;
+    }
+
+    public AssetMaster getAsset() {
+        return asset;
+    }
+
+    public void setAsset(AssetMaster asset) {
+        this.asset = asset;
+    }
+
+    public AssetDocument getDocument() {
+        return document;
+    }
+
+    public void setDocument(AssetDocument document) {
+        this.document = document;
+    }
+
+    // ✅ Safe getter for FK
+    public Long getDocumentId() {
+        return (document != null) ? document.getDocumentId() : null;
+    }
+
+    // ✅ Handles both null and valid ID values
+    public void setDocumentId(Long documentId) {
+        if (documentId == null) {
+            this.document = null; // store as NULL in DB
+        } else {
+            AssetDocument doc = new AssetDocument();
+            doc.setDocumentId(documentId);
+            this.document = doc;
+        }
+    }
+
+    // ============================================================
+    // 🧠 Convenience Aliases
+    // ============================================================
+    @Transient
+    public LocalDate getStartDate() {
+        return getWarrantyStartDate();
+    }
+
+    @Transient
+    public LocalDate getEndDate() {
+        return getWarrantyEndDate();
+    }
+
+    @Override
+    public String toString() {
+        return "AssetWarranty{" +
+                "warrantyId=" + warrantyId +
+                ", warrantyStatus='" + warrantyStatus + '\'' +
+                ", warrantyProvider='" + warrantyProvider + '\'' +
+                ", warrantyStartDate=" + warrantyStartDate +
+                ", warrantyEndDate=" + warrantyEndDate +
+                ", documentId=" + getDocumentId() +
+                ", username='" + username + '\'' +
+                '}';
+    }
 }
+
+

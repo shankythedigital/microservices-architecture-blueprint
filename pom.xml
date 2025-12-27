@@ -6,24 +6,31 @@
   <!-- Parent coordinates -->
   <groupId>com.example</groupId>
   <artifactId>microservices-architecture-blueprint</artifactId>
-  <version>0.0.1-SNAPSHOT</version>
+  <version>0.0.5-SNAPSHOT</version>
   <packaging>pom</packaging>
 
-  <name>Microservices Architecture Blueprint</name>
-  <description>Parent POM for common-lib, auth-service, notification-service</description>
+<!-- ✅ Inherit from Spring Boot Parent -->
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.3.2</version>
+        <relativePath/> <!-- lookup from repo -->
+    </parent>
 
   <!-- Modules -->
   <modules>
-    <module>common-lib</module>
+    <module>common-service</module>
     <module>auth-service</module>
+    <module>asset-service</module>
     <module>notification-service</module>
   </modules>
-
-  <!-- Central properties -->
+  <name>Microservices Architecture Blueprint</name>
+  <description>Parent POM for common-lib, auth-service, notification-service</description>
+    <!-- Central properties -->
   <properties>
     <java.version>17</java.version>
-    <spring-boot.version>3.1.1</spring-boot.version>
-    <spring-cloud.version>2022.0.3</spring-cloud.version>
+    <spring-boot.version>3.3.2</spring-boot.version>
+    <spring-cloud.version>2023.0.6</spring-cloud.version>
     <lombok.version>1.18.30</lombok.version>
     <jjwt.version>0.11.5</jjwt.version>
     <mysql.version>8.0.33</mysql.version>
@@ -89,6 +96,11 @@
           <artifactId>jakarta.validation-api</artifactId>
           <version>3.0.0</version>
       </dependency>
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+            <version>2.11.0</version>
+        </dependency>
     </dependencies>
   </dependencyManagement>
 
@@ -116,5 +128,6 @@
     </pluginManagement>
   </build>
 </project>
+
 
 

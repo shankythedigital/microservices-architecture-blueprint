@@ -1,7 +1,8 @@
 package com.example.notification.entity.templates;
 
-import com.example.notification.entity.BaseEntity;
+
 import jakarta.persistence.*;
+import com.example.common.jpa.BaseEntity;
 
 @Entity
 @Table(name = "inapp_template_master")
@@ -16,6 +17,8 @@ public class InappTemplateMaster extends BaseEntity {
 
     private String name;
     private String title;
+
+    private String subject;
 
     @Column(columnDefinition = "TEXT")
     private String body;
@@ -35,6 +38,8 @@ public class InappTemplateMaster extends BaseEntity {
     public void setName(String name) { this.name = name; }
     public String getTitle() { return title; }
     public void setTitle(String title) { this.title = title; }
+    public String getSubject() { return subject; }
+    public void setSubject(String subject) { this.subject = subject; }
     public String getBody() { return body; }
     public void setBody(String body) { this.body = body; }
     public String getPlaceholders() { return placeholders; }
@@ -44,3 +49,4 @@ public class InappTemplateMaster extends BaseEntity {
     public String getProjectType() { return projectType; }
     public void setProjectType(String projectType) { this.projectType = projectType; }
 }
+
