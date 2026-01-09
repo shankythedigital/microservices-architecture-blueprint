@@ -1,14 +1,14 @@
 # Notification-service
 server:
-  port: 6002
+  port: 8082
 
 notification:
   service:
-    url: http://13.233.230.24:6002/api/notifications
+    url: http://localhost:8082/api/notifications
 
 asset:
   service:
-    url: http://13.127.199.97:6003
+    url: http://localhost:8083
   upload:
     dir: /asset-uploads/amc-docs
 
@@ -19,9 +19,9 @@ spring:
   application:
     name: notification-service
   datasource:
-    url: jdbc:mysql://db-auth.c5csym0gc4my.ap-south-1.rds.amazonaws.com:3306/notificationdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
-    username: adminAuth
-    password: AuthPass123
+    url: jdbc:mysql://localhost:3306/notificationdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    username: root
+    password: Snmysql@1110
   jpa:
     hibernate:
       ddl-auto: update
@@ -29,7 +29,7 @@ spring:
 
 auth:
   service:
-    url: http://13.127.199.97:6001/api/
+    url: http://localhost:8081/api/
   client-id: notification-service
   client-secret: notify-secret
 

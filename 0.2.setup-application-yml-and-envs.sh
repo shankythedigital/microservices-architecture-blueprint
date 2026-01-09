@@ -32,9 +32,9 @@ if [ "$MODE" = "cloud" ]; then
   RDS_ASSET_DB="jdbc:mysql://${RDS_HOST}:3306/assetdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
   RDS_NOTIFY_DB="jdbc:mysql://${RDS_HOST}:3306/notificationdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
 
-  RDS_AUTH_USER="adminAuth"
-  RDS_ASSET_USER="adminAuth"
-  RDS_NOTIFY_USER="adminAuth"
+  RDS_AUTH_USER="admin"
+  RDS_ASSET_USER="admin"
+  RDS_NOTIFY_USER="admin"
 
   RDS_AUTH_PASS="AuthPass123"
   RDS_ASSET_PASS="AuthPass123"
@@ -48,10 +48,10 @@ if [ "$MODE" = "cloud" ]; then
   ASSET_PORT="6003"
 
   # ===== CLOUD SERVICE IPs =====
-  COMMON_AUTH_IP="13.127.199.97"
-  AUTH_IP="13.127.199.97"
-  ASSET_IP="13.127.199.97"
-  NOTIF_IP="13.233.230.24"
+  COMMON_AUTH_IP="13.204.61.111"
+  AUTH_IP="13.204.61.111"
+  ASSET_IP="13.233.124.217"
+  NOTIF_IP="13.232.146.140"
 
   COMMON_AUTH_URL="http://auth-service-env.${REGION}.elasticbeanstalk.com"
   AUTH_URL="http://${AUTH_IP}:${AUTH_PORT}"
@@ -67,9 +67,9 @@ elif [ "$MODE" = "cloud_local" ]; then
   RDS_ASSET_DB="jdbc:mysql://${RDS_HOST}:3306/assetdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
   RDS_NOTIFY_DB="jdbc:mysql://${RDS_HOST}:3306/notificationdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
 
-  RDS_AUTH_USER="adminAuth"
-  RDS_ASSET_USER="adminAuth"
-  RDS_NOTIFY_USER="adminAuth"
+  RDS_AUTH_USER="admin"
+  RDS_ASSET_USER="admin"
+  RDS_NOTIFY_USER="admin"
 
   RDS_AUTH_PASS="AuthPass123"
   RDS_ASSET_PASS="AuthPass123"

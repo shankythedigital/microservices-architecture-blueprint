@@ -1,0 +1,166 @@
+{
+	"info": {
+		"_postman_id": "master-data-api-collection",
+		"name": "Master Data API - Complete Collection",
+		"description": "Postman collection for Master Data API endpoints.\n\n**Endpoints:**\n- GET /api/asset/v1/userlinks/master-data/all - Get all master data\n- GET /api/asset/v1/userlinks/master-data/all?userId={userId} - Get master data filtered by user ID\n- GET /api/asset/v1/userlinks/need-your-attention - Get comprehensive 'Need Your Attention' data with all entities and attention indicators\n\n**Features:**\n- Comprehensive master data retrieval including users, assets, components, warranties, AMCs, makes, models, categories, sub-categories, vendors, outlets, and statuses\n- Optional filtering by userId\n- Audit information (login userId and username) included in response\n- Attention indicators: expiring warranties, expiring AMCs, assets without warranty/AMC, unassigned assets\n\n**Environment Variables Required:**\n- assetbaseUrl: Base URL (default: http://localhost:8083)\n- accessToken: JWT Bearer token from auth-service\n- userId: Optional user ID to filter data (for query parameter)",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "32725094"
+	},
+	"item": [
+		{
+			"name": "1. Get All Master Data",
+			"item": [
+				{
+					"name": "Get All Master Data (No Filter)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}",
+								"type": "text",
+								"description": "JWT Bearer token from auth-service. The token is used to extract login userId and username for audit purposes."
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{assetbaseUrl}}/api/asset/v1/userlinks/master-data/all",
+							"host": ["{{assetbaseUrl}}"],
+							"path": ["api", "asset", "v1", "userlinks", "master-data", "all"]
+						},
+						"description": "Get comprehensive master data including all entities:\n- Users (from asset user links)\n- Assets (with category, subcategory, make, model, status)\n- Components\n- Warranties (with asset details, dates, provider, status, terms)\n- AMCs (with asset details, dates, status)\n- Makes (with subcategory info)\n- Models (with make info)\n- Categories\n- Sub-categories (with category info)\n- Vendors (with contact details, address)\n- Outlets (with address, contact info, vendor info)\n- Statuses (with code, description, category)\n- Summary counts for all entities\n- Audit information (login userId, login username, requestedAt)\n\n**Response Structure:**\n```json\n{\n  \"success\": true,\n  \"message\": \"All master data retrieved successfully\",\n  \"data\": {\n    \"users\": [...],\n    \"assets\": [...],\n    \"components\": [...],\n    \"warranties\": [...],\n    \"amcs\": [...],\n    \"makes\": [...],\n    \"models\": [...],\n    \"categories\": [...],\n    \"subCategories\": [...],\n    \"vendors\": [...],\n    \"outlets\": [...],\n    \"statuses\": [...],\n    \"summary\": {\n      \"totalUsers\": 10,\n      \"totalAssets\": 50,\n      \"totalComponents\": 20,\n      ...\n    },\n    \"audit\": {\n      \"loginUserId\": 123,\n      \"loginUsername\": \"john.doe\",\n      \"requestedAt\": \"2024-01-15T10:30:00\"\n    }\n  }\n}\n```\n\n**Note:** This endpoint returns ALL master data without filtering. Use the filtered endpoint if you need data for a specific user."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "2. Get Master Data by User ID",
+			"item": [
+				{
+					"name": "Get Master Data Filtered by User ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}",
+								"type": "text",
+								"description": "JWT Bearer token from auth-service. The token is used to extract login userId and username for audit purposes."
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{assetbaseUrl}}/api/asset/v1/userlinks/master-data/all?userId={{userId}}",
+							"host": ["{{assetbaseUrl}}"],
+							"path": ["api", "asset", "v1", "userlinks", "master-data", "all"],
+							"query": [
+								{
+									"key": "userId",
+									"value": "{{userId}}",
+									"description": "User ID to filter master data. Returns only data related to this user:\n- User information for this user\n- Assets assigned to this user\n- Components assigned to this user\n- Warranties for this user's assets\n- AMCs for this user's assets\n- Makes/Models/Categories/Sub-categories of this user's assets\n- Statuses used by this user's assets",
+									"disabled": false
+								}
+							]
+						},
+						"description": "Get comprehensive master data filtered by a specific user ID.\n\n**Query Parameters:**\n- userId: User ID to filter data ({{userId}}) - Required\n\n**Returns only data related to the specified user:**\n- User information for the specified user\n- Assets assigned to the user\n- Components assigned to the user\n- Warranties for the user's assets\n- AMCs for the user's assets\n- Makes/Models/Categories/Sub-categories of the user's assets\n- Vendors/Outlets related to the user's assets (if applicable)\n- Statuses used by the user's assets\n- Summary counts for filtered entities\n- Audit information (login userId, login username, requestedAt, filteredByUserId)\n\n**Response Structure:**\n```json\n{\n  \"success\": true,\n  \"message\": \"Master data retrieved successfully for user ID: 123\",\n  \"data\": {\n    \"users\": [\n      {\n        \"userId\": 123,\n        \"username\": \"john.doe\",\n        \"email\": \"john@example.com\",\n        \"mobile\": \"+1234567890\",\n        \"assignedDate\": \"2024-01-10T09:00:00\",\n        \"unassignedDate\": null\n      }\n    ],\n    \"assets\": [\n      {\n        \"assetId\": 1,\n        \"assetNameUdv\": \"Laptop-001\",\n        \"assetStatus\": \"ACTIVE\",\n        \"categoryId\": 1,\n        \"categoryName\": \"Electronics\",\n        \"subCategoryId\": 1,\n        \"subCategoryName\": \"Laptops\",\n        \"makeId\": 1,\n        \"makeName\": \"Dell\",\n        \"modelId\": 1,\n        \"modelName\": \"XPS 13\",\n        \"active\": true,\n        \"createdBy\": \"admin\",\n        \"createdAt\": \"2024-01-01T00:00:00\",\n        \"updatedBy\": \"admin\",\n        \"updatedAt\": \"2024-01-01T00:00:00\"\n      }\n    ],\n    \"components\": [...],\n    \"warranties\": [...],\n    \"amcs\": [...],\n    \"makes\": [...],\n    \"models\": [...],\n    \"categories\": [...],\n    \"subCategories\": [...],\n    \"vendors\": [...],\n    \"outlets\": [...],\n    \"statuses\": [...],\n    \"summary\": {\n      \"totalUsers\": 1,\n      \"totalAssets\": 5,\n      \"totalComponents\": 2,\n      ...\n    },\n    \"audit\": {\n      \"loginUserId\": 456,\n      \"loginUsername\": \"admin\",\n      \"requestedAt\": \"2024-01-15T10:30:00\",\n      \"filteredByUserId\": 123\n    }\n  }\n}\n```\n\n**Example Usage:**\n- Get all data for user ID 123: `?userId=123`\n- The login user (from token) making the request is tracked in the audit section\n- The filtered user ID is also included in the audit section"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Master Data Filtered by User ID (Example)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{assetbaseUrl}}/api/asset/v1/userlinks/master-data/all?userId=123",
+							"host": ["{{assetbaseUrl}}"],
+							"path": ["api", "asset", "v1", "userlinks", "master-data", "all"],
+							"query": [
+								{
+									"key": "userId",
+									"value": "123",
+									"description": "Example: Get master data for user ID 123",
+									"disabled": false
+								}
+							]
+						},
+						"description": "Example request to get master data for user ID 123. Replace 123 with the actual user ID you want to query."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "3. Need Your Attention",
+			"item": [
+				{
+					"name": "Get Need Your Attention Data",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}",
+								"type": "text",
+								"description": "JWT Bearer token from auth-service. The token is used to extract login userId and username for audit purposes."
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{assetbaseUrl}}/api/asset/v1/userlinks/need-your-attention",
+							"host": ["{{assetbaseUrl}}"],
+							"path": ["api", "asset", "v1", "userlinks", "need-your-attention"]
+						},
+						"description": "Get comprehensive 'Need Your Attention' data including all entities in detail with attention indicators.\n\n**This endpoint returns:**\n- **All Master Data:**\n  - Users (from asset user links)\n  - Assets (with category, subcategory, make, model, status, serial number, purchase date)\n  - Components\n  - Warranties (with asset details, dates, provider, status, terms)\n  - AMCs (with asset details, dates, status)\n  - Makes (with subcategory info)\n  - Models (with make info)\n  - Categories\n  - Sub-categories (with category info)\n  - Vendors (with contact details, address)\n  - Outlets (with address, contact info, vendor info)\n  - Statuses (with code, description, category)\n\n- **Summary Counts:**\n  - Total counts for all entity types\n\n- **Attention Indicators:**\n  - `expiringWarranties`: Warranties expiring within 30 days\n  - `expiringWarrantiesCount`: Count of expiring warranties\n  - `expiringAmcs`: AMCs expiring within 30 days\n  - `expiringAmcsCount`: Count of expiring AMCs\n  - `assetsWithoutWarranty`: Assets that don't have a warranty\n  - `assetsWithoutWarrantyCount`: Count of assets without warranty\n  - `assetsWithoutAmc`: Assets that don't have an AMC\n  - `assetsWithoutAmcCount`: Count of assets without AMC\n  - `unassignedAssets`: Assets not assigned to any user\n  - `unassignedAssetsCount`: Count of unassigned assets\n\n- **Audit Information:**\n  - loginUserId, loginUsername, requestedAt, requestType\n\n**Response Structure:**\n```json\n{\n  \"success\": true,\n  \"message\": \"Need Your Attention data retrieved successfully\",\n  \"data\": {\n    \"users\": [...],\n    \"assets\": [...],\n    \"components\": [...],\n    \"warranties\": [...],\n    \"amcs\": [...],\n    \"makes\": [...],\n    \"models\": [...],\n    \"categories\": [...],\n    \"subCategories\": [...],\n    \"vendors\": [...],\n    \"outlets\": [...],\n    \"statuses\": [...],\n    \"summary\": {\n      \"totalUsers\": 10,\n      \"totalAssets\": 50,\n      \"totalComponents\": 20,\n      \"totalWarranties\": 30,\n      \"totalAmcs\": 15,\n      ...\n    },\n    \"attention\": {\n      \"expiringWarranties\": [...],\n      \"expiringWarrantiesCount\": 5,\n      \"expiringAmcs\": [...],\n      \"expiringAmcsCount\": 3,\n      \"assetsWithoutWarranty\": [...],\n      \"assetsWithoutWarrantyCount\": 10,\n      \"assetsWithoutAmc\": [...],\n      \"assetsWithoutAmcCount\": 8,\n      \"unassignedAssets\": [...],\n      \"unassignedAssetsCount\": 12\n    },\n    \"audit\": {\n      \"loginUserId\": 123,\n      \"loginUsername\": \"admin\",\n      \"requestedAt\": \"2024-01-15T10:30:00\",\n      \"requestType\": \"NEED_YOUR_ATTENTION\"\n    }\n  }\n}\n```\n\n**Use Cases:**\n- Dashboard overview showing all entities\n- Identifying items that need attention (expiring warranties, unassigned assets, etc.)\n- Comprehensive data export\n- System health monitoring\n- Reporting and analytics"
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "assetbaseUrl",
+			"value": "http://localhost:8083",
+			"type": "string",
+			"description": "Base URL for Asset Service API. Default: http://localhost:8083\n\n**Common Values:**\n- Local: http://localhost:8083\n- Development: http://dev-asset-service.example.com\n- Production: https://api.example.com/asset-service"
+		},
+		{
+			"key": "accessToken",
+			"value": "",
+			"type": "string",
+			"description": "JWT Bearer token obtained from auth-service login endpoint.\n\n**How to get:**\n1. Login to auth-service using POST /api/auth/login\n2. Copy the accessToken from the response\n3. Set this variable with the token value (without 'Bearer ' prefix)\n\n**Format:** The token will be automatically prefixed with 'Bearer ' in the Authorization header.\n\n**Note:** The token is used to:\n- Authenticate the request\n- Extract login userId and username for audit purposes"
+		},
+		{
+			"key": "userId",
+			"value": "123",
+			"type": "string",
+			"description": "User ID to filter master data (for query parameter).\n\n**Usage:**\n- Use in the query parameter: ?userId={{userId}}\n- Leave empty or omit parameter to get all master data\n- Example: 123, 456, etc.\n\n**Note:** This is the user ID whose data you want to retrieve, not the login user ID (which is extracted from the token)."
+		}
+	]
+}
+

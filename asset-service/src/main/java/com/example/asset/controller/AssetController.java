@@ -4,12 +4,14 @@ import com.example.asset.dto.AssetRequest;
 import com.example.asset.dto.AssetResponseDTO;
 import com.example.asset.dto.BulkAssetRequest;
 import com.example.asset.dto.BulkUploadResponse;
+import com.example.asset.dto.CompleteAssetCreationRequest;
 import com.example.asset.entity.AssetMaster;
 import com.example.asset.service.AssetCrudService;
 import com.example.asset.service.ExcelParsingService;
 import com.example.common.util.ResponseWrapper;
 import org.springframework.web.multipart.MultipartFile;
 import jakarta.validation.Valid;
+import io.swagger.v3.oas.annotations.Operation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -20,6 +22,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.http.HttpStatus;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * ✅ AssetController
@@ -217,6 +220,87 @@ public class AssetController {
     
         } catch (Exception e) {
             log.error("❌ Failed to bulk upload assets from Excel: {}", e.getMessage(), e);
+            return ResponseEntity.internalServerError()
+                    .body(new ResponseWrapper<>(false, "❌ " + e.getMessage(), null));
+        }
+    }
+
+    // ============================================================
+    // 🚀 COMPLETE ASSET CREATION (All-in-One)
+    // ============================================================
+    /**
+     * Create asset with all related information in one request:
+     * - Asset basic info (Title/UI Name, Model Number, Serial Number)
+     * - Warranty information (Purchase/Installation Date, Limited Warranty)
+     * - Purchase Invoice document upload
+     * - User assignment (Added to)
+     * 
+     * This endpoint combines multiple operations into a single transaction.
+     * Accepts all parameters as separate form-data fields.
+     */
+    @PostMapping(value = "/complete", consumes = "multipart/form-data")
+    @Operation(summary = "Create asset with all related information in one request", 
+               description = "Creates asset, warranty, uploads document, and assigns to user in a single transaction. Accepts all parameters as separate form-data fields.")
+    public ResponseEntity<ResponseWrapper<Map<String, Object>>> createCompleteAsset(
+            @RequestHeader HttpHeaders headers,
+            // User Context
+            @RequestParam("userId") Long userId,
+            @RequestParam("username") String username,
+            @RequestParam(value = "projectType", required = false, defaultValue = "ASSET_SERVICE") String projectType,
+            // Asset Basic Information
+            @RequestParam("assetNameUdv") String assetNameUdv,
+            @RequestParam("modelId") Long modelId,
+            @RequestParam(value = "serialNumber", required = false) String serialNumber,
+            @RequestParam(value = "categoryId", required = false) Long categoryId,
+            @RequestParam(value = "subCategoryId", required = false) Long subCategoryId,
+            @RequestParam(value = "makeId", required = false) Long makeId,
+            @RequestParam(value = "assetStatus", required = false) String assetStatus,
+            // Warranty Information
+            @RequestParam("warrantyStartDate") String warrantyStartDate,
+            @RequestParam("warrantyEndDate") String warrantyEndDate,
+            @RequestParam(value = "warrantyProvider", required = false) String warrantyProvider,
+            @RequestParam(value = "warrantyStatus", required = false) String warrantyStatus,
+            @RequestParam(value = "warrantyTerms", required = false) String warrantyTerms,
+            // User Assignment
+            @RequestParam("targetUserId") Long targetUserId,
+            @RequestParam(value = "targetUsername", required = false) String targetUsername,
+            // Document Upload
+            @RequestParam(value = "purchaseInvoice", required = false) MultipartFile purchaseInvoiceFile) {
+        
+        log.info("🚀 [POST] /assets/complete - Creating complete asset: name={}, modelId={}, targetUserId={}",
+                assetNameUdv, modelId, targetUserId);
+        
+        try {
+            // Build CompleteAssetCreationRequest from parameters
+            CompleteAssetCreationRequest request = new CompleteAssetCreationRequest();
+            request.setUserId(userId);
+            request.setUsername(username);
+            request.setProjectType(projectType);
+            request.setAssetNameUdv(assetNameUdv);
+            request.setModelId(modelId);
+            request.setSerialNumber(serialNumber);
+            request.setCategoryId(categoryId);
+            request.setSubCategoryId(subCategoryId);
+            request.setMakeId(makeId);
+            request.setAssetStatus(assetStatus);
+            request.setWarrantyStartDate(java.time.LocalDate.parse(warrantyStartDate));
+            request.setWarrantyEndDate(java.time.LocalDate.parse(warrantyEndDate));
+            request.setWarrantyProvider(warrantyProvider);
+            request.setWarrantyStatus(warrantyStatus);
+            request.setWarrantyTerms(warrantyTerms);
+            request.setTargetUserId(targetUserId);
+            request.setTargetUsername(targetUsername);
+            
+            Map<String, Object> result = assetService.createCompleteAsset(headers, request, purchaseInvoiceFile);
+            
+            return ResponseEntity.ok(new ResponseWrapper<>(
+                    true,
+                    "✅ Asset created successfully with warranty, document, and user assignment",
+                    result
+            ));
+            
+        } catch (Exception e) {
+            log.error("❌ Failed to create complete asset: {}", e.getMessage(), e);
             return ResponseEntity.internalServerError()
                     .body(new ResponseWrapper<>(false, "❌ " + e.getMessage(), null));
         }

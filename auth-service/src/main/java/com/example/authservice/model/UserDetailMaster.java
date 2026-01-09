@@ -69,6 +69,31 @@ public class UserDetailMaster extends BaseEntity {
     @Column(name = "account_locked")
     private Boolean accountLocked = false;
 
+    // Address fields
+    @Convert(converter = JpaAttributeEncryptor.class)
+    @Column(name = "pincode_enc", length = 1024)
+    private String pincode;
+
+    @Convert(converter = JpaAttributeEncryptor.class)
+    @Column(name = "city_enc", length = 1024)
+    private String city;
+
+    @Convert(converter = JpaAttributeEncryptor.class)
+    @Column(name = "state_enc", length = 1024)
+    private String state;
+
+    @Convert(converter = JpaAttributeEncryptor.class)
+    @Column(name = "country_enc", length = 1024)
+    private String country;
+
+    // Terms & Conditions acceptance
+    @Column(name = "accept_tc")
+    private Boolean acceptTc = false;
+
+    // Country code for mobile validation
+    @Column(name = "country_code", length = 10)
+    private String countryCode;
+
     // ✅ Auto-compute HMAC values before insert/update
     @PrePersist
     @PreUpdate
@@ -119,5 +144,23 @@ public class UserDetailMaster extends BaseEntity {
 
     public Boolean getAccountLocked() { return accountLocked; }
     public void setAccountLocked(Boolean accountLocked) { this.accountLocked = accountLocked; }
+
+    public String getPincode() { return pincode; }
+    public void setPincode(String pincode) { this.pincode = pincode; }
+
+    public String getCity() { return city; }
+    public void setCity(String city) { this.city = city; }
+
+    public String getState() { return state; }
+    public void setState(String state) { this.state = state; }
+
+    public String getCountry() { return country; }
+    public void setCountry(String country) { this.country = country; }
+
+    public Boolean getAcceptTc() { return acceptTc; }
+    public void setAcceptTc(Boolean acceptTc) { this.acceptTc = acceptTc; }
+
+    public String getCountryCode() { return countryCode; }
+    public void setCountryCode(String countryCode) { this.countryCode = countryCode; }
 }
 

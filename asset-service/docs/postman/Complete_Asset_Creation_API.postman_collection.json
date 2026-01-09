@@ -1,0 +1,516 @@
+{
+	"info": {
+		"_postman_id": "complete-asset-creation-collection",
+		"name": "Complete Asset Creation API - All-in-One Endpoint",
+		"description": "Postman collection for Complete Asset Creation API endpoint.\n\n**Endpoint:**\n- POST /api/asset/v1/assets/complete - Create asset with all related information in one request\n\n**Features:**\n- Create asset with basic info (Title/UI Name, Model Number, Serial Number)\n- Create warranty (Purchase/Installation Date, Limited Warranty)\n- Upload purchase invoice document\n- Assign asset to user (Added to)\n- All operations in a single atomic transaction\n\n**Request Format:**\n- Content-Type: multipart/form-data\n- All parameters as separate form-data fields\n- `purchaseInvoice` (File) - Optional purchase invoice document\n\n**Environment Variables Required:**\n- assetbaseUrl: Base URL (default: http://localhost:8083)\n- accessToken: JWT Bearer token from auth-service\n- userId, username: Caller user context\n- targetUserId, targetUsername: Target user for asset assignment",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "32725094"
+	},
+	"item": [
+		{
+			"name": "1. Complete Asset Creation",
+			"item": [
+				{
+					"name": "Create Complete Asset (With Document)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}",
+								"type": "text",
+								"description": "JWT Bearer token from auth-service"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "userId",
+									"value": "{{userId}}",
+									"type": "text",
+									"description": "Caller user ID (required)"
+								},
+								{
+									"key": "username",
+									"value": "{{username}}",
+									"type": "text",
+									"description": "Caller username (required)"
+								},
+								{
+									"key": "projectType",
+									"value": "{{projectType}}",
+									"type": "text",
+									"description": "Project type (optional, default: ASSET_SERVICE)"
+								},
+								{
+									"key": "assetNameUdv",
+									"value": "Laptop-Dell-XPS13-001",
+									"type": "text",
+									"description": "Title/UI Name (required)"
+								},
+								{
+									"key": "modelId",
+									"value": "{{modelId}}",
+									"type": "text",
+									"description": "Model Number - Model ID (required)"
+								},
+								{
+									"key": "serialNumber",
+									"value": "SN123456789",
+									"type": "text",
+									"description": "Serial Number (optional)"
+								},
+								{
+									"key": "categoryId",
+									"value": "{{categoryId}}",
+									"type": "text",
+									"description": "Category ID (optional)"
+								},
+								{
+									"key": "subCategoryId",
+									"value": "{{subCategoryId}}",
+									"type": "text",
+									"description": "SubCategory ID (optional)"
+								},
+								{
+									"key": "makeId",
+									"value": "{{makeId}}",
+									"type": "text",
+									"description": "Make ID (optional, will use make from model if not provided)"
+								},
+								{
+									"key": "assetStatus",
+									"value": "ACTIVE",
+									"type": "text",
+									"description": "Asset Status (optional, e.g., ACTIVE, INACTIVE)"
+								},
+								{
+									"key": "warrantyStartDate",
+									"value": "2024-01-15",
+									"type": "text",
+									"description": "Purchase and Installation Date (required, format: yyyy-MM-dd)"
+								},
+								{
+									"key": "warrantyEndDate",
+									"value": "2025-01-15",
+									"type": "text",
+									"description": "Limited Warranty end date (required, format: yyyy-MM-dd)"
+								},
+								{
+									"key": "warrantyProvider",
+									"value": "Dell Inc.",
+									"type": "text",
+									"description": "Warranty Provider (optional)"
+								},
+								{
+									"key": "warrantyStatus",
+									"value": "ACTIVE",
+									"type": "text",
+									"description": "Warranty Status (optional, default: ACTIVE)"
+								},
+								{
+									"key": "warrantyTerms",
+									"value": "Standard manufacturer warranty",
+									"type": "text",
+									"description": "Warranty Terms/Description (optional)"
+								},
+								{
+									"key": "targetUserId",
+									"value": "{{targetUserId}}",
+									"type": "text",
+									"description": "Added to - Target User ID (required)"
+								},
+								{
+									"key": "targetUsername",
+									"value": "{{targetUsername}}",
+									"type": "text",
+									"description": "Added to - Target Username (optional)"
+								},
+								{
+									"key": "purchaseInvoice",
+									"type": "file",
+									"src": [],
+									"description": "Upload Purchase Invoice - Document file (PDF, image, etc.) - Optional"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{assetbaseUrl}}/api/asset/v1/assets/complete",
+							"host": ["{{assetbaseUrl}}"],
+							"path": ["api", "asset", "v1", "assets", "complete"]
+						},
+						"description": "Create a complete asset with all related information in one request.\n\n**Request Parts:**\n1. `request` (JSON): Complete asset creation request\n2. `purchaseInvoice` (File): Optional purchase invoice document\n\n**Request Body Fields:**\n- **User Context:**\n  - `userId`: Caller user ID ({{userId}})\n  - `username`: Caller username ({{username}})\n  - `projectType`: Project type (default: ASSET_SERVICE)\n\n- **Asset Basic Information:**\n  - `assetNameUdv`: Title/UI Name (required)\n  - `modelId`: Model Number (required)\n  - `serialNumber`: Serial Number (optional)\n  - `categoryId`: Category ID (optional)\n  - `subCategoryId`: SubCategory ID (optional)\n  - `makeId`: Make ID (optional, will use make from model if not provided)\n  - `assetStatus`: Asset status (optional, e.g., ACTIVE, INACTIVE)\n\n- **Warranty Information:**\n  - `warrantyStartDate`: Purchase and Installation Date (required, format: yyyy-MM-dd)\n  - `warrantyEndDate`: Limited Warranty end date (required, format: yyyy-MM-dd)\n  - `warrantyProvider`: Warranty provider name (optional)\n  - `warrantyStatus`: Warranty status (optional, default: ACTIVE)\n  - `warrantyTerms`: Warranty terms/description (optional)\n\n- **User Assignment:**\n  - `targetUserId`: Added to - User ID to assign asset to (required)\n  - `targetUsername`: Added to - Username (optional, will be derived if not provided)\n\n**Response Structure:**\n```json\n{\n  \"success\": true,\n  \"message\": \"✅ Asset created successfully with warranty, document, and user assignment\",\n  \"data\": {\n    \"assetId\": 123,\n    \"assetNameUdv\": \"Laptop-Dell-XPS13-001\",\n    \"serialNumber\": \"SN123456789\",\n    \"purchaseDate\": \"2024-01-15\",\n    \"modelId\": 5,\n    \"modelName\": \"XPS 13\",\n    \"categoryId\": 1,\n    \"categoryName\": \"Electronics\",\n    \"subCategoryId\": 1,\n    \"subCategoryName\": \"Laptops\",\n    \"makeId\": 1,\n    \"makeName\": \"Dell\",\n    \"assetStatus\": \"ACTIVE\",\n    \"warrantyId\": 456,\n    \"warrantyStartDate\": \"2024-01-15\",\n    \"warrantyEndDate\": \"2025-01-15\",\n    \"warrantyProvider\": \"Dell Inc.\",\n    \"warrantyStatus\": \"ACTIVE\",\n    \"documentId\": 789,\n    \"documentFileName\": \"invoice.pdf\",\n    \"documentFilePath\": \"/uploads/documents/invoice.pdf\",\n    \"targetUserId\": 100,\n    \"targetUsername\": \"john.doe\",\n    \"linkStatus\": \"linked\"\n  }\n}\n```\n\n**What This Endpoint Does:**\n1. ✅ Creates asset with provided information\n2. ✅ Sets serial number and purchase date\n3. ✅ Creates warranty with start/end dates\n4. ✅ Uploads purchase invoice document (if provided)\n5. ✅ Links asset to target user\n6. ✅ All operations in a single transaction (atomic)\n\n**Error Handling:**\n- If any step fails, the entire transaction is rolled back\n- Returns detailed error messages for validation failures"
+					},
+					"response": []
+				},
+				{
+					"name": "Create Complete Asset (Without Document)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "userId",
+									"value": "{{userId}}",
+									"type": "text",
+									"description": "Caller user ID"
+								},
+								{
+									"key": "username",
+									"value": "{{username}}",
+									"type": "text",
+									"description": "Caller username"
+								},
+								{
+									"key": "projectType",
+									"value": "ASSET_SERVICE",
+									"type": "text",
+									"description": "Project type"
+								},
+								{
+									"key": "assetNameUdv",
+									"value": "Desktop-HP-Pavilion-002",
+									"type": "text",
+									"description": "Title/UI Name"
+								},
+								{
+									"key": "modelId",
+									"value": "{{modelId}}",
+									"type": "text",
+									"description": "Model Number - Model ID"
+								},
+								{
+									"key": "serialNumber",
+									"value": "SN987654321",
+									"type": "text",
+									"description": "Serial Number"
+								},
+								{
+									"key": "warrantyStartDate",
+									"value": "2024-02-01",
+									"type": "text",
+									"description": "Purchase and Installation Date"
+								},
+								{
+									"key": "warrantyEndDate",
+									"value": "2026-02-01",
+									"type": "text",
+									"description": "Limited Warranty end date"
+								},
+								{
+									"key": "warrantyProvider",
+									"value": "HP",
+									"type": "text",
+									"description": "Warranty Provider"
+								},
+								{
+									"key": "warrantyStatus",
+									"value": "ACTIVE",
+									"type": "text",
+									"description": "Warranty Status"
+								},
+								{
+									"key": "targetUserId",
+									"value": "{{targetUserId}}",
+									"type": "text",
+									"description": "Added to - Target User ID"
+								},
+								{
+									"key": "targetUsername",
+									"value": "{{targetUsername}}",
+									"type": "text",
+									"description": "Added to - Target Username"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{assetbaseUrl}}/asset/v1/assets/complete",
+							"host": ["{{assetbaseUrl}}"],
+							"path": ["api", "asset", "v1", "assets", "complete"]
+						},
+						"description": "Create a complete asset without uploading a purchase invoice document.\n\n**Note:** The `purchaseInvoice` part is omitted. All other operations (asset creation, warranty creation, user assignment) will still be performed."
+					},
+					"response": []
+				},
+				{
+					"name": "Create Complete Asset (Minimal Required Fields)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "userId",
+									"value": "{{userId}}",
+									"type": "text",
+									"description": "Caller user ID (required)"
+								},
+								{
+									"key": "username",
+									"value": "{{username}}",
+									"type": "text",
+									"description": "Caller username (required)"
+								},
+								{
+									"key": "assetNameUdv",
+									"value": "Monitor-Samsung-003",
+									"type": "text",
+									"description": "Title/UI Name (required)"
+								},
+								{
+									"key": "modelId",
+									"value": "{{modelId}}",
+									"type": "text",
+									"description": "Model Number - Model ID (required)"
+								},
+								{
+									"key": "warrantyStartDate",
+									"value": "2024-03-01",
+									"type": "text",
+									"description": "Purchase and Installation Date (required, format: yyyy-MM-dd)"
+								},
+								{
+									"key": "warrantyEndDate",
+									"value": "2025-03-01",
+									"type": "text",
+									"description": "Limited Warranty end date (required, format: yyyy-MM-dd)"
+								},
+								{
+									"key": "targetUserId",
+									"value": "{{targetUserId}}",
+									"type": "text",
+									"description": "Added to - Target User ID (required)"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{assetbaseUrl}}/api/asset/v1/assets/complete",
+							"host": ["{{assetbaseUrl}}"],
+							"path": ["api", "asset", "v1", "assets", "complete"]
+						},
+						"description": "Create asset with minimal required fields only.\n\n**Required Fields:**\n- `userId`: Caller user ID\n- `username`: Caller username\n- `assetNameUdv`: Asset name/title\n- `modelId`: Model ID\n- `warrantyStartDate`: Warranty start date\n- `warrantyEndDate`: Warranty end date\n- `targetUserId`: User ID to assign asset to\n\n**Optional Fields (will use defaults if not provided):**\n- `serialNumber`: Will be null if not provided\n- `categoryId`, `subCategoryId`, `makeId`: Will be derived from model if not provided\n- `warrantyProvider`, `warrantyStatus`, `warrantyTerms`: Will use defaults\n- `purchaseInvoice`: Document upload is optional"
+					},
+					"response": []
+				},
+				{
+					"name": "Create Complete Asset (Full Example)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "userId",
+									"value": "1",
+									"type": "text",
+									"description": "Caller user ID"
+								},
+								{
+									"key": "username",
+									"value": "admin",
+									"type": "text",
+									"description": "Caller username"
+								},
+								{
+									"key": "projectType",
+									"value": "ASSET_SERVICE",
+									"type": "text",
+									"description": "Project type"
+								},
+								{
+									"key": "assetNameUdv",
+									"value": "Laptop-Dell-XPS13-2024-001",
+									"type": "text",
+									"description": "Title/UI Name"
+								},
+								{
+									"key": "modelId",
+									"value": "5",
+									"type": "text",
+									"description": "Model Number - Model ID"
+								},
+								{
+									"key": "serialNumber",
+									"value": "DLXPS13-2024-001-SN123456789",
+									"type": "text",
+									"description": "Serial Number"
+								},
+								{
+									"key": "categoryId",
+									"value": "1",
+									"type": "text",
+									"description": "Category ID"
+								},
+								{
+									"key": "subCategoryId",
+									"value": "1",
+									"type": "text",
+									"description": "SubCategory ID"
+								},
+								{
+									"key": "makeId",
+									"value": "1",
+									"type": "text",
+									"description": "Make ID"
+								},
+								{
+									"key": "assetStatus",
+									"value": "ACTIVE",
+									"type": "text",
+									"description": "Asset Status"
+								},
+								{
+									"key": "warrantyStartDate",
+									"value": "2024-01-15",
+									"type": "text",
+									"description": "Purchase and Installation Date (format: yyyy-MM-dd)"
+								},
+								{
+									"key": "warrantyEndDate",
+									"value": "2025-01-15",
+									"type": "text",
+									"description": "Limited Warranty end date (format: yyyy-MM-dd)"
+								},
+								{
+									"key": "warrantyProvider",
+									"value": "Dell Inc.",
+									"type": "text",
+									"description": "Warranty Provider"
+								},
+								{
+									"key": "warrantyStatus",
+									"value": "ACTIVE",
+									"type": "text",
+									"description": "Warranty Status"
+								},
+								{
+									"key": "warrantyTerms",
+									"value": "Standard manufacturer warranty covering parts and labor for 1 year from purchase date. Includes on-site service for business customers.",
+									"type": "text",
+									"description": "Warranty Terms/Description"
+								},
+								{
+									"key": "targetUserId",
+									"value": "123",
+									"type": "text",
+									"description": "Added to - Target User ID"
+								},
+								{
+									"key": "targetUsername",
+									"value": "john.doe",
+									"type": "text",
+									"description": "Added to - Target Username"
+								},
+								{
+									"key": "purchaseInvoice",
+									"type": "file",
+									"src": [],
+									"description": "Upload Purchase Invoice - Document file (PDF, image, etc.)"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{assetbaseUrl}}/api/asset/v1/assets/complete",
+							"host": ["{{assetbaseUrl}}"],
+							"path": ["api", "asset", "v1", "assets", "complete"]
+						},
+						"description": "Full example with all fields populated and document upload.\n\n**Example Values:**\n- Asset Name: \"Laptop-Dell-XPS13-2024-001\"\n- Serial Number: \"DLXPS13-2024-001-SN123456789\"\n- Model ID: 5\n- Warranty: 1 year (2024-01-15 to 2025-01-15)\n- Target User: john.doe (ID: 123)\n\n**Use this as a template and replace with your actual values.**"
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "assetbaseUrl",
+			"value": "http://localhost:8083",
+			"type": "string",
+			"description": "Base URL for Asset Service API. Default: http://localhost:8083\n\n**Common Values:**\n- Local: http://localhost:8083\n- Development: http://dev-asset-service.example.com\n- Production: https://api.example.com/asset-service"
+		},
+		{
+			"key": "accessToken",
+			"value": "",
+			"type": "string",
+			"description": "JWT Bearer token obtained from auth-service login endpoint.\n\n**How to get:**\n1. Login to auth-service using POST /api/auth/login\n2. Copy the accessToken from the response\n3. Set this variable with the token value (without 'Bearer ' prefix)\n\n**Format:** The token will be automatically prefixed with 'Bearer ' in the Authorization header."
+		},
+		{
+			"key": "userId",
+			"value": "1",
+			"type": "string",
+			"description": "Caller user ID (the user making the request). Used for audit purposes."
+		},
+		{
+			"key": "username",
+			"value": "admin",
+			"type": "string",
+			"description": "Caller username (the user making the request). Used for audit purposes."
+		},
+		{
+			"key": "projectType",
+			"value": "ASSET_SERVICE",
+			"type": "string",
+			"description": "Project type identifier. Default: ASSET_SERVICE"
+		},
+		{
+			"key": "modelId",
+			"value": "5",
+			"type": "string",
+			"description": "Model ID (Model Number). Required field. Must be a valid model ID from the product_model table."
+		},
+		{
+			"key": "categoryId",
+			"value": "1",
+			"type": "string",
+			"description": "Category ID (optional). Must be a valid category ID from the product_category table."
+		},
+		{
+			"key": "subCategoryId",
+			"value": "1",
+			"type": "string",
+			"description": "SubCategory ID (optional). Must be a valid subcategory ID from the product_sub_category table."
+		},
+		{
+			"key": "makeId",
+			"value": "1",
+			"type": "string",
+			"description": "Make ID (optional). If not provided, will use the make from the model. Must be a valid make ID from the product_make table."
+		},
+		{
+			"key": "targetUserId",
+			"value": "123",
+			"type": "string",
+			"description": "Target user ID (Added to). Required field. The user ID to assign the asset to."
+		},
+		{
+			"key": "targetUsername",
+			"value": "john.doe",
+			"type": "string",
+			"description": "Target username (Added to). Optional. If not provided, will be derived as 'user_{targetUserId}'."
+		}
+	]
+}
+

@@ -1,0 +1,622 @@
+{
+	"info": {
+		"_postman_id": "notification-service-api-collection",
+		"name": "Notification Service API - Complete Collection",
+		"description": "Postman collection for Notification Service API endpoints.\n\n**Key Features:**\n- Multi-channel notification support (SMS, Email, WhatsApp, In-App)\n- Template-based notifications with dynamic variable substitution\n- Priority levels (LOW, NORMAL, HIGH, URGENT)\n- Asynchronous processing\n- Metadata support\n\n**Environment Variables Required:**\n- notificationbaseUrl: Base URL (default: http://localhost:8082)\n- accessToken: JWT Bearer token from auth-service\n- templateCode: Template code for notifications\n- recipient: Recipient address (phone/email/userId)",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "32725094"
+	},
+	"item": [
+		{
+			"name": "1. SMS Notifications",
+			"item": [
+				{
+					"name": "Send SMS - OTP",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 202) {",
+									"    console.log('SMS notification queued successfully');",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}",
+								"type": "text",
+								"description": "JWT Bearer token from auth-service"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"channel\": \"SMS\",\n  \"templateCode\": \"OTP_SMS\",\n  \"recipient\": \"{{mobile}}\",\n  \"variables\": {\n    \"otp\": \"123456\",\n    \"expiry\": \"3\"\n  },\n  \"priority\": \"HIGH\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{notificationbaseUrl}}/api/notifications",
+							"host": ["{{notificationbaseUrl}}"],
+							"path": ["api", "notifications"]
+						},
+						"description": "Send SMS notification with OTP template.\n\n**Request Body:**\n- `channel`: \"SMS\" (required)\n- `templateCode`: Template code (e.g., \"OTP_SMS\") (required)\n- `recipient`: Phone number with country code (e.g., \"+919876543210\") (required)\n- `variables`: Dynamic variables for template (required)\n  - `otp`: OTP code\n  - `expiry`: Expiry time in minutes\n- `priority`: Priority level (LOW, NORMAL, HIGH, URGENT) - optional\n\n**Example Response (202 Accepted):**\n```\nSMS Notification accepted\n```"
+					},
+					"response": [
+						{
+							"name": "Success - SMS Queued",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{accessToken}}"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"channel\": \"SMS\",\n  \"templateCode\": \"OTP_SMS\",\n  \"recipient\": \"+919876543210\",\n  \"variables\": {\n    \"otp\": \"123456\",\n    \"expiry\": \"3\"\n  },\n  \"priority\": \"HIGH\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{notificationbaseUrl}}/api/notifications",
+									"host": ["{{notificationbaseUrl}}"],
+									"path": ["api", "notifications"]
+								}
+							},
+							"status": "Accepted",
+							"code": 202,
+							"_postman_previewlanguage": "text",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "text/plain;charset=UTF-8"
+								}
+							],
+							"cookie": [],
+							"body": "SMS Notification accepted"
+						}
+					]
+				},
+				{
+					"name": "Send SMS - Welcome",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"channel\": \"SMS\",\n  \"templateCode\": \"WELCOME_SMS\",\n  \"recipient\": \"{{mobile}}\",\n  \"variables\": {\n    \"name\": \"John Doe\",\n    \"appName\": \"Asset Management\"\n  },\n  \"priority\": \"NORMAL\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{notificationbaseUrl}}/api/notifications",
+							"host": ["{{notificationbaseUrl}}"],
+							"path": ["api", "notifications"]
+						},
+						"description": "Send welcome SMS notification.\n\n**Variables:**\n- `name`: User name\n- `appName`: Application name"
+					},
+					"response": [
+						{
+							"name": "Success",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{accessToken}}"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"channel\": \"SMS\",\n  \"templateCode\": \"WELCOME_SMS\",\n  \"recipient\": \"+919876543210\",\n  \"variables\": {\n    \"name\": \"John Doe\",\n    \"appName\": \"Asset Management\"\n  }\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{notificationbaseUrl}}/api/notifications",
+									"host": ["{{notificationbaseUrl}}"],
+									"path": ["api", "notifications"]
+								}
+							},
+							"status": "Accepted",
+							"code": 202,
+							"_postman_previewlanguage": "text",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "text/plain;charset=UTF-8"
+								}
+							],
+							"cookie": [],
+							"body": "SMS Notification accepted"
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "2. Email Notifications",
+			"item": [
+				{
+					"name": "Send Email - Welcome",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"channel\": \"EMAIL\",\n  \"templateCode\": \"WELCOME_EMAIL\",\n  \"recipient\": \"{{email}}\",\n  \"variables\": {\n    \"name\": \"John Doe\",\n    \"activationLink\": \"https://example.com/activate?token=abc123\"\n  },\n  \"priority\": \"NORMAL\",\n  \"metadata\": {\n    \"source\": \"auth-service\",\n    \"eventType\": \"USER_REGISTERED\"\n  }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{notificationbaseUrl}}/api/notifications",
+							"host": ["{{notificationbaseUrl}}"],
+							"path": ["api", "notifications"]
+						},
+						"description": "Send welcome email notification.\n\n**Variables:**\n- `name`: User name\n- `activationLink`: Account activation link\n\n**Metadata:**\n- `source`: Service that triggered notification\n- `eventType`: Event type for tracking"
+					},
+					"response": [
+						{
+							"name": "Success",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{accessToken}}"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"channel\": \"EMAIL\",\n  \"templateCode\": \"WELCOME_EMAIL\",\n  \"recipient\": \"john.doe@example.com\",\n  \"variables\": {\n    \"name\": \"John Doe\",\n    \"activationLink\": \"https://example.com/activate?token=abc123\"\n  }\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{notificationbaseUrl}}/api/notifications",
+									"host": ["{{notificationbaseUrl}}"],
+									"path": ["api", "notifications"]
+								}
+							},
+							"status": "Accepted",
+							"code": 202,
+							"_postman_previewlanguage": "text",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "text/plain;charset=UTF-8"
+								}
+							],
+							"cookie": [],
+							"body": "EMAIL Notification accepted"
+						}
+					]
+				},
+				{
+					"name": "Send Email - Password Reset",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"channel\": \"EMAIL\",\n  \"templateCode\": \"PASSWORD_RESET_EMAIL\",\n  \"recipient\": \"{{email}}\",\n  \"variables\": {\n    \"name\": \"John Doe\",\n    \"resetLink\": \"https://example.com/reset?token=xyz789\",\n    \"expiry\": \"15\"\n  },\n  \"priority\": \"HIGH\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{notificationbaseUrl}}/api/notifications",
+							"host": ["{{notificationbaseUrl}}"],
+							"path": ["api", "notifications"]
+						},
+						"description": "Send password reset email notification.\n\n**Variables:**\n- `name`: User name\n- `resetLink`: Password reset link\n- `expiry`: Link expiry time in minutes"
+					},
+					"response": [
+						{
+							"name": "Success",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{accessToken}}"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"channel\": \"EMAIL\",\n  \"templateCode\": \"PASSWORD_RESET_EMAIL\",\n  \"recipient\": \"john.doe@example.com\",\n  \"variables\": {\n    \"name\": \"John Doe\",\n    \"resetLink\": \"https://example.com/reset?token=xyz789\",\n    \"expiry\": \"15\"\n  }\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{notificationbaseUrl}}/api/notifications",
+									"host": ["{{notificationbaseUrl}}"],
+									"path": ["api", "notifications"]
+								}
+							},
+							"status": "Accepted",
+							"code": 202,
+							"_postman_previewlanguage": "text",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "text/plain;charset=UTF-8"
+								}
+							],
+							"cookie": [],
+							"body": "EMAIL Notification accepted"
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "3. WhatsApp Notifications",
+			"item": [
+				{
+					"name": "Send WhatsApp - Order Confirmation",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"channel\": \"WHATSAPP\",\n  \"templateCode\": \"ORDER_CONFIRMATION\",\n  \"recipient\": \"{{mobile}}\",\n  \"variables\": {\n    \"orderId\": \"ORD-12345\",\n    \"amount\": \"99.99\",\n    \"currency\": \"USD\",\n    \"deliveryDate\": \"2024-01-20\"\n  },\n  \"priority\": \"NORMAL\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{notificationbaseUrl}}/api/notifications",
+							"host": ["{{notificationbaseUrl}}"],
+							"path": ["api", "notifications"]
+						},
+						"description": "Send WhatsApp notification for order confirmation.\n\n**Variables:**\n- `orderId`: Order ID\n- `amount`: Order amount\n- `currency`: Currency code\n- `deliveryDate`: Expected delivery date"
+					},
+					"response": [
+						{
+							"name": "Success",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{accessToken}}"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"channel\": \"WHATSAPP\",\n  \"templateCode\": \"ORDER_CONFIRMATION\",\n  \"recipient\": \"+919876543210\",\n  \"variables\": {\n    \"orderId\": \"ORD-12345\",\n    \"amount\": \"99.99\",\n    \"currency\": \"USD\",\n    \"deliveryDate\": \"2024-01-20\"\n  }\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{notificationbaseUrl}}/api/notifications",
+									"host": ["{{notificationbaseUrl}}"],
+									"path": ["api", "notifications"]
+								}
+							},
+							"status": "Accepted",
+							"code": 202,
+							"_postman_previewlanguage": "text",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "text/plain;charset=UTF-8"
+								}
+							],
+							"cookie": [],
+							"body": "WHATSAPP Notification accepted"
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "4. In-App Notifications",
+			"item": [
+				{
+					"name": "Send In-App - Asset Assignment",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"channel\": \"INAPP\",\n  \"templateCode\": \"ASSIGNMENT_NOTIFICATION\",\n  \"recipient\": \"{{userId}}\",\n  \"variables\": {\n    \"assetName\": \"Laptop-001\",\n    \"assignedBy\": \"Admin\",\n    \"assignedDate\": \"2024-01-15\"\n  },\n  \"priority\": \"HIGH\",\n  \"metadata\": {\n    \"source\": \"asset-service\",\n    \"eventType\": \"ASSET_ASSIGNED\",\n    \"assetId\": \"1\"\n  }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{notificationbaseUrl}}/api/notifications",
+							"host": ["{{notificationbaseUrl}}"],
+							"path": ["api", "notifications"]
+						},
+						"description": "Send in-app notification for asset assignment.\n\n**Variables:**\n- `assetName`: Asset name\n- `assignedBy`: Username who assigned\n- `assignedDate`: Assignment date\n\n**Metadata:**\n- `source`: Service name\n- `eventType`: Event type\n- `assetId`: Asset ID for navigation"
+					},
+					"response": [
+						{
+							"name": "Success",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{accessToken}}"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"channel\": \"INAPP\",\n  \"templateCode\": \"ASSIGNMENT_NOTIFICATION\",\n  \"recipient\": \"123\",\n  \"variables\": {\n    \"assetName\": \"Laptop-001\",\n    \"assignedBy\": \"Admin\",\n    \"assignedDate\": \"2024-01-15\"\n  },\n  \"priority\": \"HIGH\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{notificationbaseUrl}}/api/notifications",
+									"host": ["{{notificationbaseUrl}}"],
+									"path": ["api", "notifications"]
+								}
+							},
+							"status": "Accepted",
+							"code": 202,
+							"_postman_previewlanguage": "text",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "text/plain;charset=UTF-8"
+								}
+							],
+							"cookie": [],
+							"body": "INAPP Notification accepted"
+						}
+					]
+				},
+				{
+					"name": "Send In-App - Warranty Expiry",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"channel\": \"INAPP\",\n  \"templateCode\": \"WARRANTY_EXPIRY\",\n  \"recipient\": \"{{userId}}\",\n  \"variables\": {\n    \"assetName\": \"Laptop-001\",\n    \"expiryDate\": \"2024-02-15\",\n    \"daysRemaining\": \"30\"\n  },\n  \"priority\": \"URGENT\",\n  \"metadata\": {\n    \"source\": \"asset-service\",\n    \"eventType\": \"WARRANTY_EXPIRING\",\n    \"assetId\": \"1\",\n    \"warrantyId\": \"1\"\n  }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{notificationbaseUrl}}/api/notifications",
+							"host": ["{{notificationbaseUrl}}"],
+							"path": ["api", "notifications"]
+						},
+						"description": "Send in-app notification for warranty expiry warning.\n\n**Variables:**\n- `assetName`: Asset name\n- `expiryDate`: Warranty expiry date\n- `daysRemaining`: Days until expiry\n\n**Priority:** URGENT for expiring warranties"
+					},
+					"response": [
+						{
+							"name": "Success",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{accessToken}}"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"channel\": \"INAPP\",\n  \"templateCode\": \"WARRANTY_EXPIRY\",\n  \"recipient\": \"123\",\n  \"variables\": {\n    \"assetName\": \"Laptop-001\",\n    \"expiryDate\": \"2024-02-15\",\n    \"daysRemaining\": \"30\"\n  },\n  \"priority\": \"URGENT\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{notificationbaseUrl}}/api/notifications",
+									"host": ["{{notificationbaseUrl}}"],
+									"path": ["api", "notifications"]
+								}
+							},
+							"status": "Accepted",
+							"code": 202,
+							"_postman_previewlanguage": "text",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "text/plain;charset=UTF-8"
+								}
+							],
+							"cookie": [],
+							"body": "INAPP Notification accepted"
+						}
+					]
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "notificationbaseUrl",
+			"value": "http://localhost:8082",
+			"type": "string",
+			"description": "Base URL for Notification Service API. Default: http://localhost:8082\n\n**Common Values:**\n- Local: http://localhost:8082\n- Development: http://dev-notification-service.example.com\n- Production: https://api.example.com/notification-service"
+		},
+		{
+			"key": "accessToken",
+			"value": "",
+			"type": "string",
+			"description": "JWT Bearer token obtained from auth-service login endpoint.\n\n**How to get:**\n1. Login to auth-service using POST /api/auth/login\n2. Copy the accessToken from the response\n3. Set this variable with the token value (without 'Bearer ' prefix)\n\n**Usage:**\nUse in Authorization header: Bearer {{accessToken}}"
+		},
+		{
+			"key": "templateCode",
+			"value": "OTP_SMS",
+			"type": "string",
+			"description": "Template code for notifications.\n\n**Common Template Codes:**\n- OTP_SMS, OTP_EMAIL\n- WELCOME_SMS, WELCOME_EMAIL\n- PASSWORD_RESET_EMAIL\n- ORDER_CONFIRMATION\n- ASSIGNMENT_NOTIFICATION\n- WARRANTY_EXPIRY"
+		},
+		{
+			"key": "recipient",
+			"value": "+919876543210",
+			"type": "string",
+			"description": "Recipient address:\n- SMS/WhatsApp: Phone number with country code (e.g., +919876543210)\n- Email: Email address (e.g., user@example.com)\n- In-App: User ID (e.g., 123)"
+		},
+		{
+			"key": "mobile",
+			"value": "+919876543210",
+			"type": "string",
+			"description": "Mobile number with country code for SMS/WhatsApp"
+		},
+		{
+			"key": "email",
+			"value": "user@example.com",
+			"type": "string",
+			"description": "Email address for email notifications"
+		},
+		{
+			"key": "userId",
+			"value": "123",
+			"type": "string",
+			"description": "User ID for in-app notifications"
+		}
+	]
+}
+

@@ -521,6 +521,12 @@ public class AuthServiceImpl {
     // 🔹 Standard USER Registration
     // =====================================================
     public User register(String usernamePlain, String password, String emailPlain, String mobilePlain, String projectType) {
+        return register(usernamePlain, password, emailPlain, mobilePlain, null, projectType, null, null, null, null, null);
+    }
+
+    public User register(String usernamePlain, String password, String emailPlain, String mobilePlain, 
+                        String countryCode, String projectType, String pincode, String city, 
+                        String state, String country, Boolean acceptTc) {
         if (usernamePlain == null || usernamePlain.isBlank())
             throw new IllegalArgumentException("Username is required");
 
@@ -556,6 +562,12 @@ public class AuthServiceImpl {
         detail.setUsername(usernamePlain);
         detail.setEmail(emailPlain);
         detail.setMobile(mobilePlain);
+        detail.setCountryCode(countryCode);
+        detail.setPincode(pincode);
+        detail.setCity(city);
+        detail.setState(state);
+        detail.setCountry(country);
+        detail.setAcceptTc(acceptTc != null ? acceptTc : false);
         detail.setCreatedBy("system");
         detail.setActive(true);
         detail.setUser(user);
@@ -568,6 +580,12 @@ public class AuthServiceImpl {
     // 🔹 ADMIN Registration (Same duplicate rule)
     // =====================================================
     public User adminregister(String usernamePlain, String password, String emailPlain, String mobilePlain, String projectType) {
+        return adminregister(usernamePlain, password, emailPlain, mobilePlain, null, projectType, null, null, null, null, null);
+    }
+
+    public User adminregister(String usernamePlain, String password, String emailPlain, String mobilePlain,
+                             String countryCode, String projectType, String pincode, String city,
+                             String state, String country, Boolean acceptTc) {
         if (usernamePlain == null || usernamePlain.isBlank())
             throw new IllegalArgumentException("Username is required");
 
@@ -602,6 +620,12 @@ public class AuthServiceImpl {
         detail.setUsername(usernamePlain);
         detail.setEmail(emailPlain);
         detail.setMobile(mobilePlain);
+        detail.setCountryCode(countryCode);
+        detail.setPincode(pincode);
+        detail.setCity(city);
+        detail.setState(state);
+        detail.setCountry(country);
+        detail.setAcceptTc(acceptTc != null ? acceptTc : false);
         detail.setCreatedBy("system");
         detail.setActive(true);
         detail.setUser(user);

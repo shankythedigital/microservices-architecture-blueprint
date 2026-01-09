@@ -8,7 +8,9 @@ import com.example.asset.dto.AssetUserMultiLinkRequest;
 import com.example.asset.dto.AssetUserMultiDelinkRequest;
 import com.example.asset.service.UserLinkService;
 import com.example.asset.service.ValidationService;
+import com.example.common.security.JwtVerifier;
 import com.example.common.util.ResponseWrapper;
+import io.jsonwebtoken.Claims;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,11 +30,14 @@ public class UserLinkController {
 
     private final UserLinkService linkService;
     private final ValidationService validationService;
+    private final JwtVerifier jwtVerifier;
 
     public UserLinkController(UserLinkService linkService,
-                              ValidationService validationService) {
+                              ValidationService validationService,
+                              JwtVerifier jwtVerifier) {
         this.linkService = linkService;
         this.validationService = validationService;
+        this.jwtVerifier = jwtVerifier;
     }
 
     // ================================
@@ -210,6 +215,111 @@ public ResponseEntity<ResponseWrapper<Map<String, Object>>> delinkMultipleEntiti
         List<Map<String, Object>> result = linkService.getUsersBySubCategory(token, subCategoryId);
 
         return ResponseEntity.ok(new ResponseWrapper<>(true, "Users fetched", result));
+    }
+
+    // ================================
+    // GET ALL MASTER DATA IN DETAIL
+    // ================================
+    @GetMapping("/master-data/all")
+    @Operation(summary = "Get comprehensive master data including users, assets, components, warranties, AMCs, makes, models, categories, sub-categories, vendors, outlets, and statuses. Optionally filter by userId.")
+    public ResponseEntity<ResponseWrapper<Map<String, Object>>> getAllMasterDataInDetail(
+            @RequestHeader HttpHeaders headers,
+            @RequestParam(required = false) Long userId) {
+
+        log.info("📊 Comprehensive Master Data Request{}", userId != null ? " for userId: " + userId : "");
+        try {
+            String token = extractBearer(headers);
+            
+            // Extract login user info from token for audit
+            Long loginUserId = null;
+            String loginUsername = null;
+            try {
+                String tokenValue = token.startsWith("Bearer ") ? token.substring(7) : token;
+                Claims claims = jwtVerifier.parseToken(tokenValue).getBody();
+                String userIdStr = claims.getSubject();
+                if (userIdStr != null) {
+                    try {
+                        loginUserId = Long.parseLong(userIdStr);
+                    } catch (NumberFormatException e) {
+                        log.warn("⚠️ Could not parse userId from token: {}", userIdStr);
+                    }
+                }
+                Object usernameObj = claims.get("username");
+                if (usernameObj == null) {
+                    usernameObj = claims.get("preferred_username");
+                }
+                if (usernameObj != null) {
+                    loginUsername = usernameObj.toString();
+                }
+            } catch (Exception e) {
+                log.warn("⚠️ Could not extract user info from token: {}", e.getMessage());
+            }
+
+            Map<String, Object> result = linkService.getAllMasterDataInDetailByUserId(userId, loginUserId, loginUsername);
+
+            String message = userId != null ? 
+                    "Master data retrieved successfully for user ID: " + userId : 
+                    "All master data retrieved successfully";
+            
+            return ResponseEntity.ok(
+                    new ResponseWrapper<>(true, message, result));
+
+        } catch (Exception e) {
+            log.error("❌ Failed to retrieve master data{}: {}", 
+                    userId != null ? " for userId: " + userId : "", e.getMessage(), e);
+            return ResponseEntity.badRequest()
+                    .body(new ResponseWrapper<>(false, e.getMessage(), null));
+        }
+    }
+
+    // ================================
+    // NEED YOUR ATTENTION API
+    // ================================
+    @GetMapping("/need-your-attention")
+    @Operation(summary = "Get comprehensive 'Need Your Attention' data including all entities in detail", 
+               description = "Returns all features: users, assets, components, warranties, AMCs, makes, models, categories, sub-categories, vendors, outlets, statuses, and attention indicators (expiring warranties, expiring AMCs, assets without warranty/AMC, unassigned assets)")
+    public ResponseEntity<ResponseWrapper<Map<String, Object>>> getNeedYourAttention(
+            @RequestHeader HttpHeaders headers) {
+
+        log.info("📊 Need Your Attention API Request");
+        try {
+            String token = extractBearer(headers);
+            
+            // Extract login user info from token for audit
+            Long loginUserId = null;
+            String loginUsername = null;
+            try {
+                String tokenValue = token.startsWith("Bearer ") ? token.substring(7) : token;
+                Claims claims = jwtVerifier.parseToken(tokenValue).getBody();
+                String userIdStr = claims.getSubject();
+                if (userIdStr != null) {
+                    try {
+                        loginUserId = Long.parseLong(userIdStr);
+                    } catch (NumberFormatException e) {
+                        log.warn("⚠️ Could not parse userId from token: {}", userIdStr);
+                    }
+                }
+                Object usernameObj = claims.get("username");
+                if (usernameObj == null) {
+                    usernameObj = claims.get("preferred_username");
+                }
+                if (usernameObj != null) {
+                    loginUsername = usernameObj.toString();
+                }
+            } catch (Exception e) {
+                log.warn("⚠️ Could not extract user info from token: {}", e.getMessage());
+            }
+
+            Map<String, Object> result = linkService.getNeedYourAttentionData(loginUserId, loginUsername);
+            
+            return ResponseEntity.ok(
+                    new ResponseWrapper<>(true, "Need Your Attention data retrieved successfully", result));
+
+        } catch (Exception e) {
+            log.error("❌ Failed to retrieve Need Your Attention data: {}", e.getMessage(), e);
+            return ResponseEntity.badRequest()
+                    .body(new ResponseWrapper<>(false, e.getMessage(), null));
+        }
     }
 
     private String extractBearer(HttpHeaders headers) {

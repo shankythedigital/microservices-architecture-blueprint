@@ -5,6 +5,7 @@ package com.example.authservice.controller;
 import com.example.authservice.dto.*;
 import com.example.authservice.service.impl.AuthServiceImpl;
 import com.example.authservice.service.impl.OtpServiceImpl;
+import com.example.authservice.util.MobileValidationUtil;
 
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -16,7 +17,6 @@ import org.springframework.web.bind.annotation.*;
 import javax.validation.Valid;
 
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.Map;
 
 @RestController
@@ -31,22 +31,80 @@ public class AuthController {
     private UserService userService;
 
     @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody RegisterRequest req) {
+    public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest req) {
         try {
-            authService.register(req.username, req.password, req.email, req.mobile, req.projectType);
-            return ResponseEntity.ok("registered");
+            // Validate Terms & Conditions acceptance
+            if (req.acceptTc == null || !req.acceptTc) {
+                return ResponseEntity.badRequest()
+                        .body(Map.of("error", "Terms and Conditions must be accepted to register"));
+            }
+
+            // Validate mobile number format based on country code
+            String mobileValidationError = MobileValidationUtil.validateMobileWithMessage(req.mobile, req.countryCode);
+            if (mobileValidationError != null) {
+                return ResponseEntity.badRequest().body(Map.of("error", mobileValidationError));
+            }
+
+            // Normalize mobile number
+            String normalizedMobile = MobileValidationUtil.normalizeMobile(req.mobile);
+
+            // Call service with all fields
+            authService.register(
+                    req.username,
+                    req.password,
+                    req.email,
+                    normalizedMobile,
+                    req.countryCode,
+                    req.projectType,
+                    req.pincode,
+                    req.city,
+                    req.state,
+                    req.country,
+                    req.acceptTc
+            );
+            
+            return ResponseEntity.ok(Map.of("message", "User registered successfully", "username", req.username));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
 
     @PostMapping("/adminregister")
-    public ResponseEntity<?> adminregister(@RequestBody RegisterRequest req) {
+    public ResponseEntity<?> adminregister(@Valid @RequestBody RegisterRequest req) {
         try {
-            authService.adminregister(req.username, req.password, req.email, req.mobile, req.projectType);
-            return ResponseEntity.ok("registered");
+            // Validate Terms & Conditions acceptance
+            if (req.acceptTc == null || !req.acceptTc) {
+                return ResponseEntity.badRequest()
+                        .body(Map.of("error", "Terms and Conditions must be accepted to register"));
+            }
+
+            // Validate mobile number format based on country code
+            String mobileValidationError = MobileValidationUtil.validateMobileWithMessage(req.mobile, req.countryCode);
+            if (mobileValidationError != null) {
+                return ResponseEntity.badRequest().body(Map.of("error", mobileValidationError));
+            }
+
+            // Normalize mobile number
+            String normalizedMobile = MobileValidationUtil.normalizeMobile(req.mobile);
+
+            // Call service with all fields
+            authService.adminregister(
+                    req.username,
+                    req.password,
+                    req.email,
+                    normalizedMobile,
+                    req.countryCode,
+                    req.projectType,
+                    req.pincode,
+                    req.city,
+                    req.state,
+                    req.country,
+                    req.acceptTc
+            );
+            
+            return ResponseEntity.ok(Map.of("message", "Admin user registered successfully", "username", req.username));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
 

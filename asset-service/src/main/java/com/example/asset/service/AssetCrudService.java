@@ -242,6 +242,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.Instant;
 import java.util.*;
@@ -264,6 +265,9 @@ public class AssetCrudService {
     private final ProductMakeRepository makeRepo;
     private final ProductModelRepository modelRepo;
     private final AssetComponentRepository componentRepo;
+    private final AssetWarrantyRepository warrantyRepo;
+    private final DocumentService documentService;
+    private final UserLinkService userLinkService;
     private final SafeNotificationHelper safeNotificationHelper;
 
     public AssetCrudService(AssetMasterRepository assetRepo,
@@ -273,6 +277,9 @@ public class AssetCrudService {
             ProductMakeRepository makeRepo,
             ProductModelRepository modelRepo,
             AssetComponentRepository componentRepo,
+            AssetWarrantyRepository warrantyRepo,
+            DocumentService documentService,
+            UserLinkService userLinkService,
             SafeNotificationHelper safeNotificationHelper) {
         this.assetRepo = assetRepo;
         this.linkRepo = linkRepo;
@@ -281,6 +288,9 @@ public class AssetCrudService {
         this.makeRepo = makeRepo;
         this.modelRepo = modelRepo;
         this.componentRepo = componentRepo;
+        this.warrantyRepo = warrantyRepo;
+        this.documentService = documentService;
+        this.userLinkService = userLinkService;
         this.safeNotificationHelper = safeNotificationHelper;
     }
 
@@ -835,6 +845,173 @@ public class AssetCrudService {
         } catch (Exception e) {
             log.error("⚠️ Notification failed [{}]: {}", templateCode, e.getMessage());
         }
+    }
+
+    // ============================================================
+    // 🚀 COMPLETE ASSET CREATION (All-in-One)
+    // ============================================================
+    /**
+     * Create asset with all related information in one transaction:
+     * - Asset creation (name, model, serial number)
+     * - Warranty creation (start/end dates)
+     * - Document upload (purchase invoice)
+     * - User assignment
+     */
+    @Transactional
+    public Map<String, Object> createCompleteAsset(
+            HttpHeaders headers,
+            CompleteAssetCreationRequest request,
+            MultipartFile purchaseInvoiceFile) {
+
+        String bearer = extractBearer(headers);
+        String username = request.getUsername();
+        Long userId = request.getUserId();
+        String projectType = Optional.ofNullable(request.getProjectType()).orElse("ASSET_SERVICE");
+
+        log.info("🚀 Creating complete asset: name={}, modelId={}, targetUserId={}",
+                request.getAssetNameUdv(), request.getModelId(), request.getTargetUserId());
+
+        // 1️⃣ VALIDATE MODEL
+        ProductModel model = modelRepo.findById(request.getModelId())
+                .orElseThrow(() -> new IllegalArgumentException("❌ Model not found with ID: " + request.getModelId()));
+
+        // 2️⃣ CREATE ASSET
+        AssetMaster asset = new AssetMaster();
+        asset.setAssetNameUdv(request.getAssetNameUdv());
+        asset.setModel(model);
+        
+        // Set serial number
+        if (request.getSerialNumber() != null && !request.getSerialNumber().trim().isEmpty()) {
+            asset.setSerialNumber(request.getSerialNumber().trim());
+        }
+        
+        // Set purchase date (from warranty start date)
+        if (request.getWarrantyStartDate() != null) {
+            asset.setPurchaseDate(request.getWarrantyStartDate());
+        }
+        
+        // Set optional fields
+        if (request.getCategoryId() != null) {
+            asset.setCategory(categoryRepo.findById(request.getCategoryId())
+                    .orElseThrow(() -> new IllegalArgumentException("Category not found: " + request.getCategoryId())));
+        }
+        if (request.getSubCategoryId() != null) {
+            asset.setSubCategory(subCategoryRepo.findById(request.getSubCategoryId())
+                    .orElseThrow(() -> new IllegalArgumentException("SubCategory not found: " + request.getSubCategoryId())));
+        }
+        if (request.getMakeId() != null) {
+            asset.setMake(makeRepo.findById(request.getMakeId())
+                    .orElseThrow(() -> new IllegalArgumentException("Make not found: " + request.getMakeId())));
+        } else if (model.getMake() != null) {
+            asset.setMake(model.getMake()); // Use make from model if not specified
+        }
+        if (request.getAssetStatus() != null) {
+            asset.setAssetStatus(request.getAssetStatus());
+        }
+        
+        asset.setCreatedBy(username);
+        asset.setUpdatedBy(username);
+        asset.setActive(true);
+        
+        AssetMaster savedAsset = assetRepo.save(asset);
+        log.info("✅ Asset created: id={}, name={}", savedAsset.getAssetId(), savedAsset.getAssetNameUdv());
+
+        // 3️⃣ CREATE WARRANTY
+        AssetWarranty warranty = new AssetWarranty();
+        warranty.setAsset(savedAsset);
+        warranty.setWarrantyStartDate(request.getWarrantyStartDate());
+        warranty.setWarrantyEndDate(request.getWarrantyEndDate());
+        warranty.setWarrantyStatus(Optional.ofNullable(request.getWarrantyStatus()).orElse("ACTIVE"));
+        warranty.setWarrantyProvider(request.getWarrantyProvider());
+        warranty.setWarrantyTerms(request.getWarrantyTerms());
+        warranty.setUserId(userId);
+        warranty.setUsername(username);
+        warranty.setActive(true);
+        warranty.setCreatedBy(username);
+        warranty.setUpdatedBy(username);
+        
+        AssetWarranty savedWarranty = warrantyRepo.save(warranty);
+        log.info("✅ Warranty created: id={} for assetId={}", savedWarranty.getWarrantyId(), savedAsset.getAssetId());
+
+        // 4️⃣ UPLOAD DOCUMENT (if provided)
+        AssetDocument savedDocument = null;
+        if (purchaseInvoiceFile != null && !purchaseInvoiceFile.isEmpty()) {
+            DocumentRequest docRequest = new DocumentRequest();
+            docRequest.setUserId(userId);
+            docRequest.setUsername(username);
+            docRequest.setProjectType(projectType);
+            docRequest.setEntityType("ASSET");
+            docRequest.setEntityId(savedAsset.getAssetId());
+            docRequest.setAssetId(savedAsset.getAssetId());
+            docRequest.setDocType("PURCHASE_INVOICE");
+            
+            savedDocument = documentService.upload(headers, purchaseInvoiceFile, docRequest);
+            log.info("✅ Document uploaded: id={} for assetId={}", savedDocument.getDocumentId(), savedAsset.getAssetId());
+        }
+
+        // 5️⃣ LINK USER TO ASSET
+        String linkMessage = userLinkService.linkEntity(
+                bearer,
+                "ASSET",
+                savedAsset.getAssetId(),
+                request.getTargetUserId(),
+                Optional.ofNullable(request.getTargetUsername()).orElse("user_" + request.getTargetUserId()),
+                userId,
+                username
+        );
+        log.info("✅ User linked to asset: {}", linkMessage);
+
+        // 6️⃣ BUILD RESPONSE
+        Map<String, Object> response = new LinkedHashMap<>();
+        response.put("assetId", savedAsset.getAssetId());
+        response.put("assetNameUdv", savedAsset.getAssetNameUdv());
+        response.put("serialNumber", savedAsset.getSerialNumber());
+        response.put("purchaseDate", savedAsset.getPurchaseDate());
+        response.put("modelId", savedAsset.getModel().getModelId());
+        response.put("modelName", savedAsset.getModel().getModelName());
+        if (savedAsset.getCategory() != null) {
+            response.put("categoryId", savedAsset.getCategory().getCategoryId());
+            response.put("categoryName", savedAsset.getCategory().getCategoryName());
+        }
+        if (savedAsset.getSubCategory() != null) {
+            response.put("subCategoryId", savedAsset.getSubCategory().getSubCategoryId());
+            response.put("subCategoryName", savedAsset.getSubCategory().getSubCategoryName());
+        }
+        if (savedAsset.getMake() != null) {
+            response.put("makeId", savedAsset.getMake().getMakeId());
+            response.put("makeName", savedAsset.getMake().getMakeName());
+        }
+        response.put("assetStatus", savedAsset.getAssetStatus());
+        response.put("warrantyId", savedWarranty.getWarrantyId());
+        response.put("warrantyStartDate", savedWarranty.getWarrantyStartDate());
+        response.put("warrantyEndDate", savedWarranty.getWarrantyEndDate());
+        response.put("warrantyProvider", savedWarranty.getWarrantyProvider());
+        response.put("warrantyStatus", savedWarranty.getWarrantyStatus());
+        if (savedDocument != null) {
+            response.put("documentId", savedDocument.getDocumentId());
+            response.put("documentFileName", savedDocument.getFileName());
+            response.put("documentFilePath", savedDocument.getFilePath());
+        }
+        response.put("targetUserId", request.getTargetUserId());
+        response.put("targetUsername", Optional.ofNullable(request.getTargetUsername())
+                .orElse("user_" + request.getTargetUserId()));
+        response.put("linkStatus", linkMessage);
+
+        // 7️⃣ SEND NOTIFICATIONS
+        Map<String, Object> placeholders = new LinkedHashMap<>();
+        placeholders.put("assetId", savedAsset.getAssetId());
+        placeholders.put("assetName", savedAsset.getAssetNameUdv());
+        placeholders.put("targetUserId", request.getTargetUserId());
+        placeholders.put("username", username);
+        placeholders.put("timestamp", Instant.now().toString());
+        
+        sendAssetNotification(bearer, userId, username, "INAPP", "ASSET_CREATED_INAPP", placeholders, projectType);
+
+        log.info("✅ Complete asset creation successful: assetId={}, warrantyId={}, documentId={}, targetUserId={}",
+                savedAsset.getAssetId(), savedWarranty.getWarrantyId(),
+                savedDocument != null ? savedDocument.getDocumentId() : null, request.getTargetUserId());
+
+        return response;
     }
 
     // ============================================================

@@ -4,6 +4,7 @@ import com.example.common.jpa.BaseEntity;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
+import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -26,6 +27,12 @@ public class AssetMaster extends BaseEntity {
 
     @Column(name = "asset_name_udv", nullable = false, unique = true, length = 255)
     private String assetNameUdv;
+
+    @Column(name = "serial_number", length = 255)
+    private String serialNumber;
+
+    @Column(name = "purchase_date")
+    private LocalDate purchaseDate;
 
     // CATEGORY / SUBCATEGORY
     @ManyToOne(fetch = FetchType.LAZY)
@@ -92,6 +99,12 @@ public class AssetMaster extends BaseEntity {
 
     public String getAssetNameUdv() { return assetNameUdv; }
     public void setAssetNameUdv(String assetNameUdv) { this.assetNameUdv = assetNameUdv; }
+
+    public String getSerialNumber() { return serialNumber; }
+    public void setSerialNumber(String serialNumber) { this.serialNumber = serialNumber; }
+
+    public LocalDate getPurchaseDate() { return purchaseDate; }
+    public void setPurchaseDate(LocalDate purchaseDate) { this.purchaseDate = purchaseDate; }
 
     public ProductCategory getCategory() { return category; }
     public void setCategory(ProductCategory category) { this.category = category; }

@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -37,6 +38,11 @@ public class UserLinkService {
     private final AssetWarrantyRepository warrantyRepo;
     private final AssetAmcRepository amcRepo;
     private final AssetDocumentRepository documentRepo;
+    private final ProductCategoryRepository categoryRepo;
+    private final ProductSubCategoryRepository subCategoryRepo;
+    private final VendorRepository vendorRepo;
+    private final PurchaseOutletRepository outletRepo;
+    private final StatusMasterRepository statusRepo;
     private final SafeNotificationHelper safeNotificationHelper;
 
     public UserLinkService(
@@ -48,6 +54,11 @@ public class UserLinkService {
             AssetWarrantyRepository warrantyRepo,
             AssetAmcRepository amcRepo,
             AssetDocumentRepository documentRepo,
+            ProductCategoryRepository categoryRepo,
+            ProductSubCategoryRepository subCategoryRepo,
+            VendorRepository vendorRepo,
+            PurchaseOutletRepository outletRepo,
+            StatusMasterRepository statusRepo,
             SafeNotificationHelper safeNotificationHelper) {
 
         this.linkRepo = linkRepo;
@@ -58,6 +69,11 @@ public class UserLinkService {
         this.warrantyRepo = warrantyRepo;
         this.amcRepo = amcRepo;
         this.documentRepo = documentRepo;
+        this.categoryRepo = categoryRepo;
+        this.subCategoryRepo = subCategoryRepo;
+        this.vendorRepo = vendorRepo;
+        this.outletRepo = outletRepo;
+        this.statusRepo = statusRepo;
         this.safeNotificationHelper = safeNotificationHelper;
     }
 
@@ -643,6 +659,460 @@ public class UserLinkService {
     }
 
     // -------------------------------------------------------------------------
+    // Comprehensive Master Data Retrieval
+    // -------------------------------------------------------------------------
+    /**
+     * Get all master data in detail including:
+     * - Users (from asset user links)
+     * - Assets
+     * - Components
+     * - Warranties
+     * - AMCs
+     * - Makes
+     * - Models
+     * - Categories
+     * - Sub-categories
+     * - Vendors
+     * - Outlets
+     * - Statuses
+     */
+    public Map<String, Object> getAllMasterDataInDetail() {
+        return getAllMasterDataInDetailByUserId(null, null, null);
+    }
+
+    /**
+     * Get all master data in detail filtered by user ID.
+     * Returns only data related to the specified user:
+     * - User information
+     * - Assets assigned to the user
+     * - Components assigned to the user
+     * - Warranties for user's assets
+     * - AMCs for user's assets
+     * - Makes/Models/Categories/Sub-categories of user's assets
+     * - Vendors/Outlets related to user's assets
+     * - Statuses used by user's assets
+     * 
+     * @param userId Optional user ID to filter data (null returns all)
+     * @param loginUserId The ID of the user making the request (for audit)
+     * @param loginUsername The username of the user making the request (for audit)
+     */
+    public Map<String, Object> getAllMasterDataInDetailByUserId(Long userId, Long loginUserId, String loginUsername) {
+        Map<String, Object> result = new LinkedHashMap<>();
+        
+        try {
+            // Get user's active links to determine which assets/components are assigned
+            Set<Long> userAssetIds = new HashSet<>();
+            Set<Long> userComponentIds = new HashSet<>();
+            AssetUserLink userLinkInfo = null;
+            
+            if (userId != null) {
+                List<AssetUserLink> userLinks = linkRepo.findByUserIdAndActiveTrue(userId);
+                for (AssetUserLink link : userLinks) {
+                    if (link.getAssetId() != null) {
+                        userAssetIds.add(link.getAssetId());
+                    }
+                    if (link.getComponentId() != null) {
+                        userComponentIds.add(link.getComponentId());
+                    }
+                    if (userLinkInfo == null) {
+                        userLinkInfo = link; // Store first link for user info
+                    }
+                }
+                
+                if (userLinks.isEmpty()) {
+                    log.warn("⚠️ No active links found for userId: {}", userId);
+                    result.put("message", "No active links found for user ID: " + userId);
+                }
+            }
+            
+            // 1. USER INFORMATION
+            List<Map<String, Object>> users = new ArrayList<>();
+            if (userId != null && userLinkInfo != null) {
+                Map<String, Object> userMap = new LinkedHashMap<>();
+                userMap.put("userId", userLinkInfo.getUserId());
+                userMap.put("username", userLinkInfo.getUsername());
+                userMap.put("email", userLinkInfo.getEmail());
+                userMap.put("mobile", userLinkInfo.getMobile());
+                userMap.put("assignedDate", userLinkInfo.getAssignedDate());
+                userMap.put("unassignedDate", userLinkInfo.getUnassignedDate());
+                users.add(userMap);
+            } else if (userId == null) {
+                // If no userId specified, return all users
+                Set<Long> uniqueUserIds = new HashSet<>();
+                List<AssetUserLink> allLinks = linkRepo.findAll();
+                for (AssetUserLink link : allLinks) {
+                    if (link.getUserId() != null && !uniqueUserIds.contains(link.getUserId())) {
+                        uniqueUserIds.add(link.getUserId());
+                        Map<String, Object> userMap = new LinkedHashMap<>();
+                        userMap.put("userId", link.getUserId());
+                        userMap.put("username", link.getUsername());
+                        userMap.put("email", link.getEmail());
+                        userMap.put("mobile", link.getMobile());
+                        users.add(userMap);
+                    }
+                }
+            }
+            result.put("users", users);
+            
+            // 2. ASSETS (filtered by userId if provided)
+            List<Map<String, Object>> assets = (userId == null ? assetRepo.findAll() : 
+                    assetRepo.findAll().stream()
+                            .filter(asset -> userAssetIds.contains(asset.getAssetId()))
+                            .collect(Collectors.toList())).stream()
+                    .map(asset -> {
+                        Map<String, Object> assetMap = new LinkedHashMap<>();
+                        assetMap.put("assetId", asset.getAssetId());
+                        assetMap.put("assetNameUdv", asset.getAssetNameUdv());
+                        assetMap.put("assetStatus", asset.getAssetStatus());
+                        if (asset.getCategory() != null) {
+                            assetMap.put("categoryId", asset.getCategory().getCategoryId());
+                            assetMap.put("categoryName", asset.getCategory().getCategoryName());
+                        }
+                        if (asset.getSubCategory() != null) {
+                            assetMap.put("subCategoryId", asset.getSubCategory().getSubCategoryId());
+                            assetMap.put("subCategoryName", asset.getSubCategory().getSubCategoryName());
+                        }
+                        if (asset.getMake() != null) {
+                            assetMap.put("makeId", asset.getMake().getMakeId());
+                            assetMap.put("makeName", asset.getMake().getMakeName());
+                        }
+                        if (asset.getModel() != null) {
+                            assetMap.put("modelId", asset.getModel().getModelId());
+                            assetMap.put("modelName", asset.getModel().getModelName());
+                        }
+                        assetMap.put("active", asset.getActive());
+                        assetMap.put("createdBy", asset.getCreatedBy());
+                        assetMap.put("createdAt", asset.getCreatedAt());
+                        assetMap.put("updatedBy", asset.getUpdatedBy());
+                        assetMap.put("updatedAt", asset.getUpdatedAt());
+                        return assetMap;
+                    })
+                    .collect(Collectors.toList());
+            result.put("assets", assets);
+            
+            // Collect related IDs for filtering other entities
+            Set<Long> relatedCategoryIds = new HashSet<>();
+            Set<Long> relatedSubCategoryIds = new HashSet<>();
+            Set<Long> relatedMakeIds = new HashSet<>();
+            Set<Long> relatedModelIds = new HashSet<>();
+            
+            for (AssetMaster asset : (userId == null ? assetRepo.findAll() : 
+                    assetRepo.findAll().stream()
+                            .filter(a -> userAssetIds.contains(a.getAssetId()))
+                            .collect(Collectors.toList()))) {
+                if (asset.getCategory() != null) {
+                    relatedCategoryIds.add(asset.getCategory().getCategoryId());
+                }
+                if (asset.getSubCategory() != null) {
+                    relatedSubCategoryIds.add(asset.getSubCategory().getSubCategoryId());
+                }
+                if (asset.getMake() != null) {
+                    relatedMakeIds.add(asset.getMake().getMakeId());
+                }
+                if (asset.getModel() != null) {
+                    relatedModelIds.add(asset.getModel().getModelId());
+                }
+            }
+            
+            // 3. COMPONENTS (filtered by userId if provided)
+            List<Map<String, Object>> components = (userId == null ? componentRepo.findAll() : 
+                    componentRepo.findAll().stream()
+                            .filter(component -> userComponentIds.contains(component.getComponentId()))
+                            .collect(Collectors.toList())).stream()
+                    .map(component -> {
+                        Map<String, Object> compMap = new LinkedHashMap<>();
+                        compMap.put("componentId", component.getComponentId());
+                        compMap.put("componentName", component.getComponentName());
+                        compMap.put("description", component.getDescription());
+                        compMap.put("active", component.getActive());
+                        compMap.put("createdBy", component.getCreatedBy());
+                        compMap.put("createdAt", component.getCreatedAt());
+                        compMap.put("updatedBy", component.getUpdatedBy());
+                        compMap.put("updatedAt", component.getUpdatedAt());
+                        return compMap;
+                    })
+                    .collect(Collectors.toList());
+            result.put("components", components);
+            
+            // 4. WARRANTIES (filtered by user's assets if userId provided)
+            List<Map<String, Object>> warranties = (userId == null ? warrantyRepo.findAll() : 
+                    warrantyRepo.findAll().stream()
+                            .filter(warranty -> warranty.getAsset() != null && 
+                                    userAssetIds.contains(warranty.getAsset().getAssetId()))
+                            .collect(Collectors.toList())).stream()
+                    .map(warranty -> {
+                        Map<String, Object> warrantyMap = new LinkedHashMap<>();
+                        warrantyMap.put("warrantyId", warranty.getWarrantyId());
+                        if (warranty.getAsset() != null) {
+                            warrantyMap.put("assetId", warranty.getAsset().getAssetId());
+                            warrantyMap.put("assetName", warranty.getAsset().getAssetNameUdv());
+                        }
+                        warrantyMap.put("warrantyStartDate", warranty.getWarrantyStartDate());
+                        warrantyMap.put("warrantyEndDate", warranty.getWarrantyEndDate());
+                        warrantyMap.put("warrantyProvider", warranty.getWarrantyProvider());
+                        warrantyMap.put("warrantyStatus", warranty.getWarrantyStatus());
+                        warrantyMap.put("warrantyTerms", warranty.getWarrantyTerms());
+                        warrantyMap.put("userId", warranty.getUserId());
+                        warrantyMap.put("username", warranty.getUsername());
+                        warrantyMap.put("componentId", warranty.getComponentId());
+                        warrantyMap.put("documentId", warranty.getDocumentId());
+                        warrantyMap.put("active", warranty.getActive());
+                        warrantyMap.put("createdBy", warranty.getCreatedBy());
+                        warrantyMap.put("createdAt", warranty.getCreatedAt());
+                        warrantyMap.put("updatedBy", warranty.getUpdatedBy());
+                        warrantyMap.put("updatedAt", warranty.getUpdatedAt());
+                        return warrantyMap;
+                    })
+                    .collect(Collectors.toList());
+            result.put("warranties", warranties);
+            
+            // 5. AMCs (filtered by user's assets if userId provided)
+            List<Map<String, Object>> amcs = (userId == null ? amcRepo.findAll() : 
+                    amcRepo.findAll().stream()
+                            .filter(amc -> amc.getAsset() != null && 
+                                    userAssetIds.contains(amc.getAsset().getAssetId()))
+                            .collect(Collectors.toList())).stream()
+                    .map(amc -> {
+                        Map<String, Object> amcMap = new LinkedHashMap<>();
+                        amcMap.put("amcId", amc.getAmcId());
+                        if (amc.getAsset() != null) {
+                            amcMap.put("assetId", amc.getAsset().getAssetId());
+                            amcMap.put("assetName", amc.getAsset().getAssetNameUdv());
+                        }
+                        amcMap.put("amcStartDate", amc.getStartDate());
+                        amcMap.put("amcEndDate", amc.getEndDate());
+                        amcMap.put("amcStatus", amc.getAmcStatus());
+                        amcMap.put("userId", amc.getUserId());
+                        amcMap.put("username", amc.getUsername());
+                        amcMap.put("componentId", amc.getComponentId());
+                        amcMap.put("documentId", amc.getDocumentId());
+                        amcMap.put("active", amc.getActive());
+                        amcMap.put("createdBy", amc.getCreatedBy());
+                        amcMap.put("createdAt", amc.getCreatedAt());
+                        amcMap.put("updatedBy", amc.getUpdatedBy());
+                        amcMap.put("updatedAt", amc.getUpdatedAt());
+                        return amcMap;
+                    })
+                    .collect(Collectors.toList());
+            result.put("amcs", amcs);
+            
+            // 6. MAKES (filtered by user's assets if userId provided)
+            List<Map<String, Object>> makes = (userId == null ? makeRepo.findAll() : 
+                    makeRepo.findAll().stream()
+                            .filter(make -> relatedMakeIds.contains(make.getMakeId()))
+                            .collect(Collectors.toList())).stream()
+                    .map(make -> {
+                        Map<String, Object> makeMap = new LinkedHashMap<>();
+                        makeMap.put("makeId", make.getMakeId());
+                        makeMap.put("makeName", make.getMakeName());
+                        if (make.getSubCategory() != null) {
+                            makeMap.put("subCategoryId", make.getSubCategory().getSubCategoryId());
+                            makeMap.put("subCategoryName", make.getSubCategory().getSubCategoryName());
+                        }
+                        makeMap.put("active", make.getActive());
+                        makeMap.put("createdBy", make.getCreatedBy());
+                        makeMap.put("createdAt", make.getCreatedAt());
+                        makeMap.put("updatedBy", make.getUpdatedBy());
+                        makeMap.put("updatedAt", make.getUpdatedAt());
+                        return makeMap;
+                    })
+                    .collect(Collectors.toList());
+            result.put("makes", makes);
+            
+            // 7. MODELS (filtered by user's assets if userId provided)
+            List<Map<String, Object>> models = (userId == null ? modelRepo.findAll() : 
+                    modelRepo.findAll().stream()
+                            .filter(model -> relatedModelIds.contains(model.getModelId()))
+                            .collect(Collectors.toList())).stream()
+                    .map(model -> {
+                        Map<String, Object> modelMap = new LinkedHashMap<>();
+                        modelMap.put("modelId", model.getModelId());
+                        modelMap.put("modelName", model.getModelName());
+                        if (model.getMake() != null) {
+                            modelMap.put("makeId", model.getMake().getMakeId());
+                            modelMap.put("makeName", model.getMake().getMakeName());
+                        }
+                        modelMap.put("active", model.getActive());
+                        modelMap.put("createdBy", model.getCreatedBy());
+                        modelMap.put("createdAt", model.getCreatedAt());
+                        modelMap.put("updatedBy", model.getUpdatedBy());
+                        modelMap.put("updatedAt", model.getUpdatedAt());
+                        return modelMap;
+                    })
+                    .collect(Collectors.toList());
+            result.put("models", models);
+            
+            // 8. CATEGORIES (filtered by user's assets if userId provided)
+            List<Map<String, Object>> categories = (userId == null ? categoryRepo.findAll() : 
+                    categoryRepo.findAll().stream()
+                            .filter(category -> relatedCategoryIds.contains(category.getCategoryId()))
+                            .collect(Collectors.toList())).stream()
+                    .map(category -> {
+                        Map<String, Object> catMap = new LinkedHashMap<>();
+                        catMap.put("categoryId", category.getCategoryId());
+                        catMap.put("categoryName", category.getCategoryName());
+                        catMap.put("description", category.getDescription());
+                        catMap.put("active", category.getActive());
+                        catMap.put("createdBy", category.getCreatedBy());
+                        catMap.put("createdAt", category.getCreatedAt());
+                        catMap.put("updatedBy", category.getUpdatedBy());
+                        catMap.put("updatedAt", category.getUpdatedAt());
+                        return catMap;
+                    })
+                    .collect(Collectors.toList());
+            result.put("categories", categories);
+            
+            // 9. SUB-CATEGORIES (filtered by user's assets if userId provided)
+            List<Map<String, Object>> subCategories = (userId == null ? subCategoryRepo.findAll() : 
+                    subCategoryRepo.findAll().stream()
+                            .filter(subCategory -> relatedSubCategoryIds.contains(subCategory.getSubCategoryId()))
+                            .collect(Collectors.toList())).stream()
+                    .map(subCategory -> {
+                        Map<String, Object> subCatMap = new LinkedHashMap<>();
+                        subCatMap.put("subCategoryId", subCategory.getSubCategoryId());
+                        subCatMap.put("subCategoryName", subCategory.getSubCategoryName());
+                        if (subCategory.getCategory() != null) {
+                            subCatMap.put("categoryId", subCategory.getCategory().getCategoryId());
+                            subCatMap.put("categoryName", subCategory.getCategory().getCategoryName());
+                        }
+                        subCatMap.put("active", subCategory.getActive());
+                        subCatMap.put("createdBy", subCategory.getCreatedBy());
+                        subCatMap.put("createdAt", subCategory.getCreatedAt());
+                        subCatMap.put("updatedBy", subCategory.getUpdatedBy());
+                        subCatMap.put("updatedAt", subCategory.getUpdatedAt());
+                        return subCatMap;
+                    })
+                    .collect(Collectors.toList());
+            result.put("subCategories", subCategories);
+            
+            // 10. VENDORS (return all vendors - not directly linked to assets in current schema)
+            List<Map<String, Object>> vendors = vendorRepo.findAll().stream()
+                    .map(vendor -> {
+                        Map<String, Object> vendorMap = new LinkedHashMap<>();
+                        vendorMap.put("vendorId", vendor.getVendorId());
+                        vendorMap.put("vendorName", vendor.getVendorName());
+                        vendorMap.put("contactPerson", vendor.getContactPerson());
+                        vendorMap.put("email", vendor.getEmail());
+                        vendorMap.put("mobile", vendor.getMobile());
+                        vendorMap.put("address", vendor.getAddress());
+                        if (vendor.getOutlets() != null) {
+                            vendorMap.put("outletCount", vendor.getOutlets().size());
+                        }
+                        vendorMap.put("active", vendor.getActive());
+                        vendorMap.put("createdBy", vendor.getCreatedBy());
+                        vendorMap.put("createdAt", vendor.getCreatedAt());
+                        vendorMap.put("updatedBy", vendor.getUpdatedBy());
+                        vendorMap.put("updatedAt", vendor.getUpdatedAt());
+                        return vendorMap;
+                    })
+                    .collect(Collectors.toList());
+            result.put("vendors", vendors);
+            
+            // 11. OUTLETS (return all if userId is null, or filter if needed)
+            List<Map<String, Object>> outlets = outletRepo.findAll().stream()
+                    .map(outlet -> {
+                        Map<String, Object> outletMap = new LinkedHashMap<>();
+                        outletMap.put("outletId", outlet.getOutletId());
+                        outletMap.put("outletName", outlet.getOutletName());
+                        outletMap.put("outletAddress", outlet.getOutletAddress());
+                        outletMap.put("contactInfo", outlet.getContactInfo());
+                        if (outlet.getVendor() != null) {
+                            outletMap.put("vendorId", outlet.getVendor().getVendorId());
+                            outletMap.put("vendorName", outlet.getVendor().getVendorName());
+                        }
+                        outletMap.put("active", outlet.getActive());
+                        outletMap.put("createdBy", outlet.getCreatedBy());
+                        outletMap.put("createdAt", outlet.getCreatedAt());
+                        outletMap.put("updatedBy", outlet.getUpdatedBy());
+                        outletMap.put("updatedAt", outlet.getUpdatedAt());
+                        return outletMap;
+                    })
+                    .collect(Collectors.toList());
+            result.put("outlets", outlets);
+            
+            // Collect status codes from user's assets
+            Set<String> relatedStatusCodes = new HashSet<>();
+            if (userId != null) {
+                for (AssetMaster asset : assetRepo.findAll().stream()
+                        .filter(a -> userAssetIds.contains(a.getAssetId()))
+                        .collect(Collectors.toList())) {
+                    if (asset.getAssetStatus() != null) {
+                        relatedStatusCodes.add(asset.getAssetStatus());
+                    }
+                }
+            }
+            
+            // 12. STATUSES (filtered by user's asset statuses if userId provided)
+            List<Map<String, Object>> statuses = (userId == null ? statusRepo.findAll() : 
+                    statusRepo.findAll().stream()
+                            .filter(status -> relatedStatusCodes.contains(status.getCode()) || 
+                                    relatedStatusCodes.isEmpty())
+                            .collect(Collectors.toList())).stream()
+                    .map(status -> {
+                        Map<String, Object> statusMap = new LinkedHashMap<>();
+                        statusMap.put("statusId", status.getStatusId());
+                        statusMap.put("code", status.getCode());
+                        statusMap.put("description", status.getDescription());
+                        statusMap.put("category", status.getCategory());
+                        statusMap.put("active", status.getActive());
+                        statusMap.put("createdBy", status.getCreatedBy());
+                        statusMap.put("createdAt", status.getCreatedAt());
+                        statusMap.put("updatedBy", status.getUpdatedBy());
+                        statusMap.put("updatedAt", status.getUpdatedAt());
+                        return statusMap;
+                    })
+                    .collect(Collectors.toList());
+            result.put("statuses", statuses);
+            
+            // Summary counts
+            Map<String, Long> summary = new LinkedHashMap<>();
+            summary.put("totalUsers", (long) users.size());
+            summary.put("totalAssets", (long) assets.size());
+            summary.put("totalComponents", (long) components.size());
+            summary.put("totalWarranties", (long) warranties.size());
+            summary.put("totalAmcs", (long) amcs.size());
+            summary.put("totalMakes", (long) makes.size());
+            summary.put("totalModels", (long) models.size());
+            summary.put("totalCategories", (long) categories.size());
+            summary.put("totalSubCategories", (long) subCategories.size());
+            summary.put("totalVendors", (long) vendors.size());
+            summary.put("totalOutlets", (long) outlets.size());
+            summary.put("totalStatuses", (long) statuses.size());
+            result.put("summary", summary);
+            
+            // Add audit information (login user who made the request)
+            Map<String, Object> auditInfo = new LinkedHashMap<>();
+            auditInfo.put("loginUserId", loginUserId);
+            auditInfo.put("loginUsername", loginUsername);
+            auditInfo.put("requestedAt", LocalDateTime.now());
+            if (userId != null) {
+                auditInfo.put("filteredByUserId", userId);
+            }
+            result.put("audit", auditInfo);
+            
+            String logMessage = userId != null ? 
+                    "✅ Retrieved master data for userId {}: {} users, {} assets, {} components, {} warranties, {} amcs, {} makes, {} models, {} categories, {} subCategories, {} vendors, {} outlets, {} statuses (requested by userId={}, username={})" :
+                    "✅ Retrieved all master data: {} users, {} assets, {} components, {} warranties, {} amcs, {} makes, {} models, {} categories, {} subCategories, {} vendors, {} outlets, {} statuses (requested by userId={}, username={})";
+            
+            if (userId != null) {
+                log.info(logMessage, userId, users.size(), assets.size(), components.size(), warranties.size(), amcs.size(),
+                        makes.size(), models.size(), categories.size(), subCategories.size(),
+                        vendors.size(), outlets.size(), statuses.size(), loginUserId, loginUsername);
+            } else {
+                log.info(logMessage, users.size(), assets.size(), components.size(), warranties.size(), amcs.size(),
+                        makes.size(), models.size(), categories.size(), subCategories.size(),
+                        vendors.size(), outlets.size(), statuses.size(), loginUserId, loginUsername);
+            }
+            
+        } catch (Exception e) {
+            log.error("❌ Error retrieving master data: {}", e.getMessage(), e);
+            result.put("error", e.getMessage());
+        }
+        
+        return result;
+    }
+
+    // -------------------------------------------------------------------------
     // Notification helper
     // -------------------------------------------------------------------------
     private void notifyAudit(String bearer, String action, String username, Long assetId, Long componentId) {
@@ -657,6 +1127,180 @@ public class UserLinkService {
         } catch (Exception e) {
             log.warn("safeNotifyAsync failed for {}: {}", action, e.getMessage());
         }
+    }
+
+    // ========================================================================
+    // NEED YOUR ATTENTION - Comprehensive Dashboard API
+    // ========================================================================
+    /**
+     * Get comprehensive "Need Your Attention" data including all entities in detail.
+     * This API aggregates all features: users, assets, components, warranties, AMCs,
+     * makes, models, categories, sub-categories, vendors, outlets, statuses, and more.
+     * 
+     * @param loginUserId The ID of the user making the request (for audit)
+     * @param loginUsername The username of the user making the request (for audit)
+     * @return Comprehensive map with all entities and summary information
+     */
+    public Map<String, Object> getNeedYourAttentionData(Long loginUserId, String loginUsername) {
+        Map<String, Object> result = new LinkedHashMap<>();
+        
+        try {
+            log.info("📊 Need Your Attention API - Comprehensive data request by user: {}", loginUsername);
+            
+            // Get all master data without filtering
+            Map<String, Object> allMasterData = getAllMasterDataInDetailByUserId(null, loginUserId, loginUsername);
+            
+            // Add enhanced summary counts
+            @SuppressWarnings("unchecked")
+            Map<String, Long> existingSummary = (Map<String, Long>) allMasterData.getOrDefault("summary", new LinkedHashMap<>());
+            Map<String, Object> summary = new LinkedHashMap<>(existingSummary);
+            
+            // Add attention indicators
+            Map<String, Object> attention = new LinkedHashMap<>();
+            
+            // Warranties expiring soon (within 30 days)
+            List<Map<String, Object>> expiringWarranties = new ArrayList<>();
+            LocalDate today = LocalDate.now();
+            LocalDate thirtyDaysFromNow = today.plusDays(30);
+            @SuppressWarnings("unchecked")
+            List<Map<String, Object>> warranties = (List<Map<String, Object>>) allMasterData.getOrDefault("warranties", new ArrayList<>());
+            for (Map<String, Object> warranty : warranties) {
+                Object endDateObj = warranty.get("warrantyEndDate");
+                if (endDateObj != null) {
+                    LocalDate endDate = null;
+                    if (endDateObj instanceof LocalDate) {
+                        endDate = (LocalDate) endDateObj;
+                    } else if (endDateObj instanceof String) {
+                        try {
+                            endDate = LocalDate.parse((String) endDateObj);
+                        } catch (Exception e) {
+                            log.debug("Could not parse warranty end date: {}", endDateObj);
+                            continue;
+                        }
+                    }
+                    if (endDate != null && endDate.isAfter(today) && (endDate.isBefore(thirtyDaysFromNow) || endDate.isEqual(thirtyDaysFromNow))) {
+                        expiringWarranties.add(warranty);
+                    }
+                }
+            }
+            attention.put("expiringWarranties", expiringWarranties);
+            attention.put("expiringWarrantiesCount", expiringWarranties.size());
+            
+            // AMCs expiring soon (within 30 days)
+            List<Map<String, Object>> expiringAmcs = new ArrayList<>();
+            @SuppressWarnings("unchecked")
+            List<Map<String, Object>> amcs = (List<Map<String, Object>>) allMasterData.getOrDefault("amcs", new ArrayList<>());
+            for (Map<String, Object> amc : amcs) {
+                Object endDateObj = amc.get("amcEndDate");
+                if (endDateObj != null) {
+                    LocalDate endDate = null;
+                    if (endDateObj instanceof LocalDate) {
+                        endDate = (LocalDate) endDateObj;
+                    } else if (endDateObj instanceof String) {
+                        try {
+                            endDate = LocalDate.parse((String) endDateObj);
+                        } catch (Exception e) {
+                            log.debug("Could not parse AMC end date: {}", endDateObj);
+                            continue;
+                        }
+                    }
+                    if (endDate != null && endDate.isAfter(today) && (endDate.isBefore(thirtyDaysFromNow) || endDate.isEqual(thirtyDaysFromNow))) {
+                        expiringAmcs.add(amc);
+                    }
+                }
+            }
+            attention.put("expiringAmcs", expiringAmcs);
+            attention.put("expiringAmcsCount", expiringAmcs.size());
+            
+            // Assets without warranty
+            @SuppressWarnings("unchecked")
+            List<Map<String, Object>> assets = (List<Map<String, Object>>) allMasterData.getOrDefault("assets", new ArrayList<>());
+            Set<Long> assetsWithWarranty = warranties.stream()
+                    .filter(w -> w.get("assetId") != null)
+                    .map(w -> {
+                        Object assetId = w.get("assetId");
+                        if (assetId instanceof Number) {
+                            return ((Number) assetId).longValue();
+                        }
+                        return null;
+                    })
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toSet());
+            List<Map<String, Object>> assetsWithoutWarranty = assets.stream()
+                    .filter(a -> {
+                        Object assetId = a.get("assetId");
+                        if (assetId instanceof Number) {
+                            return !assetsWithWarranty.contains(((Number) assetId).longValue());
+                        }
+                        return false;
+                    })
+                    .collect(Collectors.toList());
+            attention.put("assetsWithoutWarranty", assetsWithoutWarranty);
+            attention.put("assetsWithoutWarrantyCount", assetsWithoutWarranty.size());
+            
+            // Assets without AMC
+            Set<Long> assetsWithAmc = amcs.stream()
+                    .filter(a -> a.get("assetId") != null)
+                    .map(a -> {
+                        Object assetId = a.get("assetId");
+                        if (assetId instanceof Number) {
+                            return ((Number) assetId).longValue();
+                        }
+                        return null;
+                    })
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toSet());
+            List<Map<String, Object>> assetsWithoutAmc = assets.stream()
+                    .filter(a -> {
+                        Object assetId = a.get("assetId");
+                        if (assetId instanceof Number) {
+                            return !assetsWithAmc.contains(((Number) assetId).longValue());
+                        }
+                        return false;
+                    })
+                    .collect(Collectors.toList());
+            attention.put("assetsWithoutAmc", assetsWithoutAmc);
+            attention.put("assetsWithoutAmcCount", assetsWithoutAmc.size());
+            
+            // Unassigned assets (no active user link)
+            List<AssetUserLink> allLinks = linkRepo.findAll();
+            Set<Long> assignedAssetIds = allLinks.stream()
+                    .filter(l -> l.getAssetId() != null && l.getActive() != null && l.getActive())
+                    .map(AssetUserLink::getAssetId)
+                    .collect(Collectors.toSet());
+            List<Map<String, Object>> unassignedAssets = assets.stream()
+                    .filter(a -> {
+                        Object assetId = a.get("assetId");
+                        if (assetId instanceof Number) {
+                            return !assignedAssetIds.contains(((Number) assetId).longValue());
+                        }
+                        return false;
+                    })
+                    .collect(Collectors.toList());
+            attention.put("unassignedAssets", unassignedAssets);
+            attention.put("unassignedAssetsCount", unassignedAssets.size());
+            
+            // Build final result - include all master data plus attention indicators
+            result.putAll(allMasterData);
+            result.put("summary", summary);
+            result.put("attention", attention);
+            
+            // Update audit information
+            @SuppressWarnings("unchecked")
+            Map<String, Object> auditInfo = (Map<String, Object>) result.getOrDefault("audit", new LinkedHashMap<>());
+            auditInfo.put("requestType", "NEED_YOUR_ATTENTION");
+            result.put("audit", auditInfo);
+            
+            log.info("✅ Need Your Attention data retrieved successfully - Summary: {}, Attention Items: {} warranties expiring, {} AMCs expiring, {} assets without warranty, {} assets without AMC, {} unassigned assets", 
+                    summary, expiringWarranties.size(), expiringAmcs.size(), 
+                    assetsWithoutWarranty.size(), assetsWithoutAmc.size(), unassignedAssets.size());
+            
+        } catch (Exception e) {
+            log.error("❌ Failed to retrieve Need Your Attention data: {}", e.getMessage(), e);
+            result.put("error", e.getMessage());
+        }
+        
+        return result;
     }
 }
 
