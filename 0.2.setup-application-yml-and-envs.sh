@@ -146,6 +146,15 @@ spring:
 common:
   notification:
     enabled: true
+    
+# Notification List Configuration
+notification:
+  list:
+    # Number of days to display notifications in notification icons
+    # Default: 30 days (notifications older than 30 days will not be shown)
+    display-days: 30
+    # Maximum number of notifications to return (for pagination/performance)
+    max-results: 100
 
 JWT_PRIVATE_KEY_PATH: classpath:keys/jwt-private.pem
 JWT_PUBLIC_KEY_PATH: classpath:keys/jwt-public.pem

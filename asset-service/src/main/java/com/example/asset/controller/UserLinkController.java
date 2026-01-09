@@ -276,16 +276,28 @@ public ResponseEntity<ResponseWrapper<Map<String, Object>>> delinkMultipleEntiti
     // NEED YOUR ATTENTION API
     // ================================
     @GetMapping("/need-your-attention")
-    @Operation(summary = "Get comprehensive 'Need Your Attention' data including all entities in detail", 
-               description = "Returns all features: users, assets, components, warranties, AMCs, makes, models, categories, sub-categories, vendors, outlets, statuses, and attention indicators (expiring warranties, expiring AMCs, assets without warranty/AMC, unassigned assets)")
+    @Operation(summary = "Get comprehensive 'Need Your Attention' data for the logged-in user", 
+               description = "Returns all features filtered by the linked user ID (extracted from JWT token) with comprehensive attention indicators. " +
+                       "**Filtered by linked user ID:** users, assets, components, warranties, AMCs, makes, models, categories, sub-categories, statuses. " +
+                       "**Not filtered (master data):** vendors, outlets (these don't have direct relationships with assets in the current schema). " +
+                       "**Expiry Attention Indicators:** " +
+                       "- Expiring warranties (within 30 days), Expired warranties (already expired) " +
+                       "- Expiring AMCs (within 30 days), Expired AMCs (already expired) " +
+                       "**Inactive Attention Indicators:** " +
+                       "- Inactive assets, Inactive components, Inactive warranties, Inactive AMCs " +
+                       "**Due/Missing Attention Indicators:** " +
+                       "- Assets without warranty, Assets without AMC, Unassigned assets (empty for user-specific view) " +
+                       "**User Attention Indicators (Placeholder):** " +
+                       "- Users needing attention (password expiry, account locked, disabled accounts) - requires auth-service integration " +
+                       "The data is automatically filtered based on the user ID extracted from the JWT token, showing only entities linked to that user via AssetUserLink.")
     public ResponseEntity<ResponseWrapper<Map<String, Object>>> getNeedYourAttention(
             @RequestHeader HttpHeaders headers) {
 
-        log.info("📊 Need Your Attention API Request");
+        log.info("📊 Need Your Attention API Request for logged-in user");
         try {
             String token = extractBearer(headers);
             
-            // Extract login user info from token for audit
+            // Extract login user info from token for filtering and audit
             Long loginUserId = null;
             String loginUsername = null;
             try {
@@ -310,10 +322,21 @@ public ResponseEntity<ResponseWrapper<Map<String, Object>>> delinkMultipleEntiti
                 log.warn("⚠️ Could not extract user info from token: {}", e.getMessage());
             }
 
-            Map<String, Object> result = linkService.getNeedYourAttentionData(loginUserId, loginUsername);
+            // Validate that we have a login user ID
+            if (loginUserId == null) {
+                log.error("❌ Could not extract userId from token for Need Your Attention request");
+                return ResponseEntity.badRequest()
+                        .body(new ResponseWrapper<>(false, "Unable to identify logged-in user from token. Please ensure a valid JWT token is provided.", null));
+            }
+
+            // Pass loginUserId as userId to filter data for the logged-in user
+            // Parameters: (userId for filtering, loginUserId for audit, loginUsername for audit)
+            Map<String, Object> result = linkService.getNeedYourAttentionData(loginUserId, loginUserId, loginUsername);
             
             return ResponseEntity.ok(
-                    new ResponseWrapper<>(true, "Need Your Attention data retrieved successfully", result));
+                    new ResponseWrapper<>(true, 
+                            "Need Your Attention data retrieved successfully for logged-in user: " + loginUsername, 
+                            result));
 
         } catch (Exception e) {
             log.error("❌ Failed to retrieve Need Your Attention data: {}", e.getMessage(), e);

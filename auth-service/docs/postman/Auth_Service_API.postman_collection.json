@@ -1,1766 +1,2455 @@
 {
-	"info": {
-		"_postman_id": "auth-service-api-collection",
-		"name": "Auth Service API - Complete Collection",
-		"description": "Postman collection for Auth Service API endpoints.\n\n**Key Features:**\n- User Registration with address fields (pincode, city, state, country)\n- Mobile number validation based on country code\n- Terms & Conditions acceptance validation\n- Terms & Conditions API for apps to display T&C during registration\n- Multiple login types (PASSWORD, OTP, MPIN, RSA, PASSKEY, AUTHCODE)\n- OTP management\n- Credential management (RSA, WebAuthn)\n- MPIN management\n- Contact change (email/mobile)\n\n**Environment Variables Required:**\n- authbaseUrl: Base URL (default: http://localhost:8080)\n- accessToken: JWT Bearer token (obtained from login)\n- refreshToken: Refresh token (obtained from login)\n- projectType: Project type code (e.g., ASSET_SERVICE)\n- username, password, email, mobile, countryCode, pincode, city, state, country\n- userId, otp, mpin, rsaChallenge, rsaSignature, credentialId, tcId, language\n\n**Note:** Import the environment file (Auth_Service_Environment.postman_environment.json) for all pre-configured variables with default values.",
-		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-		"_exporter_id": "32725094"
-	},
-	"item": [
-		{
-			"name": "1. Registration",
-			"item": [
-				{
-					"name": "Register User (Complete)",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json",
-								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"username\": \"{{username}}\",\n  \"password\": \"{{password}}\",\n  \"email\": \"{{email}}\",\n  \"mobile\": \"{{mobile}}\",\n  \"countryCode\": \"{{countryCode}}\",\n  \"projectType\": \"{{projectType}}\",\n  \"pincode\": \"{{pincode}}\",\n  \"city\": \"{{city}}\",\n  \"state\": \"{{state}}\",\n  \"country\": \"{{country}}\",\n  \"acceptTc\": true\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{authbaseUrl}}/api/auth/register",
-							"host": ["{{authbaseUrl}}"],
-							"path": ["api", "auth", "register"]
-						},
-						"description": "Register a new user with complete information.\n\n**Required Fields:**\n- `username`: Username (required)\n- `mobile`: Mobile number (required)\n- `countryCode`: Country code for mobile validation (required, e.g., \"+91\", \"+1\")\n- `projectType`: Project type (required)\n- `acceptTc`: Terms & Conditions acceptance (required, must be true)\n\n**Optional Fields:**\n- `password`: Password (optional)\n- `email`: Email address (optional)\n- `pincode`: Postal/ZIP code (optional)\n- `city`: City name (optional)\n- `state`: State/Province name (optional)\n- `country`: Country name (optional)\n\n**Mobile Validation:**\n- Mobile number format is validated based on country code\n- Supported country codes: +91 (India), +1 (USA/Canada), +44 (UK), +61 (Australia), +49 (Germany), +33 (France), +86 (China), +81 (Japan), +55 (Brazil), +971 (UAE), +65 (Singapore)\n- Mobile number is normalized (spaces, dashes, parentheses removed)\n\n**Response:**\n```json\n{\n  \"message\": \"User registered successfully\",\n  \"username\": \"john.doe\"\n}\n```\n\n**Error Responses:**\n- T&C not accepted: `{\"error\": \"Terms and Conditions must be accepted to register\"}`\n- Invalid mobile: `{\"error\": \"Invalid mobile number format for country code +91. Please enter a valid mobile number.\"}`"
-					},
-					"response": [
-						{
-							"name": "Success - User Registered",
-							"originalRequest": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "Content-Type",
-										"value": "application/json"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n  \"username\": \"john.doe\",\n  \"password\": \"SecurePass123!\",\n  \"email\": \"john.doe@example.com\",\n  \"mobile\": \"9876543210\",\n  \"countryCode\": \"+91\",\n  \"projectType\": \"ASSET_SERVICE\",\n  \"pincode\": \"400001\",\n  \"city\": \"Mumbai\",\n  \"state\": \"Maharashtra\",\n  \"country\": \"India\",\n  \"acceptTc\": true\n}",
-									"options": {
-										"raw": {
-											"language": "json"
-										}
-									}
-								},
-								"url": {
-									"raw": "{{authbaseUrl}}/api/auth/register",
-									"host": ["{{authbaseUrl}}"],
-									"path": ["api", "auth", "register"]
-								}
-							},
-							"status": "OK",
-							"code": 200,
-							"_postman_previewlanguage": "json",
-							"header": [
-								{
-									"key": "Content-Type",
-									"value": "application/json"
-								}
-							],
-							"cookie": [],
-							"body": "{\n  \"message\": \"User registered successfully\",\n  \"username\": \"john.doe\"\n}"
-						},
-						{
-							"name": "Error - T&C Not Accepted",
-							"originalRequest": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "Content-Type",
-										"value": "application/json"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n  \"username\": \"john.doe\",\n  \"mobile\": \"9876543210\",\n  \"countryCode\": \"+91\",\n  \"projectType\": \"ASSET_SERVICE\",\n  \"acceptTc\": false\n}",
-									"options": {
-										"raw": {
-											"language": "json"
-										}
-									}
-								},
-								"url": {
-									"raw": "{{authbaseUrl}}/api/auth/register",
-									"host": ["{{authbaseUrl}}"],
-									"path": ["api", "auth", "register"]
-								}
-							},
-							"status": "Bad Request",
-							"code": 400,
-							"_postman_previewlanguage": "json",
-							"header": [
-								{
-									"key": "Content-Type",
-									"value": "application/json"
-								}
-							],
-							"cookie": [],
-							"body": "{\n  \"error\": \"Terms and Conditions must be accepted to register\"\n}"
-						}
-					]
-				},
-				{
-					"name": "Register User (Minimal)",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json",
-								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"username\": \"{{username}}\",\n  \"mobile\": \"{{mobile}}\",\n  \"countryCode\": \"{{countryCode}}\",\n  \"projectType\": \"{{projectType}}\",\n  \"acceptTc\": true\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{authbaseUrl}}/api/auth/register",
-							"host": ["{{authbaseUrl}}"],
-							"path": ["api", "auth", "register"]
-						},
-						"description": "Register a new user with minimal required fields only.\n\n**Required Fields:**\n- `username`: Username\n- `mobile`: Mobile number\n- `countryCode`: Country code (e.g., \"+91\")\n- `projectType`: Project type\n- `acceptTc`: Must be true"
-					},
-					"response": []
-				},
-				{
-					"name": "Register User (USA)",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json",
-								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"username\": \"john.usa\",\n  \"password\": \"SecurePass123!\",\n  \"email\": \"john.usa@example.com\",\n  \"mobile\": \"5551234567\",\n  \"countryCode\": \"+1\",\n  \"projectType\": \"ASSET_SERVICE\",\n  \"pincode\": \"10001\",\n  \"city\": \"New York\",\n  \"state\": \"New York\",\n  \"country\": \"United States\",\n  \"acceptTc\": true\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{authbaseUrl}}/api/auth/register",
-							"host": ["{{authbaseUrl}}"],
-							"path": ["api", "auth", "register"]
-						},
-						"description": "Register a user with USA country code (+1).\n\n**USA Mobile Format:**\n- 10 digits\n- Example: 5551234567"
-					},
-					"response": []
-				},
-				{
-					"name": "Register Admin User",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json",
-								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"username\": \"admin.user\",\n  \"password\": \"{{password}}\",\n  \"email\": \"admin@example.com\",\n  \"mobile\": \"{{mobile}}\",\n  \"countryCode\": \"{{countryCode}}\",\n  \"projectType\": \"{{projectType}}\",\n  \"pincode\": \"{{pincode}}\",\n  \"city\": \"{{city}}\",\n  \"state\": \"{{state}}\",\n  \"country\": \"{{country}}\",\n  \"acceptTc\": true\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{authbaseUrl}}/api/auth/adminregister",
-							"host": ["{{authbaseUrl}}"],
-							"path": ["api", "auth", "adminregister"]
-						},
-						"description": "Register a new admin user with complete information.\n\n**Note:** Admin users are assigned ROLE_ADMIN role instead of ROLE_USER.\n\n**All validation rules apply same as regular registration:**\n- T&C must be accepted\n- Mobile format validated based on country code"
-					},
-					"response": []
-				}
-			]
-		},
-		{
-			"name": "2. Login",
-			"item": [
-				{
-					"name": "Login with Password",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"if (pm.response.code === 200) {",
-									"    var jsonData = pm.response.json();",
-									"    if (jsonData.accessToken) {",
-									"        pm.environment.set(\"accessToken\", jsonData.accessToken);",
-									"        console.log(\"✅ Access token saved to environment\");",
-									"    }",
-									"    if (jsonData.refreshToken) {",
-									"        pm.environment.set(\"refreshToken\", jsonData.refreshToken);",
-									"        console.log(\"✅ Refresh token saved to environment\");",
-									"    }",
-									"    if (jsonData.userId) {",
-									"        pm.environment.set(\"userId\", jsonData.userId.toString());",
-									"    }",
-									"    if (jsonData.username) {",
-									"        pm.environment.set(\"username\", jsonData.username);",
-									"    }",
-									"}"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json",
-								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"loginType\": \"PASSWORD\",\n  \"username\": \"{{username}}\",\n  \"password\": \"{{password}}\",\n  \"deviceInfo\": \"Mozilla/5.0 (Windows NT 10.0; Win64; x64)\"\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{authbaseUrl}}/api/auth/login",
-							"host": ["{{authbaseUrl}}"],
-							"path": ["api", "auth", "login"]
-						},
-						"description": "Login using username and password.\n\n**Request Fields:**\n- `loginType`: \"PASSWORD\" (required)\n- `username`: Username (required)\n- `password`: Password (required)\n- `deviceInfo`: Device information (optional)\n\n**Response:**\nReturns JWT access token and refresh token.\n\n**Auto-Save:**\nTokens are automatically saved to environment variables after successful login."
-					},
-					"response": [
-						{
-							"name": "Success - Login",
-							"originalRequest": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "Content-Type",
-										"value": "application/json"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n  \"loginType\": \"PASSWORD\",\n  \"username\": \"john.doe\",\n  \"password\": \"SecurePass123!\"\n}",
-									"options": {
-										"raw": {
-											"language": "json"
-										}
-									}
-								},
-								"url": {
-									"raw": "{{authbaseUrl}}/api/auth/login",
-									"host": ["{{authbaseUrl}}"],
-									"path": ["api", "auth", "login"]
-								}
-							},
-							"status": "OK",
-							"code": 200,
-							"_postman_previewlanguage": "json",
-							"header": [
-								{
-									"key": "Content-Type",
-									"value": "application/json"
-								}
-							],
-							"cookie": [],
-							"body": "{\n  \"accessToken\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwidXNlcm5hbWUiOiJqb2huLmRvZSIsInJvbGVzIjpbIlJPTEVfVVNFUiJdLCJpYXQiOjE3MDUzMjE2MDAsImV4cCI6MTcwNTMyMjUwMH0.example\",\n  \"refreshToken\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwidXNlcm5hbWUiOiJqb2huLmRvZSIsImlhdCI6MTcwNTMyMTYwMCwiZXhwIjoxNzA2NDg1NjAwfQ.example\",\n  \"tokenType\": \"Bearer\",\n  \"expiresIn\": 900,\n  \"userId\": 1,\n  \"username\": \"john.doe\",\n  \"roles\": [\"ROLE_USER\"]\n}"
-						}
-					]
-				},
-				{
-					"name": "Login with OTP",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json",
-								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"loginType\": \"OTP\",\n  \"username\": \"{{username}}\",\n  \"otp\": \"{{otp}}\",\n  \"deviceInfo\": \"Mozilla/5.0 (Windows NT 10.0; Win64; x64)\"\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{authbaseUrl}}/api/auth/login",
-							"host": ["{{authbaseUrl}}"],
-							"path": ["api", "auth", "login"]
-						},
-						"description": "Login using OTP (One-Time Password).\n\n**Prerequisites:**\n1. First call `/api/auth/otp/send` to receive OTP\n2. Use the received OTP to login\n\n**Request Fields:**\n- `loginType`: \"OTP\" (required)\n- `username`: Username (required)\n- `otp`: OTP code received (required)\n- `deviceInfo`: Device information (optional)"
-					},
-					"response": []
-				},
-				{
-					"name": "Login with MPIN",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json",
-								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"loginType\": \"MPIN\",\n  \"username\": \"{{userId}}\",\n  \"mpin\": \"{{mpin}}\",\n  \"deviceInfo\": \"Mobile App v1.0\"\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{authbaseUrl}}/api/auth/login",
-							"host": ["{{authbaseUrl}}"],
-							"path": ["api", "auth", "login"]
-						},
-						"description": "Login using MPIN (Mobile PIN).\n\n**Prerequisites:**\n1. User must have registered MPIN using `/api/auth/mpin/register`\n\n**Request Fields:**\n- `loginType`: \"MPIN\" (required)\n- `username`: User ID (required, as number)\n- `mpin`: MPIN code (required)\n- `deviceInfo`: Device information (optional)"
-					},
-					"response": []
-				},
-				{
-					"name": "Login with RSA",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json",
-								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"loginType\": \"RSA\",\n  \"username\": \"{{userId}}\",\n  \"rsaChallenge\": \"{{rsaChallenge}}\",\n  \"signature\": \"{{rsaSignature}}\",\n  \"deviceInfo\": \"Desktop App\"\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{authbaseUrl}}/api/auth/login",
-							"host": ["{{authbaseUrl}}"],
-							"path": ["api", "auth", "login"]
-						},
-						"description": "Login using RSA signature.\n\n**Prerequisites:**\n1. Get RSA challenge from `/api/auth/credential/rsa/challenge/{userId}`\n2. Sign the challenge with user's private key\n3. Send signature for login\n\n**Request Fields:**\n- `loginType`: \"RSA\" (required)\n- `username`: User ID (required, as number)\n- `rsaChallenge`: Challenge string from challenge endpoint (required)\n- `signature`: RSA signature of the challenge (required)\n- `deviceInfo`: Device information (optional)"
-					},
-					"response": []
-				},
-				{
-					"name": "Login with Passkey (WebAuthn)",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json",
-								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"loginType\": \"PASSKEY\",\n  \"username\": \"{{userId}}\",\n  \"credentialId\": \"{{credentialId}}\",\n  \"signature\": \"webauthn_signature\",\n  \"deviceInfo\": \"Chrome Browser\"\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{authbaseUrl}}/api/auth/login",
-							"host": ["{{authbaseUrl}}"],
-							"path": ["api", "auth", "login"]
-						},
-						"description": "Login using Passkey/WebAuthn.\n\n**Prerequisites:**\n1. Get WebAuthn challenge from `/api/auth/credential/webauthn/challenge/{userId}`\n2. Use WebAuthn API to generate signature\n3. Send credential ID and signature for login\n\n**Request Fields:**\n- `loginType`: \"PASSKEY\" (required)\n- `username`: User ID (required, as number)\n- `credentialId`: WebAuthn credential ID (required)\n- `signature`: WebAuthn signature (required)\n- `deviceInfo`: Device information (optional)"
-					},
-					"response": []
-				},
-				{
-					"name": "Login with Auth Code",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json",
-								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"loginType\": \"AUTHCODE\",\n  \"username\": \"{{userId}}\",\n  \"authCode\": \"auth_code_string\",\n  \"deviceInfo\": \"Mobile App\"\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{authbaseUrl}}/api/auth/login",
-							"host": ["{{authbaseUrl}}"],
-							"path": ["api", "auth", "login"]
-						},
-						"description": "Login using Auth Code.\n\n**Request Fields:**\n- `loginType`: \"AUTHCODE\" (required)\n- `username`: User ID (required, as number)\n- `authCode`: Auth code (required)\n- `deviceInfo`: Device information (optional)"
-					},
-					"response": []
-				}
-			]
-		},
-		{
-			"name": "3. OTP Management",
-			"item": [
-				{
-					"name": "Send OTP (SMS)",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json",
-								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"userId\": {{userId}},\n  \"type\": \"SMS\",\n  \"mobile\": \"{{mobile}}\",\n  \"channel\": \"SMS\",\n  \"templateCode\": \"OTP_SMS\",\n  \"purpose\": \"LOGIN\",\n  \"projecttype\": \"{{projectType}}\"\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{authbaseUrl}}/api/auth/otp/send",
-							"host": ["{{authbaseUrl}}"],
-							"path": ["api", "auth", "otp", "send"]
-						},
-						"description": "Send OTP via SMS.\n\n**Request Fields:**\n- `type`: \"SMS\" (required)\n- `mobile`: Mobile number (required for SMS/WHATSAPP)\n- `channel`: Channel type (optional, default: \"SMS\")\n- `templateCode`: Template code (optional, default: \"OTP_SMS\")\n- `purpose`: Purpose - \"LOGIN\" or \"CHANGE\" (optional, default: \"LOGIN\")\n- `projecttype`: Project type (optional)\n- `userId`: User ID (optional, default: 0)\n\n**Response:**\nReturns OTP code (for development/debugging only - remove in production)"
-					},
-					"response": [
-						{
-							"name": "Success - OTP Sent",
-							"originalRequest": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "Content-Type",
-										"value": "application/json"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n  \"userId\": 1,\n  \"type\": \"SMS\",\n  \"mobile\": \"9876543210\",\n  \"channel\": \"SMS\",\n  \"templateCode\": \"OTP_SMS\",\n  \"purpose\": \"LOGIN\",\n  \"projecttype\": \"ASSET_SERVICE\"\n}",
-									"options": {
-										"raw": {
-											"language": "json"
-										}
-									}
-								},
-								"url": {
-									"raw": "{{authbaseUrl}}/api/auth/otp/send",
-									"host": ["{{authbaseUrl}}"],
-									"path": ["api", "auth", "otp", "send"]
-								}
-							},
-							"status": "OK",
-							"code": 200,
-							"_postman_previewlanguage": "json",
-							"header": [
-								{
-									"key": "Content-Type",
-									"value": "application/json"
-								}
-							],
-							"cookie": [],
-							"body": "{\n  \"status\": \"success\",\n  \"message\": \"OTP sent successfully via SMS\",\n  \"userId\": 1,\n  \"mobile\": \"9876543210\",\n  \"channel\": \"SMS\",\n  \"templateCode\": \"OTP_SMS\",\n  \"purpose\": \"LOGIN\",\n  \"otp\": \"123456\",\n  \"expiresInMinutes\": 3\n}"
-						}
-					]
-				},
-				{
-					"name": "Send OTP (Email)",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json",
-								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"userId\": {{userId}},\n  \"type\": \"EMAIL\",\n  \"email\": \"{{email}}\",\n  \"channel\": \"EMAIL\",\n  \"templateCode\": \"OTP_EMAIL\",\n  \"purpose\": \"LOGIN\",\n  \"projecttype\": \"{{projectType}}\"\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{authbaseUrl}}/api/auth/otp/send",
-							"host": ["{{authbaseUrl}}"],
-							"path": ["api", "auth", "otp", "send"]
-						},
-						"description": "Send OTP via Email.\n\n**Request Fields:**\n- `type`: \"EMAIL\" (required)\n- `email`: Email address (required for EMAIL)\n- `channel`: Channel type (optional, default: \"EMAIL\")\n- `templateCode`: Template code (optional, default: \"OTP_EMAIL\")\n- `purpose`: Purpose - \"LOGIN\" or \"CHANGE\" (optional, default: \"LOGIN\")\n- `projecttype`: Project type (optional)\n- `userId`: User ID (optional, default: 0)"
-					},
-					"response": []
-				}
-			]
-		},
-		{
-			"name": "4. Token Management",
-			"item": [
-				{
-					"name": "Refresh Token",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"if (pm.response.code === 200) {",
-									"    var jsonData = pm.response.json();",
-									"    if (jsonData.accessToken) {",
-									"        pm.environment.set(\"accessToken\", jsonData.accessToken);",
-									"        console.log(\"✅ Access token refreshed and saved\");",
-									"    }",
-									"    if (jsonData.refreshToken) {",
-									"        pm.environment.set(\"refreshToken\", jsonData.refreshToken);",
-									"        console.log(\"✅ Refresh token updated\");",
-									"    }",
-									"}"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json",
-								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{authbaseUrl}}/api/auth/refresh?refreshToken={{refreshToken}}",
-							"host": ["{{authbaseUrl}}"],
-							"path": ["api", "auth", "refresh"],
-							"query": [
-								{
-									"key": "refreshToken",
-									"value": "{{refreshToken}}",
-									"description": "Refresh token obtained from login"
-								}
-							]
-						},
-						"description": "Refresh access token using refresh token.\n\n**Request:**\n- Query parameter: `refreshToken` (required)\n\n**Response:**\nReturns new access token and refresh token"
-					},
-					"response": [
-						{
-							"name": "Success - Token Refreshed",
-							"originalRequest": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "Content-Type",
-										"value": "application/json"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "",
-									"options": {
-										"raw": {
-											"language": "json"
-										}
-									}
-								},
-								"url": {
-									"raw": "{{authbaseUrl}}/api/auth/refresh?refreshToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-									"host": ["{{authbaseUrl}}"],
-									"path": ["api", "auth", "refresh"],
-									"query": [
-										{
-											"key": "refreshToken",
-											"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-										}
-									]
-								}
-							},
-							"status": "OK",
-							"code": 200,
-							"_postman_previewlanguage": "json",
-							"header": [
-								{
-									"key": "Content-Type",
-									"value": "application/json"
-								}
-							],
-							"cookie": [],
-							"body": "{\n  \"accessToken\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwidXNlcm5hbWUiOiJqb2huLmRvZSIsInJvbGVzIjpbIlJPTEVfVVNFUiJdLCJpYXQiOjE3MDUzMjI2MDAsImV4cCI6MTcwNTMyMzUwMH0.new\",\n  \"refreshToken\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwidXNlcm5hbWUiOiJqb2huLmRvZSIsImlhdCI6MTcwNTMyMjYwMCwiZXhwIjoxNzA2NDg2NjAwfQ.new\",\n  \"tokenType\": \"Bearer\",\n  \"expiresIn\": 900,\n  \"userId\": 1,\n  \"username\": \"john.doe\",\n  \"roles\": [\"ROLE_USER\"]\n}"
-						}
-					]
-				}
-			]
-		},
-		{
-			"name": "5. Credential Management",
-			"item": [
-				{
-					"name": "Register Credential",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json",
-								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"userId\": {{userId}},\n  \"type\": \"RSA\",\n  \"credentialId\": \"{{credentialId}}\",\n  \"publicKey\": \"public_key_string\"\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{authbaseUrl}}/api/auth/credential/register",
-							"host": ["{{authbaseUrl}}"],
-							"path": ["api", "auth", "credential", "register"]
-						},
-						"description": "Register a credential (RSA or WebAuthn) for a user.\n\n**Request Fields:**\n- `userId`: User ID (required)\n- `type`: Credential type - \"RSA\" or \"WEBAUTHN\" (required)\n- `credentialId`: Credential identifier (required)\n- `publicKey`: Public key (required)"
-					},
-					"response": []
-				},
-				{
-					"name": "Get RSA Challenge",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{authbaseUrl}}/api/auth/credential/rsa/challenge/{{userId}}",
-							"host": ["{{authbaseUrl}}"],
-							"path": ["api", "auth", "credential", "rsa", "challenge", "{{userId}}"]
-						},
-						"description": "Get RSA challenge for a user.\n\n**Path Parameter:**\n- `userId`: User ID (required)\n\n**Response:**\nReturns challenge string to be signed with user's private key"
-					},
-					"response": [
-						{
-							"name": "Success - RSA Challenge",
-							"originalRequest": {
-								"method": "GET",
-								"header": [],
-								"url": {
-									"raw": "{{authbaseUrl}}/api/auth/credential/rsa/challenge/1",
-									"host": ["{{authbaseUrl}}"],
-									"path": ["api", "auth", "credential", "rsa", "challenge", "1"]
-								}
-							},
-							"status": "OK",
-							"code": 200,
-							"_postman_previewlanguage": "json",
-							"header": [
-								{
-									"key": "Content-Type",
-									"value": "application/json"
-								}
-							],
-							"cookie": [],
-							"body": "{\n  \"userId\": 1,\n  \"challenge\": \"random-challenge-string-abc123xyz\"\n}"
-						}
-					]
-				},
-				{
-					"name": "Verify RSA Signature",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json",
-								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"userId\": {{userId}},\n  \"challenge\": \"{{rsaChallenge}}\",\n  \"signature\": \"{{rsaSignature}}\"\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{authbaseUrl}}/api/auth/credential/rsa/verify",
-							"host": ["{{authbaseUrl}}"],
-							"path": ["api", "auth", "credential", "rsa", "verify"]
-						},
-						"description": "Verify RSA signature.\n\n**Request Fields:**\n- `userId`: User ID (required)\n- `challenge`: Challenge string (required)\n- `signature`: RSA signature (required)"
-					},
-					"response": []
-				},
-				{
-					"name": "Get WebAuthn Challenge",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{authbaseUrl}}/api/auth/credential/webauthn/challenge/{{userId}}",
-							"host": ["{{authbaseUrl}}"],
-							"path": ["api", "auth", "credential", "webauthn", "challenge", "{{userId}}"]
-						},
-						"description": "Get WebAuthn challenge for a user.\n\n**Path Parameter:**\n- `userId`: User ID (required)\n\n**Response:**\nReturns WebAuthn challenge object"
-					},
-					"response": []
-				},
-				{
-					"name": "Verify WebAuthn Response",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json",
-								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"userId\": {{userId}},\n  \"credentialId\": \"{{credentialId}}\",\n  \"signature\": \"webauthn_signature\"\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{authbaseUrl}}/api/auth/credential/webauthn/verify",
-							"host": ["{{authbaseUrl}}"],
-							"path": ["api", "auth", "credential", "webauthn", "verify"]
-						},
-						"description": "Verify WebAuthn response.\n\n**Request Fields:**\n- `userId`: User ID (required)\n- `credentialId`: WebAuthn credential ID (required)\n- `signature`: WebAuthn signature (required)"
-					},
-					"response": []
-				}
-			]
-		},
-		{
-			"name": "6. MPIN Management",
-			"item": [
-				{
-					"name": "Register MPIN",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json",
-								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"userId\": {{userId}},\n  \"mpin\": \"{{mpin}}\",\n  \"deviceInfo\": \"Mobile App v1.0\"\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{authbaseUrl}}/api/auth/mpin/register",
-							"host": ["{{authbaseUrl}}"],
-							"path": ["api", "auth", "mpin", "register"]
-						},
-						"description": "Register or reset MPIN for a user.\n\n**Request Fields:**\n- `userId`: User ID (required)\n- `mpin`: MPIN code (required, will be hashed)\n- `deviceInfo`: Device information (optional)"
-					},
-					"response": []
-				},
-				{
-					"name": "Verify MPIN",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json",
-								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"userId\": {{userId}},\n  \"mpin\": \"{{mpin}}\",\n  \"deviceInfo\": \"Mobile App v1.0\"\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{authbaseUrl}}/api/auth/mpin/verify",
-							"host": ["{{authbaseUrl}}"],
-							"path": ["api", "auth", "mpin", "verify"]
-						},
-						"description": "Verify MPIN and login.\n\n**Request Fields:**\n- `userId`: User ID (required)\n- `mpin`: MPIN code (required)\n- `deviceInfo`: Device information (optional)\n\n**Response:**\nReturns JWT access token and refresh token"
-					},
-					"response": []
-				},
-				{
-					"name": "Request MPIN Reset",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json",
-								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"userId\": {{userId}},\n  \"mobile\": \"{{mobile}}\",\n  \"otp\": \"{{otp}}\"\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{authbaseUrl}}/api/auth/mpin/reset/request",
-							"host": ["{{authbaseUrl}}"],
-							"path": ["api", "auth", "mpin", "reset", "request"]
-						},
-						"description": "Request MPIN reset.\n\n**Request Fields:**\n- `userId`: User ID (required)\n- `mobile`: Mobile number (required)\n- `otp`: OTP code (required)\n\n**Response:**\nReturns reset token to be used in confirm endpoint"
-					},
-					"response": []
-				},
-				{
-					"name": "Confirm MPIN Reset",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json",
-								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"resetToken\": \"reset_token_from_request\",\n  \"newMpin\": \"5678\",\n  \"deviceInfo\": \"Mobile App v1.0\"\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{authbaseUrl}}/api/auth/mpin/reset/confirm",
-							"host": ["{{authbaseUrl}}"],
-							"path": ["api", "auth", "mpin", "reset", "confirm"]
-						},
-						"description": "Confirm MPIN reset with new MPIN.\n\n**Request Fields:**\n- `resetToken`: Reset token from request endpoint (required)\n- `newMpin`: New MPIN code (required)\n- `deviceInfo`: Device information (optional)"
-					},
-					"response": []
-				}
-			]
-		},
-		{
-			"name": "7. Terms and Conditions",
-			"item": [
-				{
-					"name": "Get Terms and Conditions (For App)",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{authbaseUrl}}/api/auth/terms-and-conditions?projectType={{projectType}}&language={{language}}",
-							"host": ["{{authbaseUrl}}"],
-							"path": ["api", "auth", "terms-and-conditions"],
-							"query": [
-								{
-									"key": "projectType",
-									"value": "{{projectType}}",
-									"description": "Project type code (e.g., ASSET_SERVICE) - optional"
-								},
-								{
-									"key": "language",
-									"value": "en",
-									"description": "Language code (e.g., en, hi, es) - optional, default: en"
-								}
-							]
-						},
-						"description": "Get active Terms and Conditions for display during registration.\n\n**Use Case:**\nApps should call this endpoint before showing the registration form to display T&C content to users.\n\n**Query Parameters:**\n- `projectType`: Project type code (optional) - If not provided, returns global/default T&C\n- `language`: Language code (optional, default: \"en\") - Returns T&C in specified language\n\n**Response:**\n```json\n{\n  \"tcId\": 1,\n  \"projectType\": \"ASSET_SERVICE\",\n  \"version\": \"1.0\",\n  \"title\": \"Terms and Conditions\",\n  \"content\": \"Full T&C content here...\",\n  \"summary\": \"Summary of T&C\",\n  \"language\": \"en\",\n  \"effectiveDate\": \"2024-01-01\",\n  \"lastUpdated\": \"2024-01-01T10:00:00\"\n}\n```\n\n**Fallback Logic:**\n1. Tries to find project-specific T&C with language\n2. Falls back to project-specific T&C (any language)\n3. Falls back to global T&C with language\n4. Falls back to global T&C (default)"
-					},
-					"response": [
-						{
-							"name": "Success - T&C Retrieved",
-							"originalRequest": {
-								"method": "GET",
-								"header": [],
-								"url": {
-									"raw": "{{authbaseUrl}}/api/auth/terms-and-conditions?projectType=ASSET_SERVICE&language=en",
-									"host": ["{{authbaseUrl}}"],
-									"path": ["api", "auth", "terms-and-conditions"],
-									"query": [
-										{
-											"key": "projectType",
-											"value": "ASSET_SERVICE"
-										},
-										{
-											"key": "language",
-											"value": "en"
-										}
-									]
-								}
-							},
-							"status": "OK",
-							"code": 200,
-							"_postman_previewlanguage": "json",
-							"header": [
-								{
-									"key": "Content-Type",
-									"value": "application/json"
-								}
-							],
-							"cookie": [],
-							"body": "{\n  \"tcId\": 1,\n  \"projectType\": \"ASSET_SERVICE\",\n  \"version\": \"1.0\",\n  \"title\": \"Terms and Conditions\",\n  \"content\": \"<h1>Terms and Conditions</h1><p>By using this service, you agree to the following terms...</p>\",\n  \"summary\": \"By registering, you agree to our Terms and Conditions. Please read them carefully.\",\n  \"language\": \"en\",\n  \"effectiveDate\": \"2024-01-01\",\n  \"lastUpdated\": \"2024-01-15T10:30:00\"\n}"
-						}
-					]
-				},
-				{
-					"name": "Get Terms and Conditions (Global)",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{authbaseUrl}}/api/auth/terms-and-conditions?language={{language}}",
-							"host": ["{{authbaseUrl}}"],
-							"path": ["api", "auth", "terms-and-conditions"],
-							"query": [
-								{
-									"key": "language",
-									"value": "en",
-									"description": "Language code"
-								}
-							]
-						},
-						"description": "Get global/default Terms and Conditions (no projectType specified)."
-					},
-					"response": []
-				},
-				{
-					"name": "Get Terms and Conditions by Version",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{authbaseUrl}}/api/auth/terms-and-conditions/version?projectType={{projectType}}&version=1.0",
-							"host": ["{{authbaseUrl}}"],
-							"path": ["api", "auth", "terms-and-conditions", "version"],
-							"query": [
-								{
-									"key": "projectType",
-									"value": "{{projectType}}",
-									"description": "Project type code (required)"
-								},
-								{
-									"key": "version",
-									"value": "1.0",
-									"description": "Version number (required)"
-								}
-							]
-						},
-						"description": "Get Terms and Conditions by specific version.\n\n**Use Case:**\nRetrieve a specific version of T&C for reference or historical purposes."
-					},
-					"response": []
-				},
-				{
-					"name": "Get All T&C Versions (Admin)",
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{accessToken}}",
-								"type": "text"
-							}
-						],
-						"url": {
-							"raw": "{{authbaseUrl}}/api/auth/terms-and-conditions/versions?projectType={{projectType}}",
-							"host": ["{{authbaseUrl}}"],
-							"path": ["api", "auth", "terms-and-conditions", "versions"],
-							"query": [
-								{
-									"key": "projectType",
-									"value": "{{projectType}}",
-									"description": "Project type code (required)"
-								}
-							]
-						},
-						"description": "Get all versions of Terms and Conditions for a project type.\n\n**Use Case:**\nAdmin endpoint to view all T&C versions and manage them."
-					},
-					"response": []
-				},
-				{
-					"name": "Create Terms and Conditions (Admin)",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{accessToken}}",
-								"type": "text"
-							},
-							{
-								"key": "Content-Type",
-								"value": "application/json",
-								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"projectType\": \"{{projectType}}\",\n  \"version\": \"1.0\",\n  \"title\": \"Terms and Conditions\",\n  \"content\": \"<h1>Terms and Conditions</h1><p>By using this service, you agree to the following terms...</p><h2>1. Acceptance of Terms</h2><p>Content here...</p><h2>2. User Responsibilities</h2><p>Content here...</p>\",\n  \"summary\": \"By registering, you agree to our Terms and Conditions. Please read them carefully.\",\n  \"language\": \"{{language}}\",\n  \"isActive\": true,\n  \"effectiveDate\": \"2024-01-01\",\n  \"displayOrder\": 0\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{authbaseUrl}}/api/auth/terms-and-conditions",
-							"host": ["{{authbaseUrl}}"],
-							"path": ["api", "auth", "terms-and-conditions"]
-						},
-						"description": "Create new Terms and Conditions.\n\n**Request Fields:**\n- `projectType`: Project type code (optional, null for global T&C)\n- `version`: Version number (required, e.g., \"1.0\", \"2.0\")\n- `title`: Title of T&C (required)\n- `content`: Full content (required, can be HTML or plain text)\n- `summary`: Short summary (optional)\n- `language`: Language code (optional, default: \"en\")\n- `isActive`: Whether this is active (optional, default: true)\n- `effectiveDate`: Effective date (optional, defaults to today)\n- `displayOrder`: Display order (optional, default: 0)\n\n**Note:** This is an admin endpoint and should be secured."
-					},
-					"response": []
-				},
-				{
-					"name": "Activate T&C Version (Admin)",
-					"request": {
-						"method": "PUT",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{accessToken}}",
-								"type": "text"
-							}
-						],
-						"url": {
-							"raw": "{{authbaseUrl}}/api/auth/terms-and-conditions/{{tcId}}/activate",
-							"host": ["{{authbaseUrl}}"],
-							"path": ["api", "auth", "terms-and-conditions", "{{tcId}}", "activate"]
-						},
-						"description": "Activate a Terms and Conditions version.\n\n**Note:**\n- This will deactivate other versions for the same project type\n- Only one version can be active at a time per project type\n\n**Path Parameter:**\n- `tcId`: T&C ID (required)"
-					},
-					"response": []
-				},
-				{
-					"name": "Deactivate T&C Version (Admin)",
-					"request": {
-						"method": "PUT",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{accessToken}}",
-								"type": "text"
-							}
-						],
-						"url": {
-							"raw": "{{authbaseUrl}}/api/auth/terms-and-conditions/{{tcId}}/deactivate",
-							"host": ["{{authbaseUrl}}"],
-							"path": ["api", "auth", "terms-and-conditions", "{{tcId}}", "deactivate"]
-						},
-						"description": "Deactivate a Terms and Conditions version.\n\n**Path Parameter:**\n- `tcId`: T&C ID (required)"
-					},
-					"response": []
-				}
-			]
-		},
-		{
-			"name": "8. Contact Change",
-			"item": [
-				{
-					"name": "Request Email/Mobile Change",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json",
-								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"userId\": {{userId}},\n  \"oldValue\": \"old@example.com\",\n  \"otp\": \"{{otp}}\",\n  \"type\": \"EMAIL\"\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{authbaseUrl}}/api/auth/contact/change/request",
-							"host": ["{{authbaseUrl}}"],
-							"path": ["api", "auth", "contact", "change", "request"]
-						},
-						"description": "Request email or mobile change.\n\n**Request Fields:**\n- `userId`: User ID (required)\n- `oldValue`: Current email or mobile (required)\n- `otp`: OTP code (required)\n- `type`: Type - \"EMAIL\" or \"MOBILE\" (required)\n\n**Response:**\nReturns reset token to be used in confirm endpoint"
-					},
-					"response": []
-				},
-				{
-					"name": "Confirm Email/Mobile Change",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json",
-								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"resetToken\": \"reset_token_from_request\",\n  \"newValue\": \"new@example.com\",\n  \"otp\": \"{{otp}}\"\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{authbaseUrl}}/api/auth/contact/change/confirm",
-							"host": ["{{authbaseUrl}}"],
-							"path": ["api", "auth", "contact", "change", "confirm"]
-						},
-						"description": "Confirm email or mobile change.\n\n**Request Fields:**\n- `resetToken`: Reset token from request endpoint (required)\n- `newValue`: New email or mobile (required)\n- `otp`: OTP code for new email/mobile (required)"
-					},
-					"response": []
-				}
-			]
-		},
-		{
-			"name": "9. User Profile",
-			"item": [
-				{
-					"name": "Get Current User Profile",
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{accessToken}}",
-								"type": "text"
-							}
-						],
-						"url": {
-							"raw": "{{authbaseUrl}}/api/users/me",
-							"host": ["{{authbaseUrl}}"],
-							"path": ["api", "users", "me"]
-						},
-						"description": "Get the profile of the currently authenticated user.\n\n**Authentication:**\nRequires valid JWT token in Authorization header.\n\n**Response:**\nReturns user profile including userId, username, email, mobile, projectType, roles, etc."
-					},
-					"response": [
-						{
-							"name": "Success - User Profile",
-							"originalRequest": {
-								"method": "GET",
-								"header": [
-									{
-										"key": "Authorization",
-										"value": "Bearer {{accessToken}}"
-									}
-								],
-								"url": {
-									"raw": "{{authbaseUrl}}/api/users/me",
-									"host": ["{{authbaseUrl}}"],
-									"path": ["api", "users", "me"]
-								}
-							},
-							"status": "OK",
-							"code": 200,
-							"_postman_previewlanguage": "json",
-							"header": [
-								{
-									"key": "Content-Type",
-									"value": "application/json"
-								}
-							],
-							"cookie": [],
-							"body": "{\n  \"userId\": 1,\n  \"username\": \"john.doe\",\n  \"email\": \"john.doe@example.com\",\n  \"mobile\": \"9876543210\",\n  \"projectType\": \"ASSET_SERVICE\",\n  \"enabled\": true,\n  \"roles\": [\"ROLE_USER\"],\n  \"lastLoginDate\": \"2024-01-15T10:30:00\"\n}"
-						}
-					]
-				},
-				{
-					"name": "Get User by ID",
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{accessToken}}",
-								"type": "text"
-							}
-						],
-						"url": {
-							"raw": "{{authbaseUrl}}/api/users/{{userId}}",
-							"host": ["{{authbaseUrl}}"],
-							"path": ["api", "users", "{{userId}}"]
-						},
-						"description": "Get user profile by ID.\n\n**Access Control:**\n- Users can only view their own profile\n- Admins can view any user profile\n\n**Path Parameter:**\n- `id`: User ID (required)"
-					},
-					"response": [
-						{
-							"name": "Success - User Profile",
-							"originalRequest": {
-								"method": "GET",
-								"header": [
-									{
-										"key": "Authorization",
-										"value": "Bearer {{accessToken}}"
-									}
-								],
-								"url": {
-									"raw": "{{authbaseUrl}}/api/users/1",
-									"host": ["{{authbaseUrl}}"],
-									"path": ["api", "users", "1"]
-								}
-							},
-							"status": "OK",
-							"code": 200,
-							"_postman_previewlanguage": "json",
-							"header": [
-								{
-									"key": "Content-Type",
-									"value": "application/json"
-								}
-							],
-							"cookie": [],
-							"body": "{\n  \"userId\": 1,\n  \"username\": \"john.doe\",\n  \"email\": \"john.doe@example.com\",\n  \"mobile\": \"9876543210\",\n  \"projectType\": \"ASSET_SERVICE\",\n  \"enabled\": true,\n  \"roles\": [\"ROLE_USER\"]\n}"
-						}
-					]
-				}
-			]
-		},
-		{
-			"name": "10. Admin Operations",
-			"item": [
-				{
-					"name": "List All Users (Admin)",
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{accessToken}}",
-								"type": "text"
-							}
-						],
-						"url": {
-							"raw": "{{authbaseUrl}}/api/admin/users",
-							"host": ["{{authbaseUrl}}"],
-							"path": ["api", "admin", "users"]
-						},
-						"description": "Get a list of all users (admin only).\n\n**Authentication:**\nRequires admin role and valid JWT token.\n\n**Response:**\nReturns array of user profiles."
-					},
-					"response": [
-						{
-							"name": "Success - User List",
-							"originalRequest": {
-								"method": "GET",
-								"header": [
-									{
-										"key": "Authorization",
-										"value": "Bearer {{accessToken}}"
-									}
-								],
-								"url": {
-									"raw": "{{authbaseUrl}}/api/admin/users",
-									"host": ["{{authbaseUrl}}"],
-									"path": ["api", "admin", "users"]
-								}
-							},
-							"status": "OK",
-							"code": 200,
-							"_postman_previewlanguage": "json",
-							"header": [
-								{
-									"key": "Content-Type",
-									"value": "application/json"
-								}
-							],
-							"cookie": [],
-							"body": "[\n  {\n    \"userId\": 1,\n    \"username\": \"john.doe\",\n    \"email\": \"john.doe@example.com\",\n    \"mobile\": \"9876543210\",\n    \"projectType\": \"ASSET_SERVICE\",\n    \"enabled\": true,\n    \"roles\": [\"ROLE_USER\"]\n  },\n  {\n    \"userId\": 2,\n    \"username\": \"admin.user\",\n    \"email\": \"admin@example.com\",\n    \"mobile\": \"9876543211\",\n    \"projectType\": \"ASSET_SERVICE\",\n    \"enabled\": true,\n    \"roles\": [\"ROLE_ADMIN\"]\n  }\n]"
-						}
-					]
-				},
-				{
-					"name": "Get Audit Logs (Admin)",
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{accessToken}}",
-								"type": "text"
-							}
-						],
-						"url": {
-							"raw": "{{authbaseUrl}}/api/admin/audit/logs?userId={{userId}}",
-							"host": ["{{authbaseUrl}}"],
-							"path": ["api", "admin", "audit", "logs"],
-							"query": [
-								{
-									"key": "userId",
-									"value": "{{userId}}",
-									"description": "Filter by user ID (optional)"
-								},
-								{
-									"key": "action",
-									"value": "",
-									"description": "Filter by action (optional)",
-									"disabled": true
-								},
-								{
-									"key": "from",
-									"value": "",
-									"description": "Filter from date (ISO format, optional)",
-									"disabled": true
-								},
-								{
-									"key": "to",
-									"value": "",
-									"description": "Filter to date (ISO format, optional)",
-									"disabled": true
-								}
-							]
-						},
-						"description": "Get audit logs with optional filters (admin only).\n\n**Query Parameters:**\n- `userId`: Filter by user ID (optional)\n- `action`: Filter by action (optional)\n- `url`: Filter by URL (optional)\n- `method`: Filter by HTTP method (optional)\n- `from`: Filter from date (ISO format, optional)\n- `to`: Filter to date (ISO format, optional)"
-					},
-					"response": [
-						{
-							"name": "Success - Audit Logs",
-							"originalRequest": {
-								"method": "GET",
-								"header": [
-									{
-										"key": "Authorization",
-										"value": "Bearer {{accessToken}}"
-									}
-								],
-								"url": {
-									"raw": "{{authbaseUrl}}/api/admin/audit/logs?userId=1",
-									"host": ["{{authbaseUrl}}"],
-									"path": ["api", "admin", "audit", "logs"],
-									"query": [
-										{
-											"key": "userId",
-											"value": "1"
-										}
-									]
-								}
-							},
-							"status": "OK",
-							"code": 200,
-							"_postman_previewlanguage": "json",
-							"header": [
-								{
-									"key": "Content-Type",
-									"value": "application/json"
-								}
-							],
-							"cookie": [],
-							"body": "[\n  {\n    \"id\": 1,\n    \"userId\": 1,\n    \"action\": \"LOGIN\",\n    \"url\": \"/api/auth/login\",\n    \"method\": \"POST\",\n    \"ipAddress\": \"192.168.1.1\",\n    \"userAgent\": \"Mozilla/5.0...\",\n    \"eventTime\": \"2024-01-15T10:30:00\"\n  }\n]"
-						}
-					]
-				},
-				{
-					"name": "Get Paginated Audit Logs (Admin)",
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{accessToken}}",
-								"type": "text"
-							}
-						],
-						"url": {
-							"raw": "{{authbaseUrl}}/api/admin/audit/logs/paged?page=0&size=20",
-							"host": ["{{authbaseUrl}}"],
-							"path": ["api", "admin", "audit", "logs", "paged"],
-							"query": [
-								{
-									"key": "page",
-									"value": "0",
-									"description": "Page number (0-based)"
-								},
-								{
-									"key": "size",
-									"value": "20",
-									"description": "Page size"
-								},
-								{
-									"key": "userId",
-									"value": "{{userId}}",
-									"description": "Filter by user ID (optional)",
-									"disabled": true
-								}
-							]
-						},
-						"description": "Get audit logs with pagination (admin only).\n\n**Query Parameters:**\n- `page`: Page number (0-based, default: 0)\n- `size`: Page size (default: 20)\n- `sort`: Sort criteria (optional)\n- Other filters same as /logs endpoint"
-					},
-					"response": []
-				},
-				{
-					"name": "Export Audit Logs CSV (Admin)",
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{accessToken}}",
-								"type": "text"
-							}
-						],
-						"url": {
-							"raw": "{{authbaseUrl}}/api/admin/audit/logs/csv",
-							"host": ["{{authbaseUrl}}"],
-							"path": ["api", "admin", "audit", "logs", "csv"]
-						},
-						"description": "Export audit logs as CSV file (admin only).\n\n**Response:**\nReturns CSV file download.\n\n**Query Parameters:**\nSame filters as /logs endpoint"
-					},
-					"response": []
-				},
-				{
-					"name": "Export Audit Logs Excel (Admin)",
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{accessToken}}",
-								"type": "text"
-							}
-						],
-						"url": {
-							"raw": "{{authbaseUrl}}/api/admin/audit/logs/excel",
-							"host": ["{{authbaseUrl}}"],
-							"path": ["api", "admin", "audit", "logs", "excel"]
-						},
-						"description": "Export audit logs as Excel file (admin only).\n\n**Response:**\nReturns Excel (.xlsx) file download.\n\n**Query Parameters:**\nSame filters as /logs endpoint"
-					},
-					"response": []
-				}
-			]
-		},
-		{
-			"name": "11. Project Types",
-			"item": [
-				{
-					"name": "Get All Active Project Types",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{authbaseUrl}}/api/auth/v1/project-types",
-							"host": ["{{authbaseUrl}}"],
-							"path": ["api", "auth", "v1", "project-types"]
-						},
-						"description": "Get a list of all active project types.\n\n**Response:**\nReturns array of active project types."
-					},
-					"response": [
-						{
-							"name": "Success - Project Types",
-							"originalRequest": {
-								"method": "GET",
-								"header": [],
-								"url": {
-									"raw": "{{authbaseUrl}}/api/auth/v1/project-types",
-									"host": ["{{authbaseUrl}}"],
-									"path": ["api", "auth", "v1", "project-types"]
-								}
-							},
-							"status": "OK",
-							"code": 200,
-							"_postman_previewlanguage": "json",
-							"header": [
-								{
-									"key": "Content-Type",
-									"value": "application/json"
-								}
-							],
-							"cookie": [],
-							"body": "[\n  {\n    \"projectTypeId\": 1,\n    \"code\": \"ASSET_SERVICE\",\n    \"name\": \"Asset Service\",\n    \"description\": \"Asset Management Service\",\n    \"displayOrder\": 1,\n    \"active\": true\n  },\n  {\n    \"projectTypeId\": 2,\n    \"code\": \"ECOM\",\n    \"name\": \"E-Commerce\",\n    \"description\": \"E-Commerce Platform\",\n    \"displayOrder\": 2,\n    \"active\": true\n  }\n]"
-						}
-					]
-				},
-				{
-					"name": "Get Project Type by ID",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{authbaseUrl}}/api/auth/v1/project-types/{{projectTypeId}}",
-							"host": ["{{authbaseUrl}}"],
-							"path": ["api", "auth", "v1", "project-types", "{{projectTypeId}}"]
-						},
-						"description": "Get a project type by its ID.\n\n**Path Parameter:**\n- `projectTypeId`: Project type ID (required)"
-					},
-					"response": []
-				},
-				{
-					"name": "Get Project Type by Code",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{authbaseUrl}}/api/auth/v1/project-types/code/{{projectTypeCode}}",
-							"host": ["{{authbaseUrl}}"],
-							"path": ["api", "auth", "v1", "project-types", "code", "{{projectTypeCode}}"]
-						},
-						"description": "Get a project type by its code.\n\n**Path Parameter:**\n- `code`: Project type code (required, e.g., ASSET_SERVICE)"
-					},
-					"response": []
-				},
-				{
-					"name": "Validate Project Type Code",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{authbaseUrl}}/api/auth/v1/project-types/validate/{{projectTypeCode}}",
-							"host": ["{{authbaseUrl}}"],
-							"path": ["api", "auth", "v1", "project-types", "validate", "{{projectTypeCode}}"]
-						},
-						"description": "Check if a project type code exists.\n\n**Path Parameter:**\n- `code`: Project type code to validate (required)\n\n**Response:**\n```json\n{\n  \"code\": \"ASSET_SERVICE\",\n  \"exists\": true\n}\n```"
-					},
-					"response": [
-						{
-							"name": "Success - Validation Result",
-							"originalRequest": {
-								"method": "GET",
-								"header": [],
-								"url": {
-									"raw": "{{authbaseUrl}}/api/auth/v1/project-types/validate/ASSET_SERVICE",
-									"host": ["{{authbaseUrl}}"],
-									"path": ["api", "auth", "v1", "project-types", "validate", "ASSET_SERVICE"]
-								}
-							},
-							"status": "OK",
-							"code": 200,
-							"_postman_previewlanguage": "json",
-							"header": [
-								{
-									"key": "Content-Type",
-									"value": "application/json"
-								}
-							],
-							"cookie": [],
-							"body": "{\n  \"code\": \"ASSET_SERVICE\",\n  \"exists\": true\n}"
-						}
-					]
-				},
-				{
-					"name": "Create Project Type",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/x-www-form-urlencoded",
-								"type": "text"
-							}
-						],
-						"url": {
-							"raw": "{{authbaseUrl}}/api/auth/v1/project-types?code={{projectTypeCode}}&name=New Project Type&description=Description&displayOrder=0&createdBy=SYSTEM",
-							"host": ["{{authbaseUrl}}"],
-							"path": ["api", "auth", "v1", "project-types"],
-							"query": [
-								{
-									"key": "code",
-									"value": "{{projectTypeCode}}",
-									"description": "Project type code (required)"
-								},
-								{
-									"key": "name",
-									"value": "New Project Type",
-									"description": "Project type name (required)"
-								},
-								{
-									"key": "description",
-									"value": "Description",
-									"description": "Description (optional)"
-								},
-								{
-									"key": "displayOrder",
-									"value": "0",
-									"description": "Display order (optional, default: 0)"
-								},
-								{
-									"key": "createdBy",
-									"value": "SYSTEM",
-									"description": "Created by (optional, default: SYSTEM)"
-								}
-							]
-						},
-						"description": "Create a new project type.\n\n**Query Parameters:**\n- `code`: Project type code (required, must be unique)\n- `name`: Project type name (required)\n- `description`: Description (optional)\n- `displayOrder`: Display order (optional, default: 0)\n- `createdBy`: Created by (optional, default: SYSTEM)"
-					},
-					"response": []
-				},
-				{
-					"name": "Update Project Type",
-					"request": {
-						"method": "PUT",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{accessToken}}",
-								"type": "text"
-							}
-						],
-						"url": {
-							"raw": "{{authbaseUrl}}/api/auth/v1/project-types/{{projectTypeId}}?name=Updated Name&description=Updated Description&displayOrder=1&updatedBy=SYSTEM",
-							"host": ["{{authbaseUrl}}"],
-							"path": ["api", "auth", "v1", "project-types", "{{projectTypeId}}"],
-							"query": [
-								{
-									"key": "name",
-									"value": "Updated Name",
-									"description": "Project type name (required)"
-								},
-								{
-									"key": "description",
-									"value": "Updated Description",
-									"description": "Description (optional)"
-								},
-								{
-									"key": "displayOrder",
-									"value": "1",
-									"description": "Display order (optional)"
-								},
-								{
-									"key": "updatedBy",
-									"value": "SYSTEM",
-									"description": "Updated by (optional, default: SYSTEM)"
-								}
-							]
-						},
-						"description": "Update an existing project type.\n\n**Path Parameter:**\n- `projectTypeId`: Project type ID (required)\n\n**Query Parameters:**\n- `name`: Project type name (required)\n- `description`: Description (optional)\n- `displayOrder`: Display order (optional)\n- `updatedBy`: Updated by (optional, default: SYSTEM)"
-					},
-					"response": []
-				},
-				{
-					"name": "Delete Project Type",
-					"request": {
-						"method": "DELETE",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{accessToken}}",
-								"type": "text"
-							}
-						],
-						"url": {
-							"raw": "{{authbaseUrl}}/api/auth/v1/project-types/{{projectTypeId}}?deletedBy=SYSTEM",
-							"host": ["{{authbaseUrl}}"],
-							"path": ["api", "auth", "v1", "project-types", "{{projectTypeId}}"],
-							"query": [
-								{
-									"key": "deletedBy",
-									"value": "SYSTEM",
-									"description": "Deleted by (optional, default: SYSTEM)"
-								}
-							]
-						},
-						"description": "Soft delete a project type.\n\n**Path Parameter:**\n- `projectTypeId`: Project type ID (required)\n\n**Query Parameters:**\n- `deletedBy`: Deleted by (optional, default: SYSTEM)"
-					},
-					"response": []
-				}
-			]
-		}
-	],
-	"variable": [
-		{
-			"key": "authbaseUrl",
-			"value": "http://localhost:8080",
-			"type": "string",
-			"description": "Base URL for Auth Service API. Default: http://localhost:8080\n\n**Common Values:**\n- Local: http://localhost:8080\n- Development: http://dev-auth-service.example.com\n- Production: https://api.example.com/auth-service"
-		},
-		{
-			"key": "accessToken",
-			"value": "",
-			"type": "string",
-			"description": "JWT Bearer token obtained from login endpoint.\n\n**How to get:**\n1. Call POST /api/auth/login with valid credentials\n2. Copy the accessToken from the response\n3. Set this variable with the token value (without 'Bearer ' prefix)\n\n**Usage:**\nUse in Authorization header: Bearer {{accessToken}}"
-		},
-		{
-			"key": "refreshToken",
-			"value": "",
-			"type": "string",
-			"description": "Refresh token obtained from login endpoint.\n\n**How to get:**\n1. Call POST /api/auth/login with valid credentials\n2. Copy the refreshToken from the response\n3. Set this variable with the token value\n\n**Usage:**\nUse to refresh access token when it expires"
-		},
-		{
-			"key": "projectType",
-			"value": "ASSET_SERVICE",
-			"type": "string",
-			"description": "Project type code for T&C and registration.\n\n**Common Values:**\n- ASSET_SERVICE\n- ECOM\n- INVENTORY\n\n**Usage:**\nUsed in T&C API and registration endpoints"
-		}
-	]
+  "info": {
+    "_postman_id": "auth-service-api-collection",
+    "name": "Auth Service API - Complete Collection",
+    "description": "Postman collection for Auth Service API endpoints.\n\n**Key Features:**\n- User Registration with address fields (pincode, city, state, country)\n- Mobile number validation based on country code\n- Terms & Conditions acceptance validation\n- Terms & Conditions API for apps to display T&C during registration\n- Multiple login types (PASSWORD, OTP, MPIN, RSA, PASSKEY, AUTHCODE)\n- OTP management\n- Credential management (RSA, WebAuthn)\n- MPIN management\n- Contact change (email/mobile)\n\n**Environment Variables Required:**\n- authbaseUrl: Base URL (default: http://localhost:8080)\n- accessToken: JWT Bearer token (obtained from login)\n- refreshToken: Refresh token (obtained from login)\n- projectType: Project type code (e.g., ASSET_SERVICE)\n- username, password, email, mobile, countryCode, pincode, city, state, country\n- userId, otp, mpin, rsaChallenge, rsaSignature, credentialId, tcId, language\n\n**Note:** Import the environment file (Auth_Service_Environment.postman_environment.json) for all pre-configured variables with default values.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "32725094"
+  },
+  "item": [
+    {
+      "name": "1. Registration",
+      "item": [
+        {
+          "name": "Register User (Complete)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{username}}\",\n  \"password\": \"{{password}}\",\n  \"email\": \"{{email}}\",\n  \"mobile\": \"{{mobile}}\",\n  \"countryCode\": \"{{countryCode}}\",\n  \"projectType\": \"{{projectType}}\",\n  \"pincode\": \"{{pincode}}\",\n  \"city\": \"{{city}}\",\n  \"state\": \"{{state}}\",\n  \"country\": \"{{country}}\",\n  \"acceptTc\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{authbaseUrl}}/api/auth/register",
+              "host": [
+                "{{authbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "register"
+              ]
+            },
+            "description": "Register a new user with complete information.\n\n**Required Fields:**\n- `username`: Username (required)\n- `mobile`: Mobile number (required)\n- `countryCode`: Country code for mobile validation (required, e.g., \"+91\", \"+1\")\n- `projectType`: Project type (required)\n- `acceptTc`: Terms & Conditions acceptance (required, must be true)\n\n**Optional Fields:**\n- `password`: Password (optional)\n- `email`: Email address (optional)\n- `pincode`: Postal/ZIP code (optional)\n- `city`: City name (optional)\n- `state`: State/Province name (optional)\n- `country`: Country name (optional)\n\n**Mobile Validation:**\n- Mobile number format is validated based on country code\n- Supported country codes: +91 (India), +1 (USA/Canada), +44 (UK), +61 (Australia), +49 (Germany), +33 (France), +86 (China), +81 (Japan), +55 (Brazil), +971 (UAE), +65 (Singapore)\n- Mobile number is normalized (spaces, dashes, parentheses removed)\n\n**Response:**\n```json\n{\n  \"message\": \"User registered successfully\",\n  \"username\": \"john.doe\"\n}\n```\n\n**Error Responses:**\n- T&C not accepted: `{\"error\": \"Terms and Conditions must be accepted to register\"}`\n- Invalid mobile: `{\"error\": \"Invalid mobile number format for country code +91. Please enter a valid mobile number.\"}`"
+          },
+          "response": [
+            {
+              "name": "Success - User Registered",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"username\": \"john.doe\",\n  \"password\": \"SecurePass123!\",\n  \"email\": \"john.doe@example.com\",\n  \"mobile\": \"9876543210\",\n  \"countryCode\": \"+91\",\n  \"projectType\": \"ASSET_SERVICE\",\n  \"pincode\": \"400001\",\n  \"city\": \"Mumbai\",\n  \"state\": \"Maharashtra\",\n  \"country\": \"India\",\n  \"acceptTc\": true\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{authbaseUrl}}/api/auth/register",
+                  "host": [
+                    "{{authbaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "auth",
+                    "register"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"message\": \"User registered successfully\",\n  \"username\": \"john.doe\"\n}"
+            },
+            {
+              "name": "Error - T&C Not Accepted",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"username\": \"john.doe\",\n  \"mobile\": \"9876543210\",\n  \"countryCode\": \"+91\",\n  \"projectType\": \"ASSET_SERVICE\",\n  \"acceptTc\": false\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{authbaseUrl}}/api/auth/register",
+                  "host": [
+                    "{{authbaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "auth",
+                    "register"
+                  ]
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"error\": \"Terms and Conditions must be accepted to register\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Register User (Minimal)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{username}}\",\n  \"mobile\": \"{{mobile}}\",\n  \"countryCode\": \"{{countryCode}}\",\n  \"projectType\": \"{{projectType}}\",\n  \"acceptTc\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{authbaseUrl}}/api/auth/register",
+              "host": [
+                "{{authbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "register"
+              ]
+            },
+            "description": "Register a new user with minimal required fields only.\n\n**Required Fields:**\n- `username`: Username\n- `mobile`: Mobile number\n- `countryCode`: Country code (e.g., \"+91\")\n- `projectType`: Project type\n- `acceptTc`: Must be true"
+          },
+          "response": []
+        },
+        {
+          "name": "Register User (USA)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"john.usa\",\n  \"password\": \"SecurePass123!\",\n  \"email\": \"john.usa@example.com\",\n  \"mobile\": \"5551234567\",\n  \"countryCode\": \"+1\",\n  \"projectType\": \"ASSET_SERVICE\",\n  \"pincode\": \"10001\",\n  \"city\": \"New York\",\n  \"state\": \"New York\",\n  \"country\": \"United States\",\n  \"acceptTc\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{authbaseUrl}}/api/auth/register",
+              "host": [
+                "{{authbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "register"
+              ]
+            },
+            "description": "Register a user with USA country code (+1).\n\n**USA Mobile Format:**\n- 10 digits\n- Example: 5551234567"
+          },
+          "response": []
+        },
+        {
+          "name": "Register Admin User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"admin.user\",\n  \"password\": \"{{password}}\",\n  \"email\": \"admin@example.com\",\n  \"mobile\": \"{{mobile}}\",\n  \"countryCode\": \"{{countryCode}}\",\n  \"projectType\": \"{{projectType}}\",\n  \"pincode\": \"{{pincode}}\",\n  \"city\": \"{{city}}\",\n  \"state\": \"{{state}}\",\n  \"country\": \"{{country}}\",\n  \"acceptTc\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{authbaseUrl}}/api/auth/adminregister",
+              "host": [
+                "{{authbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "adminregister"
+              ]
+            },
+            "description": "Register a new admin user with complete information.\n\n**Note:** Admin users are assigned ROLE_ADMIN role instead of ROLE_USER.\n\n**All validation rules apply same as regular registration:**\n- T&C must be accepted\n- Mobile format validated based on country code"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "2. Login",
+      "item": [
+        {
+          "name": "Login with Password",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    if (jsonData.accessToken) {",
+                  "        pm.environment.set(\"accessToken\", jsonData.accessToken);",
+                  "        console.log(\"\u2705 Access token saved to environment\");",
+                  "    }",
+                  "    if (jsonData.refreshToken) {",
+                  "        pm.environment.set(\"refreshToken\", jsonData.refreshToken);",
+                  "        console.log(\"\u2705 Refresh token saved to environment\");",
+                  "    }",
+                  "    if (jsonData.userId) {",
+                  "        pm.environment.set(\"userId\", jsonData.userId.toString());",
+                  "    }",
+                  "    if (jsonData.username) {",
+                  "        pm.environment.set(\"username\", jsonData.username);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"loginType\": \"PASSWORD\",\n  \"username\": \"{{username}}\",\n  \"password\": \"{{password}}\",\n  \"deviceInfo\": \"Mozilla/5.0 (Windows NT 10.0; Win64; x64)\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{authbaseUrl}}/api/auth/login",
+              "host": [
+                "{{authbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Login using username and password.\n\n**Request Fields:**\n- `loginType`: \"PASSWORD\" (required)\n- `username`: Username (required)\n- `password`: Password (required)\n- `deviceInfo`: Device information (optional)\n\n**Response:**\nReturns JWT access token and refresh token.\n\n**Auto-Save:**\nTokens are automatically saved to environment variables after successful login."
+          },
+          "response": [
+            {
+              "name": "Success - Login",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"loginType\": \"PASSWORD\",\n  \"username\": \"john.doe\",\n  \"password\": \"SecurePass123!\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{authbaseUrl}}/api/auth/login",
+                  "host": [
+                    "{{authbaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "auth",
+                    "login"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"accessToken\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwidXNlcm5hbWUiOiJqb2huLmRvZSIsInJvbGVzIjpbIlJPTEVfVVNFUiJdLCJpYXQiOjE3MDUzMjE2MDAsImV4cCI6MTcwNTMyMjUwMH0.example\",\n  \"refreshToken\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwidXNlcm5hbWUiOiJqb2huLmRvZSIsImlhdCI6MTcwNTMyMTYwMCwiZXhwIjoxNzA2NDg1NjAwfQ.example\",\n  \"tokenType\": \"Bearer\",\n  \"expiresIn\": 900,\n  \"userId\": 1,\n  \"username\": \"john.doe\",\n  \"roles\": [\"ROLE_USER\"]\n}"
+            }
+          ]
+        },
+        {
+          "name": "Login with OTP",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"loginType\": \"OTP\",\n  \"username\": \"{{username}}\",\n  \"otp\": \"{{otp}}\",\n  \"deviceInfo\": \"Mozilla/5.0 (Windows NT 10.0; Win64; x64)\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{authbaseUrl}}/api/auth/login",
+              "host": [
+                "{{authbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Login using OTP (One-Time Password).\n\n**Prerequisites:**\n1. First call `/api/auth/otp/send` to receive OTP\n2. Use the received OTP to login\n\n**Request Fields:**\n- `loginType`: \"OTP\" (required)\n- `username`: Username (required)\n- `otp`: OTP code received (required)\n- `deviceInfo`: Device information (optional)"
+          },
+          "response": []
+        },
+        {
+          "name": "Login with MPIN",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"loginType\": \"MPIN\",\n  \"username\": \"{{userId}}\",\n  \"mpin\": \"{{mpin}}\",\n  \"deviceInfo\": \"Mobile App v1.0\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{authbaseUrl}}/api/auth/login",
+              "host": [
+                "{{authbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Login using MPIN (Mobile PIN).\n\n**Prerequisites:**\n1. User must have registered MPIN using `/api/auth/mpin/register`\n\n**Request Fields:**\n- `loginType`: \"MPIN\" (required)\n- `username`: User ID (required, as number)\n- `mpin`: MPIN code (required)\n- `deviceInfo`: Device information (optional)"
+          },
+          "response": []
+        },
+        {
+          "name": "Login with RSA",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"loginType\": \"RSA\",\n  \"username\": \"{{userId}}\",\n  \"rsaChallenge\": \"{{rsaChallenge}}\",\n  \"signature\": \"{{rsaSignature}}\",\n  \"deviceInfo\": \"Desktop App\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{authbaseUrl}}/api/auth/login",
+              "host": [
+                "{{authbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Login using RSA signature.\n\n**Prerequisites:**\n1. Get RSA challenge from `/api/auth/credential/rsa/challenge/{userId}`\n2. Sign the challenge with user's private key\n3. Send signature for login\n\n**Request Fields:**\n- `loginType`: \"RSA\" (required)\n- `username`: User ID (required, as number)\n- `rsaChallenge`: Challenge string from challenge endpoint (required)\n- `signature`: RSA signature of the challenge (required)\n- `deviceInfo`: Device information (optional)"
+          },
+          "response": []
+        },
+        {
+          "name": "Login with Passkey (WebAuthn)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"loginType\": \"PASSKEY\",\n  \"username\": \"{{userId}}\",\n  \"credentialId\": \"{{credentialId}}\",\n  \"signature\": \"webauthn_signature\",\n  \"deviceInfo\": \"Chrome Browser\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{authbaseUrl}}/api/auth/login",
+              "host": [
+                "{{authbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Login using Passkey/WebAuthn.\n\n**Prerequisites:**\n1. Get WebAuthn challenge from `/api/auth/credential/webauthn/challenge/{userId}`\n2. Use WebAuthn API to generate signature\n3. Send credential ID and signature for login\n\n**Request Fields:**\n- `loginType`: \"PASSKEY\" (required)\n- `username`: User ID (required, as number)\n- `credentialId`: WebAuthn credential ID (required)\n- `signature`: WebAuthn signature (required)\n- `deviceInfo`: Device information (optional)"
+          },
+          "response": []
+        },
+        {
+          "name": "Login with Auth Code",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"loginType\": \"AUTHCODE\",\n  \"username\": \"{{userId}}\",\n  \"authCode\": \"auth_code_string\",\n  \"deviceInfo\": \"Mobile App\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{authbaseUrl}}/api/auth/login",
+              "host": [
+                "{{authbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Login using Auth Code.\n\n**Request Fields:**\n- `loginType`: \"AUTHCODE\" (required)\n- `username`: User ID (required, as number)\n- `authCode`: Auth code (required)\n- `deviceInfo`: Device information (optional)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "3. OTP Management",
+      "item": [
+        {
+          "name": "Send OTP (SMS)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": {{userId}},\n  \"type\": \"SMS\",\n  \"mobile\": \"{{mobile}}\",\n  \"channel\": \"SMS\",\n  \"templateCode\": \"OTP_SMS\",\n  \"purpose\": \"LOGIN\",\n  \"projecttype\": \"{{projectType}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{authbaseUrl}}/api/auth/otp/send",
+              "host": [
+                "{{authbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "otp",
+                "send"
+              ]
+            },
+            "description": "Send OTP via SMS.\n\n**Request Fields:**\n- `type`: \"SMS\" (required)\n- `mobile`: Mobile number (required for SMS/WHATSAPP)\n- `channel`: Channel type (optional, default: \"SMS\")\n- `templateCode`: Template code (optional, default: \"OTP_SMS\")\n- `purpose`: Purpose - \"LOGIN\" or \"CHANGE\" (optional, default: \"LOGIN\")\n- `projecttype`: Project type (optional)\n- `userId`: User ID (optional, default: 0)\n\n**Response:**\nReturns OTP code (for development/debugging only - remove in production)"
+          },
+          "response": [
+            {
+              "name": "Success - OTP Sent",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"userId\": 1,\n  \"type\": \"SMS\",\n  \"mobile\": \"9876543210\",\n  \"channel\": \"SMS\",\n  \"templateCode\": \"OTP_SMS\",\n  \"purpose\": \"LOGIN\",\n  \"projecttype\": \"ASSET_SERVICE\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{authbaseUrl}}/api/auth/otp/send",
+                  "host": [
+                    "{{authbaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "auth",
+                    "otp",
+                    "send"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"status\": \"success\",\n  \"message\": \"OTP sent successfully via SMS\",\n  \"userId\": 1,\n  \"mobile\": \"9876543210\",\n  \"channel\": \"SMS\",\n  \"templateCode\": \"OTP_SMS\",\n  \"purpose\": \"LOGIN\",\n  \"otp\": \"123456\",\n  \"expiresInMinutes\": 3\n}"
+            }
+          ]
+        },
+        {
+          "name": "Send OTP (Email)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": {{userId}},\n  \"type\": \"EMAIL\",\n  \"email\": \"{{email}}\",\n  \"channel\": \"EMAIL\",\n  \"templateCode\": \"OTP_EMAIL\",\n  \"purpose\": \"LOGIN\",\n  \"projecttype\": \"{{projectType}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{authbaseUrl}}/api/auth/otp/send",
+              "host": [
+                "{{authbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "otp",
+                "send"
+              ]
+            },
+            "description": "Send OTP via Email.\n\n**Request Fields:**\n- `type`: \"EMAIL\" (required)\n- `email`: Email address (required for EMAIL)\n- `channel`: Channel type (optional, default: \"EMAIL\")\n- `templateCode`: Template code (optional, default: \"OTP_EMAIL\")\n- `purpose`: Purpose - \"LOGIN\" or \"CHANGE\" (optional, default: \"LOGIN\")\n- `projecttype`: Project type (optional)\n- `userId`: User ID (optional, default: 0)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "4. Token Management",
+      "item": [
+        {
+          "name": "Refresh Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    if (jsonData.accessToken) {",
+                  "        pm.environment.set(\"accessToken\", jsonData.accessToken);",
+                  "        console.log(\"\u2705 Access token refreshed and saved\");",
+                  "    }",
+                  "    if (jsonData.refreshToken) {",
+                  "        pm.environment.set(\"refreshToken\", jsonData.refreshToken);",
+                  "        console.log(\"\u2705 Refresh token updated\");",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{authbaseUrl}}/api/auth/refresh?refreshToken={{refreshToken}}",
+              "host": [
+                "{{authbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "refresh"
+              ],
+              "query": [
+                {
+                  "key": "refreshToken",
+                  "value": "{{refreshToken}}",
+                  "description": "Refresh token obtained from login"
+                }
+              ]
+            },
+            "description": "Refresh access token using refresh token.\n\n**Request:**\n- Query parameter: `refreshToken` (required)\n\n**Response:**\nReturns new access token and refresh token"
+          },
+          "response": [
+            {
+              "name": "Success - Token Refreshed",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{authbaseUrl}}/api/auth/refresh?refreshToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+                  "host": [
+                    "{{authbaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "auth",
+                    "refresh"
+                  ],
+                  "query": [
+                    {
+                      "key": "refreshToken",
+                      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"accessToken\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwidXNlcm5hbWUiOiJqb2huLmRvZSIsInJvbGVzIjpbIlJPTEVfVVNFUiJdLCJpYXQiOjE3MDUzMjI2MDAsImV4cCI6MTcwNTMyMzUwMH0.new\",\n  \"refreshToken\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwidXNlcm5hbWUiOiJqb2huLmRvZSIsImlhdCI6MTcwNTMyMjYwMCwiZXhwIjoxNzA2NDg2NjAwfQ.new\",\n  \"tokenType\": \"Bearer\",\n  \"expiresIn\": 900,\n  \"userId\": 1,\n  \"username\": \"john.doe\",\n  \"roles\": [\"ROLE_USER\"]\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "5. Credential Management",
+      "item": [
+        {
+          "name": "Register Credential",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": {{userId}},\n  \"type\": \"RSA\",\n  \"credentialId\": \"{{credentialId}}\",\n  \"publicKey\": \"public_key_string\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{authbaseUrl}}/api/auth/credential/register",
+              "host": [
+                "{{authbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "credential",
+                "register"
+              ]
+            },
+            "description": "Register a credential (RSA or WebAuthn) for a user.\n\n**Request Fields:**\n- `userId`: User ID (required)\n- `type`: Credential type - \"RSA\" or \"WEBAUTHN\" (required)\n- `credentialId`: Credential identifier (required)\n- `publicKey`: Public key (required)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get RSA Challenge",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{authbaseUrl}}/api/auth/credential/rsa/challenge/{{userId}}",
+              "host": [
+                "{{authbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "credential",
+                "rsa",
+                "challenge",
+                "{{userId}}"
+              ]
+            },
+            "description": "Get RSA challenge for a user.\n\n**Path Parameter:**\n- `userId`: User ID (required)\n\n**Response:**\nReturns challenge string to be signed with user's private key"
+          },
+          "response": [
+            {
+              "name": "Success - RSA Challenge",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{authbaseUrl}}/api/auth/credential/rsa/challenge/1",
+                  "host": [
+                    "{{authbaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "auth",
+                    "credential",
+                    "rsa",
+                    "challenge",
+                    "1"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"userId\": 1,\n  \"challenge\": \"random-challenge-string-abc123xyz\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Verify RSA Signature",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": {{userId}},\n  \"challenge\": \"{{rsaChallenge}}\",\n  \"signature\": \"{{rsaSignature}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{authbaseUrl}}/api/auth/credential/rsa/verify",
+              "host": [
+                "{{authbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "credential",
+                "rsa",
+                "verify"
+              ]
+            },
+            "description": "Verify RSA signature.\n\n**Request Fields:**\n- `userId`: User ID (required)\n- `challenge`: Challenge string (required)\n- `signature`: RSA signature (required)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get WebAuthn Challenge",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{authbaseUrl}}/api/auth/credential/webauthn/challenge/{{userId}}",
+              "host": [
+                "{{authbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "credential",
+                "webauthn",
+                "challenge",
+                "{{userId}}"
+              ]
+            },
+            "description": "Get WebAuthn challenge for a user.\n\n**Path Parameter:**\n- `userId`: User ID (required)\n\n**Response:**\nReturns WebAuthn challenge object"
+          },
+          "response": []
+        },
+        {
+          "name": "Verify WebAuthn Response",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": {{userId}},\n  \"credentialId\": \"{{credentialId}}\",\n  \"signature\": \"webauthn_signature\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{authbaseUrl}}/api/auth/credential/webauthn/verify",
+              "host": [
+                "{{authbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "credential",
+                "webauthn",
+                "verify"
+              ]
+            },
+            "description": "Verify WebAuthn response.\n\n**Request Fields:**\n- `userId`: User ID (required)\n- `credentialId`: WebAuthn credential ID (required)\n- `signature`: WebAuthn signature (required)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "6. MPIN Management",
+      "item": [
+        {
+          "name": "Register MPIN",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": {{userId}},\n  \"mpin\": \"{{mpin}}\",\n  \"deviceInfo\": \"Mobile App v1.0\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{authbaseUrl}}/api/auth/mpin/register",
+              "host": [
+                "{{authbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "mpin",
+                "register"
+              ]
+            },
+            "description": "Register or reset MPIN for a user.\n\n**Request Fields:**\n- `userId`: User ID (required)\n- `mpin`: MPIN code (required, will be hashed)\n- `deviceInfo`: Device information (optional)"
+          },
+          "response": []
+        },
+        {
+          "name": "Verify MPIN",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": {{userId}},\n  \"mpin\": \"{{mpin}}\",\n  \"deviceInfo\": \"Mobile App v1.0\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{authbaseUrl}}/api/auth/mpin/verify",
+              "host": [
+                "{{authbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "mpin",
+                "verify"
+              ]
+            },
+            "description": "Verify MPIN and login.\n\n**Request Fields:**\n- `userId`: User ID (required)\n- `mpin`: MPIN code (required)\n- `deviceInfo`: Device information (optional)\n\n**Response:**\nReturns JWT access token and refresh token"
+          },
+          "response": []
+        },
+        {
+          "name": "Request MPIN Reset",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": {{userId}},\n  \"mobile\": \"{{mobile}}\",\n  \"otp\": \"{{otp}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{authbaseUrl}}/api/auth/mpin/reset/request",
+              "host": [
+                "{{authbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "mpin",
+                "reset",
+                "request"
+              ]
+            },
+            "description": "Request MPIN reset.\n\n**Request Fields:**\n- `userId`: User ID (required)\n- `mobile`: Mobile number (required)\n- `otp`: OTP code (required)\n\n**Response:**\nReturns reset token to be used in confirm endpoint"
+          },
+          "response": []
+        },
+        {
+          "name": "Confirm MPIN Reset",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"resetToken\": \"reset_token_from_request\",\n  \"newMpin\": \"5678\",\n  \"deviceInfo\": \"Mobile App v1.0\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{authbaseUrl}}/api/auth/mpin/reset/confirm",
+              "host": [
+                "{{authbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "mpin",
+                "reset",
+                "confirm"
+              ]
+            },
+            "description": "Confirm MPIN reset with new MPIN.\n\n**Request Fields:**\n- `resetToken`: Reset token from request endpoint (required)\n- `newMpin`: New MPIN code (required)\n- `deviceInfo`: Device information (optional)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "7. Terms and Conditions",
+      "item": [
+        {
+          "name": "Get Terms and Conditions (For App)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{authbaseUrl}}/api/auth/terms-and-conditions?projectType={{projectType}}&language={{language}}",
+              "host": [
+                "{{authbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "terms-and-conditions"
+              ],
+              "query": [
+                {
+                  "key": "projectType",
+                  "value": "{{projectType}}",
+                  "description": "Project type code (e.g., ASSET_SERVICE) - optional"
+                },
+                {
+                  "key": "language",
+                  "value": "en",
+                  "description": "Language code (e.g., en, hi, es) - optional, default: en"
+                }
+              ]
+            },
+            "description": "Get active Terms and Conditions for display during registration.\n\n**Use Case:**\nApps should call this endpoint before showing the registration form to display T&C content to users.\n\n**Query Parameters:**\n- `projectType`: Project type code (optional) - If not provided, returns global/default T&C\n- `language`: Language code (optional, default: \"en\") - Returns T&C in specified language\n\n**Response:**\n```json\n{\n  \"tcId\": 1,\n  \"projectType\": \"ASSET_SERVICE\",\n  \"version\": \"1.0\",\n  \"title\": \"Terms and Conditions\",\n  \"content\": \"Full T&C content here...\",\n  \"summary\": \"Summary of T&C\",\n  \"language\": \"en\",\n  \"effectiveDate\": \"2024-01-01\",\n  \"lastUpdated\": \"2024-01-01T10:00:00\"\n}\n```\n\n**Fallback Logic:**\n1. Tries to find project-specific T&C with language\n2. Falls back to project-specific T&C (any language)\n3. Falls back to global T&C with language\n4. Falls back to global T&C (default)"
+          },
+          "response": [
+            {
+              "name": "Success - T&C Retrieved",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{authbaseUrl}}/api/auth/terms-and-conditions?projectType=ASSET_SERVICE&language=en",
+                  "host": [
+                    "{{authbaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "auth",
+                    "terms-and-conditions"
+                  ],
+                  "query": [
+                    {
+                      "key": "projectType",
+                      "value": "ASSET_SERVICE"
+                    },
+                    {
+                      "key": "language",
+                      "value": "en"
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"tcId\": 1,\n  \"projectType\": \"ASSET_SERVICE\",\n  \"version\": \"1.0\",\n  \"title\": \"Terms and Conditions\",\n  \"content\": \"<h1>Terms and Conditions</h1><p>By using this service, you agree to the following terms...</p>\",\n  \"summary\": \"By registering, you agree to our Terms and Conditions. Please read them carefully.\",\n  \"language\": \"en\",\n  \"effectiveDate\": \"2024-01-01\",\n  \"lastUpdated\": \"2024-01-15T10:30:00\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Terms and Conditions (Global)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{authbaseUrl}}/api/auth/terms-and-conditions?language={{language}}",
+              "host": [
+                "{{authbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "terms-and-conditions"
+              ],
+              "query": [
+                {
+                  "key": "language",
+                  "value": "en",
+                  "description": "Language code"
+                }
+              ]
+            },
+            "description": "Get global/default Terms and Conditions (no projectType specified)."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Terms and Conditions by Version",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{authbaseUrl}}/api/auth/terms-and-conditions/version?projectType={{projectType}}&version=1.0",
+              "host": [
+                "{{authbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "terms-and-conditions",
+                "version"
+              ],
+              "query": [
+                {
+                  "key": "projectType",
+                  "value": "{{projectType}}",
+                  "description": "Project type code (required)"
+                },
+                {
+                  "key": "version",
+                  "value": "1.0",
+                  "description": "Version number (required)"
+                }
+              ]
+            },
+            "description": "Get Terms and Conditions by specific version.\n\n**Use Case:**\nRetrieve a specific version of T&C for reference or historical purposes."
+          },
+          "response": []
+        },
+        {
+          "name": "Get All T&C Versions (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{authbaseUrl}}/api/auth/terms-and-conditions/versions?projectType={{projectType}}",
+              "host": [
+                "{{authbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "terms-and-conditions",
+                "versions"
+              ],
+              "query": [
+                {
+                  "key": "projectType",
+                  "value": "{{projectType}}",
+                  "description": "Project type code (required)"
+                }
+              ]
+            },
+            "description": "Get all versions of Terms and Conditions for a project type.\n\n**Use Case:**\nAdmin endpoint to view all T&C versions and manage them."
+          },
+          "response": []
+        },
+        {
+          "name": "Create Terms and Conditions (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"projectType\": \"{{projectType}}\",\n  \"version\": \"1.0\",\n  \"title\": \"Terms and Conditions\",\n  \"content\": \"<h1>Terms and Conditions</h1><p>By using this service, you agree to the following terms...</p><h2>1. Acceptance of Terms</h2><p>Content here...</p><h2>2. User Responsibilities</h2><p>Content here...</p>\",\n  \"summary\": \"By registering, you agree to our Terms and Conditions. Please read them carefully.\",\n  \"language\": \"{{language}}\",\n  \"isActive\": true,\n  \"effectiveDate\": \"2024-01-01\",\n  \"displayOrder\": 0\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{authbaseUrl}}/api/auth/terms-and-conditions",
+              "host": [
+                "{{authbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "terms-and-conditions"
+              ]
+            },
+            "description": "Create new Terms and Conditions.\n\n**Request Fields:**\n- `projectType`: Project type code (optional, null for global T&C)\n- `version`: Version number (required, e.g., \"1.0\", \"2.0\")\n- `title`: Title of T&C (required)\n- `content`: Full content (required, can be HTML or plain text)\n- `summary`: Short summary (optional)\n- `language`: Language code (optional, default: \"en\")\n- `isActive`: Whether this is active (optional, default: true)\n- `effectiveDate`: Effective date (optional, defaults to today)\n- `displayOrder`: Display order (optional, default: 0)\n\n**Note:** This is an admin endpoint and should be secured."
+          },
+          "response": []
+        },
+        {
+          "name": "Activate T&C Version (Admin)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{authbaseUrl}}/api/auth/terms-and-conditions/{{tcId}}/activate",
+              "host": [
+                "{{authbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "terms-and-conditions",
+                "{{tcId}}",
+                "activate"
+              ]
+            },
+            "description": "Activate a Terms and Conditions version.\n\n**Note:**\n- This will deactivate other versions for the same project type\n- Only one version can be active at a time per project type\n\n**Path Parameter:**\n- `tcId`: T&C ID (required)"
+          },
+          "response": []
+        },
+        {
+          "name": "Deactivate T&C Version (Admin)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{authbaseUrl}}/api/auth/terms-and-conditions/{{tcId}}/deactivate",
+              "host": [
+                "{{authbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "terms-and-conditions",
+                "{{tcId}}",
+                "deactivate"
+              ]
+            },
+            "description": "Deactivate a Terms and Conditions version.\n\n**Path Parameter:**\n- `tcId`: T&C ID (required)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "8. Contact Change",
+      "item": [
+        {
+          "name": "Request Email/Mobile Change",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": {{userId}},\n  \"oldValue\": \"old@example.com\",\n  \"otp\": \"{{otp}}\",\n  \"type\": \"EMAIL\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{authbaseUrl}}/api/auth/contact/change/request",
+              "host": [
+                "{{authbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "contact",
+                "change",
+                "request"
+              ]
+            },
+            "description": "Request email or mobile change.\n\n**Request Fields:**\n- `userId`: User ID (required)\n- `oldValue`: Current email or mobile (required)\n- `otp`: OTP code (required)\n- `type`: Type - \"EMAIL\" or \"MOBILE\" (required)\n\n**Response:**\nReturns reset token to be used in confirm endpoint"
+          },
+          "response": []
+        },
+        {
+          "name": "Confirm Email/Mobile Change",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"resetToken\": \"reset_token_from_request\",\n  \"newValue\": \"new@example.com\",\n  \"otp\": \"{{otp}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{authbaseUrl}}/api/auth/contact/change/confirm",
+              "host": [
+                "{{authbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "contact",
+                "change",
+                "confirm"
+              ]
+            },
+            "description": "Confirm email or mobile change.\n\n**Request Fields:**\n- `resetToken`: Reset token from request endpoint (required)\n- `newValue`: New email or mobile (required)\n- `otp`: OTP code for new email/mobile (required)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "9. User Profile",
+      "item": [
+        {
+          "name": "Get Current User Profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{authbaseUrl}}/api/users/me",
+              "host": [
+                "{{authbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "me"
+              ]
+            },
+            "description": "Get the profile of the currently authenticated user.\n\n**Authentication:**\nRequires valid JWT token in Authorization header.\n\n**Response:**\nReturns user profile including userId, username, email, mobile, projectType, roles, etc."
+          },
+          "response": [
+            {
+              "name": "Success - User Profile",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{authbaseUrl}}/api/users/me",
+                  "host": [
+                    "{{authbaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "users",
+                    "me"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"userId\": 1,\n  \"username\": \"john.doe\",\n  \"email\": \"john.doe@example.com\",\n  \"mobile\": \"9876543210\",\n  \"projectType\": \"ASSET_SERVICE\",\n  \"enabled\": true,\n  \"roles\": [\"ROLE_USER\"],\n  \"lastLoginDate\": \"2024-01-15T10:30:00\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get User by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{authbaseUrl}}/api/users/{{userId}}",
+              "host": [
+                "{{authbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "{{userId}}"
+              ]
+            },
+            "description": "Get user profile by ID.\n\n**Access Control:**\n- Users can only view their own profile\n- Admins can view any user profile\n\n**Path Parameter:**\n- `id`: User ID (required)"
+          },
+          "response": [
+            {
+              "name": "Success - User Profile",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{authbaseUrl}}/api/users/1",
+                  "host": [
+                    "{{authbaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "users",
+                    "1"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"userId\": 1,\n  \"username\": \"john.doe\",\n  \"email\": \"john.doe@example.com\",\n  \"mobile\": \"9876543210\",\n  \"projectType\": \"ASSET_SERVICE\",\n  \"enabled\": true,\n  \"roles\": [\"ROLE_USER\"]\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "10. Admin Operations",
+      "item": [
+        {
+          "name": "List All Users (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{authbaseUrl}}/api/admin/users",
+              "host": [
+                "{{authbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "users"
+              ]
+            },
+            "description": "Get a list of all users (admin only).\n\n**Authentication:**\nRequires admin role and valid JWT token.\n\n**Response:**\nReturns array of user profiles."
+          },
+          "response": [
+            {
+              "name": "Success - User List",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{authbaseUrl}}/api/admin/users",
+                  "host": [
+                    "{{authbaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "admin",
+                    "users"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "[\n  {\n    \"userId\": 1,\n    \"username\": \"john.doe\",\n    \"email\": \"john.doe@example.com\",\n    \"mobile\": \"9876543210\",\n    \"projectType\": \"ASSET_SERVICE\",\n    \"enabled\": true,\n    \"roles\": [\"ROLE_USER\"]\n  },\n  {\n    \"userId\": 2,\n    \"username\": \"admin.user\",\n    \"email\": \"admin@example.com\",\n    \"mobile\": \"9876543211\",\n    \"projectType\": \"ASSET_SERVICE\",\n    \"enabled\": true,\n    \"roles\": [\"ROLE_ADMIN\"]\n  }\n]"
+            }
+          ]
+        },
+        {
+          "name": "Get Audit Logs (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{authbaseUrl}}/api/admin/audit/logs?userId={{userId}}",
+              "host": [
+                "{{authbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "audit",
+                "logs"
+              ],
+              "query": [
+                {
+                  "key": "userId",
+                  "value": "{{userId}}",
+                  "description": "Filter by user ID (optional)"
+                },
+                {
+                  "key": "action",
+                  "value": "",
+                  "description": "Filter by action (optional)",
+                  "disabled": true
+                },
+                {
+                  "key": "from",
+                  "value": "",
+                  "description": "Filter from date (ISO format, optional)",
+                  "disabled": true
+                },
+                {
+                  "key": "to",
+                  "value": "",
+                  "description": "Filter to date (ISO format, optional)",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Get audit logs with optional filters (admin only).\n\n**Query Parameters:**\n- `userId`: Filter by user ID (optional)\n- `action`: Filter by action (optional)\n- `url`: Filter by URL (optional)\n- `method`: Filter by HTTP method (optional)\n- `from`: Filter from date (ISO format, optional)\n- `to`: Filter to date (ISO format, optional)"
+          },
+          "response": [
+            {
+              "name": "Success - Audit Logs",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{authbaseUrl}}/api/admin/audit/logs?userId=1",
+                  "host": [
+                    "{{authbaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "admin",
+                    "audit",
+                    "logs"
+                  ],
+                  "query": [
+                    {
+                      "key": "userId",
+                      "value": "1"
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "[\n  {\n    \"id\": 1,\n    \"userId\": 1,\n    \"action\": \"LOGIN\",\n    \"url\": \"/api/auth/login\",\n    \"method\": \"POST\",\n    \"ipAddress\": \"192.168.1.1\",\n    \"userAgent\": \"Mozilla/5.0...\",\n    \"eventTime\": \"2024-01-15T10:30:00\"\n  }\n]"
+            }
+          ]
+        },
+        {
+          "name": "Get Paginated Audit Logs (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{authbaseUrl}}/api/admin/audit/logs/paged?page=0&size=20",
+              "host": [
+                "{{authbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "audit",
+                "logs",
+                "paged"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0",
+                  "description": "Page number (0-based)"
+                },
+                {
+                  "key": "size",
+                  "value": "20",
+                  "description": "Page size"
+                },
+                {
+                  "key": "userId",
+                  "value": "{{userId}}",
+                  "description": "Filter by user ID (optional)",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Get audit logs with pagination (admin only).\n\n**Query Parameters:**\n- `page`: Page number (0-based, default: 0)\n- `size`: Page size (default: 20)\n- `sort`: Sort criteria (optional)\n- Other filters same as /logs endpoint"
+          },
+          "response": []
+        },
+        {
+          "name": "Export Audit Logs CSV (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{authbaseUrl}}/api/admin/audit/logs/csv",
+              "host": [
+                "{{authbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "audit",
+                "logs",
+                "csv"
+              ]
+            },
+            "description": "Export audit logs as CSV file (admin only).\n\n**Response:**\nReturns CSV file download.\n\n**Query Parameters:**\nSame filters as /logs endpoint"
+          },
+          "response": []
+        },
+        {
+          "name": "Export Audit Logs Excel (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{authbaseUrl}}/api/admin/audit/logs/excel",
+              "host": [
+                "{{authbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "audit",
+                "logs",
+                "excel"
+              ]
+            },
+            "description": "Export audit logs as Excel file (admin only).\n\n**Response:**\nReturns Excel (.xlsx) file download.\n\n**Query Parameters:**\nSame filters as /logs endpoint"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "11. Project Types",
+      "item": [
+        {
+          "name": "Get All Active Project Types",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{authbaseUrl}}/api/auth/v1/project-types",
+              "host": [
+                "{{authbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "v1",
+                "project-types"
+              ]
+            },
+            "description": "Get a list of all active project types.\n\n**Response:**\nReturns array of active project types."
+          },
+          "response": [
+            {
+              "name": "Success - Project Types",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{authbaseUrl}}/api/auth/v1/project-types",
+                  "host": [
+                    "{{authbaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "auth",
+                    "v1",
+                    "project-types"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "[\n  {\n    \"projectTypeId\": 1,\n    \"code\": \"ASSET_SERVICE\",\n    \"name\": \"Asset Service\",\n    \"description\": \"Asset Management Service\",\n    \"displayOrder\": 1,\n    \"active\": true\n  },\n  {\n    \"projectTypeId\": 2,\n    \"code\": \"ECOM\",\n    \"name\": \"E-Commerce\",\n    \"description\": \"E-Commerce Platform\",\n    \"displayOrder\": 2,\n    \"active\": true\n  }\n]"
+            }
+          ]
+        },
+        {
+          "name": "Get Project Type by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{authbaseUrl}}/api/auth/v1/project-types/{{projectTypeId}}",
+              "host": [
+                "{{authbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "v1",
+                "project-types",
+                "{{projectTypeId}}"
+              ]
+            },
+            "description": "Get a project type by its ID.\n\n**Path Parameter:**\n- `projectTypeId`: Project type ID (required)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Project Type by Code",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{authbaseUrl}}/api/auth/v1/project-types/code/{{projectTypeCode}}",
+              "host": [
+                "{{authbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "v1",
+                "project-types",
+                "code",
+                "{{projectTypeCode}}"
+              ]
+            },
+            "description": "Get a project type by its code.\n\n**Path Parameter:**\n- `code`: Project type code (required, e.g., ASSET_SERVICE)"
+          },
+          "response": []
+        },
+        {
+          "name": "Validate Project Type Code",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{authbaseUrl}}/api/auth/v1/project-types/validate/{{projectTypeCode}}",
+              "host": [
+                "{{authbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "v1",
+                "project-types",
+                "validate",
+                "{{projectTypeCode}}"
+              ]
+            },
+            "description": "Check if a project type code exists.\n\n**Path Parameter:**\n- `code`: Project type code to validate (required)\n\n**Response:**\n```json\n{\n  \"code\": \"ASSET_SERVICE\",\n  \"exists\": true\n}\n```"
+          },
+          "response": [
+            {
+              "name": "Success - Validation Result",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{authbaseUrl}}/api/auth/v1/project-types/validate/ASSET_SERVICE",
+                  "host": [
+                    "{{authbaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "auth",
+                    "v1",
+                    "project-types",
+                    "validate",
+                    "ASSET_SERVICE"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"code\": \"ASSET_SERVICE\",\n  \"exists\": true\n}"
+            }
+          ]
+        },
+        {
+          "name": "Create Project Type",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{authbaseUrl}}/api/auth/v1/project-types?code={{projectTypeCode}}&name=New Project Type&description=Description&displayOrder=0&createdBy=SYSTEM",
+              "host": [
+                "{{authbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "v1",
+                "project-types"
+              ],
+              "query": [
+                {
+                  "key": "code",
+                  "value": "{{projectTypeCode}}",
+                  "description": "Project type code (required)"
+                },
+                {
+                  "key": "name",
+                  "value": "New Project Type",
+                  "description": "Project type name (required)"
+                },
+                {
+                  "key": "description",
+                  "value": "Description",
+                  "description": "Description (optional)"
+                },
+                {
+                  "key": "displayOrder",
+                  "value": "0",
+                  "description": "Display order (optional, default: 0)"
+                },
+                {
+                  "key": "createdBy",
+                  "value": "SYSTEM",
+                  "description": "Created by (optional, default: SYSTEM)"
+                }
+              ]
+            },
+            "description": "Create a new project type.\n\n**Query Parameters:**\n- `code`: Project type code (required, must be unique)\n- `name`: Project type name (required)\n- `description`: Description (optional)\n- `displayOrder`: Display order (optional, default: 0)\n- `createdBy`: Created by (optional, default: SYSTEM)"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Project Type",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{authbaseUrl}}/api/auth/v1/project-types/{{projectTypeId}}?name=Updated Name&description=Updated Description&displayOrder=1&updatedBy=SYSTEM",
+              "host": [
+                "{{authbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "v1",
+                "project-types",
+                "{{projectTypeId}}"
+              ],
+              "query": [
+                {
+                  "key": "name",
+                  "value": "Updated Name",
+                  "description": "Project type name (required)"
+                },
+                {
+                  "key": "description",
+                  "value": "Updated Description",
+                  "description": "Description (optional)"
+                },
+                {
+                  "key": "displayOrder",
+                  "value": "1",
+                  "description": "Display order (optional)"
+                },
+                {
+                  "key": "updatedBy",
+                  "value": "SYSTEM",
+                  "description": "Updated by (optional, default: SYSTEM)"
+                }
+              ]
+            },
+            "description": "Update an existing project type.\n\n**Path Parameter:**\n- `projectTypeId`: Project type ID (required)\n\n**Query Parameters:**\n- `name`: Project type name (required)\n- `description`: Description (optional)\n- `displayOrder`: Display order (optional)\n- `updatedBy`: Updated by (optional, default: SYSTEM)"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Project Type",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{authbaseUrl}}/api/auth/v1/project-types/{{projectTypeId}}?deletedBy=SYSTEM",
+              "host": [
+                "{{authbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "v1",
+                "project-types",
+                "{{projectTypeId}}"
+              ],
+              "query": [
+                {
+                  "key": "deletedBy",
+                  "value": "SYSTEM",
+                  "description": "Deleted by (optional, default: SYSTEM)"
+                }
+              ]
+            },
+            "description": "Soft delete a project type.\n\n**Path Parameter:**\n- `projectTypeId`: Project type ID (required)\n\n**Query Parameters:**\n- `deletedBy`: Deleted by (optional, default: SYSTEM)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "12. User Profile",
+      "item": [
+        {
+          "name": "Get My Profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text",
+                "description": "JWT Bearer token from auth-service"
+              }
+            ],
+            "url": {
+              "raw": "{{authbaseUrl}}/api/auth/profile/me",
+              "host": [
+                "{{authbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "profile",
+                "me"
+              ]
+            },
+            "description": "Get current user's complete profile including photo, social media links, demographic info, behaviors, and additional information.\n\n**Authentication:**\n- Requires Authorization header with Bearer token\n- Returns profile of the logged-in user\n\n**Response includes:**\n- Basic info: userId, username, email, mobile, employeeId\n- Address: pincode, city, state, country, countryCode\n- Profile photo: profilePhotoUrl\n- Social media: linkedinUrl, facebookUrl, twitterUrl, instagramUrl, githubUrl, websiteUrl\n- Demographic: dateOfBirth, gender, occupation, education, maritalStatus\n- Behaviors: preferences (JSON), activityPatterns (JSON), interests (JSON array)\n- Additional: bio, skills (JSON array), languages (JSON array), timezone, additionalInfo (JSON)\n- Account: lastLoginDate, accountLocked, acceptTc\n\n**Response Example:**\n```json\n{\n  \"userId\": 123,\n  \"username\": \"john.doe\",\n  \"email\": \"john@example.com\",\n  \"mobile\": \"9876543210\",\n  \"profilePhotoUrl\": \"https://example.com/photos/john.jpg\",\n  \"linkedinUrl\": \"https://linkedin.com/in/johndoe\",\n  \"bio\": \"Software engineer with 10 years of experience\",\n  \"dateOfBirth\": \"1990-01-15\",\n  \"gender\": \"MALE\",\n  \"occupation\": \"Software Engineer\",\n  \"education\": \"BACHELORS\",\n  \"maritalStatus\": \"SINGLE\",\n  \"preferences\": \"{\\\"theme\\\":\\\"dark\\\",\\\"notifications\\\":true}\",\n  \"interests\": \"[\\\"coding\\\",\\\"reading\\\",\\\"traveling\\\"]\",\n  \"skills\": \"[\\\"Java\\\",\\\"Spring Boot\\\",\\\"React\\\"]\",\n  \"languages\": \"[\\\"English\\\",\\\"Spanish\\\"]\",\n  \"timezone\": \"America/New_York\",\n  \"lastLoginDate\": \"2024-01-15T10:30:00\",\n  \"accountLocked\": false,\n  \"acceptTc\": true\n}\n```"
+          },
+          "response": []
+        },
+        {
+          "name": "Get User Profile by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text",
+                "description": "JWT Bearer token from auth-service"
+              }
+            ],
+            "url": {
+              "raw": "{{authbaseUrl}}/api/auth/profile/{{userId}}",
+              "host": [
+                "{{authbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "profile",
+                "{{userId}}"
+              ]
+            },
+            "description": "Get a specific user's profile by userId.\n\n**Authentication:**\n- Requires Authorization header with Bearer token\n- Users can only view their own profile unless they are admin\n\n**Path Parameters:**\n- `userId`: User ID (required)\n\n**Response:**\nSame structure as Get My Profile"
+          },
+          "response": []
+        },
+        {
+          "name": "Update My Profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text",
+                "description": "JWT Bearer token from auth-service"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"profilePhotoUrl\": \"https://example.com/photos/user.jpg\",\n  \"linkedinUrl\": \"https://linkedin.com/in/user\",\n  \"facebookUrl\": \"https://facebook.com/user\",\n  \"twitterUrl\": \"https://twitter.com/user\",\n  \"instagramUrl\": \"https://instagram.com/user\",\n  \"githubUrl\": \"https://github.com/user\",\n  \"websiteUrl\": \"https://userwebsite.com\",\n  \"dateOfBirth\": \"1990-01-15\",\n  \"gender\": \"MALE\",\n  \"occupation\": \"Software Engineer\",\n  \"education\": \"BACHELORS\",\n  \"maritalStatus\": \"SINGLE\",\n  \"preferences\": \"{\\\"theme\\\":\\\"dark\\\",\\\"notifications\\\":true}\",\n  \"activityPatterns\": \"{\\\"loginFrequency\\\":\\\"daily\\\"}\",\n  \"interests\": \"[\\\"coding\\\",\\\"reading\\\"]\",\n  \"bio\": \"Software engineer with 10 years of experience\",\n  \"skills\": \"[\\\"Java\\\",\\\"Spring Boot\\\"]\",\n  \"languages\": \"[\\\"English\\\",\\\"Spanish\\\"]\",\n  \"timezone\": \"America/New_York\",\n  \"additionalInfo\": \"{\\\"customField\\\":\\\"value\\\"}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{authbaseUrl}}/api/auth/profile/me",
+              "host": [
+                "{{authbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "profile",
+                "me"
+              ]
+            },
+            "description": "Update current user's profile. Only provide fields you want to update (partial update supported).\n\n**Authentication:**\n- Requires Authorization header with Bearer token\n- Users can only update their own profile\n\n**Request Body Fields (all optional):**\n- `profilePhotoUrl`: Profile photo URL (string)\n- `linkedinUrl`, `facebookUrl`, `twitterUrl`, `instagramUrl`, `githubUrl`, `websiteUrl`: Social media links (strings)\n- `dateOfBirth`: Date of birth in YYYY-MM-DD format (string, validated)\n- `gender`: Gender (MALE, FEMALE, OTHER, PREFER_NOT_TO_SAY)\n- `occupation`: Occupation (string)\n- `education`: Education level (HIGH_SCHOOL, BACHELORS, MASTERS, PHD, etc.)\n- `maritalStatus`: Marital status (SINGLE, MARRIED, DIVORCED, WIDOWED, etc.)\n- `preferences`: User preferences as JSON string\n- `activityPatterns`: Activity patterns as JSON string\n- `interests`: Interests/hobbies as JSON array string\n- `bio`: User biography/description (string)\n- `skills`: Skills as JSON array string\n- `languages`: Languages spoken as JSON array string\n- `timezone`: User's timezone (e.g., \"America/New_York\", \"Asia/Kolkata\")\n- `additionalInfo`: Additional information as JSON string\n\n**Response:**\n```json\n{\n  \"message\": \"Profile updated successfully\",\n  \"profile\": {\n    \"userId\": 123,\n    \"username\": \"john.doe\",\n    ...\n  }\n}\n```"
+          },
+          "response": []
+        },
+        {
+          "name": "Update User Profile by ID",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text",
+                "description": "JWT Bearer token from auth-service"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"profilePhotoUrl\": \"https://example.com/photos/user.jpg\",\n  \"bio\": \"Updated bio\",\n  \"skills\": \"[\\\"Java\\\",\\\"Python\\\"]\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{authbaseUrl}}/api/auth/profile/{{userId}}",
+              "host": [
+                "{{authbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "profile",
+                "{{userId}}"
+              ]
+            },
+            "description": "Update a specific user's profile by userId.\n\n**Authentication:**\n- Requires Authorization header with Bearer token\n- Users can only update their own profile unless they are admin\n\n**Path Parameters:**\n- `userId`: User ID (required)\n\n**Request Body:**\nSame as Update My Profile. Only provide fields you want to update.\n\n**Response:**\nSame as Update My Profile"
+          },
+          "response": []
+        },
+        {
+          "name": "Update My Profile (With Photo Upload)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text",
+                "description": "JWT Bearer token from auth-service"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "profilePhoto",
+                  "type": "file",
+                  "src": [],
+                  "description": "Profile photo file (JPG, PNG, etc.)"
+                },
+                {
+                  "key": "bio",
+                  "value": "Software engineer with 10 years of experience",
+                  "type": "text",
+                  "description": "User biography"
+                },
+                {
+                  "key": "linkedinUrl",
+                  "value": "https://linkedin.com/in/user",
+                  "type": "text",
+                  "description": "LinkedIn profile URL"
+                },
+                {
+                  "key": "facebookUrl",
+                  "value": "https://facebook.com/user",
+                  "type": "text",
+                  "description": "Facebook profile URL"
+                },
+                {
+                  "key": "dateOfBirth",
+                  "value": "1990-01-15",
+                  "type": "text",
+                  "description": "Date of birth (YYYY-MM-DD)"
+                },
+                {
+                  "key": "gender",
+                  "value": "MALE",
+                  "type": "text",
+                  "description": "Gender (MALE, FEMALE, OTHER, PREFER_NOT_TO_SAY)"
+                },
+                {
+                  "key": "occupation",
+                  "value": "Software Engineer",
+                  "type": "text",
+                  "description": "Occupation"
+                },
+                {
+                  "key": "skills",
+                  "value": "[\"Java\", \"Spring Boot\", \"React\"]",
+                  "type": "text",
+                  "description": "Skills as JSON array string"
+                },
+                {
+                  "key": "languages",
+                  "value": "[\"English\", \"Spanish\"]",
+                  "type": "text",
+                  "description": "Languages as JSON array string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{authbaseUrl}}/api/auth/profile/me",
+              "host": [
+                "{{authbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "profile",
+                "me"
+              ]
+            },
+            "description": "Update current user's profile with photo upload using form-data.\n\n**Authentication:**\n- Requires Authorization header with Bearer token\n- Users can only update their own profile\n\n**Form-Data Fields (all optional):**\n- `profilePhoto`: Profile photo file (file upload - JPG, PNG, GIF, etc.)\n- `linkedinUrl`, `facebookUrl`, `twitterUrl`, `instagramUrl`, `githubUrl`, `websiteUrl`: Social media links (text)\n- `dateOfBirth`: Date of birth in YYYY-MM-DD format (text, validated)\n- `gender`: Gender (MALE, FEMALE, OTHER, PREFER_NOT_TO_SAY)\n- `occupation`: Occupation (text)\n- `education`: Education level (HIGH_SCHOOL, BACHELORS, MASTERS, PHD, etc.)\n- `maritalStatus`: Marital status (SINGLE, MARRIED, DIVORCED, WIDOWED, etc.)\n- `preferences`: User preferences as JSON string (text)\n- `activityPatterns`: Activity patterns as JSON string (text)\n- `interests`: Interests/hobbies as JSON array string (text)\n- `bio`: User biography/description (text)\n- `skills`: Skills as JSON array string (text)\n- `languages`: Languages spoken as JSON array string (text)\n- `timezone`: User's timezone (text, e.g., \"America/New_York\", \"Asia/Kolkata\")\n- `additionalInfo`: Additional information as JSON string (text)\n\n**File Upload:**\n- The `profilePhoto` field accepts image files\n- File is stored in `uploads/USER_PROFILE/` directory\n- Returns the stored file path in `profilePhotoUrl` field\n\n**Response:**\n```json\n{\n  \"message\": \"Profile updated successfully\",\n  \"profile\": {\n    \"userId\": 123,\n    \"username\": \"john.doe\",\n    \"profilePhotoUrl\": \"uploads/USER_PROFILE/USER_PROFILE_2024-01-15_10-30-00_abc123.jpg\",\n    ...\n  }\n}\n```"
+          },
+          "response": []
+        },
+        {
+          "name": "Update User Profile by ID (With Photo Upload)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text",
+                "description": "JWT Bearer token from auth-service"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "profilePhoto",
+                  "type": "file",
+                  "src": [],
+                  "description": "Profile photo file (JPG, PNG, etc.)"
+                },
+                {
+                  "key": "bio",
+                  "value": "Updated bio with photo",
+                  "type": "text",
+                  "description": "User biography"
+                },
+                {
+                  "key": "skills",
+                  "value": "[\"Java\", \"Python\", \"Docker\"]",
+                  "type": "text",
+                  "description": "Skills as JSON array string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{authbaseUrl}}/api/auth/profile/{{userId}}",
+              "host": [
+                "{{authbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "profile",
+                "{{userId}}"
+              ]
+            },
+            "description": "Update a specific user's profile by userId with photo upload using form-data.\n\n**Authentication:**\n- Requires Authorization header with Bearer token\n- Users can only update their own profile unless they are admin\n\n**Path Parameters:**\n- `userId`: User ID (required)\n\n**Form-Data Fields:**\nSame as \"Update My Profile (With Photo Upload)\". All fields are optional.\n\n**File Upload:**\n- The `profilePhoto` field accepts image files\n- File is stored in `uploads/USER_PROFILE/` directory\n- Returns the stored file path in `profilePhotoUrl` field\n\n**Response:**\nSame as Update My Profile (With Photo Upload)"
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "authbaseUrl",
+      "value": "http://localhost:8080",
+      "type": "string",
+      "description": "Base URL for Auth Service API. Default: http://localhost:8080\n\n**Common Values:**\n- Local: http://localhost:8080\n- Development: http://dev-auth-service.example.com\n- Production: https://api.example.com/auth-service"
+    },
+    {
+      "key": "accessToken",
+      "value": "",
+      "type": "string",
+      "description": "JWT Bearer token obtained from login endpoint.\n\n**How to get:**\n1. Call POST /api/auth/login with valid credentials\n2. Copy the accessToken from the response\n3. Set this variable with the token value (without 'Bearer ' prefix)\n\n**Usage:**\nUse in Authorization header: Bearer {{accessToken}}"
+    },
+    {
+      "key": "refreshToken",
+      "value": "",
+      "type": "string",
+      "description": "Refresh token obtained from login endpoint.\n\n**How to get:**\n1. Call POST /api/auth/login with valid credentials\n2. Copy the refreshToken from the response\n3. Set this variable with the token value\n\n**Usage:**\nUse to refresh access token when it expires"
+    },
+    {
+      "key": "projectType",
+      "value": "ASSET_SERVICE",
+      "type": "string",
+      "description": "Project type code for T&C and registration.\n\n**Common Values:**\n- ASSET_SERVICE\n- ECOM\n- INVENTORY\n\n**Usage:**\nUsed in T&C API and registration endpoints"
+    }
+  ]
 }
-

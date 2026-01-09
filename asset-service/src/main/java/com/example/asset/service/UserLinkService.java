@@ -986,6 +986,9 @@ public class UserLinkService {
             result.put("subCategories", subCategories);
             
             // 10. VENDORS (return all vendors - not directly linked to assets in current schema)
+            // Note: Vendors are master data and don't have a direct relationship with AssetMaster.
+            // They are not filtered by userId as there's no direct link between vendors and user-assigned assets.
+            // If vendor filtering is needed in the future, it would require adding a vendor relationship to AssetMaster.
             List<Map<String, Object>> vendors = vendorRepo.findAll().stream()
                     .map(vendor -> {
                         Map<String, Object> vendorMap = new LinkedHashMap<>();
@@ -1008,7 +1011,10 @@ public class UserLinkService {
                     .collect(Collectors.toList());
             result.put("vendors", vendors);
             
-            // 11. OUTLETS (return all if userId is null, or filter if needed)
+            // 11. OUTLETS (return all outlets - not directly linked to assets in current schema)
+            // Note: Outlets are master data and don't have a direct relationship with AssetMaster.
+            // They are not filtered by userId as there's no direct link between outlets and user-assigned assets.
+            // If outlet filtering is needed in the future, it would require adding an outlet relationship to AssetMaster.
             List<Map<String, Object>> outlets = outletRepo.findAll().stream()
                     .map(outlet -> {
                         Map<String, Object> outletMap = new LinkedHashMap<>();
@@ -1136,19 +1142,22 @@ public class UserLinkService {
      * Get comprehensive "Need Your Attention" data including all entities in detail.
      * This API aggregates all features: users, assets, components, warranties, AMCs,
      * makes, models, categories, sub-categories, vendors, outlets, statuses, and more.
+     * The data is filtered by the logged-in user (userId) to show only relevant information.
      * 
+     * @param userId The ID of the user to filter data for (logged-in user). If null, returns all data.
      * @param loginUserId The ID of the user making the request (for audit)
      * @param loginUsername The username of the user making the request (for audit)
-     * @return Comprehensive map with all entities and summary information
+     * @return Comprehensive map with all entities and summary information filtered by userId
      */
-    public Map<String, Object> getNeedYourAttentionData(Long loginUserId, String loginUsername) {
+    public Map<String, Object> getNeedYourAttentionData(Long userId, Long loginUserId, String loginUsername) {
         Map<String, Object> result = new LinkedHashMap<>();
         
         try {
-            log.info("📊 Need Your Attention API - Comprehensive data request by user: {}", loginUsername);
+            log.info("📊 Need Your Attention API - Comprehensive data request for userId: {} (requested by: {})", 
+                    userId, loginUsername);
             
-            // Get all master data without filtering
-            Map<String, Object> allMasterData = getAllMasterDataInDetailByUserId(null, loginUserId, loginUsername);
+            // Get master data filtered by userId (logged-in user)
+            Map<String, Object> allMasterData = getAllMasterDataInDetailByUserId(userId, loginUserId, loginUsername);
             
             // Add enhanced summary counts
             @SuppressWarnings("unchecked")
@@ -1158,8 +1167,9 @@ public class UserLinkService {
             // Add attention indicators
             Map<String, Object> attention = new LinkedHashMap<>();
             
-            // Warranties expiring soon (within 30 days)
+            // Warranties expiring soon (within 30 days) and expired warranties
             List<Map<String, Object>> expiringWarranties = new ArrayList<>();
+            List<Map<String, Object>> expiredWarranties = new ArrayList<>();
             LocalDate today = LocalDate.now();
             LocalDate thirtyDaysFromNow = today.plusDays(30);
             @SuppressWarnings("unchecked")
@@ -1178,16 +1188,25 @@ public class UserLinkService {
                             continue;
                         }
                     }
-                    if (endDate != null && endDate.isAfter(today) && (endDate.isBefore(thirtyDaysFromNow) || endDate.isEqual(thirtyDaysFromNow))) {
-                        expiringWarranties.add(warranty);
+                    if (endDate != null) {
+                        if (endDate.isBefore(today)) {
+                            // Already expired
+                            expiredWarranties.add(warranty);
+                        } else if (endDate.isAfter(today) && (endDate.isBefore(thirtyDaysFromNow) || endDate.isEqual(thirtyDaysFromNow))) {
+                            // Expiring within 30 days
+                            expiringWarranties.add(warranty);
+                        }
                     }
                 }
             }
             attention.put("expiringWarranties", expiringWarranties);
             attention.put("expiringWarrantiesCount", expiringWarranties.size());
+            attention.put("expiredWarranties", expiredWarranties);
+            attention.put("expiredWarrantiesCount", expiredWarranties.size());
             
-            // AMCs expiring soon (within 30 days)
+            // AMCs expiring soon (within 30 days) and expired AMCs
             List<Map<String, Object>> expiringAmcs = new ArrayList<>();
+            List<Map<String, Object>> expiredAmcs = new ArrayList<>();
             @SuppressWarnings("unchecked")
             List<Map<String, Object>> amcs = (List<Map<String, Object>>) allMasterData.getOrDefault("amcs", new ArrayList<>());
             for (Map<String, Object> amc : amcs) {
@@ -1204,13 +1223,21 @@ public class UserLinkService {
                             continue;
                         }
                     }
-                    if (endDate != null && endDate.isAfter(today) && (endDate.isBefore(thirtyDaysFromNow) || endDate.isEqual(thirtyDaysFromNow))) {
-                        expiringAmcs.add(amc);
+                    if (endDate != null) {
+                        if (endDate.isBefore(today)) {
+                            // Already expired
+                            expiredAmcs.add(amc);
+                        } else if (endDate.isAfter(today) && (endDate.isBefore(thirtyDaysFromNow) || endDate.isEqual(thirtyDaysFromNow))) {
+                            // Expiring within 30 days
+                            expiringAmcs.add(amc);
+                        }
                     }
                 }
             }
             attention.put("expiringAmcs", expiringAmcs);
             attention.put("expiringAmcsCount", expiringAmcs.size());
+            attention.put("expiredAmcs", expiredAmcs);
+            attention.put("expiredAmcsCount", expiredAmcs.size());
             
             // Assets without warranty
             @SuppressWarnings("unchecked")
@@ -1262,23 +1289,97 @@ public class UserLinkService {
             attention.put("assetsWithoutAmc", assetsWithoutAmc);
             attention.put("assetsWithoutAmcCount", assetsWithoutAmc.size());
             
-            // Unassigned assets (no active user link)
-            List<AssetUserLink> allLinks = linkRepo.findAll();
-            Set<Long> assignedAssetIds = allLinks.stream()
-                    .filter(l -> l.getAssetId() != null && l.getActive() != null && l.getActive())
-                    .map(AssetUserLink::getAssetId)
-                    .collect(Collectors.toSet());
-            List<Map<String, Object>> unassignedAssets = assets.stream()
-                    .filter(a -> {
-                        Object assetId = a.get("assetId");
-                        if (assetId instanceof Number) {
-                            return !assignedAssetIds.contains(((Number) assetId).longValue());
-                        }
-                        return false;
-                    })
-                    .collect(Collectors.toList());
+            // Unassigned assets (no active user link) - filtered by userId if provided
+            // For a specific user, all returned assets are already assigned to that user,
+            // so unassigned assets would be empty for user-specific view.
+            // For system-wide view (userId == null), this shows assets not assigned to any user
+            List<Map<String, Object>> unassignedAssets;
+            if (userId != null) {
+                // For user-specific filtering, all assets in the result are already assigned to the user
+                // So there are no unassigned assets for this user's view
+                unassignedAssets = new ArrayList<>();
+            } else {
+                // For system-wide view: get all assets assigned to any user
+                List<AssetUserLink> allLinks = linkRepo.findAll();
+                Set<Long> assignedAssetIds = allLinks.stream()
+                        .filter(l -> l.getAssetId() != null && l.getActive() != null && l.getActive())
+                        .map(AssetUserLink::getAssetId)
+                        .collect(Collectors.toSet());
+                // Filter to show assets not assigned to any user
+                unassignedAssets = assets.stream()
+                        .filter(a -> {
+                            Object assetId = a.get("assetId");
+                            if (assetId instanceof Number) {
+                                return !assignedAssetIds.contains(((Number) assetId).longValue());
+                            }
+                            return false;
+                        })
+                        .collect(Collectors.toList());
+            }
             attention.put("unassignedAssets", unassignedAssets);
             attention.put("unassignedAssetsCount", unassignedAssets.size());
+            
+            // Inactive assets
+            @SuppressWarnings("unchecked")
+            List<Map<String, Object>> allAssets = (List<Map<String, Object>>) allMasterData.getOrDefault("assets", new ArrayList<>());
+            List<Map<String, Object>> inactiveAssets = allAssets.stream()
+                    .filter(a -> {
+                        Object activeObj = a.get("active");
+                        return activeObj != null && Boolean.FALSE.equals(activeObj);
+                    })
+                    .collect(Collectors.toList());
+            attention.put("inactiveAssets", inactiveAssets);
+            attention.put("inactiveAssetsCount", inactiveAssets.size());
+            
+            // Inactive components
+            @SuppressWarnings("unchecked")
+            List<Map<String, Object>> allComponents = (List<Map<String, Object>>) allMasterData.getOrDefault("components", new ArrayList<>());
+            List<Map<String, Object>> inactiveComponents = allComponents.stream()
+                    .filter(c -> {
+                        Object activeObj = c.get("active");
+                        return activeObj != null && Boolean.FALSE.equals(activeObj);
+                    })
+                    .collect(Collectors.toList());
+            attention.put("inactiveComponents", inactiveComponents);
+            attention.put("inactiveComponentsCount", inactiveComponents.size());
+            
+            // Inactive warranties
+            List<Map<String, Object>> inactiveWarranties = warranties.stream()
+                    .filter(w -> {
+                        Object activeObj = w.get("active");
+                        return activeObj != null && Boolean.FALSE.equals(activeObj);
+                    })
+                    .collect(Collectors.toList());
+            attention.put("inactiveWarranties", inactiveWarranties);
+            attention.put("inactiveWarrantiesCount", inactiveWarranties.size());
+            
+            // Inactive AMCs
+            List<Map<String, Object>> inactiveAmcs = amcs.stream()
+                    .filter(a -> {
+                        Object activeObj = a.get("active");
+                        return activeObj != null && Boolean.FALSE.equals(activeObj);
+                    })
+                    .collect(Collectors.toList());
+            attention.put("inactiveAmcs", inactiveAmcs);
+            attention.put("inactiveAmcsCount", inactiveAmcs.size());
+            
+            // Note: Password expiry and inactive users would require integration with auth-service
+            // For now, we'll add placeholders that can be populated when auth-service API is available
+            // To implement: Call auth-service API to get users with:
+            //   - Password expiry (if passwordExpiryDate field exists)
+            //   - Account locked (accountLocked = true)
+            //   - Disabled accounts (enabled = false)
+            //   - Users with high failed login attempts (failedAttempts > threshold)
+            List<Map<String, Object>> usersNeedingAttention = new ArrayList<>();
+            // For now, we can't check password expiry or account status without auth-service integration
+            // This would require:
+            // 1. HTTP client to call auth-service API
+            // 2. Or shared database access to User and UserDetailMaster tables
+            // Placeholder for future implementation
+            attention.put("usersNeedingAttention", usersNeedingAttention);
+            attention.put("usersNeedingAttentionCount", usersNeedingAttention.size());
+            attention.put("passwordExpiryNote", "Password expiry tracking requires auth-service integration. " +
+                    "To implement: Add passwordExpiryDate field in auth-service UserDetailMaster and create API endpoint to query users with expiring/expired passwords.");
             
             // Build final result - include all master data plus attention indicators
             result.putAll(allMasterData);
@@ -1289,11 +1390,16 @@ public class UserLinkService {
             @SuppressWarnings("unchecked")
             Map<String, Object> auditInfo = (Map<String, Object>) result.getOrDefault("audit", new LinkedHashMap<>());
             auditInfo.put("requestType", "NEED_YOUR_ATTENTION");
+            if (userId != null) {
+                auditInfo.put("filteredForUserId", userId);
+            }
             result.put("audit", auditInfo);
             
-            log.info("✅ Need Your Attention data retrieved successfully - Summary: {}, Attention Items: {} warranties expiring, {} AMCs expiring, {} assets without warranty, {} assets without AMC, {} unassigned assets", 
-                    summary, expiringWarranties.size(), expiringAmcs.size(), 
-                    assetsWithoutWarranty.size(), assetsWithoutAmc.size(), unassignedAssets.size());
+            log.info("✅ Need Your Attention data retrieved successfully for userId: {} - Summary: {}, Attention Items: {} warranties expiring, {} warranties expired, {} AMCs expiring, {} AMCs expired, {} assets without warranty, {} assets without AMC, {} inactive assets, {} inactive components, {} inactive warranties, {} inactive AMCs, {} unassigned assets", 
+                    userId, summary, expiringWarranties.size(), expiredWarranties.size(), 
+                    expiringAmcs.size(), expiredAmcs.size(), assetsWithoutWarranty.size(), 
+                    assetsWithoutAmc.size(), inactiveAssets.size(), inactiveComponents.size(),
+                    inactiveWarranties.size(), inactiveAmcs.size(), unassignedAssets.size());
             
         } catch (Exception e) {
             log.error("❌ Failed to retrieve Need Your Attention data: {}", e.getMessage(), e);

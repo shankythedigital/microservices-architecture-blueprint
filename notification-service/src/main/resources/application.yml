@@ -5,6 +5,12 @@ server:
 notification:
   service:
     url: http://localhost:8082/api/notifications
+  list:
+    # Number of days to display notifications in notification icons
+    # Default: 30 days (notifications older than 30 days will not be shown)
+    display-days: 30
+    # Maximum number of notifications to return (for pagination/performance)
+    max-results: 100
 
 asset:
   service:

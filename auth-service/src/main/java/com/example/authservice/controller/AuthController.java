@@ -6,12 +6,16 @@ import com.example.authservice.dto.*;
 import com.example.authservice.service.impl.AuthServiceImpl;
 import com.example.authservice.service.impl.OtpServiceImpl;
 import com.example.authservice.util.MobileValidationUtil;
+import com.example.authservice.util.SecurityUtil;
+import com.example.common.util.FileStorageUtil;
 
 import jakarta.servlet.http.HttpServletRequest;
 
 import com.example.authservice.service.UserService;
+import org.springframework.web.multipart.MultipartFile;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import javax.validation.Valid;
@@ -29,6 +33,8 @@ public class AuthController {
     private OtpServiceImpl otpService;
     @Autowired
     private UserService userService;
+    @Autowired
+    private FileStorageUtil fileStorageUtil;
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest req) {
@@ -348,6 +354,197 @@ public class AuthController {
             return ResponseEntity.ok("Change successful");
         } catch (Exception e) {
             return ResponseEntity.status(401).body(e.getMessage());
+        }
+    }
+
+    // =====================================================
+    // USER PROFILE MANAGEMENT
+    // =====================================================
+
+    /**
+     * Get user profile
+     * GET /api/auth/profile/me - Get current user's profile
+     * GET /api/auth/profile/{userId} - Get specific user's profile (admin only or self)
+     */
+    @GetMapping("/profile/me")
+    public ResponseEntity<?> getMyProfile() {
+        try {
+            Long currentUserId = SecurityUtil.getCurrentUserId();
+            if (currentUserId == null) {
+                return ResponseEntity.status(401).body(Map.of("error", "Unauthorized: No active user context"));
+            }
+            UserProfileResponse profile = userService.getUserProfileExtended(currentUserId, currentUserId);
+            return ResponseEntity.ok(profile);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @GetMapping("/profile/{userId}")
+    public ResponseEntity<?> getUserProfile(@PathVariable Long userId) {
+        try {
+            Long currentUserId = SecurityUtil.getCurrentUserId();
+            if (currentUserId == null) {
+                return ResponseEntity.status(401).body(Map.of("error", "Unauthorized: No active user context"));
+            }
+            UserProfileResponse profile = userService.getUserProfileExtended(userId, currentUserId);
+            return ResponseEntity.ok(profile);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    /**
+     * Update user profile with file upload support
+     * PUT /api/auth/profile/me - Update current user's profile
+     * PUT /api/auth/profile/{userId} - Update specific user's profile (admin only or self)
+     * 
+     * Supports both JSON and form-data:
+     * - JSON: Use @RequestBody for all fields except photo
+     * - Form-data: Use @RequestPart for JSON fields and @RequestParam for file upload
+     */
+    @PutMapping(value = "/profile/me", consumes = {"application/json", "multipart/form-data"})
+    public ResponseEntity<?> updateMyProfile(
+            @RequestHeader(required = false) HttpHeaders headers,
+            @RequestPart(value = "request", required = false) @Valid UserProfileRequest request,
+            @RequestParam(value = "profilePhoto", required = false) MultipartFile profilePhoto,
+            // Form-data fields (when not using JSON request part)
+            @RequestParam(value = "linkedinUrl", required = false) String linkedinUrl,
+            @RequestParam(value = "facebookUrl", required = false) String facebookUrl,
+            @RequestParam(value = "twitterUrl", required = false) String twitterUrl,
+            @RequestParam(value = "instagramUrl", required = false) String instagramUrl,
+            @RequestParam(value = "githubUrl", required = false) String githubUrl,
+            @RequestParam(value = "websiteUrl", required = false) String websiteUrl,
+            @RequestParam(value = "dateOfBirth", required = false) String dateOfBirth,
+            @RequestParam(value = "gender", required = false) String gender,
+            @RequestParam(value = "occupation", required = false) String occupation,
+            @RequestParam(value = "education", required = false) String education,
+            @RequestParam(value = "maritalStatus", required = false) String maritalStatus,
+            @RequestParam(value = "preferences", required = false) String preferences,
+            @RequestParam(value = "activityPatterns", required = false) String activityPatterns,
+            @RequestParam(value = "interests", required = false) String interests,
+            @RequestParam(value = "bio", required = false) String bio,
+            @RequestParam(value = "skills", required = false) String skills,
+            @RequestParam(value = "languages", required = false) String languages,
+            @RequestParam(value = "timezone", required = false) String timezone,
+            @RequestParam(value = "additionalInfo", required = false) String additionalInfo) {
+        try {
+            Long currentUserId = SecurityUtil.getCurrentUserId();
+            if (currentUserId == null) {
+                return ResponseEntity.status(401).body(Map.of("error", "Unauthorized: No active user context"));
+            }
+            
+            // Build request from form-data if JSON request part is not provided
+            if (request == null) {
+                request = new UserProfileRequest();
+                request.setLinkedinUrl(linkedinUrl);
+                request.setFacebookUrl(facebookUrl);
+                request.setTwitterUrl(twitterUrl);
+                request.setInstagramUrl(instagramUrl);
+                request.setGithubUrl(githubUrl);
+                request.setWebsiteUrl(websiteUrl);
+                request.setDateOfBirth(dateOfBirth);
+                request.setGender(gender);
+                request.setOccupation(occupation);
+                request.setEducation(education);
+                request.setMaritalStatus(maritalStatus);
+                request.setPreferences(preferences);
+                request.setActivityPatterns(activityPatterns);
+                request.setInterests(interests);
+                request.setBio(bio);
+                request.setSkills(skills);
+                request.setLanguages(languages);
+                request.setTimezone(timezone);
+                request.setAdditionalInfo(additionalInfo);
+            }
+            
+            // Handle file upload
+            if (profilePhoto != null && !profilePhoto.isEmpty()) {
+                try {
+                    String filePath = fileStorageUtil.storeFile(profilePhoto, "USER_PROFILE");
+                    request.setProfilePhotoUrl(filePath);
+                } catch (Exception e) {
+                    return ResponseEntity.badRequest().body(Map.of("error", "Failed to upload profile photo: " + e.getMessage()));
+                }
+            }
+            
+            UserProfileResponse profile = userService.updateUserProfileExtended(currentUserId, currentUserId, request);
+            return ResponseEntity.ok(Map.of("message", "Profile updated successfully", "profile", profile));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @PutMapping(value = "/profile/{userId}", consumes = {"application/json", "multipart/form-data"})
+    public ResponseEntity<?> updateUserProfile(
+            @PathVariable Long userId,
+            @RequestHeader(required = false) HttpHeaders headers,
+            @RequestPart(value = "request", required = false) @Valid UserProfileRequest request,
+            @RequestParam(value = "profilePhoto", required = false) MultipartFile profilePhoto,
+            // Form-data fields (when not using JSON request part)
+            @RequestParam(value = "linkedinUrl", required = false) String linkedinUrl,
+            @RequestParam(value = "facebookUrl", required = false) String facebookUrl,
+            @RequestParam(value = "twitterUrl", required = false) String twitterUrl,
+            @RequestParam(value = "instagramUrl", required = false) String instagramUrl,
+            @RequestParam(value = "githubUrl", required = false) String githubUrl,
+            @RequestParam(value = "websiteUrl", required = false) String websiteUrl,
+            @RequestParam(value = "dateOfBirth", required = false) String dateOfBirth,
+            @RequestParam(value = "gender", required = false) String gender,
+            @RequestParam(value = "occupation", required = false) String occupation,
+            @RequestParam(value = "education", required = false) String education,
+            @RequestParam(value = "maritalStatus", required = false) String maritalStatus,
+            @RequestParam(value = "preferences", required = false) String preferences,
+            @RequestParam(value = "activityPatterns", required = false) String activityPatterns,
+            @RequestParam(value = "interests", required = false) String interests,
+            @RequestParam(value = "bio", required = false) String bio,
+            @RequestParam(value = "skills", required = false) String skills,
+            @RequestParam(value = "languages", required = false) String languages,
+            @RequestParam(value = "timezone", required = false) String timezone,
+            @RequestParam(value = "additionalInfo", required = false) String additionalInfo) {
+        try {
+            Long currentUserId = SecurityUtil.getCurrentUserId();
+            if (currentUserId == null) {
+                return ResponseEntity.status(401).body(Map.of("error", "Unauthorized: No active user context"));
+            }
+            
+            // Build request from form-data if JSON request part is not provided
+            if (request == null) {
+                request = new UserProfileRequest();
+                request.setLinkedinUrl(linkedinUrl);
+                request.setFacebookUrl(facebookUrl);
+                request.setTwitterUrl(twitterUrl);
+                request.setInstagramUrl(instagramUrl);
+                request.setGithubUrl(githubUrl);
+                request.setWebsiteUrl(websiteUrl);
+                request.setDateOfBirth(dateOfBirth);
+                request.setGender(gender);
+                request.setOccupation(occupation);
+                request.setEducation(education);
+                request.setMaritalStatus(maritalStatus);
+                request.setPreferences(preferences);
+                request.setActivityPatterns(activityPatterns);
+                request.setInterests(interests);
+                request.setBio(bio);
+                request.setSkills(skills);
+                request.setLanguages(languages);
+                request.setTimezone(timezone);
+                request.setAdditionalInfo(additionalInfo);
+            }
+            
+            // Handle file upload
+            if (profilePhoto != null && !profilePhoto.isEmpty()) {
+                try {
+                    String filePath = fileStorageUtil.storeFile(profilePhoto, "USER_PROFILE");
+                    request.setProfilePhotoUrl(filePath);
+                } catch (Exception e) {
+                    return ResponseEntity.badRequest().body(Map.of("error", "Failed to upload profile photo: " + e.getMessage()));
+                }
+            }
+            
+            UserProfileResponse profile = userService.updateUserProfileExtended(userId, currentUserId, request);
+            return ResponseEntity.ok(Map.of("message", "Profile updated successfully", "profile", profile));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
 }

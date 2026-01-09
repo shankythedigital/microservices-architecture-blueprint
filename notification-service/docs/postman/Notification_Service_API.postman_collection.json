@@ -8,6 +8,235 @@
   },
   "item": [
     {
+      "name": "Notification List",
+      "item": [
+        {
+          "name": "Get Notification List",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text",
+                "description": "JWT Bearer token from auth-service. The token is used to extract userId for filtering notifications."
+              }
+            ],
+            "url": {
+              "raw": "{{notificationbaseUrl}}/api/notifications/list?days={{notificationDisplayDays}}",
+              "host": [
+                "{{notificationbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "notifications",
+                "list"
+              ],
+              "query": [
+                {
+                  "key": "days",
+                  "value": "{{notificationDisplayDays}}",
+                  "description": "Number of days to retrieve notifications (optional). If not provided, uses configured default (30 days).",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Get notification list for the logged-in user.\n\n**Authentication:**\n- Requires Authorization header with Bearer token\n- Automatically extracts userId from JWT token\n- Returns only in-app notifications for the logged-in user\n\n**Query Parameters:**\n- `days` (optional): Number of days to retrieve notifications. If not provided, uses configured default from `application.yml` (notification.list.display-days, default: 30 days)\n\n**Response includes:**\n- `id`: Notification ID\n- `userId`: User ID\n- `username`: Username\n- `title`: Notification title\n- `message`: Notification message (rendered with placeholders)\n- `templateCode`: Template code used\n- `createdAt`: Creation timestamp\n- `read`: Read status (default: false)\n- `priority`: Priority level (if available)\n\n**Response Example:**\n```json\n{\n  \"success\": true,\n  \"message\": \"Notifications retrieved successfully\",\n  \"data\": [\n    {\n      \"id\": 123,\n      \"userId\": \"456\",\n      \"username\": \"john.doe\",\n      \"title\": \"Asset Created\",\n      \"message\": \"Asset Laptop-001 has been created successfully\",\n      \"templateCode\": \"ASSET_CREATED_INAPP\",\n      \"createdAt\": \"2024-01-15T10:30:00\",\n      \"read\": false,\n      \"priority\": null\n    },\n    {\n      \"id\": 122,\n      \"userId\": \"456\",\n      \"username\": \"john.doe\",\n      \"title\": \"Warranty Expiring\",\n      \"message\": \"Warranty for Asset Laptop-001 is expiring in 15 days\",\n      \"templateCode\": \"WARRANTY_EXPIRING_INAPP\",\n      \"createdAt\": \"2024-01-14T09:20:00\",\n      \"read\": false,\n      \"priority\": null\n    }\n  ]\n}\n```\n\n**Configuration:**\n- Default display days: Configured in `application.yml` as `notification.list.display-days` (default: 30)\n- Max results: Configured in `application.yml` as `notification.list.max-results` (default: 100)\n\n**Use Cases:**\n- Display notifications in notification icon/dropdown\n- Show recent activity to users\n- Notification center/feed"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Notification Count",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text",
+                "description": "JWT Bearer token from auth-service"
+              }
+            ],
+            "url": {
+              "raw": "{{notificationbaseUrl}}/api/notifications/count?days={{notificationDisplayDays}}",
+              "host": [
+                "{{notificationbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "notifications",
+                "count"
+              ],
+              "query": [
+                {
+                  "key": "days",
+                  "value": "{{notificationDisplayDays}}",
+                  "description": "Number of days to count notifications (optional). If not provided, uses configured default (30 days).",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Get notification count for the logged-in user (for badge display).\n\n**Authentication:**\n- Requires Authorization header with Bearer token\n- Automatically extracts userId from JWT token\n- Returns count of in-app notifications for the logged-in user\n\n**Query Parameters:**\n- `days` (optional): Number of days to count notifications. If not provided, uses configured default from `application.yml` (notification.list.display-days, default: 30 days)\n\n**Response Example:**\n```json\n{\n  \"success\": true,\n  \"message\": \"Notification count retrieved successfully\",\n  \"data\": {\n    \"userId\": \"456\",\n    \"count\": 5,\n    \"days\": 30\n  }\n}\n```\n\n**Use Cases:**\n- Display notification badge count on notification icon\n- Show unread notification count\n- Quick notification status check"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Notification List by User ID (Path Parameter)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text",
+                "description": "JWT Bearer token from auth-service"
+              }
+            ],
+            "url": {
+              "raw": "{{notificationbaseUrl}}/api/notifications/list/{{userId}}?days={{notificationDisplayDays}}",
+              "host": [
+                "{{notificationbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "notifications",
+                "list",
+                "{{userId}}"
+              ],
+              "query": [
+                {
+                  "key": "days",
+                  "value": "{{notificationDisplayDays}}",
+                  "description": "Number of days to retrieve notifications (optional). If not provided, uses configured default (30 days).",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Get notification list for a specific user by userId (path parameter).\n\n**Authentication:**\n- Requires Authorization header with Bearer token\n\n**Path Parameters:**\n- `userId`: User ID to get notifications for (required)\n\n**Query Parameters:**\n- `days` (optional): Number of days to retrieve notifications. If not provided, uses configured default from `application.yml` (notification.list.display-days, default: 30 days)\n\n**Response:**\nSame structure as Get Notification List\n\n**Example:**\n```\nGET /api/notifications/list/123?days=30\n```"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Notification List by User ID (Query Parameter)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text",
+                "description": "JWT Bearer token from auth-service"
+              }
+            ],
+            "url": {
+              "raw": "{{notificationbaseUrl}}/api/notifications/list?userId={{userId}}&days={{notificationDisplayDays}}",
+              "host": [
+                "{{notificationbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "notifications",
+                "list"
+              ],
+              "query": [
+                {
+                  "key": "userId",
+                  "value": "{{userId}}",
+                  "description": "User ID to get notifications for (optional). If not provided, extracts from JWT token.",
+                  "disabled": false
+                },
+                {
+                  "key": "days",
+                  "value": "{{notificationDisplayDays}}",
+                  "description": "Number of days to retrieve notifications (optional). If not provided, uses configured default (30 days).",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Get notification list for a specific user by userId (query parameter).\n\n**Authentication:**\n- Requires Authorization header with Bearer token\n\n**Query Parameters:**\n- `userId` (optional): User ID to get notifications for. If not provided, extracts userId from JWT token\n- `days` (optional): Number of days to retrieve notifications. If not provided, uses configured default (30 days)\n\n**Response:**\nSame structure as Get Notification List\n\n**Example:**\n```\nGET /api/notifications/list?userId=123&days=30\n```"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Notification Count by User ID (Path Parameter)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text",
+                "description": "JWT Bearer token from auth-service"
+              }
+            ],
+            "url": {
+              "raw": "{{notificationbaseUrl}}/api/notifications/count/{{userId}}?days={{notificationDisplayDays}}",
+              "host": [
+                "{{notificationbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "notifications",
+                "count",
+                "{{userId}}"
+              ],
+              "query": [
+                {
+                  "key": "days",
+                  "value": "{{notificationDisplayDays}}",
+                  "description": "Number of days to count notifications (optional). If not provided, uses configured default (30 days).",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Get notification count for a specific user by userId (path parameter).\n\n**Authentication:**\n- Requires Authorization header with Bearer token\n\n**Path Parameters:**\n- `userId`: User ID to get notification count for (required)\n\n**Query Parameters:**\n- `days` (optional): Number of days to count notifications. If not provided, uses configured default (30 days)\n\n**Response:**\nSame structure as Get Notification Count\n\n**Example:**\n```\nGET /api/notifications/count/123?days=30\n```"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Notification Count by User ID (Query Parameter)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text",
+                "description": "JWT Bearer token from auth-service"
+              }
+            ],
+            "url": {
+              "raw": "{{notificationbaseUrl}}/api/notifications/count?userId={{userId}}&days={{notificationDisplayDays}}",
+              "host": [
+                "{{notificationbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "notifications",
+                "count"
+              ],
+              "query": [
+                {
+                  "key": "userId",
+                  "value": "{{userId}}",
+                  "description": "User ID to get notification count for (optional). If not provided, extracts from JWT token.",
+                  "disabled": false
+                },
+                {
+                  "key": "days",
+                  "value": "{{notificationDisplayDays}}",
+                  "description": "Number of days to count notifications (optional). If not provided, uses configured default (30 days).",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Get notification count for a specific user by userId (query parameter).\n\n**Authentication:**\n- Requires Authorization header with Bearer token\n\n**Query Parameters:**\n- `userId` (optional): User ID to get notification count for. If not provided, extracts userId from JWT token\n- `days` (optional): Number of days to count notifications. If not provided, uses configured default (30 days)\n\n**Response:**\nSame structure as Get Notification Count\n\n**Example:**\n```\nGET /api/notifications/count?userId=123&days=30\n```"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
       "name": "SMS Notifications",
       "item": [
         {
