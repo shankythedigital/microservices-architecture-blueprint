@@ -1,12 +1,12 @@
 #!/bin/bash
 # ======================================================
-# 🧩 setup-application-yml-and-envs.sh
+# 🧩 generate-application-yml.sh
 # Generates application.yml for:
 #   - Auth Service
 #   - Asset Service
 #   - Notification Service
-#   - Common Service
 #
+# EXACT YAML output (duplicate keys preserved)
 # Supports: local, cloud_local, cloud
 # ======================================================
 
@@ -19,7 +19,6 @@ ROOT_DIR="$(pwd)"
 AUTH_DIR="$ROOT_DIR/auth-service"
 ASSET_DIR="$ROOT_DIR/asset-service"
 NOTIF_DIR="$ROOT_DIR/notification-service"
-COMMON_DIR="$ROOT_DIR/common-service"
 
 # ======================================================
 # 🔧 CONFIGURATION SWITCH
@@ -40,6 +39,7 @@ if [ "$MODE" = "cloud" ]; then
   RDS_AUTH_PASS="AuthPass123"
   RDS_ASSET_PASS="AuthPass123"
   RDS_NOTIFY_PASS="AuthPass123"
+  
 
   # ===== Cloud ports (local debug mode of EB) =====
   COMMON_PORT="6000"
@@ -107,22 +107,17 @@ else
   NOTIF_URL="http://localhost:${NOTIF_PORT}"
 fi
 
-# Common configuration values
 JWT_SECRET="yNnC7M3ZqgV4bD0lFJm9Q2w5tSe8XpR1pWc7UjK4oHs="
-AUTH_ENC_KEY="SLOqKf8lS2hidTDsXQe25ZSaoaGcczUX6gySXUxjE1M="
-AUTH_HMAC_KEY="krFcA7/MYPXQWbtSGMM87Dzxu2euOsRckVFeUyOC6dw="
-NOTIFY_ENC_KEY="yfwZM8WwHraV8LhcSNFZ7UuIpLwxpX6lthpH4CflI3U="
-NOTIFY_HMAC_KEY="SyHeAe8KeKETQihKAGFfpKipF9mysIjTsh01NaDiDpc="
 
-mkdir -p "$AUTH_DIR/src/main/resources" "$ASSET_DIR/src/main/resources" "$NOTIF_DIR/src/main/resources" "$COMMON_DIR/src/main/resources"
+mkdir -p "$AUTH_DIR/src/main/resources" "$ASSET_DIR/src/main/resources" "$NOTIF_DIR/src/main/resources"
 
 # ======================================================
-# 🔐 AUTH-SERVICE YAML
+# 🔐 AUTH-SERVICE YAML (EXACT AS PROVIDED)
 # ======================================================
 cat > "$AUTH_DIR/src/main/resources/application.yml" <<YAML
 # Auth-service
 server:
-  port: ${AUTH_PORT}
+  port: ${AUTH_PORT}  # CLOUD uses EB port, LOCAL uses 8081
 
 auth:
   service:
@@ -151,18 +146,26 @@ spring:
 common:
   notification:
     enabled: true
+    
+# Notification List Configuration
+notification:
+  list:
+    # Number of days to display notifications in notification icons
+    # Default: 30 days (notifications older than 30 days will not be shown)
+    display-days: 30
+    # Maximum number of notifications to return (for pagination/performance)
+    max-results: 100
 
 JWT_PRIVATE_KEY_PATH: classpath:keys/jwt-private.pem
 JWT_PUBLIC_KEY_PATH: classpath:keys/jwt-public.pem
 JWT_SECRET: ${JWT_SECRET}
 JWT_ACCESS_TOKEN_VALIDITY_SECONDS: 900
 JWT_REFRESH_TOKEN_VALIDITY_SECONDS: 1209600
-AUTH_ENC_KEY: ${AUTH_ENC_KEY}
-AUTH_HMAC_KEY: ${AUTH_HMAC_KEY}
-ENCRYPTION_KEY: ${AUTH_ENC_KEY}
+AUTH_ENC_KEY: SLOqKf8lS2hidTDsXQe25ZSaoaGcczUX6gySXUxjE1M=
+AUTH_HMAC_KEY: krFcA7/MYPXQWbtSGMM87Dzxu2euOsRckVFeUyOC6dw=
+ENCRYPTION_KEY: SLOqKf8lS2hidTDsXQe25ZSaoaGcczUX6gySXUxjE1M=
 ACCESS_TOKEN: change_this_token
 FEIGN_ACCESS_TOKEN:
-
 logging:
   level:
     com.example: DEBUG
@@ -188,7 +191,7 @@ YAML
 echo "✅ Auth-service YAML generated"
 
 # ======================================================
-# 🧱 ASSET-SERVICE YAML
+# 🧱 ASSET-SERVICE YAML (EXACT AS PROVIDED)
 # ======================================================
 cat > "$ASSET_DIR/src/main/resources/application.yml" <<YAML
 # Asset-service
@@ -198,11 +201,9 @@ server:
 auth:
   service:
     url: ${AUTH_URL}
-
 notification:
   service:
     url: ${NOTIF_URL}/api/notifications
-
 asset:
   service:
     url: ${ASSET_URL}
@@ -244,8 +245,8 @@ common:
 
 JWT_PUBLIC_KEY_PATH: classpath:keys/jwt-public.pem
 JWT_SECRET: ${JWT_SECRET}
-AUTH_ENC_KEY: ${AUTH_ENC_KEY}
-AUTH_HMAC_KEY: ${AUTH_HMAC_KEY}
+AUTH_ENC_KEY: SLOqKf8lS2hidTDsXQe25ZSaoaGcczUX6gySXUxjE1M=
+AUTH_HMAC_KEY: krFcA7/MYPXQWbtSGMM87Dzxu2euOsRckVFeUyOC6dw=
 AUTH_SERVICE_URL: ${AUTH_URL}
 NOTIFICATION_SERVICE_URL: ${NOTIF_URL}
 
@@ -270,7 +271,7 @@ YAML
 echo "✅ Asset-service YAML generated"
 
 # ======================================================
-# 📢 NOTIFICATION-SERVICE YAML
+# 📢 NOTIFICATION-SERVICE YAML (EXACT AS PROVIDED)
 # ======================================================
 cat > "$NOTIF_DIR/src/main/resources/application.yml" <<YAML
 # Notification-service
@@ -280,12 +281,6 @@ server:
 notification:
   service:
     url: ${NOTIF_URL}/api/notifications
-  list:
-    # Number of days to display notifications in notification icons
-    # Default: 30 days (notifications older than 30 days will not be shown)
-    display-days: 30
-    # Maximum number of notifications to return (for pagination/performance)
-    max-results: 100
 
 asset:
   service:
@@ -316,9 +311,9 @@ auth:
 
 notify:
   enc:
-    key: ${NOTIFY_ENC_KEY}
+    key: yfwZM8WwHraV8LhcSNFZ7UuIpLwxpX6lthpH4CflI3U=
   hmac:
-    key: ${NOTIFY_HMAC_KEY}
+    key: SyHeAe8KeKETQihKAGFfpKipF9mysIjTsh01NaDiDpc=
 
 jwt:
   public-key-path: classpath:keys/jwt-public.pem
@@ -356,41 +351,4 @@ YAML
 
 echo "✅ Notification-service YAML generated"
 
-# ======================================================
-# 🔗 COMMON-SERVICE YAML
-# ======================================================
-cat > "$COMMON_DIR/src/main/resources/application.yml" <<YAML
-spring:
-  application:
-    name: common-service
-
-auth:
-  service:
-    url: ${AUTH_URL}
-
-asset:
-  service:
-    url: ${ASSET_URL}
-
-notification:
-  service:
-    url: ${NOTIF_URL}/api/notifications
-
-JWT_PRIVATE_KEY_PATH: classpath:keys/jwt-private.pem
-JWT_PUBLIC_KEY_PATH: classpath:keys/jwt-public.pem
-JWT_SECRET: ${JWT_SECRET}
-JWT_ACCESS_TOKEN_VALIDITY_SECONDS: 900
-JWT_REFRESH_TOKEN_VALIDITY_SECONDS: 1209600
-AUTH_ENC_KEY: ${AUTH_ENC_KEY}
-AUTH_HMAC_KEY: ${AUTH_HMAC_KEY}
-YAML
-
-echo "✅ Common-service YAML generated"
-
 echo "🎉 ALL application.yml files generated successfully for mode: $MODE"
-echo ""
-echo "📋 Generated files:"
-echo "   ✓ auth-service/src/main/resources/application.yml"
-echo "   ✓ asset-service/src/main/resources/application.yml"
-echo "   ✓ notification-service/src/main/resources/application.yml"
-echo "   ✓ common-service/src/main/resources/application.yml"

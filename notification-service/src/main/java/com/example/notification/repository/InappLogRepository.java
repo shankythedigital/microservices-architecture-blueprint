@@ -2,11 +2,10 @@ package com.example.notification.repository;
 
 import com.example.notification.entity.InappLog;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 public interface InappLogRepository extends JpaRepository<InappLog, Long> {
     
@@ -20,11 +19,14 @@ public interface InappLogRepository extends JpaRepository<InappLog, Long> {
      * Find all in-app notifications for a specific user
      */
     List<InappLog> findByUserIdOrderByCreatedAtDesc(String userId);
-    
+
     /**
-     * Count unread notifications for a user within a date range
-     * (Assuming read status will be added later)
+     * Find notification by ID and userId (for security - ensure user can only mark their own notifications)
      */
-    @Query("SELECT COUNT(i) FROM InappLog i WHERE i.userId = :userId AND i.createdAt >= :afterDate")
-    Long countByUserIdAndCreatedAtAfter(@Param("userId") String userId, @Param("afterDate") LocalDateTime afterDate);
+    Optional<InappLog> findByIdAndUserId(Long id, String userId);
+
+    /**
+     * Find notifications by userId and createdAt after date
+     */
+    List<InappLog> findByUserIdAndCreatedAtAfter(String userId, LocalDateTime afterDate);
 }

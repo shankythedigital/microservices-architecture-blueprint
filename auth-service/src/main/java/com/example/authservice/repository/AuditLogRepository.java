@@ -4,62 +4,67 @@ import com.example.authservice.model.AuditLog;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
-public interface AuditLogRepository extends JpaRepository<AuditLog, Long> {
+public interface AuditLogRepository extends JpaRepository<AuditLog, Long>, JpaSpecificationExecutor<AuditLog> {
 
-    @Query("SELECT a FROM AuditLog a " +
-           "WHERE (:userId IS NULL OR a.userId = :userId) " +
-           "AND (:action IS NULL OR LOWER(a.action) = LOWER(:action)) " +
-           "AND (:from IS NULL OR a.timestamp >= :from) " +
-           "AND (:to IS NULL OR a.timestamp <= :to)")
-    List<AuditLog> searchLogs(@Param("userId") Long userId,
-                              @Param("action") String action,
-                              @Param("from") LocalDateTime from,
-                              @Param("to") LocalDateTime to);
+    /**
+     * Find audit logs by userId
+     */
+    List<AuditLog> findByUserId(Long userId);
 
-    @Query("SELECT a FROM AuditLog a " +
-           "WHERE (:userId IS NULL OR a.userId = :userId) " +
-           "AND (:action IS NULL OR LOWER(a.action) = LOWER(:action)) " +
-           "AND (:from IS NULL OR a.timestamp >= :from) " +
-           "AND (:to IS NULL OR a.timestamp <= :to)")
-    Page<AuditLog> searchLogsPaged(@Param("userId") Long userId,
-                                   @Param("action") String action,
-                                   @Param("from") LocalDateTime from,
-                                   @Param("to") LocalDateTime to,
-                                   Pageable pageable);
+    /**
+     * Find audit logs by userId with pagination
+     */
+    Page<AuditLog> findByUserId(Long userId, Pageable pageable);
 
-@Query("SELECT a FROM AuditLog a " +
-       "WHERE (:userId IS NULL OR a.userId = :userId) " +
-       "AND (:action IS NULL OR LOWER(a.action) = LOWER(:action)) " +
-       "AND (:url IS NULL OR a.url LIKE %:url%) " +
-       "AND (:method IS NULL OR UPPER(a.method) = UPPER(:method)) " +
-       "AND (:from IS NULL OR a.timestamp >= :from) " +
-       "AND (:to IS NULL OR a.timestamp <= :to)")
-List<AuditLog> searchLogs(@Param("userId") Long userId,
-                          @Param("action") String action,
-                          @Param("url") String url,
-                          @Param("method") String method,
-                          @Param("from") LocalDateTime from,
-                          @Param("to") LocalDateTime to);
+    /**
+     * Find audit logs by action (case-insensitive)
+     */
+    List<AuditLog> findByActionIgnoreCase(String action);
 
-@Query("SELECT a FROM AuditLog a " +
-       "WHERE (:userId IS NULL OR a.userId = :userId) " +
-       "AND (:action IS NULL OR LOWER(a.action) = LOWER(:action)) " +
-       "AND (:url IS NULL OR a.url LIKE %:url%) " +
-       "AND (:method IS NULL OR UPPER(a.method) = UPPER(:method)) " +
-       "AND (:from IS NULL OR a.timestamp >= :from) " +
-       "AND (:to IS NULL OR a.timestamp <= :to)")
-Page<AuditLog> searchLogsPaged(@Param("userId") Long userId,
-                               @Param("action") String action,
-                               @Param("url") String url,
-                               @Param("method") String method,
-                               @Param("from") LocalDateTime from,
-                               @Param("to") LocalDateTime to,
-                               Pageable pageable);
+    /**
+     * Find audit logs by userId and action
+     */
+    List<AuditLog> findByUserIdAndActionIgnoreCase(Long userId, String action);
+
+    /**
+     * Find audit logs by timestamp range
+     */
+    List<AuditLog> findByTimestampBetween(LocalDateTime from, LocalDateTime to);
+
+    /**
+     * Find audit logs by userId and timestamp range
+     */
+    List<AuditLog> findByUserIdAndTimestampBetween(Long userId, LocalDateTime from, LocalDateTime to);
+
+    /**
+     * Find audit logs by URL containing
+     */
+    List<AuditLog> findByUrlContainingIgnoreCase(String url);
+
+    /**
+     * Find audit logs by method (case-insensitive)
+     */
+    List<AuditLog> findByMethodIgnoreCase(String method);
+
+    /**
+     * Find audit logs by userId, URL containing, and method
+     */
+    List<AuditLog> findByUserIdAndUrlContainingIgnoreCaseAndMethodIgnoreCase(
+            Long userId, String url, String method);
+
+    /**
+     * Find audit logs by timestamp range with pagination
+     */
+    Page<AuditLog> findByTimestampBetween(LocalDateTime from, LocalDateTime to, Pageable pageable);
+
+    /**
+     * Find audit logs by userId and timestamp range with pagination
+     */
+    Page<AuditLog> findByUserIdAndTimestampBetween(Long userId, LocalDateTime from, LocalDateTime to, Pageable pageable);
 
 }

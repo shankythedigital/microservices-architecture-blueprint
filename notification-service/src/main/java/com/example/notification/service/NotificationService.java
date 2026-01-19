@@ -13,6 +13,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -176,7 +178,7 @@ public class NotificationService {
      * 
      * @param userId User ID
      * @param days Optional number of days (if null, uses configured displayDays)
-     * @return Count of notifications
+     * @return Count of unread notifications
      */
     @Transactional(readOnly = true)
     public Long getNotificationCount(String userId, Integer days) {
@@ -187,9 +189,220 @@ public class NotificationService {
         int displayDays = (days != null && days > 0) ? days : listProperties.getDisplayDays();
         LocalDateTime cutoffDate = LocalDateTime.now().minusDays(displayDays);
         
-        Long count = inappRepo.countByUserIdAndCreatedAtAfter(userId, cutoffDate);
-        log.info("📊 Notification count for userId: {} (last {} days): {}", userId, displayDays, count);
+        // Count unread notifications (isRead = false or null)
+        List<InappLog> notifications = inappRepo.findByUserIdAndCreatedAtAfterOrderByCreatedAtDesc(userId, cutoffDate);
+        long count = notifications.stream()
+                .filter(n -> n.getIsRead() == null || !n.getIsRead())
+                .count();
+        
+        log.info("📊 Unread notification count for userId: {} (last {} days): {}", userId, displayDays, count);
         return count;
+    }
+
+    // ============================================================
+    // ✅ MARK NOTIFICATIONS AS READ
+    // ============================================================
+
+    /**
+     * Mark a single notification as read
+     * 
+     * @param notificationId Notification ID
+     * @param userId User ID (for security - ensures user can only mark their own notifications)
+     * @return true if notification was marked as read, false if not found or already read
+     */
+    @Transactional
+    public boolean markNotificationAsRead(Long notificationId, String userId) {
+        if (notificationId == null) {
+            throw new IllegalArgumentException("Notification ID is required");
+        }
+        if (userId == null || userId.isBlank()) {
+            throw new IllegalArgumentException("User ID is required");
+        }
+
+        // Find notification and verify it belongs to the user
+        Optional<InappLog> notificationOpt = inappRepo.findByIdAndUserId(notificationId, userId);
+        if (notificationOpt.isEmpty()) {
+            log.warn("⚠️ Notification {} not found or does not belong to user {}", notificationId, userId);
+            return false;
+        }
+
+        InappLog notification = notificationOpt.get();
+
+        // Check if already read
+        if (Boolean.TRUE.equals(notification.getIsRead())) {
+            log.info("ℹ️ Notification {} is already marked as read", notificationId);
+            return false;
+        }
+
+        // Mark as read
+        notification.setIsRead(true);
+        notification.setReadAt(LocalDateTime.now());
+        inappRepo.save(notification);
+        
+        log.info("✅ Marked notification {} as read for userId: {}", notificationId, userId);
+        return true;
+    }
+
+    /**
+     * Mark all notifications as read for a user
+     * 
+     * @param userId User ID
+     * @param days Optional number of days (if null, uses configured displayDays)
+     * @return Number of notifications marked as read
+     */
+    @Transactional
+    public int markAllNotificationsAsRead(String userId, Integer days) {
+        if (userId == null || userId.isBlank()) {
+            throw new IllegalArgumentException("User ID is required");
+        }
+
+        int displayDays = (days != null && days > 0) ? days : listProperties.getDisplayDays();
+        LocalDateTime cutoffDate = LocalDateTime.now().minusDays(displayDays);
+        LocalDateTime readAt = LocalDateTime.now();
+
+        // Find all unread notifications for the user within the date range
+        List<InappLog> notifications = inappRepo.findByUserIdAndCreatedAtAfterOrderByCreatedAtDesc(userId, cutoffDate);
+        
+        // Filter unread notifications and mark them as read
+        int updated = 0;
+        for (InappLog notification : notifications) {
+            if (notification.getIsRead() == null || !notification.getIsRead()) {
+                notification.setIsRead(true);
+                notification.setReadAt(readAt);
+                inappRepo.save(notification);
+                updated++;
+            }
+        }
+        
+        log.info("✅ Marked {} notifications as read for userId: {} (last {} days)", updated, userId, displayDays);
+        return updated;
+    }
+
+    /**
+     * Mark a single notification as unread
+     * 
+     * @param notificationId Notification ID
+     * @param userId User ID (for security - ensures user can only mark their own notifications)
+     * @return true if notification was marked as unread, false if not found or already unread
+     */
+    @Transactional
+    public boolean markNotificationAsUnread(Long notificationId, String userId) {
+        if (notificationId == null) {
+            throw new IllegalArgumentException("Notification ID is required");
+        }
+        if (userId == null || userId.isBlank()) {
+            throw new IllegalArgumentException("User ID is required");
+        }
+
+        // Find notification and verify it belongs to the user
+        Optional<InappLog> notificationOpt = inappRepo.findByIdAndUserId(notificationId, userId);
+        if (notificationOpt.isEmpty()) {
+            log.warn("⚠️ Notification {} not found or does not belong to user {}", notificationId, userId);
+            return false;
+        }
+
+        InappLog notification = notificationOpt.get();
+
+        // Check if already unread
+        if (notification.getIsRead() == null || !notification.getIsRead()) {
+            log.info("ℹ️ Notification {} is already marked as unread", notificationId);
+            return false;
+        }
+
+        // Mark as unread
+        notification.setIsRead(false);
+        notification.setReadAt(null);
+        inappRepo.save(notification);
+        
+        log.info("✅ Marked notification {} as unread for userId: {}", notificationId, userId);
+        return true;
+    }
+
+    /**
+     * Mark all notifications as unread for a user
+     * 
+     * @param userId User ID
+     * @param days Optional number of days (if null, uses configured displayDays)
+     * @return Number of notifications marked as unread
+     */
+    @Transactional
+    public int markAllNotificationsAsUnread(String userId, Integer days) {
+        if (userId == null || userId.isBlank()) {
+            throw new IllegalArgumentException("User ID is required");
+        }
+
+        int displayDays = (days != null && days > 0) ? days : listProperties.getDisplayDays();
+        LocalDateTime cutoffDate = LocalDateTime.now().minusDays(displayDays);
+
+        // Find all read notifications for the user within the date range
+        List<InappLog> notifications = inappRepo.findByUserIdAndCreatedAtAfterOrderByCreatedAtDesc(userId, cutoffDate);
+        
+        // Filter read notifications and mark them as unread
+        int updated = 0;
+        for (InappLog notification : notifications) {
+            if (Boolean.TRUE.equals(notification.getIsRead())) {
+                notification.setIsRead(false);
+                notification.setReadAt(null);
+                inappRepo.save(notification);
+                updated++;
+            }
+        }
+        
+        log.info("✅ Marked {} notifications as unread for userId: {} (last {} days)", updated, userId, displayDays);
+        return updated;
+    }
+
+    /**
+     * Toggle read status of a notification (unread -> read, read -> unread)
+     * 
+     * @param notificationId Notification ID
+     * @param userId User ID (for security - ensures user can only toggle their own notifications)
+     * @return Map containing the notification ID, new read status, and success flag
+     */
+    @Transactional
+    public Map<String, Object> toggleNotificationReadStatus(Long notificationId, String userId) {
+        if (notificationId == null) {
+            throw new IllegalArgumentException("Notification ID is required");
+        }
+        if (userId == null || userId.isBlank()) {
+            throw new IllegalArgumentException("User ID is required");
+        }
+
+        // Find notification and verify it belongs to the user
+        Optional<InappLog> notificationOpt = inappRepo.findByIdAndUserId(notificationId, userId);
+        if (notificationOpt.isEmpty()) {
+            log.warn("⚠️ Notification {} not found or does not belong to user {}", notificationId, userId);
+            throw new IllegalArgumentException("Notification not found or does not belong to the user");
+        }
+
+        InappLog notification = notificationOpt.get();
+        
+        // Toggle read status
+        boolean currentStatus = Boolean.TRUE.equals(notification.getIsRead());
+        boolean newStatus = !currentStatus;
+        
+        notification.setIsRead(newStatus);
+        if (newStatus) {
+            // If marking as read, set read timestamp
+            notification.setReadAt(LocalDateTime.now());
+        } else {
+            // If marking as unread, clear read timestamp
+            notification.setReadAt(null);
+        }
+        
+        inappRepo.save(notification);
+        
+        log.info("✅ Toggled notification {} read status from {} to {} for userId: {}", 
+                notificationId, currentStatus, newStatus, userId);
+        
+        return Map.of(
+                "notificationId", notificationId,
+                "userId", userId,
+                "previousStatus", currentStatus ? "read" : "unread",
+                "newStatus", newStatus ? "read" : "unread",
+                "isRead", newStatus,
+                "readAt", newStatus ? notification.getReadAt() : null
+        );
     }
 
     /**
@@ -204,8 +417,7 @@ public class NotificationService {
         response.setMessage(inappLog.getMessage());
         response.setTemplateCode(inappLog.getTemplateCode());
         response.setCreatedAt(inappLog.getCreatedAt());
-        // Read status and priority can be added later when those fields are implemented
-        response.setRead(false); // Default to unread
+        response.setRead(Boolean.TRUE.equals(inappLog.getIsRead())); // Use actual read status from entity
         response.setPriority(null); // Can be extracted from template or metadata later
         return response;
     }

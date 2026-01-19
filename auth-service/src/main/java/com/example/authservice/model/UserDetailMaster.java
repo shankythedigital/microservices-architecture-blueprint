@@ -28,7 +28,7 @@ public class UserDetailMaster extends BaseEntity {
 
     // Encrypted + HMAC username
     @Convert(converter = JpaAttributeEncryptor.class)
-    @Column(name = "username_enc", nullable = false, length = 2048)
+    @Column(name = "username_enc", nullable = false, columnDefinition = "TEXT")
     private String username;
 
     @Column(name = "username_hash", nullable = false, unique = true, length = 512)
@@ -36,7 +36,7 @@ public class UserDetailMaster extends BaseEntity {
 
     // Encrypted + HMAC email
     @Convert(converter = JpaAttributeEncryptor.class)
-    @Column(name = "email_enc", length = 2048)
+    @Column(name = "email_enc", columnDefinition = "TEXT")
     private String email;
 
     @Column(name = "email_hash", unique = true, length = 512)
@@ -44,14 +44,14 @@ public class UserDetailMaster extends BaseEntity {
 
     // Encrypted + HMAC mobile
     @Convert(converter = JpaAttributeEncryptor.class)
-    @Column(name = "mobile_enc", length = 2048)
+    @Column(name = "mobile_enc", columnDefinition = "TEXT")
     private String mobile;
 
     @Column(name = "mobile_hash", unique = true, length = 512)
     private String mobileHash;
 
     @Convert(converter = JpaAttributeEncryptor.class)
-    @Column(name = "employee_id_enc", length = 1024)
+    @Column(name = "employee_id_enc", columnDefinition = "TEXT")
     private String employeeId;
 
     @Column(name = "login_date")
@@ -71,19 +71,19 @@ public class UserDetailMaster extends BaseEntity {
 
     // Address fields
     @Convert(converter = JpaAttributeEncryptor.class)
-    @Column(name = "pincode_enc", length = 1024)
+    @Column(name = "pincode_enc", columnDefinition = "TEXT")
     private String pincode;
 
     @Convert(converter = JpaAttributeEncryptor.class)
-    @Column(name = "city_enc", length = 1024)
+    @Column(name = "city_enc", columnDefinition = "TEXT")
     private String city;
 
     @Convert(converter = JpaAttributeEncryptor.class)
-    @Column(name = "state_enc", length = 1024)
+    @Column(name = "state_enc", columnDefinition = "TEXT")
     private String state;
 
     @Convert(converter = JpaAttributeEncryptor.class)
-    @Column(name = "country_enc", length = 1024)
+    @Column(name = "country_enc", columnDefinition = "TEXT")
     private String country;
 
     // Terms & Conditions acceptance
@@ -125,23 +125,23 @@ public class UserDetailMaster extends BaseEntity {
     // 👤 DEMOGRAPHIC INFORMATION
     // ============================================================
     @Convert(converter = JpaAttributeEncryptor.class)
-    @Column(name = "date_of_birth_enc", length = 2048)
+    @Column(name = "date_of_birth_enc", columnDefinition = "TEXT")
     private String dateOfBirth; // Stored as encrypted string (YYYY-MM-DD format)
 
     @Convert(converter = JpaAttributeEncryptor.class)
-    @Column(name = "gender_enc", length = 2048)
+    @Column(name = "gender_enc", columnDefinition = "TEXT")
     private String gender; // MALE, FEMALE, OTHER, PREFER_NOT_TO_SAY
 
     @Convert(converter = JpaAttributeEncryptor.class)
-    @Column(name = "occupation_enc", length = 2048)
+    @Column(name = "occupation_enc", columnDefinition = "TEXT")
     private String occupation;
 
     @Convert(converter = JpaAttributeEncryptor.class)
-    @Column(name = "education_enc", length = 2048)
+    @Column(name = "education_enc", columnDefinition = "TEXT")
     private String education; // HIGH_SCHOOL, BACHELORS, MASTERS, PHD, etc.
 
     @Convert(converter = JpaAttributeEncryptor.class)
-    @Column(name = "marital_status_enc", length = 2048)
+    @Column(name = "marital_status_enc", columnDefinition = "TEXT")
     private String maritalStatus; // SINGLE, MARRIED, DIVORCED, WIDOWED, etc.
 
     // ============================================================

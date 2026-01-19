@@ -14,13 +14,13 @@ ADD COLUMN instagram_url VARCHAR(500) NULL,
 ADD COLUMN github_url VARCHAR(500) NULL,
 ADD COLUMN website_url VARCHAR(500) NULL;
 
--- Demographic Information (encrypted fields)
+-- Demographic Information (encrypted fields - using TEXT to avoid row size issues)
 ALTER TABLE user_detail_master
-ADD COLUMN date_of_birth_enc VARCHAR(2048) NULL,
-ADD COLUMN gender_enc VARCHAR(2048) NULL,
-ADD COLUMN occupation_enc VARCHAR(2048) NULL,
-ADD COLUMN education_enc VARCHAR(2048) NULL,
-ADD COLUMN marital_status_enc VARCHAR(2048) NULL;
+ADD COLUMN date_of_birth_enc TEXT NULL,
+ADD COLUMN gender_enc TEXT NULL,
+ADD COLUMN occupation_enc TEXT NULL,
+ADD COLUMN education_enc TEXT NULL,
+ADD COLUMN marital_status_enc TEXT NULL;
 
 -- Behaviors & Preferences (JSON strings stored as TEXT)
 ALTER TABLE user_detail_master

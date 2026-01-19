@@ -1,17 +1,19 @@
-
 package com.example.authservice.service.impl;
 
 import com.example.authservice.model.AuditLog;
 import com.example.authservice.repository.AuditLogRepository;
+import jakarta.persistence.criteria.Predicate;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayOutputStream;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -20,11 +22,43 @@ public class AuditLogService {
     private AuditLogRepository repo;
 
     /**
+     * Build Specification for audit log search with optional parameters
+     */
+    private Specification<AuditLog> buildSpecification(Long userId, String action, String url, String method,
+                                                        LocalDateTime from, LocalDateTime to) {
+        return (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+
+            if (userId != null) {
+                predicates.add(cb.equal(root.get("userId"), userId));
+            }
+            if (action != null && !action.isBlank()) {
+                predicates.add(cb.equal(cb.lower(root.get("action")), action.toLowerCase()));
+            }
+            if (url != null && !url.isBlank()) {
+                predicates.add(cb.like(cb.lower(root.get("url")), "%" + url.toLowerCase() + "%"));
+            }
+            if (method != null && !method.isBlank()) {
+                predicates.add(cb.equal(cb.upper(root.get("method")), method.toUpperCase()));
+            }
+            if (from != null) {
+                predicates.add(cb.greaterThanOrEqualTo(root.get("timestamp"), from));
+            }
+            if (to != null) {
+                predicates.add(cb.lessThanOrEqualTo(root.get("timestamp"), to));
+            }
+
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+    }
+
+    /**
      * DB-level filtered list
      */
     public List<AuditLog> findLogs(Long userId, String action, String url, String method,
                                    LocalDateTime from, LocalDateTime to) {
-        return repo.searchLogs(userId, action, url, method, from, to);
+        Specification<AuditLog> spec = buildSpecification(userId, action, url, method, from, to);
+        return repo.findAll(spec);
     }
 
     /**
@@ -32,7 +66,8 @@ public class AuditLogService {
      */
     public Page<AuditLog> findLogsPaged(Long userId, String action, String url, String method,
                                         LocalDateTime from, LocalDateTime to, Pageable pageable) {
-        return repo.searchLogsPaged(userId, action, url, method, from, to, pageable);
+        Specification<AuditLog> spec = buildSpecification(userId, action, url, method, from, to);
+        return repo.findAll(spec, pageable);
     }
 
     public String exportToCsv(List<AuditLog> logs) {
