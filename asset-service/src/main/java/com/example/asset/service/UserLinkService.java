@@ -681,6 +681,35 @@ public class UserLinkService {
     }
 
     /**
+     * Helper method to fetch documents for an entity type and ID
+     * Returns a list of document information including file paths, names, and types
+     */
+    private List<Map<String, Object>> getDocumentsForEntity(String entityType, Long entityId) {
+        if (entityId == null) {
+            return new ArrayList<>();
+        }
+        try {
+            return documentRepo.findAllByEntityTypeIgnoreCaseAndEntityIdAndActiveTrue(entityType, entityId)
+                    .stream()
+                    .map(doc -> {
+                        Map<String, Object> docMap = new LinkedHashMap<>();
+                        docMap.put("documentId", doc.getDocumentId());
+                        docMap.put("fileName", doc.getFileName());
+                        docMap.put("filePath", doc.getFilePath());
+                        docMap.put("docType", doc.getDocType());
+                        docMap.put("uploadedDate", doc.getUploadedDate());
+                        docMap.put("entityType", doc.getEntityType());
+                        docMap.put("entityId", doc.getEntityId());
+                        return docMap;
+                    })
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            log.warn("⚠️ Error fetching documents for {} ID {}: {}", entityType, entityId, e.getMessage());
+            return new ArrayList<>();
+        }
+    }
+
+    /**
      * Get all master data in detail filtered by user ID.
      * Returns only data related to the specified user:
      * - User information
@@ -691,6 +720,7 @@ public class UserLinkService {
      * - Makes/Models/Categories/Sub-categories of user's assets
      * - Vendors/Outlets related to user's assets
      * - Statuses used by user's assets
+     * - Documents (images, PDFs, PNGs, JPGs, etc.) for all entities
      * 
      * @param userId Optional user ID to filter data (null returns all)
      * @param loginUserId The ID of the user making the request (for audit)
@@ -735,6 +765,8 @@ public class UserLinkService {
                 userMap.put("mobile", userLinkInfo.getMobile());
                 userMap.put("assignedDate", userLinkInfo.getAssignedDate());
                 userMap.put("unassignedDate", userLinkInfo.getUnassignedDate());
+                // Add documents for user (if USER entity type is supported)
+                userMap.put("documents", getDocumentsForEntity("USER", userLinkInfo.getUserId()));
                 users.add(userMap);
             } else if (userId == null) {
                 // If no userId specified, return all users
@@ -748,6 +780,8 @@ public class UserLinkService {
                         userMap.put("username", link.getUsername());
                         userMap.put("email", link.getEmail());
                         userMap.put("mobile", link.getMobile());
+                        // Add documents for user (if USER entity type is supported)
+                        userMap.put("documents", getDocumentsForEntity("USER", link.getUserId()));
                         users.add(userMap);
                     }
                 }
@@ -785,6 +819,8 @@ public class UserLinkService {
                         assetMap.put("createdAt", asset.getCreatedAt());
                         assetMap.put("updatedBy", asset.getUpdatedBy());
                         assetMap.put("updatedAt", asset.getUpdatedAt());
+                        // Add documents for asset
+                        assetMap.put("documents", getDocumentsForEntity("ASSET", asset.getAssetId()));
                         return assetMap;
                     })
                     .collect(Collectors.toList());
@@ -829,6 +865,8 @@ public class UserLinkService {
                         compMap.put("createdAt", component.getCreatedAt());
                         compMap.put("updatedBy", component.getUpdatedBy());
                         compMap.put("updatedAt", component.getUpdatedAt());
+                        // Add documents for component
+                        compMap.put("documents", getDocumentsForEntity("COMPONENT", component.getComponentId()));
                         return compMap;
                     })
                     .collect(Collectors.toList());
@@ -861,6 +899,8 @@ public class UserLinkService {
                         warrantyMap.put("createdAt", warranty.getCreatedAt());
                         warrantyMap.put("updatedBy", warranty.getUpdatedBy());
                         warrantyMap.put("updatedAt", warranty.getUpdatedAt());
+                        // Add documents for warranty
+                        warrantyMap.put("documents", getDocumentsForEntity("WARRANTY", warranty.getWarrantyId()));
                         return warrantyMap;
                     })
                     .collect(Collectors.toList());
@@ -891,6 +931,8 @@ public class UserLinkService {
                         amcMap.put("createdAt", amc.getCreatedAt());
                         amcMap.put("updatedBy", amc.getUpdatedBy());
                         amcMap.put("updatedAt", amc.getUpdatedAt());
+                        // Add documents for AMC
+                        amcMap.put("documents", getDocumentsForEntity("AMC", amc.getAmcId()));
                         return amcMap;
                     })
                     .collect(Collectors.toList());
@@ -914,6 +956,8 @@ public class UserLinkService {
                         makeMap.put("createdAt", make.getCreatedAt());
                         makeMap.put("updatedBy", make.getUpdatedBy());
                         makeMap.put("updatedAt", make.getUpdatedAt());
+                        // Add documents for make
+                        makeMap.put("documents", getDocumentsForEntity("MAKE", make.getMakeId()));
                         return makeMap;
                     })
                     .collect(Collectors.toList());
@@ -937,6 +981,8 @@ public class UserLinkService {
                         modelMap.put("createdAt", model.getCreatedAt());
                         modelMap.put("updatedBy", model.getUpdatedBy());
                         modelMap.put("updatedAt", model.getUpdatedAt());
+                        // Add documents for model
+                        modelMap.put("documents", getDocumentsForEntity("MODEL", model.getModelId()));
                         return modelMap;
                     })
                     .collect(Collectors.toList());
@@ -957,6 +1003,8 @@ public class UserLinkService {
                         catMap.put("createdAt", category.getCreatedAt());
                         catMap.put("updatedBy", category.getUpdatedBy());
                         catMap.put("updatedAt", category.getUpdatedAt());
+                        // Add documents for category
+                        catMap.put("documents", getDocumentsForEntity("CATEGORY", category.getCategoryId()));
                         return catMap;
                     })
                     .collect(Collectors.toList());
@@ -980,6 +1028,8 @@ public class UserLinkService {
                         subCatMap.put("createdAt", subCategory.getCreatedAt());
                         subCatMap.put("updatedBy", subCategory.getUpdatedBy());
                         subCatMap.put("updatedAt", subCategory.getUpdatedAt());
+                        // Add documents for subCategory
+                        subCatMap.put("documents", getDocumentsForEntity("SUBCATEGORY", subCategory.getSubCategoryId()));
                         return subCatMap;
                     })
                     .collect(Collectors.toList());
@@ -1006,6 +1056,8 @@ public class UserLinkService {
                         vendorMap.put("createdAt", vendor.getCreatedAt());
                         vendorMap.put("updatedBy", vendor.getUpdatedBy());
                         vendorMap.put("updatedAt", vendor.getUpdatedAt());
+                        // Add documents for vendor
+                        vendorMap.put("documents", getDocumentsForEntity("VENDOR", vendor.getVendorId()));
                         return vendorMap;
                     })
                     .collect(Collectors.toList());
@@ -1031,6 +1083,8 @@ public class UserLinkService {
                         outletMap.put("createdAt", outlet.getCreatedAt());
                         outletMap.put("updatedBy", outlet.getUpdatedBy());
                         outletMap.put("updatedAt", outlet.getUpdatedAt());
+                        // Add documents for outlet
+                        outletMap.put("documents", getDocumentsForEntity("OUTLET", outlet.getOutletId()));
                         return outletMap;
                     })
                     .collect(Collectors.toList());
@@ -1065,6 +1119,8 @@ public class UserLinkService {
                         statusMap.put("createdAt", status.getCreatedAt());
                         statusMap.put("updatedBy", status.getUpdatedBy());
                         statusMap.put("updatedAt", status.getUpdatedAt());
+                        // Add documents for status (convert Integer to Long)
+                        statusMap.put("documents", getDocumentsForEntity("STATUS", status.getStatusId() != null ? status.getStatusId().longValue() : null));
                         return statusMap;
                     })
                     .collect(Collectors.toList());

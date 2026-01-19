@@ -221,7 +221,7 @@ public ResponseEntity<ResponseWrapper<Map<String, Object>>> delinkMultipleEntiti
     // GET ALL MASTER DATA IN DETAIL
     // ================================
     @GetMapping("/master-data/all")
-    @Operation(summary = "Get comprehensive master data including users, assets, components, warranties, AMCs, makes, models, categories, sub-categories, vendors, outlets, and statuses. Optionally filter by userId.")
+    @Operation(summary = "Get comprehensive master data including users, assets, components, warranties, AMCs, makes, models, categories, sub-categories, vendors, outlets, and statuses. Each entity includes associated documents (images, PDFs, PNGs, JPGs, etc.). Optionally filter by userId.")
     public ResponseEntity<ResponseWrapper<Map<String, Object>>> getAllMasterDataInDetail(
             @RequestHeader HttpHeaders headers,
             @RequestParam(required = false) Long userId) {
