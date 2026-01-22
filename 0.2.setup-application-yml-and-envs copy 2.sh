@@ -6,7 +6,6 @@
 #   - Asset Service
 #   - Notification Service
 #   - Common Service
-#   - Helpdesk Service
 #
 # Supports: local, cloud_local, cloud
 # ======================================================
@@ -21,7 +20,6 @@ AUTH_DIR="$ROOT_DIR/auth-service"
 ASSET_DIR="$ROOT_DIR/asset-service"
 NOTIF_DIR="$ROOT_DIR/notification-service"
 COMMON_DIR="$ROOT_DIR/common-service"
-HELPDESK_DIR="$ROOT_DIR/helpdesk-service"
 
 # ======================================================
 # 🔧 CONFIGURATION SWITCH
@@ -34,37 +32,31 @@ if [ "$MODE" = "cloud" ]; then
   RDS_AUTH_DB="jdbc:mysql://${RDS_HOST}:3306/authdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
   RDS_ASSET_DB="jdbc:mysql://${RDS_HOST}:3306/assetdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
   RDS_NOTIFY_DB="jdbc:mysql://${RDS_HOST}:3306/notificationdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
-  RDS_HELPDESK_DB="jdbc:mysql://${RDS_HOST}:3306/helpdeskdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
 
   RDS_AUTH_USER="admin"
   RDS_ASSET_USER="admin"
   RDS_NOTIFY_USER="admin"
-  RDS_HELPDESK_USER="admin"
 
   RDS_AUTH_PASS="AuthPass123"
   RDS_ASSET_PASS="AuthPass123"
   RDS_NOTIFY_PASS="AuthPass123"
-  RDS_HELPDESK_PASS="AuthPass123"
 
   # ===== Cloud ports (local debug mode of EB) =====
   COMMON_PORT="6000"
   AUTH_PORT="6001"
   NOTIF_PORT="6002"
   ASSET_PORT="6003"
-  HELPDESK_PORT="6004"
 
   # ===== CLOUD SERVICE IPs =====
   COMMON_AUTH_IP="13.204.61.111"
   AUTH_IP="13.204.61.111"
   ASSET_IP="13.233.124.217"
   NOTIF_IP="13.232.146.140"
-  HELPDESK_IP="13.204.61.111"
 
   COMMON_AUTH_URL="http://auth-service-env.${REGION}.elasticbeanstalk.com"
   AUTH_URL="http://${AUTH_IP}:${AUTH_PORT}"
   ASSET_URL="http://${ASSET_IP}:${ASSET_PORT}"
   NOTIF_URL="http://${NOTIF_IP}:${NOTIF_PORT}"
-  HELPDESK_URL="http://${HELPDESK_IP}:${HELPDESK_PORT}"
 
 elif [ "$MODE" = "cloud_local" ]; then
   echo "🌥️ Generating Cloud DB + Local Services..."
@@ -74,27 +66,22 @@ elif [ "$MODE" = "cloud_local" ]; then
   RDS_AUTH_DB="jdbc:mysql://${RDS_HOST}:3306/authdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
   RDS_ASSET_DB="jdbc:mysql://${RDS_HOST}:3306/assetdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
   RDS_NOTIFY_DB="jdbc:mysql://${RDS_HOST}:3306/notificationdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
-  RDS_HELPDESK_DB="jdbc:mysql://${RDS_HOST}:3306/helpdeskdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
 
   RDS_AUTH_USER="admin"
   RDS_ASSET_USER="admin"
   RDS_NOTIFY_USER="admin"
-  RDS_HELPDESK_USER="admin"
 
   RDS_AUTH_PASS="AuthPass123"
   RDS_ASSET_PASS="AuthPass123"
   RDS_NOTIFY_PASS="AuthPass123"
-  RDS_HELPDESK_PASS="AuthPass123"
 
   AUTH_PORT="8081"
   NOTIF_PORT="8082"
   ASSET_PORT="8083"
-  HELPDESK_PORT="8084"
 
   AUTH_URL="http://localhost:${AUTH_PORT}"
   ASSET_URL="http://localhost:${ASSET_PORT}"
   NOTIF_URL="http://localhost:${NOTIF_PORT}"
-  HELPDESK_URL="http://localhost:${HELPDESK_PORT}"
 
 else
   echo "💻 Generating Local YAML..."
@@ -102,27 +89,22 @@ else
   RDS_AUTH_DB="jdbc:mysql://localhost:3306/authdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
   RDS_ASSET_DB="jdbc:mysql://localhost:3306/assetdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
   RDS_NOTIFY_DB="jdbc:mysql://localhost:3306/notificationdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
-  RDS_HELPDESK_DB="jdbc:mysql://localhost:3306/helpdeskdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
 
   RDS_AUTH_USER="root"
   RDS_ASSET_USER="root"
   RDS_NOTIFY_USER="root"
-  RDS_HELPDESK_USER="root"
 
   RDS_AUTH_PASS="Snmysql@1110"
   RDS_ASSET_PASS="Snmysql@1110"
   RDS_NOTIFY_PASS="Snmysql@1110"
-  RDS_HELPDESK_PASS="Snmysql@1110"
 
   AUTH_PORT="8081"
   NOTIF_PORT="8082"
   ASSET_PORT="8083"
-  HELPDESK_PORT="8084"
 
   AUTH_URL="http://localhost:${AUTH_PORT}"
   ASSET_URL="http://localhost:${ASSET_PORT}"
   NOTIF_URL="http://localhost:${NOTIF_PORT}"
-  HELPDESK_URL="http://localhost:${HELPDESK_PORT}"
 fi
 
 # Common configuration values
@@ -132,7 +114,7 @@ AUTH_HMAC_KEY="krFcA7/MYPXQWbtSGMM87Dzxu2euOsRckVFeUyOC6dw="
 NOTIFY_ENC_KEY="yfwZM8WwHraV8LhcSNFZ7UuIpLwxpX6lthpH4CflI3U="
 NOTIFY_HMAC_KEY="SyHeAe8KeKETQihKAGFfpKipF9mysIjTsh01NaDiDpc="
 
-mkdir -p "$AUTH_DIR/src/main/resources" "$ASSET_DIR/src/main/resources" "$NOTIF_DIR/src/main/resources" "$COMMON_DIR/src/main/resources" "$HELPDESK_DIR/src/main/resources"
+mkdir -p "$AUTH_DIR/src/main/resources" "$ASSET_DIR/src/main/resources" "$NOTIF_DIR/src/main/resources" "$COMMON_DIR/src/main/resources"
 
 # ======================================================
 # 🔐 AUTH-SERVICE YAML
@@ -405,96 +387,6 @@ YAML
 
 echo "✅ Common-service YAML generated"
 
-# ======================================================
-# 🎫 HELPDESK-SERVICE YAML
-# ======================================================
-cat > "$HELPDESK_DIR/src/main/resources/application.yml" <<YAML
-# Helpdesk-service
-server:
-  port: ${HELPDESK_PORT}
-
-auth:
-  service:
-    url: ${AUTH_URL}
-
-notification:
-  service:
-    url: ${NOTIF_URL}/api/notifications
-
-asset:
-  service:
-    url: ${ASSET_URL}
-
-helpdesk:
-  service:
-    url: ${HELPDESK_URL}
-  chatbot:
-    enabled: true
-    max-context-length: 1000
-
-spring:
-  application:
-    name: helpdesk-service
-  datasource:
-    url: ${RDS_HELPDESK_DB}
-    username: ${RDS_HELPDESK_USER}
-    password: ${RDS_HELPDESK_PASS}
-  jpa:
-    hibernate:
-      ddl-auto: update
-    show-sql: false
-  servlet:
-    multipart:
-      enabled: true
-      max-file-size: 50MB
-      max-request-size: 50MB
-
-services:
-  auth:
-    base-url: ${AUTH_URL}
-  notification:
-    base-url: ${NOTIF_URL}
-  asset:
-    base-url: ${ASSET_URL}
-
-security:
-  jwt:
-    public-key-path: classpath:keys/jwt-private.pem
-    issuer: "auth-service"
-    audience: "helpdesk-service"
-
-common:
-  notification:
-    enabled: true
-
-JWT_PUBLIC_KEY_PATH: classpath:keys/jwt-public.pem
-JWT_SECRET: ${JWT_SECRET}
-AUTH_ENC_KEY: ${AUTH_ENC_KEY}
-AUTH_HMAC_KEY: ${AUTH_HMAC_KEY}
-AUTH_SERVICE_URL: ${AUTH_URL}
-NOTIFICATION_SERVICE_URL: ${NOTIF_URL}
-ASSET_SERVICE_URL: ${ASSET_URL}
-
-# Swagger/OpenAPI Configuration
-springdoc:
-  api-docs:
-    path: /api-docs
-    enabled: true
-  swagger-ui:
-    path: /swagger-ui.html
-    enabled: true
-    operations-sorter: method
-    tags-sorter: alpha
-    try-it-out-enabled: true
-  show-actuator: false
-  group-configs:
-    - group: 'helpdesk-service'
-      display-name: 'Helpdesk Service API'
-      paths-to-match: '/api/**'
-YAML
-
-echo "✅ Helpdesk-service YAML generated"
-
 echo "🎉 ALL application.yml files generated successfully for mode: $MODE"
 echo ""
 echo "📋 Generated files:"
@@ -502,4 +394,3 @@ echo "   ✓ auth-service/src/main/resources/application.yml"
 echo "   ✓ asset-service/src/main/resources/application.yml"
 echo "   ✓ notification-service/src/main/resources/application.yml"
 echo "   ✓ common-service/src/main/resources/application.yml"
-echo "   ✓ helpdesk-service/src/main/resources/application.yml"

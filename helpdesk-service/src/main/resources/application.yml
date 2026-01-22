@@ -80,4 +80,3 @@ springdoc:
     - group: 'helpdesk-service'
       display-name: 'Helpdesk Service API'
       paths-to-match: '/api/**'
-
