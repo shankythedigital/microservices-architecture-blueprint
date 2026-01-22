@@ -2,10 +2,6 @@ package com.example.helpdesk.entity;
 
 import com.example.common.jpa.BaseEntity;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
@@ -14,10 +10,6 @@ import java.time.LocalDateTime;
  */
 @Entity
 @Table(name = "sla_tracking")
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-@EqualsAndHashCode(callSuper = true)
 public class SLATracking extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -56,5 +48,31 @@ public class SLATracking extends BaseEntity {
 
     @Column(name = "actual_resolution_time_minutes")
     private Integer actualResolutionTimeMinutes; // Actual time taken for resolution
+
+    // Getters and Setters
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public Issue getIssue() { return issue; }
+    public void setIssue(Issue issue) { this.issue = issue; }
+    public Integer getResponseTimeMinutes() { return responseTimeMinutes; }
+    public void setResponseTimeMinutes(Integer responseTimeMinutes) { this.responseTimeMinutes = responseTimeMinutes; }
+    public Integer getResolutionTimeMinutes() { return resolutionTimeMinutes; }
+    public void setResolutionTimeMinutes(Integer resolutionTimeMinutes) { this.resolutionTimeMinutes = resolutionTimeMinutes; }
+    public LocalDateTime getFirstResponseAt() { return firstResponseAt; }
+    public void setFirstResponseAt(LocalDateTime firstResponseAt) { this.firstResponseAt = firstResponseAt; }
+    public LocalDateTime getResolvedAt() { return resolvedAt; }
+    public void setResolvedAt(LocalDateTime resolvedAt) { this.resolvedAt = resolvedAt; }
+    public Boolean getResponseSLAMet() { return responseSLAMet; }
+    public void setResponseSLAMet(Boolean responseSLAMet) { this.responseSLAMet = responseSLAMet; }
+    public Boolean getResolutionSLAMet() { return resolutionSLAMet; }
+    public void setResolutionSLAMet(Boolean resolutionSLAMet) { this.resolutionSLAMet = resolutionSLAMet; }
+    public LocalDateTime getResponseSLABreachAt() { return responseSLABreachAt; }
+    public void setResponseSLABreachAt(LocalDateTime responseSLABreachAt) { this.responseSLABreachAt = responseSLABreachAt; }
+    public LocalDateTime getResolutionSLABreachAt() { return resolutionSLABreachAt; }
+    public void setResolutionSLABreachAt(LocalDateTime resolutionSLABreachAt) { this.resolutionSLABreachAt = resolutionSLABreachAt; }
+    public Integer getActualResponseTimeMinutes() { return actualResponseTimeMinutes; }
+    public void setActualResponseTimeMinutes(Integer actualResponseTimeMinutes) { this.actualResponseTimeMinutes = actualResponseTimeMinutes; }
+    public Integer getActualResolutionTimeMinutes() { return actualResolutionTimeMinutes; }
+    public void setActualResolutionTimeMinutes(Integer actualResolutionTimeMinutes) { this.actualResolutionTimeMinutes = actualResolutionTimeMinutes; }
 }
 

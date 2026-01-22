@@ -4,19 +4,11 @@ import com.example.common.jpa.BaseEntity;
 import com.example.helpdesk.enums.QueryStatus;
 import com.example.helpdesk.enums.RelatedService;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "queries")
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-@EqualsAndHashCode(callSuper = true)
 public class Query extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -50,5 +42,23 @@ public class Query extends BaseEntity {
             answeredAt = LocalDateTime.now();
         }
     }
+
+    // Getters and Setters
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public String getQuestion() { return question; }
+    public void setQuestion(String question) { this.question = question; }
+    public String getAnswer() { return answer; }
+    public void setAnswer(String answer) { this.answer = answer; }
+    public QueryStatus getStatus() { return status; }
+    public void setStatus(QueryStatus status) { this.status = status; }
+    public RelatedService getRelatedService() { return relatedService; }
+    public void setRelatedService(RelatedService relatedService) { this.relatedService = relatedService; }
+    public String getAskedBy() { return askedBy; }
+    public void setAskedBy(String askedBy) { this.askedBy = askedBy; }
+    public String getAnsweredBy() { return answeredBy; }
+    public void setAnsweredBy(String answeredBy) { this.answeredBy = answeredBy; }
+    public LocalDateTime getAnsweredAt() { return answeredAt; }
+    public void setAnsweredAt(LocalDateTime answeredAt) { this.answeredAt = answeredAt; }
 }
 

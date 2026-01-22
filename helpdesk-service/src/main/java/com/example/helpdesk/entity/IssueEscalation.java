@@ -3,10 +3,6 @@ package com.example.helpdesk.entity;
 import com.example.common.jpa.BaseEntity;
 import com.example.helpdesk.enums.SupportLevel;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
@@ -15,10 +11,6 @@ import java.time.LocalDateTime;
  */
 @Entity
 @Table(name = "issue_escalations")
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-@EqualsAndHashCode(callSuper = true)
 public class IssueEscalation extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -51,5 +43,21 @@ public class IssueEscalation extends BaseEntity {
             escalatedAt = LocalDateTime.now();
         }
     }
+
+    // Getters and Setters
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public Issue getIssue() { return issue; }
+    public void setIssue(Issue issue) { this.issue = issue; }
+    public SupportLevel getFromLevel() { return fromLevel; }
+    public void setFromLevel(SupportLevel fromLevel) { this.fromLevel = fromLevel; }
+    public SupportLevel getToLevel() { return toLevel; }
+    public void setToLevel(SupportLevel toLevel) { this.toLevel = toLevel; }
+    public LocalDateTime getEscalatedAt() { return escalatedAt; }
+    public void setEscalatedAt(LocalDateTime escalatedAt) { this.escalatedAt = escalatedAt; }
+    public String getEscalationReason() { return escalationReason; }
+    public void setEscalationReason(String escalationReason) { this.escalationReason = escalationReason; }
+    public String getEscalatedBy() { return escalatedBy; }
+    public void setEscalatedBy(String escalatedBy) { this.escalatedBy = escalatedBy; }
 }
 
