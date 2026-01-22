@@ -41,6 +41,12 @@ public interface AssetWarrantyRepository extends JpaRepository<AssetWarranty, Lo
      * Used for validating indirect linkage.
      */
     Optional<AssetWarranty> findByWarrantyId(Long warrantyId);
+    
+    /**
+     * Find warranties by Asset ID.
+     * Used for finding existing warranties for an asset.
+     */
+    java.util.List<AssetWarranty> findByAsset_AssetId(Long assetId);
 
     /**
      * SME Requirement:

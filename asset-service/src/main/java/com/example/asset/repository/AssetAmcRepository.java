@@ -42,6 +42,12 @@ public interface AssetAmcRepository extends JpaRepository<AssetAmc, Long> {
      * Required for validation of indirect linkage.
      */
     Optional<AssetAmc> findByAmcId(Long amcId);
+    
+    /**
+     * Find AMCs by Asset ID.
+     * Used for finding existing AMCs for an asset.
+     */
+    java.util.List<AssetAmc> findByAsset_AssetId(Long assetId);
 
     /**
      * SME Requirement:

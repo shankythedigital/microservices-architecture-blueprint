@@ -74,6 +74,16 @@ public interface AssetMasterRepository extends JpaRepository<AssetMaster, Long> 
      * For DOCUMENT linkage validation
      */
     Optional<AssetMaster> findByDocuments_DocumentId(Long documentId);
+
+    // =============================================================
+    // 🔍 SCANNING METHODS (QR Code / Barcode)
+    // =============================================================
+    
+    /**
+     * Find asset by serial number (case-insensitive)
+     * Used for QR/barcode scanning
+     */
+    Optional<AssetMaster> findBySerialNumberIgnoreCase(String serialNumber);
 }
 
 
