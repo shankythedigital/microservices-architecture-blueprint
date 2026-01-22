@@ -20,7 +20,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.time.LocalDate;
 import java.util.Map;
 import java.util.List;
 import java.util.Optional;
@@ -211,7 +210,110 @@ public class AssetAmcService {
         return docReq;
     }
 
+    // ============================================================
+    // ⭐ FAVOURITE / MOST LIKE / SEQUENCE ORDER OPERATIONS
+    // ============================================================
+    
+    /**
+     * Toggle favourite status for an AMC (accessible to all authenticated users)
+     */
+    @Transactional
+    public AssetAmcDto updateFavourite(HttpHeaders headers, Long id, Boolean isFavourite) {
+        String username = com.example.asset.util.JwtUtil.getUsernameOrThrow();
+        Long userId = Long.parseLong(com.example.asset.util.JwtUtil.getUserIdOrThrow());
+        String projectType = "ASSET_SERVICE";
 
+        return amcRepo.findById(id).map(existing -> {
+            existing.setIsFavourite(isFavourite != null ? isFavourite : false);
+            existing.setUpdatedBy(username);
+            AssetAmc saved = amcRepo.save(existing);
+
+            Map<String, Object> placeholders = Map.of(
+                    "amcId", saved.getAmcId(),
+                    "isFavourite", saved.getIsFavourite(),
+                    "actor", username,
+                    "timestamp", java.time.Instant.now().toString()
+            );
+
+            notificationHelper.safeNotifyAsync(
+                    headers.getFirst("Authorization"),
+                    userId, username, null, null,
+                    "INAPP", "AMC_FAVOURITE_UPDATED_INAPP",
+                    placeholders, projectType);
+            log.info("⭐ AMC favourite updated: id={} isFavourite={} by={}", id, isFavourite, username);
+
+            return AssetAmcMapper.toDto(saved);
+        }).orElseThrow(() -> new IllegalArgumentException("AMC not found with id: " + id));
+    }
+
+    /**
+     * Toggle most like status for an AMC (accessible to all authenticated users)
+     */
+    @Transactional
+    public AssetAmcDto updateMostLike(HttpHeaders headers, Long id, Boolean isMostLike) {
+        String username = com.example.asset.util.JwtUtil.getUsernameOrThrow();
+        Long userId = Long.parseLong(com.example.asset.util.JwtUtil.getUserIdOrThrow());
+        String projectType = "ASSET_SERVICE";
+
+        return amcRepo.findById(id).map(existing -> {
+            existing.setIsMostLike(isMostLike != null ? isMostLike : false);
+            existing.setUpdatedBy(username);
+            AssetAmc saved = amcRepo.save(existing);
+
+            Map<String, Object> placeholders = Map.of(
+                    "amcId", saved.getAmcId(),
+                    "isMostLike", saved.getIsMostLike(),
+                    "actor", username,
+                    "timestamp", java.time.Instant.now().toString()
+            );
+
+            notificationHelper.safeNotifyAsync(
+                    headers.getFirst("Authorization"),
+                    userId, username, null, null,
+                    "INAPP", "AMC_MOST_LIKE_UPDATED_INAPP",
+                    placeholders, projectType);
+            log.info("⭐ AMC most like updated: id={} isMostLike={} by={}", id, isMostLike, username);
+
+            return AssetAmcMapper.toDto(saved);
+        }).orElseThrow(() -> new IllegalArgumentException("AMC not found with id: " + id));
+    }
+
+    /**
+     * Update sequence order for an AMC (admin only)
+     */
+    @Transactional
+    public AssetAmcDto updateSequenceOrder(HttpHeaders headers, Long id, Integer sequenceOrder) {
+        // Check if user is admin
+        if (!com.example.asset.util.JwtUtil.isAdmin()) {
+            throw new RuntimeException("Access denied: Only admins can update sequence order");
+        }
+
+        String username = com.example.asset.util.JwtUtil.getUsernameOrThrow();
+        Long userId = Long.parseLong(com.example.asset.util.JwtUtil.getUserIdOrThrow());
+        String projectType = "ASSET_SERVICE";
+
+        return amcRepo.findById(id).map(existing -> {
+            existing.setSequenceOrder(sequenceOrder);
+            existing.setUpdatedBy(username);
+            AssetAmc saved = amcRepo.save(existing);
+
+            Map<String, Object> placeholders = Map.of(
+                    "amcId", saved.getAmcId(),
+                    "sequenceOrder", saved.getSequenceOrder() != null ? saved.getSequenceOrder() : 0,
+                    "actor", username,
+                    "timestamp", java.time.Instant.now().toString()
+            );
+
+            notificationHelper.safeNotifyAsync(
+                    headers.getFirst("Authorization"),
+                    userId, username, null, null,
+                    "INAPP", "AMC_SEQUENCE_UPDATED_INAPP",
+                    placeholders, projectType);
+            log.info("📊 AMC sequence order updated: id={} sequenceOrder={} by={}", id, sequenceOrder, username);
+
+            return AssetAmcMapper.toDto(saved);
+        }).orElseThrow(() -> new IllegalArgumentException("AMC not found with id: " + id));
+    }
 }
 
 

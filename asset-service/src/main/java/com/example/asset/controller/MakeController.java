@@ -186,6 +186,73 @@ public class MakeController {
                     .body(new ResponseWrapper<>(false, "❌ " + e.getMessage(), null));
         }
     }
+
+    // ============================================================
+    // ⭐ FAVOURITE / MOST LIKE / SEQUENCE ORDER OPERATIONS
+    // ============================================================
+    
+    /**
+     * Toggle favourite status for a make (accessible to all authenticated users)
+     * PUT /api/asset/v1/makes/{id}/favourite
+     */
+    @PutMapping("/{id}/favourite")
+    public ResponseEntity<ResponseWrapper<MakeDto>> updateFavourite(
+            @RequestHeader HttpHeaders headers,
+            @PathVariable Long id,
+            @RequestParam(value = "isFavourite", defaultValue = "true") Boolean isFavourite) {
+        try {
+            MakeDto updated = makeService.updateFavourite(headers, id, isFavourite);
+            return ResponseEntity.ok(
+                    new ResponseWrapper<>(true, "⭐ Make favourite updated successfully", updated)
+            );
+        } catch (Exception e) {
+            log.error("❌ Failed to update make favourite: {}", e.getMessage(), e);
+            return ResponseEntity.internalServerError()
+                    .body(new ResponseWrapper<>(false, "❌ Error: " + e.getMessage(), null));
+        }
+    }
+
+    /**
+     * Toggle most like status for a make (accessible to all authenticated users)
+     * PUT /api/asset/v1/makes/{id}/most-like
+     */
+    @PutMapping("/{id}/most-like")
+    public ResponseEntity<ResponseWrapper<MakeDto>> updateMostLike(
+            @RequestHeader HttpHeaders headers,
+            @PathVariable Long id,
+            @RequestParam(value = "isMostLike", defaultValue = "true") Boolean isMostLike) {
+        try {
+            MakeDto updated = makeService.updateMostLike(headers, id, isMostLike);
+            return ResponseEntity.ok(
+                    new ResponseWrapper<>(true, "⭐ Make most like updated successfully", updated)
+            );
+        } catch (Exception e) {
+            log.error("❌ Failed to update make most like: {}", e.getMessage(), e);
+            return ResponseEntity.internalServerError()
+                    .body(new ResponseWrapper<>(false, "❌ Error: " + e.getMessage(), null));
+        }
+    }
+
+    /**
+     * Update sequence order for a make (admin only)
+     * PUT /api/asset/v1/makes/{id}/sequence-order
+     */
+    @PutMapping("/{id}/sequence-order")
+    public ResponseEntity<ResponseWrapper<MakeDto>> updateSequenceOrder(
+            @RequestHeader HttpHeaders headers,
+            @PathVariable Long id,
+            @RequestParam("sequenceOrder") Integer sequenceOrder) {
+        try {
+            MakeDto updated = makeService.updateSequenceOrder(headers, id, sequenceOrder);
+            return ResponseEntity.ok(
+                    new ResponseWrapper<>(true, "📊 Make sequence order updated successfully", updated)
+            );
+        } catch (Exception e) {
+            log.error("❌ Failed to update make sequence order: {}", e.getMessage(), e);
+            return ResponseEntity.internalServerError()
+                    .body(new ResponseWrapper<>(false, "❌ Error: " + e.getMessage(), null));
+        }
+    }
 }
 
 

@@ -432,6 +432,108 @@ public class MakeService {
             log.error("⚠️ Failed to notify linked users for {}: {}", templateCode, e.getMessage());
         }
     }
+
+    // ============================================================
+    // ⭐ FAVOURITE / MOST LIKE / SEQUENCE ORDER OPERATIONS
+    // ============================================================
+    
+    /**
+     * Toggle favourite status for a make (accessible to all authenticated users)
+     */
+    @Transactional
+    public MakeDto updateFavourite(HttpHeaders headers, Long id, Boolean isFavourite) {
+        validateAuthorization(headers);
+        String bearer = headers.getFirst("Authorization");
+        String username = com.example.asset.util.JwtUtil.getUsernameOrThrow();
+        Long userId = Long.parseLong(com.example.asset.util.JwtUtil.getUserIdOrThrow());
+        String projectType = "ASSET_SERVICE";
+
+        return repo.findById(id).map(existing -> {
+            existing.setIsFavourite(isFavourite != null ? isFavourite : false);
+            existing.setUpdatedBy(username);
+            ProductMake saved = repo.save(existing);
+
+            Map<String, Object> placeholders = new LinkedHashMap<>();
+            placeholders.put("makeId", saved.getMakeId());
+            placeholders.put("makeName", saved.getMakeName());
+            placeholders.put("isFavourite", saved.getIsFavourite());
+            placeholders.put("actor", username);
+            placeholders.put("timestamp", new Date().toString());
+
+            sendMultiChannelNotification(bearer, userId, username, placeholders, projectType,
+                    "MAKE_FAVOURITE_UPDATED", "Make favourite updated successfully");
+            log.info("⭐ Make favourite updated: id={} isFavourite={} by={}", id, isFavourite, username);
+
+            return MakeMapper.toDto(saved);
+        }).orElseThrow(() -> new IllegalArgumentException("Make not found with id: " + id));
+    }
+
+    /**
+     * Toggle most like status for a make (accessible to all authenticated users)
+     */
+    @Transactional
+    public MakeDto updateMostLike(HttpHeaders headers, Long id, Boolean isMostLike) {
+        validateAuthorization(headers);
+        String bearer = headers.getFirst("Authorization");
+        String username = com.example.asset.util.JwtUtil.getUsernameOrThrow();
+        Long userId = Long.parseLong(com.example.asset.util.JwtUtil.getUserIdOrThrow());
+        String projectType = "ASSET_SERVICE";
+
+        return repo.findById(id).map(existing -> {
+            existing.setIsMostLike(isMostLike != null ? isMostLike : false);
+            existing.setUpdatedBy(username);
+            ProductMake saved = repo.save(existing);
+
+            Map<String, Object> placeholders = new LinkedHashMap<>();
+            placeholders.put("makeId", saved.getMakeId());
+            placeholders.put("makeName", saved.getMakeName());
+            placeholders.put("isMostLike", saved.getIsMostLike());
+            placeholders.put("actor", username);
+            placeholders.put("timestamp", new Date().toString());
+
+            sendMultiChannelNotification(bearer, userId, username, placeholders, projectType,
+                    "MAKE_MOST_LIKE_UPDATED", "Make most like updated successfully");
+            log.info("⭐ Make most like updated: id={} isMostLike={} by={}", id, isMostLike, username);
+
+            return MakeMapper.toDto(saved);
+        }).orElseThrow(() -> new IllegalArgumentException("Make not found with id: " + id));
+    }
+
+    /**
+     * Update sequence order for a make (admin only)
+     */
+    @Transactional
+    public MakeDto updateSequenceOrder(HttpHeaders headers, Long id, Integer sequenceOrder) {
+        // Check if user is admin
+        if (!com.example.asset.util.JwtUtil.isAdmin()) {
+            throw new RuntimeException("Access denied: Only admins can update sequence order");
+        }
+
+        validateAuthorization(headers);
+        String bearer = headers.getFirst("Authorization");
+        String username = com.example.asset.util.JwtUtil.getUsernameOrThrow();
+        Long userId = Long.parseLong(com.example.asset.util.JwtUtil.getUserIdOrThrow());
+        String projectType = "ASSET_SERVICE";
+
+        return repo.findById(id).map(existing -> {
+            existing.setSequenceOrder(sequenceOrder);
+            existing.setUpdatedBy(username);
+            ProductMake saved = repo.save(existing);
+
+            Map<String, Object> placeholders = new LinkedHashMap<>();
+            placeholders.put("makeId", saved.getMakeId());
+            placeholders.put("makeName", saved.getMakeName());
+            placeholders.put("sequenceOrder", saved.getSequenceOrder() != null ? saved.getSequenceOrder() : 0);
+            placeholders.put("actor", username);
+            placeholders.put("timestamp", new Date().toString());
+
+            sendMultiChannelNotification(bearer, userId, username, placeholders, projectType,
+                    "MAKE_SEQUENCE_UPDATED", "Make sequence order updated successfully");
+            log.info("📊 Make sequence order updated: id={} sequenceOrder={} by={}", id, sequenceOrder, username);
+
+            return MakeMapper.toDto(saved);
+        }).orElseThrow(() -> new IllegalArgumentException("Make not found with id: " + id));
+    }
 }
 
 

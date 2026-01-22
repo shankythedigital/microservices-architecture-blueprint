@@ -279,6 +279,102 @@ public class ComponentService {
     }
 
     // ============================================================
+    // ⭐ FAVOURITE / MOST LIKE / SEQUENCE ORDER OPERATIONS
+    // ============================================================
+    
+    /**
+     * Toggle favourite status for a component (accessible to all authenticated users)
+     */
+    @Transactional
+    public ComponentDto updateFavourite(HttpHeaders headers, Long id, Boolean isFavourite) {
+        String bearer = extractBearer(headers);
+        String username = com.example.asset.util.JwtUtil.getUsernameOrThrow();
+        Long userId = Long.parseLong(com.example.asset.util.JwtUtil.getUserIdOrThrow());
+        String projectType = "ASSET_SERVICE";
+
+        return repo.findById(id).map(existing -> {
+            existing.setIsFavourite(isFavourite != null ? isFavourite : false);
+            existing.setUpdatedBy(username);
+            AssetComponent saved = repo.save(existing);
+
+            Map<String, Object> placeholders = new LinkedHashMap<>();
+            placeholders.put("componentId", saved.getComponentId());
+            placeholders.put("componentName", saved.getComponentName());
+            placeholders.put("isFavourite", saved.getIsFavourite());
+            placeholders.put("actor", username);
+            placeholders.put("timestamp", Instant.now().toString());
+
+            sendMultiChannelNotification(bearer, userId, username, placeholders, projectType, "COMPONENT_FAVOURITE_UPDATED");
+            log.info("⭐ Component favourite updated: id={} isFavourite={} by={}", id, isFavourite, username);
+
+            return ComponentMapper.toDto(saved);
+        }).orElseThrow(() -> new IllegalArgumentException("Component not found with id: " + id));
+    }
+
+    /**
+     * Toggle most like status for a component (accessible to all authenticated users)
+     */
+    @Transactional
+    public ComponentDto updateMostLike(HttpHeaders headers, Long id, Boolean isMostLike) {
+        String bearer = extractBearer(headers);
+        String username = com.example.asset.util.JwtUtil.getUsernameOrThrow();
+        Long userId = Long.parseLong(com.example.asset.util.JwtUtil.getUserIdOrThrow());
+        String projectType = "ASSET_SERVICE";
+
+        return repo.findById(id).map(existing -> {
+            existing.setIsMostLike(isMostLike != null ? isMostLike : false);
+            existing.setUpdatedBy(username);
+            AssetComponent saved = repo.save(existing);
+
+            Map<String, Object> placeholders = new LinkedHashMap<>();
+            placeholders.put("componentId", saved.getComponentId());
+            placeholders.put("componentName", saved.getComponentName());
+            placeholders.put("isMostLike", saved.getIsMostLike());
+            placeholders.put("actor", username);
+            placeholders.put("timestamp", Instant.now().toString());
+
+            sendMultiChannelNotification(bearer, userId, username, placeholders, projectType, "COMPONENT_MOST_LIKE_UPDATED");
+            log.info("⭐ Component most like updated: id={} isMostLike={} by={}", id, isMostLike, username);
+
+            return ComponentMapper.toDto(saved);
+        }).orElseThrow(() -> new IllegalArgumentException("Component not found with id: " + id));
+    }
+
+    /**
+     * Update sequence order for a component (admin only)
+     */
+    @Transactional
+    public ComponentDto updateSequenceOrder(HttpHeaders headers, Long id, Integer sequenceOrder) {
+        // Check if user is admin
+        if (!com.example.asset.util.JwtUtil.isAdmin()) {
+            throw new RuntimeException("Access denied: Only admins can update sequence order");
+        }
+
+        String bearer = extractBearer(headers);
+        String username = com.example.asset.util.JwtUtil.getUsernameOrThrow();
+        Long userId = Long.parseLong(com.example.asset.util.JwtUtil.getUserIdOrThrow());
+        String projectType = "ASSET_SERVICE";
+
+        return repo.findById(id).map(existing -> {
+            existing.setSequenceOrder(sequenceOrder);
+            existing.setUpdatedBy(username);
+            AssetComponent saved = repo.save(existing);
+
+            Map<String, Object> placeholders = new LinkedHashMap<>();
+            placeholders.put("componentId", saved.getComponentId());
+            placeholders.put("componentName", saved.getComponentName());
+            placeholders.put("sequenceOrder", saved.getSequenceOrder() != null ? saved.getSequenceOrder() : 0);
+            placeholders.put("actor", username);
+            placeholders.put("timestamp", Instant.now().toString());
+
+            sendMultiChannelNotification(bearer, userId, username, placeholders, projectType, "COMPONENT_SEQUENCE_UPDATED");
+            log.info("📊 Component sequence order updated: id={} sequenceOrder={} by={}", id, sequenceOrder, username);
+
+            return ComponentMapper.toDto(saved);
+        }).orElseThrow(() -> new IllegalArgumentException("Component not found with id: " + id));
+    }
+
+    // ============================================================
     // 🔐 Token Extractor
     // ============================================================
     private String extractBearer(HttpHeaders headers) {

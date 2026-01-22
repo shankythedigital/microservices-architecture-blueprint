@@ -43,6 +43,15 @@ public class AssetUserLink extends BaseEntity {
     @Column(name = "unassigned_date")
     private LocalDateTime unassignedDate;
 
+    @Column(name = "sequence_order")
+    private Integer sequenceOrder;
+
+    @Column(name = "is_favourite")
+    private Boolean isFavourite = false;
+
+    @Column(name = "is_most_like")
+    private Boolean isMostLike = false;
+
     // ---------- Relationship back to AssetMaster (many links → one asset)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "asset_id", insertable = false, updatable = false)
@@ -78,6 +87,13 @@ public class AssetUserLink extends BaseEntity {
 
     public LocalDateTime getUnassignedDate() { return unassignedDate; }
     public void setUnassignedDate(LocalDateTime unassignedDate) { this.unassignedDate = unassignedDate; }
+
+    public Integer getSequenceOrder() { return sequenceOrder; }
+    public void setSequenceOrder(Integer sequenceOrder) { this.sequenceOrder = sequenceOrder; }
+    public Boolean getIsFavourite() { return isFavourite; }
+    public void setIsFavourite(Boolean isFavourite) { this.isFavourite = isFavourite; }
+    public Boolean getIsMostLike() { return isMostLike; }
+    public void setIsMostLike(Boolean isMostLike) { this.isMostLike = isMostLike; }
 
     public AssetMaster getAsset() { return asset; }
     public void setAsset(AssetMaster asset) { this.asset = asset; }

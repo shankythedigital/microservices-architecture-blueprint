@@ -5,6 +5,7 @@ import com.example.asset.enums.Status;
 import com.example.asset.repository.StatusMasterRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -140,5 +141,59 @@ public class StatusService {
     // ============================================================
     public Optional<StatusMaster> findById(Integer id) {
         return repository.findById(id);
+    }
+
+    // ============================================================
+    // ⭐ FAVOURITE / MOST LIKE / SEQUENCE ORDER OPERATIONS
+    // ============================================================
+    
+    /**
+     * Toggle favourite status for a status (accessible to all authenticated users)
+     */
+    @Transactional
+    public StatusMaster updateFavourite(HttpHeaders headers, Integer id, Boolean isFavourite) {
+        String username = com.example.asset.util.JwtUtil.getUsernameOrThrow();
+        return repository.findById(id).map(existing -> {
+            existing.setIsFavourite(isFavourite != null ? isFavourite : false);
+            existing.setUpdatedBy(username);
+            StatusMaster saved = repository.save(existing);
+            log.info("⭐ Status favourite updated: id={} isFavourite={} by={}", id, isFavourite, username);
+            return saved;
+        }).orElseThrow(() -> new IllegalArgumentException("Status not found with id: " + id));
+    }
+
+    /**
+     * Toggle most like status for a status (accessible to all authenticated users)
+     */
+    @Transactional
+    public StatusMaster updateMostLike(HttpHeaders headers, Integer id, Boolean isMostLike) {
+        String username = com.example.asset.util.JwtUtil.getUsernameOrThrow();
+        return repository.findById(id).map(existing -> {
+            existing.setIsMostLike(isMostLike != null ? isMostLike : false);
+            existing.setUpdatedBy(username);
+            StatusMaster saved = repository.save(existing);
+            log.info("⭐ Status most like updated: id={} isMostLike={} by={}", id, isMostLike, username);
+            return saved;
+        }).orElseThrow(() -> new IllegalArgumentException("Status not found with id: " + id));
+    }
+
+    /**
+     * Update sequence order for a status (admin only)
+     */
+    @Transactional
+    public StatusMaster updateSequenceOrder(HttpHeaders headers, Integer id, Integer sequenceOrder) {
+        // Check if user is admin
+        if (!com.example.asset.util.JwtUtil.isAdmin()) {
+            throw new RuntimeException("Access denied: Only admins can update sequence order");
+        }
+
+        String username = com.example.asset.util.JwtUtil.getUsernameOrThrow();
+        return repository.findById(id).map(existing -> {
+            existing.setSequenceOrder(sequenceOrder);
+            existing.setUpdatedBy(username);
+            StatusMaster saved = repository.save(existing);
+            log.info("📊 Status sequence order updated: id={} sequenceOrder={} by={}", id, sequenceOrder, username);
+            return saved;
+        }).orElseThrow(() -> new IllegalArgumentException("Status not found with id: " + id));
     }
 }

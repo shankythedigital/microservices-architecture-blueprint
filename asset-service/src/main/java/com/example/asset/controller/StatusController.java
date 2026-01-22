@@ -5,6 +5,7 @@ import com.example.asset.service.StatusService;
 import com.example.common.util.ResponseWrapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -177,6 +178,73 @@ public class StatusController {
             log.error("❌ Failed to initialize statuses: {}", e.getMessage(), e);
             return ResponseEntity.internalServerError()
                     .body(new ResponseWrapper<>(false, "❌ " + e.getMessage(), null));
+        }
+    }
+
+    // ============================================================
+    // ⭐ FAVOURITE / MOST LIKE / SEQUENCE ORDER OPERATIONS
+    // ============================================================
+    
+    /**
+     * Toggle favourite status for a status (accessible to all authenticated users)
+     * PUT /api/asset/v1/statuses/{id}/favourite
+     */
+    @PutMapping("/{id}/favourite")
+    public ResponseEntity<ResponseWrapper<StatusMaster>> updateFavourite(
+            @RequestHeader HttpHeaders headers,
+            @PathVariable Integer id,
+            @RequestParam(value = "isFavourite", defaultValue = "true") Boolean isFavourite) {
+        try {
+            StatusMaster updated = statusService.updateFavourite(headers, id, isFavourite);
+            return ResponseEntity.ok(
+                    new ResponseWrapper<>(true, "⭐ Status favourite updated successfully", updated)
+            );
+        } catch (Exception e) {
+            log.error("❌ Failed to update status favourite: {}", e.getMessage(), e);
+            return ResponseEntity.internalServerError()
+                    .body(new ResponseWrapper<>(false, "❌ Error: " + e.getMessage(), null));
+        }
+    }
+
+    /**
+     * Toggle most like status for a status (accessible to all authenticated users)
+     * PUT /api/asset/v1/statuses/{id}/most-like
+     */
+    @PutMapping("/{id}/most-like")
+    public ResponseEntity<ResponseWrapper<StatusMaster>> updateMostLike(
+            @RequestHeader HttpHeaders headers,
+            @PathVariable Integer id,
+            @RequestParam(value = "isMostLike", defaultValue = "true") Boolean isMostLike) {
+        try {
+            StatusMaster updated = statusService.updateMostLike(headers, id, isMostLike);
+            return ResponseEntity.ok(
+                    new ResponseWrapper<>(true, "⭐ Status most like updated successfully", updated)
+            );
+        } catch (Exception e) {
+            log.error("❌ Failed to update status most like: {}", e.getMessage(), e);
+            return ResponseEntity.internalServerError()
+                    .body(new ResponseWrapper<>(false, "❌ Error: " + e.getMessage(), null));
+        }
+    }
+
+    /**
+     * Update sequence order for a status (admin only)
+     * PUT /api/asset/v1/statuses/{id}/sequence-order
+     */
+    @PutMapping("/{id}/sequence-order")
+    public ResponseEntity<ResponseWrapper<StatusMaster>> updateSequenceOrder(
+            @RequestHeader HttpHeaders headers,
+            @PathVariable Integer id,
+            @RequestParam("sequenceOrder") Integer sequenceOrder) {
+        try {
+            StatusMaster updated = statusService.updateSequenceOrder(headers, id, sequenceOrder);
+            return ResponseEntity.ok(
+                    new ResponseWrapper<>(true, "📊 Status sequence order updated successfully", updated)
+            );
+        } catch (Exception e) {
+            log.error("❌ Failed to update status sequence order: {}", e.getMessage(), e);
+            return ResponseEntity.internalServerError()
+                    .body(new ResponseWrapper<>(false, "❌ Error: " + e.getMessage(), null));
         }
     }
 }

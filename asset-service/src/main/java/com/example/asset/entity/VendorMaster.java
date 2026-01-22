@@ -39,6 +39,15 @@ public class VendorMaster extends BaseEntity {
     @Column(length = 255)
     private String address;
 
+    @Column(name = "sequence_order")
+    private Integer sequenceOrder;
+
+    @Column(name = "is_favourite")
+    private Boolean isFavourite = false;
+
+    @Column(name = "is_most_like")
+    private Boolean isMostLike = false;
+
     // ✅ One vendor can have multiple outlets
     @OneToMany(mappedBy = "vendor", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Set<PurchaseOutlet> outlets = new HashSet<>();
@@ -76,6 +85,13 @@ public class VendorMaster extends BaseEntity {
 
     public String getAddress() { return address; }
     public void setAddress(String address) { this.address = address; }
+
+    public Integer getSequenceOrder() { return sequenceOrder; }
+    public void setSequenceOrder(Integer sequenceOrder) { this.sequenceOrder = sequenceOrder; }
+    public Boolean getIsFavourite() { return isFavourite; }
+    public void setIsFavourite(Boolean isFavourite) { this.isFavourite = isFavourite; }
+    public Boolean getIsMostLike() { return isMostLike; }
+    public void setIsMostLike(Boolean isMostLike) { this.isMostLike = isMostLike; }
 
     public Set<PurchaseOutlet> getOutlets() { return outlets; }
     public void setOutlets(Set<PurchaseOutlet> outlets) { this.outlets = outlets; }

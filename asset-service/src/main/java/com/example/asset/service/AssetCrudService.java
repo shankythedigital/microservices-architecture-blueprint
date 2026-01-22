@@ -259,7 +259,8 @@ public class AssetCrudService {
     private static final Logger log = LoggerFactory.getLogger(AssetCrudService.class);
 
     private final AssetMasterRepository assetRepo;
-    private final AssetUserLinkRepository linkRepo;
+    @SuppressWarnings("unused")
+    private final AssetUserLinkRepository linkRepo; // Reserved for future user linking operations
     private final ProductCategoryRepository categoryRepo;
     private final ProductSubCategoryRepository subCategoryRepo;
     private final ProductMakeRepository makeRepo;
@@ -1012,6 +1013,105 @@ public class AssetCrudService {
                 savedDocument != null ? savedDocument.getDocumentId() : null, request.getTargetUserId());
 
         return response;
+    }
+
+    // ============================================================
+    // ⭐ FAVOURITE / MOST LIKE / SEQUENCE ORDER OPERATIONS
+    // ============================================================
+    
+    /**
+     * Toggle favourite status for an asset (accessible to all authenticated users)
+     */
+    @Transactional
+    public AssetMaster updateFavourite(HttpHeaders headers, Long id, Boolean isFavourite) {
+        String bearer = extractBearer(headers);
+        String username = com.example.asset.util.JwtUtil.getUsernameOrThrow();
+        Long userId = Long.parseLong(com.example.asset.util.JwtUtil.getUserIdOrThrow());
+        String projectType = "ASSET_SERVICE";
+
+        return assetRepo.findById(id).map(existing -> {
+            existing.setIsFavourite(isFavourite != null ? isFavourite : false);
+            existing.setUpdatedBy(username);
+            AssetMaster saved = assetRepo.save(existing);
+
+            Map<String, Object> placeholders = Map.of(
+                    "assetId", saved.getAssetId(),
+                    "assetName", saved.getAssetNameUdv(),
+                    "isFavourite", saved.getIsFavourite(),
+                    "actor", username,
+                    "timestamp", Instant.now().toString()
+            );
+
+            sendAssetNotification(bearer, userId, username, "INAPP", "ASSET_FAVOURITE_UPDATED_INAPP", placeholders, projectType);
+            log.info("⭐ Asset favourite updated: id={} isFavourite={} by={}", id, isFavourite, username);
+
+            return saved;
+        }).orElseThrow(() -> new IllegalArgumentException("Asset not found with id: " + id));
+    }
+
+    /**
+     * Toggle most like status for an asset (accessible to all authenticated users)
+     */
+    @Transactional
+    public AssetMaster updateMostLike(HttpHeaders headers, Long id, Boolean isMostLike) {
+        String bearer = extractBearer(headers);
+        String username = com.example.asset.util.JwtUtil.getUsernameOrThrow();
+        Long userId = Long.parseLong(com.example.asset.util.JwtUtil.getUserIdOrThrow());
+        String projectType = "ASSET_SERVICE";
+
+        return assetRepo.findById(id).map(existing -> {
+            existing.setIsMostLike(isMostLike != null ? isMostLike : false);
+            existing.setUpdatedBy(username);
+            AssetMaster saved = assetRepo.save(existing);
+
+            Map<String, Object> placeholders = Map.of(
+                    "assetId", saved.getAssetId(),
+                    "assetName", saved.getAssetNameUdv(),
+                    "isMostLike", saved.getIsMostLike(),
+                    "actor", username,
+                    "timestamp", Instant.now().toString()
+            );
+
+            sendAssetNotification(bearer, userId, username, "INAPP", "ASSET_MOST_LIKE_UPDATED_INAPP", placeholders, projectType);
+            log.info("⭐ Asset most like updated: id={} isMostLike={} by={}", id, isMostLike, username);
+
+            return saved;
+        }).orElseThrow(() -> new IllegalArgumentException("Asset not found with id: " + id));
+    }
+
+    /**
+     * Update sequence order for an asset (admin only)
+     */
+    @Transactional
+    public AssetMaster updateSequenceOrder(HttpHeaders headers, Long id, Integer sequenceOrder) {
+        // Check if user is admin
+        if (!com.example.asset.util.JwtUtil.isAdmin()) {
+            throw new RuntimeException("Access denied: Only admins can update sequence order");
+        }
+
+        String bearer = extractBearer(headers);
+        String username = com.example.asset.util.JwtUtil.getUsernameOrThrow();
+        Long userId = Long.parseLong(com.example.asset.util.JwtUtil.getUserIdOrThrow());
+        String projectType = "ASSET_SERVICE";
+
+        return assetRepo.findById(id).map(existing -> {
+            existing.setSequenceOrder(sequenceOrder);
+            existing.setUpdatedBy(username);
+            AssetMaster saved = assetRepo.save(existing);
+
+            Map<String, Object> placeholders = Map.of(
+                    "assetId", saved.getAssetId(),
+                    "assetName", saved.getAssetNameUdv(),
+                    "sequenceOrder", saved.getSequenceOrder() != null ? saved.getSequenceOrder() : 0,
+                    "actor", username,
+                    "timestamp", Instant.now().toString()
+            );
+
+            sendAssetNotification(bearer, userId, username, "INAPP", "ASSET_SEQUENCE_UPDATED_INAPP", placeholders, projectType);
+            log.info("📊 Asset sequence order updated: id={} sequenceOrder={} by={}", id, sequenceOrder, username);
+
+            return saved;
+        }).orElseThrow(() -> new IllegalArgumentException("Asset not found with id: " + id));
     }
 
     // ============================================================

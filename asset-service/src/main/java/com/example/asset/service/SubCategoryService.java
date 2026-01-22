@@ -77,6 +77,13 @@ public class SubCategoryService {
             }
         }
 
+        // Set favourite and mostLike if provided
+        if (sub.getIsFavourite() == null) {
+            sub.setIsFavourite(false);
+        }
+        if (sub.getIsMostLike() == null) {
+            sub.setIsMostLike(false);
+        }
         sub.setCreatedBy(username);
         sub.setUpdatedBy(username);
         ProductSubCategory saved = repo.save(sub);
@@ -133,6 +140,19 @@ public class SubCategoryService {
 
             String oldName = existing.getSubCategoryName();
             existing.setSubCategoryName(newName);
+            // Preserve sequenceOrder if provided in request
+            if (request.getSubCategory().getSequenceOrder() != null) {
+                existing.setSequenceOrder(request.getSubCategory().getSequenceOrder());
+            }
+            if (request.getSubCategory().getDescription() != null) {
+                existing.setDescription(request.getSubCategory().getDescription());
+            }
+            if (request.getSubCategory().getIsFavourite() != null) {
+                existing.setIsFavourite(request.getSubCategory().getIsFavourite());
+            }
+            if (request.getSubCategory().getIsMostLike() != null) {
+                existing.setIsMostLike(request.getSubCategory().getIsMostLike());
+            }
             existing.setUpdatedBy(username);
 
             ProductSubCategory saved = repo.save(existing);
@@ -188,6 +208,29 @@ public class SubCategoryService {
     public List<ProductSubCategory> list() {
         return repo.findAll().stream()
                 .filter(s -> s.getActive() == null || s.getActive())
+                .sorted((a, b) -> {
+                    // Priority: 1. isMostLike (true first), 2. isFavourite (true first), 3. sequenceOrder (lower first), 4. subCategoryName
+                    Boolean mostLikeA = a.getIsMostLike() != null ? a.getIsMostLike() : false;
+                    Boolean mostLikeB = b.getIsMostLike() != null ? b.getIsMostLike() : false;
+                    int mostLikeCompare = Boolean.compare(mostLikeB, mostLikeA); // true first (descending)
+                    if (mostLikeCompare != 0) return mostLikeCompare;
+                    
+                    Boolean favA = a.getIsFavourite() != null ? a.getIsFavourite() : false;
+                    Boolean favB = b.getIsFavourite() != null ? b.getIsFavourite() : false;
+                    int favCompare = Boolean.compare(favB, favA); // true first (descending)
+                    if (favCompare != 0) return favCompare;
+                    
+                    // Then by sequenceOrder (nulls last)
+                    Integer seqA = a.getSequenceOrder();
+                    Integer seqB = b.getSequenceOrder();
+                    if (seqA == null && seqB == null) {
+                        return a.getSubCategoryName().compareToIgnoreCase(b.getSubCategoryName());
+                    }
+                    if (seqA == null) return 1;
+                    if (seqB == null) return -1;
+                    int seqCompare = seqA.compareTo(seqB);
+                    return seqCompare != 0 ? seqCompare : a.getSubCategoryName().compareToIgnoreCase(b.getSubCategoryName());
+                })
                 .toList();
     }
 
@@ -317,6 +360,105 @@ public class SubCategoryService {
         log.info("📦 Bulk subcategory upload: {}/{} success",
                 response.getSuccessCount(), response.getTotalCount());
         return response;
+    }
+
+    // ============================================================
+    // ⭐ FAVOURITE / MOST LIKE / SEQUENCE ORDER OPERATIONS
+    // ============================================================
+    
+    /**
+     * Toggle favourite status for a subcategory (accessible to all authenticated users)
+     */
+    @Transactional
+    public ProductSubCategoryDto updateFavourite(HttpHeaders headers, Long id, Boolean isFavourite) {
+        String bearer = extractBearerToken(headers);
+        String username = com.example.asset.util.JwtUtil.getUsernameOrThrow();
+        Long userId = Long.parseLong(com.example.asset.util.JwtUtil.getUserIdOrThrow());
+        String projectType = "ASSET_SERVICE";
+
+        return repo.findById(id).map(existing -> {
+            existing.setIsFavourite(isFavourite != null ? isFavourite : false);
+            existing.setUpdatedBy(username);
+            ProductSubCategory saved = repo.save(existing);
+
+            Map<String, Object> placeholders = Map.of(
+                    "subCategoryId", saved.getSubCategoryId(),
+                    "subCategoryName", saved.getSubCategoryName(),
+                    "isFavourite", saved.getIsFavourite(),
+                    "actor", username,
+                    "timestamp", Instant.now().toString()
+            );
+
+            sendNotification(bearer, userId, username, "INAPP", "SUBCATEGORY_FAVOURITE_UPDATED_INAPP", placeholders, projectType);
+            log.info("⭐ Subcategory favourite updated: id={} isFavourite={} by={}", id, isFavourite, username);
+
+            return ProductSubCategoryMapper.toDto(saved);
+        }).orElseThrow(() -> new IllegalArgumentException("Subcategory not found with id: " + id));
+    }
+
+    /**
+     * Toggle most like status for a subcategory (accessible to all authenticated users)
+     */
+    @Transactional
+    public ProductSubCategoryDto updateMostLike(HttpHeaders headers, Long id, Boolean isMostLike) {
+        String bearer = extractBearerToken(headers);
+        String username = com.example.asset.util.JwtUtil.getUsernameOrThrow();
+        Long userId = Long.parseLong(com.example.asset.util.JwtUtil.getUserIdOrThrow());
+        String projectType = "ASSET_SERVICE";
+
+        return repo.findById(id).map(existing -> {
+            existing.setIsMostLike(isMostLike != null ? isMostLike : false);
+            existing.setUpdatedBy(username);
+            ProductSubCategory saved = repo.save(existing);
+
+            Map<String, Object> placeholders = Map.of(
+                    "subCategoryId", saved.getSubCategoryId(),
+                    "subCategoryName", saved.getSubCategoryName(),
+                    "isMostLike", saved.getIsMostLike(),
+                    "actor", username,
+                    "timestamp", Instant.now().toString()
+            );
+
+            sendNotification(bearer, userId, username, "INAPP", "SUBCATEGORY_MOST_LIKE_UPDATED_INAPP", placeholders, projectType);
+            log.info("⭐ Subcategory most like updated: id={} isMostLike={} by={}", id, isMostLike, username);
+
+            return ProductSubCategoryMapper.toDto(saved);
+        }).orElseThrow(() -> new IllegalArgumentException("Subcategory not found with id: " + id));
+    }
+
+    /**
+     * Update sequence order for a subcategory (admin only)
+     */
+    @Transactional
+    public ProductSubCategoryDto updateSequenceOrder(HttpHeaders headers, Long id, Integer sequenceOrder) {
+        // Check if user is admin
+        if (!com.example.asset.util.JwtUtil.isAdmin()) {
+            throw new RuntimeException("Access denied: Only admins can update sequence order");
+        }
+
+        String bearer = extractBearerToken(headers);
+        String username = com.example.asset.util.JwtUtil.getUsernameOrThrow();
+        Long userId = Long.parseLong(com.example.asset.util.JwtUtil.getUserIdOrThrow());
+        String projectType = "ASSET_SERVICE";
+
+        return repo.findById(id).map(existing -> {
+            existing.setSequenceOrder(sequenceOrder);
+            existing.setUpdatedBy(username);
+            ProductSubCategory saved = repo.save(existing);
+
+            Map<String, Object> placeholders = Map.of(
+                    "subCategoryId", saved.getSubCategoryId(),
+                    "subCategoryName", saved.getSubCategoryName(),
+                    "sequenceOrder", saved.getSequenceOrder() != null ? saved.getSequenceOrder() : 0,
+                    "actor", username,
+                    "timestamp", Instant.now().toString()
+            );
+
+            sendNotification(bearer, userId, username, "INAPP", "SUBCATEGORY_SEQUENCE_UPDATED_INAPP", placeholders, projectType);
+            log.info("📊 Subcategory sequence order updated: id={} sequenceOrder={} by={}", id, sequenceOrder, username);
+
+            return ProductSubCategoryMapper.toDto(saved);
+        }).orElseThrow(() -> new IllegalArgumentException("Subcategory not found with id: " + id));
     }
 
     // ============================================================

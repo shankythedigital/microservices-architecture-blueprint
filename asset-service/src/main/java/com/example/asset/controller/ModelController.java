@@ -166,6 +166,73 @@ public class ModelController {
                     .body(new ResponseWrapper<>(false, "❌ " + e.getMessage(), null));
         }
     }
+
+    // ============================================================
+    // ⭐ FAVOURITE / MOST LIKE / SEQUENCE ORDER OPERATIONS
+    // ============================================================
+    
+    /**
+     * Toggle favourite status for a model (accessible to all authenticated users)
+     * PUT /api/asset/v1/models/{id}/favourite
+     */
+    @PutMapping("/{id}/favourite")
+    public ResponseEntity<ResponseWrapper<ModelDto>> updateFavourite(
+            @RequestHeader HttpHeaders headers,
+            @PathVariable Long id,
+            @RequestParam(value = "isFavourite", defaultValue = "true") Boolean isFavourite) {
+        try {
+            ModelDto updated = modelService.updateFavourite(headers, id, isFavourite);
+            return ResponseEntity.ok(
+                    new ResponseWrapper<>(true, "⭐ Model favourite updated successfully", updated)
+            );
+        } catch (Exception e) {
+            log.error("❌ Failed to update model favourite: {}", e.getMessage(), e);
+            return ResponseEntity.internalServerError()
+                    .body(new ResponseWrapper<>(false, "❌ Error: " + e.getMessage(), null));
+        }
+    }
+
+    /**
+     * Toggle most like status for a model (accessible to all authenticated users)
+     * PUT /api/asset/v1/models/{id}/most-like
+     */
+    @PutMapping("/{id}/most-like")
+    public ResponseEntity<ResponseWrapper<ModelDto>> updateMostLike(
+            @RequestHeader HttpHeaders headers,
+            @PathVariable Long id,
+            @RequestParam(value = "isMostLike", defaultValue = "true") Boolean isMostLike) {
+        try {
+            ModelDto updated = modelService.updateMostLike(headers, id, isMostLike);
+            return ResponseEntity.ok(
+                    new ResponseWrapper<>(true, "⭐ Model most like updated successfully", updated)
+            );
+        } catch (Exception e) {
+            log.error("❌ Failed to update model most like: {}", e.getMessage(), e);
+            return ResponseEntity.internalServerError()
+                    .body(new ResponseWrapper<>(false, "❌ Error: " + e.getMessage(), null));
+        }
+    }
+
+    /**
+     * Update sequence order for a model (admin only)
+     * PUT /api/asset/v1/models/{id}/sequence-order
+     */
+    @PutMapping("/{id}/sequence-order")
+    public ResponseEntity<ResponseWrapper<ModelDto>> updateSequenceOrder(
+            @RequestHeader HttpHeaders headers,
+            @PathVariable Long id,
+            @RequestParam("sequenceOrder") Integer sequenceOrder) {
+        try {
+            ModelDto updated = modelService.updateSequenceOrder(headers, id, sequenceOrder);
+            return ResponseEntity.ok(
+                    new ResponseWrapper<>(true, "📊 Model sequence order updated successfully", updated)
+            );
+        } catch (Exception e) {
+            log.error("❌ Failed to update model sequence order: {}", e.getMessage(), e);
+            return ResponseEntity.internalServerError()
+                    .body(new ResponseWrapper<>(false, "❌ Error: " + e.getMessage(), null));
+        }
+    }
 }
 
 

@@ -17,6 +17,7 @@ import java.util.List;
 @Service
 public class ComplianceRuleTemplateService {
 
+    @SuppressWarnings("unused")
     private static final Logger log = LoggerFactory.getLogger(ComplianceRuleTemplateService.class);
     private final ComplianceMasterCacheService cacheService;
 

@@ -23,6 +23,7 @@
     <module>auth-service</module>
     <module>asset-service</module>
     <module>notification-service</module>
+    <module>helpdesk-service</module>
   </modules>
   <name>Microservices Architecture Blueprint</name>
   <description>Parent POM for common-lib, auth-service, notification-service</description>

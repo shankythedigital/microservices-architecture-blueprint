@@ -150,5 +150,72 @@ public class AssetAmcController {
                     .body(new ResponseWrapper<>(false, "❌ Failed to fetch AMC: " + e.getMessage(), null));
         }
     }
+
+    // ============================================================
+    // ⭐ FAVOURITE / MOST LIKE / SEQUENCE ORDER OPERATIONS
+    // ============================================================
+    
+    /**
+     * Toggle favourite status for an AMC (accessible to all authenticated users)
+     * PUT /api/asset/v1/amc/{id}/favourite
+     */
+    @PutMapping("/{id}/favourite")
+    public ResponseEntity<ResponseWrapper<AssetAmcDto>> updateFavourite(
+            @RequestHeader HttpHeaders headers,
+            @PathVariable Long id,
+            @RequestParam(value = "isFavourite", defaultValue = "true") Boolean isFavourite) {
+        try {
+            AssetAmcDto updated = assetAmcService.updateFavourite(headers, id, isFavourite);
+            return ResponseEntity.ok(
+                    new ResponseWrapper<>(true, "⭐ AMC favourite updated successfully", updated)
+            );
+        } catch (Exception e) {
+            log.error("❌ Failed to update AMC favourite: {}", e.getMessage(), e);
+            return ResponseEntity.internalServerError()
+                    .body(new ResponseWrapper<>(false, "❌ Error: " + e.getMessage(), null));
+        }
+    }
+
+    /**
+     * Toggle most like status for an AMC (accessible to all authenticated users)
+     * PUT /api/asset/v1/amc/{id}/most-like
+     */
+    @PutMapping("/{id}/most-like")
+    public ResponseEntity<ResponseWrapper<AssetAmcDto>> updateMostLike(
+            @RequestHeader HttpHeaders headers,
+            @PathVariable Long id,
+            @RequestParam(value = "isMostLike", defaultValue = "true") Boolean isMostLike) {
+        try {
+            AssetAmcDto updated = assetAmcService.updateMostLike(headers, id, isMostLike);
+            return ResponseEntity.ok(
+                    new ResponseWrapper<>(true, "⭐ AMC most like updated successfully", updated)
+            );
+        } catch (Exception e) {
+            log.error("❌ Failed to update AMC most like: {}", e.getMessage(), e);
+            return ResponseEntity.internalServerError()
+                    .body(new ResponseWrapper<>(false, "❌ Error: " + e.getMessage(), null));
+        }
+    }
+
+    /**
+     * Update sequence order for an AMC (admin only)
+     * PUT /api/asset/v1/amc/{id}/sequence-order
+     */
+    @PutMapping("/{id}/sequence-order")
+    public ResponseEntity<ResponseWrapper<AssetAmcDto>> updateSequenceOrder(
+            @RequestHeader HttpHeaders headers,
+            @PathVariable Long id,
+            @RequestParam("sequenceOrder") Integer sequenceOrder) {
+        try {
+            AssetAmcDto updated = assetAmcService.updateSequenceOrder(headers, id, sequenceOrder);
+            return ResponseEntity.ok(
+                    new ResponseWrapper<>(true, "📊 AMC sequence order updated successfully", updated)
+            );
+        } catch (Exception e) {
+            log.error("❌ Failed to update AMC sequence order: {}", e.getMessage(), e);
+            return ResponseEntity.internalServerError()
+                    .body(new ResponseWrapper<>(false, "❌ Error: " + e.getMessage(), null));
+        }
+    }
 }
 

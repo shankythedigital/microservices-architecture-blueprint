@@ -60,6 +60,10 @@ public class CategoryService {
             throw new IllegalArgumentException("Category already exists: " + name);
 
         ProductCategory entity = new ProductCategory(name);
+        entity.setSequenceOrder(payload.getSequenceOrder());
+        entity.setDescription(payload.getDescription());
+        entity.setIsFavourite(payload.getIsFavourite() != null ? payload.getIsFavourite() : false);
+        entity.setIsMostLike(payload.getIsMostLike() != null ? payload.getIsMostLike() : false);
         entity.setCreatedBy(username);
         entity.setUpdatedBy(username);
 
@@ -109,6 +113,18 @@ public class CategoryService {
 
             String oldName = existing.getCategoryName();
             existing.setCategoryName(newName);
+            if (patch.getDescription() != null) {
+                existing.setDescription(patch.getDescription());
+            }
+            if (patch.getSequenceOrder() != null) {
+                existing.setSequenceOrder(patch.getSequenceOrder());
+            }
+            if (patch.getIsFavourite() != null) {
+                existing.setIsFavourite(patch.getIsFavourite());
+            }
+            if (patch.getIsMostLike() != null) {
+                existing.setIsMostLike(patch.getIsMostLike());
+            }
             existing.setUpdatedBy(username);
             ProductCategory saved = repo.save(existing);
 
@@ -165,6 +181,29 @@ public class CategoryService {
     public List<CategoryDto> list() {
         return repo.findAll().stream()
                 .filter(c -> c.getActive() == null || c.getActive())
+                .sorted((a, b) -> {
+                    // Priority: 1. isMostLike (true first), 2. isFavourite (true first), 3. sequenceOrder (lower first), 4. categoryName
+                    Boolean mostLikeA = a.getIsMostLike() != null ? a.getIsMostLike() : false;
+                    Boolean mostLikeB = b.getIsMostLike() != null ? b.getIsMostLike() : false;
+                    int mostLikeCompare = Boolean.compare(mostLikeB, mostLikeA); // true first (descending)
+                    if (mostLikeCompare != 0) return mostLikeCompare;
+                    
+                    Boolean favA = a.getIsFavourite() != null ? a.getIsFavourite() : false;
+                    Boolean favB = b.getIsFavourite() != null ? b.getIsFavourite() : false;
+                    int favCompare = Boolean.compare(favB, favA); // true first (descending)
+                    if (favCompare != 0) return favCompare;
+                    
+                    // Then by sequenceOrder (nulls last)
+                    Integer seqA = a.getSequenceOrder();
+                    Integer seqB = b.getSequenceOrder();
+                    if (seqA == null && seqB == null) {
+                        return a.getCategoryName().compareToIgnoreCase(b.getCategoryName());
+                    }
+                    if (seqA == null) return 1;
+                    if (seqB == null) return -1;
+                    int seqCompare = seqA.compareTo(seqB);
+                    return seqCompare != 0 ? seqCompare : a.getCategoryName().compareToIgnoreCase(b.getCategoryName());
+                })
                 .map(CategoryMapper::toDto)
                 .toList();
     }
@@ -261,6 +300,105 @@ public BulkUploadResponse<CategoryDto> bulkCreate(
     return response;
 }
 
+
+    // ============================================================
+    // ⭐ FAVOURITE / MOST LIKE / SEQUENCE ORDER OPERATIONS
+    // ============================================================
+    
+    /**
+     * Toggle favourite status for a category (accessible to all authenticated users)
+     */
+    @Transactional
+    public CategoryDto updateFavourite(HttpHeaders headers, Long id, Boolean isFavourite) {
+        String bearer = extractBearer(headers);
+        String username = com.example.asset.util.JwtUtil.getUsernameOrThrow();
+        Long userId = Long.parseLong(com.example.asset.util.JwtUtil.getUserIdOrThrow());
+        String projectType = "ASSET_SERVICE";
+
+        return repo.findById(id).map(existing -> {
+            existing.setIsFavourite(isFavourite != null ? isFavourite : false);
+            existing.setUpdatedBy(username);
+            ProductCategory saved = repo.save(existing);
+
+            Map<String, Object> placeholders = Map.of(
+                    "categoryId", saved.getCategoryId(),
+                    "categoryName", saved.getCategoryName(),
+                    "isFavourite", saved.getIsFavourite(),
+                    "actor", username,
+                    "timestamp", Instant.now().toString()
+            );
+
+            sendNotification(bearer, userId, username, "INAPP", "CATEGORY_FAVOURITE_UPDATED_INAPP", placeholders, projectType);
+            log.info("⭐ Category favourite updated: id={} isFavourite={} by={}", id, isFavourite, username);
+
+            return CategoryMapper.toDto(saved);
+        }).orElseThrow(() -> new IllegalArgumentException("Category not found with id: " + id));
+    }
+
+    /**
+     * Toggle most like status for a category (accessible to all authenticated users)
+     */
+    @Transactional
+    public CategoryDto updateMostLike(HttpHeaders headers, Long id, Boolean isMostLike) {
+        String bearer = extractBearer(headers);
+        String username = com.example.asset.util.JwtUtil.getUsernameOrThrow();
+        Long userId = Long.parseLong(com.example.asset.util.JwtUtil.getUserIdOrThrow());
+        String projectType = "ASSET_SERVICE";
+
+        return repo.findById(id).map(existing -> {
+            existing.setIsMostLike(isMostLike != null ? isMostLike : false);
+            existing.setUpdatedBy(username);
+            ProductCategory saved = repo.save(existing);
+
+            Map<String, Object> placeholders = Map.of(
+                    "categoryId", saved.getCategoryId(),
+                    "categoryName", saved.getCategoryName(),
+                    "isMostLike", saved.getIsMostLike(),
+                    "actor", username,
+                    "timestamp", Instant.now().toString()
+            );
+
+            sendNotification(bearer, userId, username, "INAPP", "CATEGORY_MOST_LIKE_UPDATED_INAPP", placeholders, projectType);
+            log.info("⭐ Category most like updated: id={} isMostLike={} by={}", id, isMostLike, username);
+
+            return CategoryMapper.toDto(saved);
+        }).orElseThrow(() -> new IllegalArgumentException("Category not found with id: " + id));
+    }
+
+    /**
+     * Update sequence order for a category (admin only)
+     */
+    @Transactional
+    public CategoryDto updateSequenceOrder(HttpHeaders headers, Long id, Integer sequenceOrder) {
+        // Check if user is admin
+        if (!com.example.asset.util.JwtUtil.isAdmin()) {
+            throw new RuntimeException("Access denied: Only admins can update sequence order");
+        }
+
+        String bearer = extractBearer(headers);
+        String username = com.example.asset.util.JwtUtil.getUsernameOrThrow();
+        Long userId = Long.parseLong(com.example.asset.util.JwtUtil.getUserIdOrThrow());
+        String projectType = "ASSET_SERVICE";
+
+        return repo.findById(id).map(existing -> {
+            existing.setSequenceOrder(sequenceOrder);
+            existing.setUpdatedBy(username);
+            ProductCategory saved = repo.save(existing);
+
+            Map<String, Object> placeholders = Map.of(
+                    "categoryId", saved.getCategoryId(),
+                    "categoryName", saved.getCategoryName(),
+                    "sequenceOrder", saved.getSequenceOrder() != null ? saved.getSequenceOrder() : 0,
+                    "actor", username,
+                    "timestamp", Instant.now().toString()
+            );
+
+            sendNotification(bearer, userId, username, "INAPP", "CATEGORY_SEQUENCE_UPDATED_INAPP", placeholders, projectType);
+            log.info("📊 Category sequence order updated: id={} sequenceOrder={} by={}", id, sequenceOrder, username);
+
+            return CategoryMapper.toDto(saved);
+        }).orElseThrow(() -> new IllegalArgumentException("Category not found with id: " + id));
+    }
 
     // ============================================================
     // 🔔 Notification Helper

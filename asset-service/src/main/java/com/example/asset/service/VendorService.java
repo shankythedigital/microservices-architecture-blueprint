@@ -310,6 +310,105 @@ public class VendorService {
     }
 
     // ============================================================
+    // ⭐ FAVOURITE / MOST LIKE / SEQUENCE ORDER OPERATIONS
+    // ============================================================
+    
+    /**
+     * Toggle favourite status for a vendor (accessible to all authenticated users)
+     */
+    @Transactional
+    public VendorDto updateFavourite(HttpHeaders headers, Long id, Boolean isFavourite) {
+        String bearer = extractBearer(headers);
+        String username = com.example.asset.util.JwtUtil.getUsernameOrThrow();
+        Long userId = Long.parseLong(com.example.asset.util.JwtUtil.getUserIdOrThrow());
+        String projectType = "ASSET_SERVICE";
+
+        return repo.findById(id).map(existing -> {
+            existing.setIsFavourite(isFavourite != null ? isFavourite : false);
+            existing.setUpdatedBy(username);
+            VendorMaster saved = repo.save(existing);
+
+            Map<String, Object> placeholders = Map.of(
+                    "vendorId", saved.getVendorId(),
+                    "vendorName", saved.getVendorName(),
+                    "isFavourite", saved.getIsFavourite(),
+                    "actor", username,
+                    "timestamp", new Date().toString()
+            );
+
+            sendNotification(bearer, userId, username, placeholders, "VENDOR_FAVOURITE_UPDATED_INAPP", projectType);
+            log.info("⭐ Vendor favourite updated: id={} isFavourite={} by={}", id, isFavourite, username);
+
+            return VendorMapper.toDto(saved);
+        }).orElseThrow(() -> new IllegalArgumentException("Vendor not found with id: " + id));
+    }
+
+    /**
+     * Toggle most like status for a vendor (accessible to all authenticated users)
+     */
+    @Transactional
+    public VendorDto updateMostLike(HttpHeaders headers, Long id, Boolean isMostLike) {
+        String bearer = extractBearer(headers);
+        String username = com.example.asset.util.JwtUtil.getUsernameOrThrow();
+        Long userId = Long.parseLong(com.example.asset.util.JwtUtil.getUserIdOrThrow());
+        String projectType = "ASSET_SERVICE";
+
+        return repo.findById(id).map(existing -> {
+            existing.setIsMostLike(isMostLike != null ? isMostLike : false);
+            existing.setUpdatedBy(username);
+            VendorMaster saved = repo.save(existing);
+
+            Map<String, Object> placeholders = Map.of(
+                    "vendorId", saved.getVendorId(),
+                    "vendorName", saved.getVendorName(),
+                    "isMostLike", saved.getIsMostLike(),
+                    "actor", username,
+                    "timestamp", new Date().toString()
+            );
+
+            sendNotification(bearer, userId, username, placeholders, "VENDOR_MOST_LIKE_UPDATED_INAPP", projectType);
+            log.info("⭐ Vendor most like updated: id={} isMostLike={} by={}", id, isMostLike, username);
+
+            return VendorMapper.toDto(saved);
+        }).orElseThrow(() -> new IllegalArgumentException("Vendor not found with id: " + id));
+    }
+
+    /**
+     * Update sequence order for a vendor (admin only)
+     */
+    @Transactional
+    public VendorDto updateSequenceOrder(HttpHeaders headers, Long id, Integer sequenceOrder) {
+        // Check if user is admin
+        if (!com.example.asset.util.JwtUtil.isAdmin()) {
+            throw new RuntimeException("Access denied: Only admins can update sequence order");
+        }
+
+        String bearer = extractBearer(headers);
+        String username = com.example.asset.util.JwtUtil.getUsernameOrThrow();
+        Long userId = Long.parseLong(com.example.asset.util.JwtUtil.getUserIdOrThrow());
+        String projectType = "ASSET_SERVICE";
+
+        return repo.findById(id).map(existing -> {
+            existing.setSequenceOrder(sequenceOrder);
+            existing.setUpdatedBy(username);
+            VendorMaster saved = repo.save(existing);
+
+            Map<String, Object> placeholders = Map.of(
+                    "vendorId", saved.getVendorId(),
+                    "vendorName", saved.getVendorName(),
+                    "sequenceOrder", saved.getSequenceOrder() != null ? saved.getSequenceOrder() : 0,
+                    "actor", username,
+                    "timestamp", new Date().toString()
+            );
+
+            sendNotification(bearer, userId, username, placeholders, "VENDOR_SEQUENCE_UPDATED_INAPP", projectType);
+            log.info("📊 Vendor sequence order updated: id={} sequenceOrder={} by={}", id, sequenceOrder, username);
+
+            return VendorMapper.toDto(saved);
+        }).orElseThrow(() -> new IllegalArgumentException("Vendor not found with id: " + id));
+    }
+
+    // ============================================================
     // 🧩 PRIVATE HELPERS
     // ============================================================
     private void validateRequest(HttpHeaders headers, VendorRequest request) {

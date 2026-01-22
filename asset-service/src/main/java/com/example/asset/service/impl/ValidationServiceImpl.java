@@ -1,20 +1,14 @@
 package com.example.asset.service.impl;
 
 import com.example.asset.dto.AssetUserUniversalLinkRequest;
-import com.example.asset.entity.AssetMaster;
 import com.example.asset.repository.*;
 import com.example.asset.service.ValidationService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
 import java.util.Objects;
 
 @Service
 public class ValidationServiceImpl implements ValidationService {
-
-    private static final Logger log = LoggerFactory.getLogger(ValidationServiceImpl.class);
 
     private final AssetMasterRepository assetRepo;
     private final AssetComponentRepository componentRepo;

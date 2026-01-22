@@ -189,5 +189,72 @@ public class VendorController {
                     .body(new ResponseWrapper<>(false, "❌ " + e.getMessage(), null));
         }
     }
+
+    // ============================================================
+    // ⭐ FAVOURITE / MOST LIKE / SEQUENCE ORDER OPERATIONS
+    // ============================================================
+    
+    /**
+     * Toggle favourite status for a vendor (accessible to all authenticated users)
+     * PUT /api/asset/v1/vendors/{id}/favourite
+     */
+    @PutMapping("/{id}/favourite")
+    public ResponseEntity<ResponseWrapper<VendorDto>> updateFavourite(
+            @RequestHeader HttpHeaders headers,
+            @PathVariable Long id,
+            @RequestParam(value = "isFavourite", defaultValue = "true") Boolean isFavourite) {
+        try {
+            VendorDto updated = vendorService.updateFavourite(headers, id, isFavourite);
+            return ResponseEntity.ok(
+                    new ResponseWrapper<>(true, "⭐ Vendor favourite updated successfully", updated)
+            );
+        } catch (Exception e) {
+            log.error("❌ Failed to update vendor favourite: {}", e.getMessage(), e);
+            return ResponseEntity.internalServerError()
+                    .body(new ResponseWrapper<>(false, "❌ Error: " + e.getMessage(), null));
+        }
+    }
+
+    /**
+     * Toggle most like status for a vendor (accessible to all authenticated users)
+     * PUT /api/asset/v1/vendors/{id}/most-like
+     */
+    @PutMapping("/{id}/most-like")
+    public ResponseEntity<ResponseWrapper<VendorDto>> updateMostLike(
+            @RequestHeader HttpHeaders headers,
+            @PathVariable Long id,
+            @RequestParam(value = "isMostLike", defaultValue = "true") Boolean isMostLike) {
+        try {
+            VendorDto updated = vendorService.updateMostLike(headers, id, isMostLike);
+            return ResponseEntity.ok(
+                    new ResponseWrapper<>(true, "⭐ Vendor most like updated successfully", updated)
+            );
+        } catch (Exception e) {
+            log.error("❌ Failed to update vendor most like: {}", e.getMessage(), e);
+            return ResponseEntity.internalServerError()
+                    .body(new ResponseWrapper<>(false, "❌ Error: " + e.getMessage(), null));
+        }
+    }
+
+    /**
+     * Update sequence order for a vendor (admin only)
+     * PUT /api/asset/v1/vendors/{id}/sequence-order
+     */
+    @PutMapping("/{id}/sequence-order")
+    public ResponseEntity<ResponseWrapper<VendorDto>> updateSequenceOrder(
+            @RequestHeader HttpHeaders headers,
+            @PathVariable Long id,
+            @RequestParam("sequenceOrder") Integer sequenceOrder) {
+        try {
+            VendorDto updated = vendorService.updateSequenceOrder(headers, id, sequenceOrder);
+            return ResponseEntity.ok(
+                    new ResponseWrapper<>(true, "📊 Vendor sequence order updated successfully", updated)
+            );
+        } catch (Exception e) {
+            log.error("❌ Failed to update vendor sequence order: {}", e.getMessage(), e);
+            return ResponseEntity.internalServerError()
+                    .body(new ResponseWrapper<>(false, "❌ Error: " + e.getMessage(), null));
+        }
+    }
 }
 

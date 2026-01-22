@@ -12,6 +12,9 @@ public class ModelDto extends BaseEntity {
     private Long modelId;
     private String modelName;
     private String description;
+    private Integer sequenceOrder;
+    private Boolean isFavourite;
+    private Boolean isMostLike;
     private Boolean active;
 
     private Long makeId;
@@ -41,6 +44,30 @@ public class ModelDto extends BaseEntity {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public Integer getSequenceOrder() {
+        return sequenceOrder;
+    }
+
+    public void setSequenceOrder(Integer sequenceOrder) {
+        this.sequenceOrder = sequenceOrder;
+    }
+
+    public Boolean getIsFavourite() {
+        return isFavourite;
+    }
+
+    public void setIsFavourite(Boolean isFavourite) {
+        this.isFavourite = isFavourite;
+    }
+
+    public Boolean getIsMostLike() {
+        return isMostLike;
+    }
+
+    public void setIsMostLike(Boolean isMostLike) {
+        this.isMostLike = isMostLike;
     }
 
     public Boolean getActive() {

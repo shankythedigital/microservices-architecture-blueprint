@@ -1,7 +1,6 @@
 package com.example.asset.service;
 
 import com.example.asset.entity.ComplianceRule;
-import com.example.asset.service.ComplianceMasterCacheService;
 import com.example.asset.repository.ComplianceRuleRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

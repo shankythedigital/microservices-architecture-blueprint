@@ -48,6 +48,15 @@ public class StatusMaster extends BaseEntity {
     @Column(name = "category", nullable = false, length = 50)
     private String category;
 
+    @Column(name = "sequence_order")
+    private Integer sequenceOrder;
+
+    @Column(name = "is_favourite")
+    private Boolean isFavourite = false;
+
+    @Column(name = "is_most_like")
+    private Boolean isMostLike = false;
+
     // ============================================================
     // 🧾 Constructors
     // ============================================================
@@ -93,6 +102,30 @@ public class StatusMaster extends BaseEntity {
 
     public void setCategory(String category) {
         this.category = category;
+    }
+
+    public Integer getSequenceOrder() {
+        return sequenceOrder;
+    }
+
+    public void setSequenceOrder(Integer sequenceOrder) {
+        this.sequenceOrder = sequenceOrder;
+    }
+
+    public Boolean getIsFavourite() {
+        return isFavourite;
+    }
+
+    public void setIsFavourite(Boolean isFavourite) {
+        this.isFavourite = isFavourite;
+    }
+
+    public Boolean getIsMostLike() {
+        return isMostLike;
+    }
+
+    public void setIsMostLike(Boolean isMostLike) {
+        this.isMostLike = isMostLike;
     }
 
     // ============================================================

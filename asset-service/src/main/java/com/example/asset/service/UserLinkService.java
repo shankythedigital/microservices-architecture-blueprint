@@ -681,6 +681,56 @@ public class UserLinkService {
     }
 
     /**
+     * Helper method to sort entities by: 1. isMostLike (true first), 2. isFavourite (true first), 
+     * 3. sequenceOrder (nulls last), 4. name/ID
+     * Works with Map<String, Object> entities that have these fields
+     */
+    private void sortBySequenceOrder(List<Map<String, Object>> entities, String nameField) {
+        entities.sort((a, b) -> {
+            // Priority 1: isMostLike (true first)
+            Boolean mostLikeA = (Boolean) a.get("isMostLike");
+            Boolean mostLikeB = (Boolean) b.get("isMostLike");
+            boolean mostLikeAVal = mostLikeA != null ? mostLikeA : false;
+            boolean mostLikeBVal = mostLikeB != null ? mostLikeB : false;
+            int mostLikeCompare = Boolean.compare(mostLikeBVal, mostLikeAVal); // true first (descending)
+            if (mostLikeCompare != 0) return mostLikeCompare;
+            
+            // Priority 2: isFavourite (true first)
+            Boolean favA = (Boolean) a.get("isFavourite");
+            Boolean favB = (Boolean) b.get("isFavourite");
+            boolean favAVal = favA != null ? favA : false;
+            boolean favBVal = favB != null ? favB : false;
+            int favCompare = Boolean.compare(favBVal, favAVal); // true first (descending)
+            if (favCompare != 0) return favCompare;
+            
+            // Priority 3: sequenceOrder (nulls last)
+            Integer seqA = (Integer) a.get("sequenceOrder");
+            Integer seqB = (Integer) b.get("sequenceOrder");
+            if (seqA == null && seqB == null) {
+                // Both null, sort by name field
+                Object nameA = a.get(nameField);
+                Object nameB = b.get(nameField);
+                if (nameA == null && nameB == null) return 0;
+                if (nameA == null) return 1;
+                if (nameB == null) return -1;
+                return nameA.toString().compareToIgnoreCase(nameB.toString());
+            }
+            if (seqA == null) return 1;
+            if (seqB == null) return -1;
+            int seqCompare = seqA.compareTo(seqB);
+            if (seqCompare != 0) return seqCompare;
+            
+            // Priority 4: If sequenceOrder is same, sort by name
+            Object nameA = a.get(nameField);
+            Object nameB = b.get(nameField);
+            if (nameA == null && nameB == null) return 0;
+            if (nameA == null) return 1;
+            if (nameB == null) return -1;
+            return nameA.toString().compareToIgnoreCase(nameB.toString());
+        });
+    }
+
+    /**
      * Helper method to fetch documents for an entity type and ID
      * Returns a list of document information including file paths, names, and types
      */
@@ -765,6 +815,9 @@ public class UserLinkService {
                 userMap.put("mobile", userLinkInfo.getMobile());
                 userMap.put("assignedDate", userLinkInfo.getAssignedDate());
                 userMap.put("unassignedDate", userLinkInfo.getUnassignedDate());
+                userMap.put("sequenceOrder", userLinkInfo.getSequenceOrder());
+                userMap.put("isFavourite", userLinkInfo.getIsFavourite());
+                userMap.put("isMostLike", userLinkInfo.getIsMostLike());
                 // Add documents for user (if USER entity type is supported)
                 userMap.put("documents", getDocumentsForEntity("USER", userLinkInfo.getUserId()));
                 users.add(userMap);
@@ -780,12 +833,16 @@ public class UserLinkService {
                         userMap.put("username", link.getUsername());
                         userMap.put("email", link.getEmail());
                         userMap.put("mobile", link.getMobile());
+                        userMap.put("sequenceOrder", link.getSequenceOrder());
+                        userMap.put("isFavourite", link.getIsFavourite());
+                        userMap.put("isMostLike", link.getIsMostLike());
                         // Add documents for user (if USER entity type is supported)
                         userMap.put("documents", getDocumentsForEntity("USER", link.getUserId()));
                         users.add(userMap);
                     }
                 }
             }
+            sortBySequenceOrder(users, "username");
             result.put("users", users);
             
             // 2. ASSETS (filtered by userId if provided)
@@ -819,11 +876,15 @@ public class UserLinkService {
                         assetMap.put("createdAt", asset.getCreatedAt());
                         assetMap.put("updatedBy", asset.getUpdatedBy());
                         assetMap.put("updatedAt", asset.getUpdatedAt());
+                        assetMap.put("sequenceOrder", asset.getSequenceOrder());
+                        assetMap.put("isFavourite", asset.getIsFavourite());
+                        assetMap.put("isMostLike", asset.getIsMostLike());
                         // Add documents for asset
                         assetMap.put("documents", getDocumentsForEntity("ASSET", asset.getAssetId()));
                         return assetMap;
                     })
                     .collect(Collectors.toList());
+            sortBySequenceOrder(assets, "assetNameUdv");
             result.put("assets", assets);
             
             // Collect related IDs for filtering other entities
@@ -865,11 +926,15 @@ public class UserLinkService {
                         compMap.put("createdAt", component.getCreatedAt());
                         compMap.put("updatedBy", component.getUpdatedBy());
                         compMap.put("updatedAt", component.getUpdatedAt());
+                        compMap.put("sequenceOrder", component.getSequenceOrder());
+                        compMap.put("isFavourite", component.getIsFavourite());
+                        compMap.put("isMostLike", component.getIsMostLike());
                         // Add documents for component
                         compMap.put("documents", getDocumentsForEntity("COMPONENT", component.getComponentId()));
                         return compMap;
                     })
                     .collect(Collectors.toList());
+            sortBySequenceOrder(components, "componentName");
             result.put("components", components);
             
             // 4. WARRANTIES (filtered by user's assets if userId provided)
@@ -899,11 +964,15 @@ public class UserLinkService {
                         warrantyMap.put("createdAt", warranty.getCreatedAt());
                         warrantyMap.put("updatedBy", warranty.getUpdatedBy());
                         warrantyMap.put("updatedAt", warranty.getUpdatedAt());
+                        warrantyMap.put("sequenceOrder", warranty.getSequenceOrder());
+                        warrantyMap.put("isFavourite", warranty.getIsFavourite());
+                        warrantyMap.put("isMostLike", warranty.getIsMostLike());
                         // Add documents for warranty
                         warrantyMap.put("documents", getDocumentsForEntity("WARRANTY", warranty.getWarrantyId()));
                         return warrantyMap;
                     })
                     .collect(Collectors.toList());
+            sortBySequenceOrder(warranties, "warrantyProvider");
             result.put("warranties", warranties);
             
             // 5. AMCs (filtered by user's assets if userId provided)
@@ -931,11 +1000,15 @@ public class UserLinkService {
                         amcMap.put("createdAt", amc.getCreatedAt());
                         amcMap.put("updatedBy", amc.getUpdatedBy());
                         amcMap.put("updatedAt", amc.getUpdatedAt());
+                        amcMap.put("sequenceOrder", amc.getSequenceOrder());
+                        amcMap.put("isFavourite", amc.getIsFavourite());
+                        amcMap.put("isMostLike", amc.getIsMostLike());
                         // Add documents for AMC
                         amcMap.put("documents", getDocumentsForEntity("AMC", amc.getAmcId()));
                         return amcMap;
                     })
                     .collect(Collectors.toList());
+            sortBySequenceOrder(amcs, "amcStatus");
             result.put("amcs", amcs);
             
             // 6. MAKES (filtered by user's assets if userId provided)
@@ -956,11 +1029,15 @@ public class UserLinkService {
                         makeMap.put("createdAt", make.getCreatedAt());
                         makeMap.put("updatedBy", make.getUpdatedBy());
                         makeMap.put("updatedAt", make.getUpdatedAt());
+                        makeMap.put("sequenceOrder", make.getSequenceOrder());
+                        makeMap.put("isFavourite", make.getIsFavourite());
+                        makeMap.put("isMostLike", make.getIsMostLike());
                         // Add documents for make
                         makeMap.put("documents", getDocumentsForEntity("MAKE", make.getMakeId()));
                         return makeMap;
                     })
                     .collect(Collectors.toList());
+            sortBySequenceOrder(makes, "makeName");
             result.put("makes", makes);
             
             // 7. MODELS (filtered by user's assets if userId provided)
@@ -981,11 +1058,15 @@ public class UserLinkService {
                         modelMap.put("createdAt", model.getCreatedAt());
                         modelMap.put("updatedBy", model.getUpdatedBy());
                         modelMap.put("updatedAt", model.getUpdatedAt());
+                        modelMap.put("sequenceOrder", model.getSequenceOrder());
+                        modelMap.put("isFavourite", model.getIsFavourite());
+                        modelMap.put("isMostLike", model.getIsMostLike());
                         // Add documents for model
                         modelMap.put("documents", getDocumentsForEntity("MODEL", model.getModelId()));
                         return modelMap;
                     })
                     .collect(Collectors.toList());
+            sortBySequenceOrder(models, "modelName");
             result.put("models", models);
             
             // 8. CATEGORIES (filtered by user's assets if userId provided)
@@ -1003,11 +1084,15 @@ public class UserLinkService {
                         catMap.put("createdAt", category.getCreatedAt());
                         catMap.put("updatedBy", category.getUpdatedBy());
                         catMap.put("updatedAt", category.getUpdatedAt());
+                        catMap.put("sequenceOrder", category.getSequenceOrder());
+                        catMap.put("isFavourite", category.getIsFavourite());
+                        catMap.put("isMostLike", category.getIsMostLike());
                         // Add documents for category
                         catMap.put("documents", getDocumentsForEntity("CATEGORY", category.getCategoryId()));
                         return catMap;
                     })
                     .collect(Collectors.toList());
+            sortBySequenceOrder(categories, "categoryName");
             result.put("categories", categories);
             
             // 9. SUB-CATEGORIES (filtered by user's assets if userId provided)
@@ -1028,11 +1113,15 @@ public class UserLinkService {
                         subCatMap.put("createdAt", subCategory.getCreatedAt());
                         subCatMap.put("updatedBy", subCategory.getUpdatedBy());
                         subCatMap.put("updatedAt", subCategory.getUpdatedAt());
+                        subCatMap.put("sequenceOrder", subCategory.getSequenceOrder());
+                        subCatMap.put("isFavourite", subCategory.getIsFavourite());
+                        subCatMap.put("isMostLike", subCategory.getIsMostLike());
                         // Add documents for subCategory
                         subCatMap.put("documents", getDocumentsForEntity("SUBCATEGORY", subCategory.getSubCategoryId()));
                         return subCatMap;
                     })
                     .collect(Collectors.toList());
+            sortBySequenceOrder(subCategories, "subCategoryName");
             result.put("subCategories", subCategories);
             
             // 10. VENDORS (return all vendors - not directly linked to assets in current schema)
@@ -1056,11 +1145,15 @@ public class UserLinkService {
                         vendorMap.put("createdAt", vendor.getCreatedAt());
                         vendorMap.put("updatedBy", vendor.getUpdatedBy());
                         vendorMap.put("updatedAt", vendor.getUpdatedAt());
+                        vendorMap.put("sequenceOrder", vendor.getSequenceOrder());
+                        vendorMap.put("isFavourite", vendor.getIsFavourite());
+                        vendorMap.put("isMostLike", vendor.getIsMostLike());
                         // Add documents for vendor
                         vendorMap.put("documents", getDocumentsForEntity("VENDOR", vendor.getVendorId()));
                         return vendorMap;
                     })
                     .collect(Collectors.toList());
+            sortBySequenceOrder(vendors, "vendorName");
             result.put("vendors", vendors);
             
             // 11. OUTLETS (return all outlets - not directly linked to assets in current schema)
@@ -1083,11 +1176,15 @@ public class UserLinkService {
                         outletMap.put("createdAt", outlet.getCreatedAt());
                         outletMap.put("updatedBy", outlet.getUpdatedBy());
                         outletMap.put("updatedAt", outlet.getUpdatedAt());
+                        outletMap.put("sequenceOrder", outlet.getSequenceOrder());
+                        outletMap.put("isFavourite", outlet.getIsFavourite());
+                        outletMap.put("isMostLike", outlet.getIsMostLike());
                         // Add documents for outlet
                         outletMap.put("documents", getDocumentsForEntity("OUTLET", outlet.getOutletId()));
                         return outletMap;
                     })
                     .collect(Collectors.toList());
+            sortBySequenceOrder(outlets, "outletName");
             result.put("outlets", outlets);
             
             // Collect status codes from user's assets
@@ -1119,11 +1216,15 @@ public class UserLinkService {
                         statusMap.put("createdAt", status.getCreatedAt());
                         statusMap.put("updatedBy", status.getUpdatedBy());
                         statusMap.put("updatedAt", status.getUpdatedAt());
+                        statusMap.put("sequenceOrder", status.getSequenceOrder());
+                        statusMap.put("isFavourite", status.getIsFavourite());
+                        statusMap.put("isMostLike", status.getIsMostLike());
                         // Add documents for status (convert Integer to Long)
                         statusMap.put("documents", getDocumentsForEntity("STATUS", status.getStatusId() != null ? status.getStatusId().longValue() : null));
                         return statusMap;
                     })
                     .collect(Collectors.toList());
+            sortBySequenceOrder(statuses, "code");
             result.put("statuses", statuses);
             
             // Summary counts

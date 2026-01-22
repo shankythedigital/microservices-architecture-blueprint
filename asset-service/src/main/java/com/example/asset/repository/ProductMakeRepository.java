@@ -3,7 +3,6 @@ package com.example.asset.repository;
 
 import com.example.asset.entity.ProductMake;
 import com.example.asset.entity.AssetMaster;
-import com.example.asset.entity.AssetUserLink;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;

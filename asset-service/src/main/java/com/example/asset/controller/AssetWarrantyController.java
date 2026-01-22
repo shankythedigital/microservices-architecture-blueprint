@@ -117,6 +117,73 @@ public class AssetWarrantyController {
                     .body(new ResponseWrapper<>(false, "❌ Failed to fetch Warranty: " + e.getMessage(), null));
         }
     }
+
+    // ============================================================
+    // ⭐ FAVOURITE / MOST LIKE / SEQUENCE ORDER OPERATIONS
+    // ============================================================
+    
+    /**
+     * Toggle favourite status for a warranty (accessible to all authenticated users)
+     * PUT /api/asset/v1/warranty/{id}/favourite
+     */
+    @PutMapping("/{id}/favourite")
+    public ResponseEntity<ResponseWrapper<AssetWarrantyDto>> updateFavourite(
+            @RequestHeader HttpHeaders headers,
+            @PathVariable Long id,
+            @RequestParam(value = "isFavourite", defaultValue = "true") Boolean isFavourite) {
+        try {
+            AssetWarrantyDto updated = warrantyService.updateFavourite(headers, id, isFavourite);
+            return ResponseEntity.ok(
+                    new ResponseWrapper<>(true, "⭐ Warranty favourite updated successfully", updated)
+            );
+        } catch (Exception e) {
+            log.error("❌ Failed to update warranty favourite: {}", e.getMessage(), e);
+            return ResponseEntity.internalServerError()
+                    .body(new ResponseWrapper<>(false, "❌ Error: " + e.getMessage(), null));
+        }
+    }
+
+    /**
+     * Toggle most like status for a warranty (accessible to all authenticated users)
+     * PUT /api/asset/v1/warranty/{id}/most-like
+     */
+    @PutMapping("/{id}/most-like")
+    public ResponseEntity<ResponseWrapper<AssetWarrantyDto>> updateMostLike(
+            @RequestHeader HttpHeaders headers,
+            @PathVariable Long id,
+            @RequestParam(value = "isMostLike", defaultValue = "true") Boolean isMostLike) {
+        try {
+            AssetWarrantyDto updated = warrantyService.updateMostLike(headers, id, isMostLike);
+            return ResponseEntity.ok(
+                    new ResponseWrapper<>(true, "⭐ Warranty most like updated successfully", updated)
+            );
+        } catch (Exception e) {
+            log.error("❌ Failed to update warranty most like: {}", e.getMessage(), e);
+            return ResponseEntity.internalServerError()
+                    .body(new ResponseWrapper<>(false, "❌ Error: " + e.getMessage(), null));
+        }
+    }
+
+    /**
+     * Update sequence order for a warranty (admin only)
+     * PUT /api/asset/v1/warranty/{id}/sequence-order
+     */
+    @PutMapping("/{id}/sequence-order")
+    public ResponseEntity<ResponseWrapper<AssetWarrantyDto>> updateSequenceOrder(
+            @RequestHeader HttpHeaders headers,
+            @PathVariable Long id,
+            @RequestParam("sequenceOrder") Integer sequenceOrder) {
+        try {
+            AssetWarrantyDto updated = warrantyService.updateSequenceOrder(headers, id, sequenceOrder);
+            return ResponseEntity.ok(
+                    new ResponseWrapper<>(true, "📊 Warranty sequence order updated successfully", updated)
+            );
+        } catch (Exception e) {
+            log.error("❌ Failed to update warranty sequence order: {}", e.getMessage(), e);
+            return ResponseEntity.internalServerError()
+                    .body(new ResponseWrapper<>(false, "❌ Error: " + e.getMessage(), null));
+        }
+    }
 }
 
 

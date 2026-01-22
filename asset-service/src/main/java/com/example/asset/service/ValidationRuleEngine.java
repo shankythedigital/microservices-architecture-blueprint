@@ -36,7 +36,8 @@ public class ValidationRuleEngine {
     private final AssetAmcRepository amcRepo;
     private final VendorRepository vendorRepo;
     private final PurchaseOutletRepository outletRepo;
-    private final ComplianceMasterCacheService cacheService;
+    @SuppressWarnings("unused")
+    private final ComplianceMasterCacheService cacheService; // Reserved for future caching operations
 
     public ValidationRuleEngine(
             AssetMasterRepository assetRepo,

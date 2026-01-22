@@ -19,6 +19,9 @@ public class ProductSubCategoryDto  extends BaseEntity {
     private Long subCategoryId;
     private String subCategoryName;
     private String description;
+    private Integer sequenceOrder;
+    private Boolean isFavourite;
+    private Boolean isMostLike;
 
     // ============================================================
     // 🔗 Category Info
@@ -67,6 +70,30 @@ public class ProductSubCategoryDto  extends BaseEntity {
 
     public void setCategoryName(String categoryName) {
         this.categoryName = categoryName;
+    }
+
+    public Integer getSequenceOrder() {
+        return sequenceOrder;
+    }
+
+    public void setSequenceOrder(Integer sequenceOrder) {
+        this.sequenceOrder = sequenceOrder;
+    }
+
+    public Boolean getIsFavourite() {
+        return isFavourite;
+    }
+
+    public void setIsFavourite(Boolean isFavourite) {
+        this.isFavourite = isFavourite;
+    }
+
+    public Boolean getIsMostLike() {
+        return isMostLike;
+    }
+
+    public void setIsMostLike(Boolean isMostLike) {
+        this.isMostLike = isMostLike;
     }
 
     // ============================================================

@@ -32,6 +32,9 @@ public final class CategoryMapper {
         dto.setCategoryId(entity.getCategoryId());
         dto.setCategoryName(entity.getCategoryName());
         dto.setDescription(entity.getDescription());
+        dto.setSequenceOrder(entity.getSequenceOrder());
+        dto.setIsFavourite(entity.getIsFavourite());
+        dto.setIsMostLike(entity.getIsMostLike());
         dto.setActive(entity.getActive());
         dto.setCreatedBy(entity.getCreatedBy());
         dto.setUpdatedBy(entity.getUpdatedBy());
@@ -56,6 +59,9 @@ public final class CategoryMapper {
         entity.setCategoryId(dto.getCategoryId());
         entity.setCategoryName(trim(dto.getCategoryName()));
         entity.setDescription(trim(dto.getDescription()));
+        entity.setSequenceOrder(dto.getSequenceOrder());
+        entity.setIsFavourite(dto.getIsFavourite());
+        entity.setIsMostLike(dto.getIsMostLike());
         entity.setActive(dto.getActive());
         entity.setCreatedBy(dto.getCreatedBy());
         entity.setUpdatedBy(dto.getUpdatedBy());
@@ -81,6 +87,12 @@ public final class CategoryMapper {
             entity.setCategoryName(trim(dto.getCategoryName()));
         if (dto.getDescription() != null)
             entity.setDescription(trim(dto.getDescription()));
+        if (dto.getSequenceOrder() != null)
+            entity.setSequenceOrder(dto.getSequenceOrder());
+        if (dto.getIsFavourite() != null)
+            entity.setIsFavourite(dto.getIsFavourite());
+        if (dto.getIsMostLike() != null)
+            entity.setIsMostLike(dto.getIsMostLike());
         if (dto.getActive() != null)
             entity.setActive(dto.getActive());
         if (dto.getUpdatedBy() != null)

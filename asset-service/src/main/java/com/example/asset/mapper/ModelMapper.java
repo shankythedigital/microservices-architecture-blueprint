@@ -17,6 +17,9 @@ public class ModelMapper {
         dto.setModelId(entity.getModelId());
         dto.setModelName(entity.getModelName());
         dto.setDescription(entity.getDescription());
+        dto.setSequenceOrder(entity.getSequenceOrder());
+        dto.setIsFavourite(entity.getIsFavourite());
+        dto.setIsMostLike(entity.getIsMostLike());
         dto.setActive(entity.getActive());
         dto.setCreatedBy(entity.getCreatedBy());
         dto.setUpdatedBy(entity.getUpdatedBy());

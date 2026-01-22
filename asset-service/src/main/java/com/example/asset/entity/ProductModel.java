@@ -33,6 +33,15 @@ public class ProductModel extends BaseEntity {
     @Column(length = 255)
     private String description;
 
+    @Column(name = "sequence_order")
+    private Integer sequenceOrder;
+
+    @Column(name = "is_favourite")
+    private Boolean isFavourite = false;
+
+    @Column(name = "is_most_like")
+    private Boolean isMostLike = false;
+
     // ============================================================
     // ✅ Constructors
     // ============================================================
@@ -77,6 +86,30 @@ public class ProductModel extends BaseEntity {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public Integer getSequenceOrder() {
+        return sequenceOrder;
+    }
+
+    public void setSequenceOrder(Integer sequenceOrder) {
+        this.sequenceOrder = sequenceOrder;
+    }
+
+    public Boolean getIsFavourite() {
+        return isFavourite;
+    }
+
+    public void setIsFavourite(Boolean isFavourite) {
+        this.isFavourite = isFavourite;
+    }
+
+    public Boolean getIsMostLike() {
+        return isMostLike;
+    }
+
+    public void setIsMostLike(Boolean isMostLike) {
+        this.isMostLike = isMostLike;
     }
 
     // ============================================================

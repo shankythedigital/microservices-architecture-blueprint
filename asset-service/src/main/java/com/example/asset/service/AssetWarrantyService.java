@@ -8,12 +8,11 @@ import com.example.asset.entity.AssetDocument;
 import com.example.asset.entity.AssetMaster;
 import com.example.asset.entity.AssetWarranty;
 import com.example.asset.mapper.AssetWarrantyMapper;
+import com.example.asset.repository.AssetComponentRepository;
 import com.example.asset.repository.AssetDocumentRepository;
 import com.example.asset.repository.AssetMasterRepository;
 import com.example.asset.repository.AssetWarrantyRepository;
 import com.example.common.service.SafeNotificationHelper;
-import com.example.asset.repository.AssetComponentRepository;
-import com.example.asset.repository.AssetDocumentRepository;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -236,6 +235,110 @@ public class AssetWarrantyService {
         }
     }
 
+    // ============================================================
+    // ⭐ FAVOURITE / MOST LIKE / SEQUENCE ORDER OPERATIONS
+    // ============================================================
+    
+    /**
+     * Toggle favourite status for a warranty (accessible to all authenticated users)
+     */
+    @Transactional
+    public AssetWarrantyDto updateFavourite(HttpHeaders headers, Long id, Boolean isFavourite) {
+        String username = com.example.asset.util.JwtUtil.getUsernameOrThrow();
+        Long userId = Long.parseLong(com.example.asset.util.JwtUtil.getUserIdOrThrow());
+        String projectType = "ASSET_SERVICE";
+
+        return warrantyRepo.findById(id).map(existing -> {
+            existing.setIsFavourite(isFavourite != null ? isFavourite : false);
+            existing.setUpdatedBy(username);
+            AssetWarranty saved = warrantyRepo.save(existing);
+
+            Map<String, Object> placeholders = Map.of(
+                    "warrantyId", saved.getWarrantyId(),
+                    "isFavourite", saved.getIsFavourite(),
+                    "actor", username,
+                    "timestamp", java.time.Instant.now().toString()
+            );
+
+            notificationHelper.safeNotifyAsync(
+                    headers.getFirst("Authorization"),
+                    userId, username, null, null,
+                    "INAPP", "WARRANTY_FAVOURITE_UPDATED_INAPP",
+                    placeholders, projectType);
+            log.info("⭐ Warranty favourite updated: id={} isFavourite={} by={}", id, isFavourite, username);
+
+            return AssetWarrantyMapper.toDto(saved);
+        }).orElseThrow(() -> new IllegalArgumentException("Warranty not found with id: " + id));
+    }
+
+    /**
+     * Toggle most like status for a warranty (accessible to all authenticated users)
+     */
+    @Transactional
+    public AssetWarrantyDto updateMostLike(HttpHeaders headers, Long id, Boolean isMostLike) {
+        String username = com.example.asset.util.JwtUtil.getUsernameOrThrow();
+        Long userId = Long.parseLong(com.example.asset.util.JwtUtil.getUserIdOrThrow());
+        String projectType = "ASSET_SERVICE";
+
+        return warrantyRepo.findById(id).map(existing -> {
+            existing.setIsMostLike(isMostLike != null ? isMostLike : false);
+            existing.setUpdatedBy(username);
+            AssetWarranty saved = warrantyRepo.save(existing);
+
+            Map<String, Object> placeholders = Map.of(
+                    "warrantyId", saved.getWarrantyId(),
+                    "isMostLike", saved.getIsMostLike(),
+                    "actor", username,
+                    "timestamp", java.time.Instant.now().toString()
+            );
+
+            notificationHelper.safeNotifyAsync(
+                    headers.getFirst("Authorization"),
+                    userId, username, null, null,
+                    "INAPP", "WARRANTY_MOST_LIKE_UPDATED_INAPP",
+                    placeholders, projectType);
+            log.info("⭐ Warranty most like updated: id={} isMostLike={} by={}", id, isMostLike, username);
+
+            return AssetWarrantyMapper.toDto(saved);
+        }).orElseThrow(() -> new IllegalArgumentException("Warranty not found with id: " + id));
+    }
+
+    /**
+     * Update sequence order for a warranty (admin only)
+     */
+    @Transactional
+    public AssetWarrantyDto updateSequenceOrder(HttpHeaders headers, Long id, Integer sequenceOrder) {
+        // Check if user is admin
+        if (!com.example.asset.util.JwtUtil.isAdmin()) {
+            throw new RuntimeException("Access denied: Only admins can update sequence order");
+        }
+
+        String username = com.example.asset.util.JwtUtil.getUsernameOrThrow();
+        Long userId = Long.parseLong(com.example.asset.util.JwtUtil.getUserIdOrThrow());
+        String projectType = "ASSET_SERVICE";
+
+        return warrantyRepo.findById(id).map(existing -> {
+            existing.setSequenceOrder(sequenceOrder);
+            existing.setUpdatedBy(username);
+            AssetWarranty saved = warrantyRepo.save(existing);
+
+            Map<String, Object> placeholders = Map.of(
+                    "warrantyId", saved.getWarrantyId(),
+                    "sequenceOrder", saved.getSequenceOrder() != null ? saved.getSequenceOrder() : 0,
+                    "actor", username,
+                    "timestamp", java.time.Instant.now().toString()
+            );
+
+            notificationHelper.safeNotifyAsync(
+                    headers.getFirst("Authorization"),
+                    userId, username, null, null,
+                    "INAPP", "WARRANTY_SEQUENCE_UPDATED_INAPP",
+                    placeholders, projectType);
+            log.info("📊 Warranty sequence order updated: id={} sequenceOrder={} by={}", id, sequenceOrder, username);
+
+            return AssetWarrantyMapper.toDto(saved);
+        }).orElseThrow(() -> new IllegalArgumentException("Warranty not found with id: " + id));
+    }
 }
 
 

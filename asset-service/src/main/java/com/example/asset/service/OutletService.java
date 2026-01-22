@@ -429,6 +429,108 @@ public class OutletService {
             log.error("⚠️ Failed to notify admins for {}: {}", templateCode, e.getMessage());
         }
     }
+
+    // ============================================================
+    // ⭐ FAVOURITE / MOST LIKE / SEQUENCE ORDER OPERATIONS
+    // ============================================================
+    
+    /**
+     * Toggle favourite status for an outlet (accessible to all authenticated users)
+     */
+    @Transactional
+    public OutletDto updateFavourite(HttpHeaders headers, Long id, Boolean isFavourite) {
+        validateAuthorization(headers);
+        String bearer = headers.getFirst("Authorization");
+        String username = com.example.asset.util.JwtUtil.getUsernameOrThrow();
+        Long userId = Long.parseLong(com.example.asset.util.JwtUtil.getUserIdOrThrow());
+        String projectType = "ASSET_SERVICE";
+
+        return repo.findById(id).map(existing -> {
+            existing.setIsFavourite(isFavourite != null ? isFavourite : false);
+            existing.setUpdatedBy(username);
+            PurchaseOutlet saved = repo.save(existing);
+
+            Map<String, Object> placeholders = new LinkedHashMap<>();
+            placeholders.put("outletId", saved.getOutletId());
+            placeholders.put("outletName", saved.getOutletName());
+            placeholders.put("isFavourite", saved.getIsFavourite());
+            placeholders.put("actor", username);
+            placeholders.put("timestamp", new Date().toString());
+
+            sendNotifications(bearer, userId, username, placeholders, projectType,
+                    "OUTLET_FAVOURITE_UPDATED", "Outlet favourite updated successfully");
+            log.info("⭐ Outlet favourite updated: id={} isFavourite={} by={}", id, isFavourite, username);
+
+            return OutletMapper.toDto(saved);
+        }).orElseThrow(() -> new IllegalArgumentException("Outlet not found with id: " + id));
+    }
+
+    /**
+     * Toggle most like status for an outlet (accessible to all authenticated users)
+     */
+    @Transactional
+    public OutletDto updateMostLike(HttpHeaders headers, Long id, Boolean isMostLike) {
+        validateAuthorization(headers);
+        String bearer = headers.getFirst("Authorization");
+        String username = com.example.asset.util.JwtUtil.getUsernameOrThrow();
+        Long userId = Long.parseLong(com.example.asset.util.JwtUtil.getUserIdOrThrow());
+        String projectType = "ASSET_SERVICE";
+
+        return repo.findById(id).map(existing -> {
+            existing.setIsMostLike(isMostLike != null ? isMostLike : false);
+            existing.setUpdatedBy(username);
+            PurchaseOutlet saved = repo.save(existing);
+
+            Map<String, Object> placeholders = new LinkedHashMap<>();
+            placeholders.put("outletId", saved.getOutletId());
+            placeholders.put("outletName", saved.getOutletName());
+            placeholders.put("isMostLike", saved.getIsMostLike());
+            placeholders.put("actor", username);
+            placeholders.put("timestamp", new Date().toString());
+
+            sendNotifications(bearer, userId, username, placeholders, projectType,
+                    "OUTLET_MOST_LIKE_UPDATED", "Outlet most like updated successfully");
+            log.info("⭐ Outlet most like updated: id={} isMostLike={} by={}", id, isMostLike, username);
+
+            return OutletMapper.toDto(saved);
+        }).orElseThrow(() -> new IllegalArgumentException("Outlet not found with id: " + id));
+    }
+
+    /**
+     * Update sequence order for an outlet (admin only)
+     */
+    @Transactional
+    public OutletDto updateSequenceOrder(HttpHeaders headers, Long id, Integer sequenceOrder) {
+        // Check if user is admin
+        if (!com.example.asset.util.JwtUtil.isAdmin()) {
+            throw new RuntimeException("Access denied: Only admins can update sequence order");
+        }
+
+        validateAuthorization(headers);
+        String bearer = headers.getFirst("Authorization");
+        String username = com.example.asset.util.JwtUtil.getUsernameOrThrow();
+        Long userId = Long.parseLong(com.example.asset.util.JwtUtil.getUserIdOrThrow());
+        String projectType = "ASSET_SERVICE";
+
+        return repo.findById(id).map(existing -> {
+            existing.setSequenceOrder(sequenceOrder);
+            existing.setUpdatedBy(username);
+            PurchaseOutlet saved = repo.save(existing);
+
+            Map<String, Object> placeholders = new LinkedHashMap<>();
+            placeholders.put("outletId", saved.getOutletId());
+            placeholders.put("outletName", saved.getOutletName());
+            placeholders.put("sequenceOrder", saved.getSequenceOrder() != null ? saved.getSequenceOrder() : 0);
+            placeholders.put("actor", username);
+            placeholders.put("timestamp", new Date().toString());
+
+            sendNotifications(bearer, userId, username, placeholders, projectType,
+                    "OUTLET_SEQUENCE_UPDATED", "Outlet sequence order updated successfully");
+            log.info("📊 Outlet sequence order updated: id={} sequenceOrder={} by={}", id, sequenceOrder, username);
+
+            return OutletMapper.toDto(saved);
+        }).orElseThrow(() -> new IllegalArgumentException("Outlet not found with id: " + id));
+    }
 }
 
 
