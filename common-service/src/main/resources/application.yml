@@ -4,15 +4,15 @@ spring:
 
 auth:
   service:
-    url: http://13.204.61.111:6001
+    url: http://localhost:8081
 
 asset:
   service:
-    url: http://13.233.124.217:6003
+    url: http://localhost:8083
 
 notification:
   service:
-    url: http://13.232.146.140:6002/api/notifications
+    url: http://localhost:8082/api/notifications
 
 JWT_PRIVATE_KEY_PATH: classpath:keys/jwt-private.pem
 JWT_PUBLIC_KEY_PATH: classpath:keys/jwt-public.pem

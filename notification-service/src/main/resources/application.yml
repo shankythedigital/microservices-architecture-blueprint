@@ -1,10 +1,10 @@
 # Notification-service
 server:
-  port: 6002
+  port: 8082
 
 notification:
   service:
-    url: http://13.232.146.140:6002/api/notifications
+    url: http://localhost:8082/api/notifications
   list:
     # Number of days to display notifications in notification icons
     # Default: 30 days (notifications older than 30 days will not be shown)
@@ -14,7 +14,7 @@ notification:
 
 asset:
   service:
-    url: http://13.233.124.217:6003
+    url: http://localhost:8083
   upload:
     dir: /asset-uploads/amc-docs
 
@@ -25,9 +25,9 @@ spring:
   application:
     name: notification-service
   datasource:
-    url: jdbc:mysql://db-auth.c5csym0gc4my.ap-south-1.rds.amazonaws.com:3306/notificationdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
-    username: admin
-    password: AuthPass123
+    url: jdbc:mysql://localhost:3306/notificationdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    username: root
+    password: Snmysql@1110
   jpa:
     hibernate:
       ddl-auto: update
@@ -35,7 +35,7 @@ spring:
 
 auth:
   service:
-    url: http://13.204.61.111:6001/api/
+    url: http://localhost:8081/api/
   client-id: notification-service
   client-secret: notify-secret
 

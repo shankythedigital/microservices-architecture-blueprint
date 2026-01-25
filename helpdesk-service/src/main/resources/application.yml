@@ -1,22 +1,22 @@
 # Helpdesk-service
 server:
-  port: 6004
+  port: 8084
 
 auth:
   service:
-    url: http://13.204.61.111:6001
+    url: http://localhost:8081
 
 notification:
   service:
-    url: http://13.232.146.140:6002/api/notifications
+    url: http://localhost:8082/api/notifications
 
 asset:
   service:
-    url: http://13.233.124.217:6003
+    url: http://localhost:8083
 
 helpdesk:
   service:
-    url: http://13.204.61.111:6004
+    url: http://localhost:8084
   chatbot:
     enabled: true
     max-context-length: 1000
@@ -25,9 +25,9 @@ spring:
   application:
     name: helpdesk-service
   datasource:
-    url: jdbc:mysql://db-auth.c5csym0gc4my.ap-south-1.rds.amazonaws.com:3306/helpdeskdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
-    username: admin
-    password: AuthPass123
+    url: jdbc:mysql://localhost:3306/helpdeskdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    username: root
+    password: Snmysql@1110
     hikari:
       minimum-idle: 5
       maximum-pool-size: 20
@@ -48,11 +48,11 @@ spring:
 
 services:
   auth:
-    base-url: http://13.204.61.111:6001
+    base-url: http://localhost:8081
   notification:
-    base-url: http://13.232.146.140:6002
+    base-url: http://localhost:8082
   asset:
-    base-url: http://13.233.124.217:6003
+    base-url: http://localhost:8083
 
 security:
   jwt:
@@ -68,9 +68,9 @@ JWT_PUBLIC_KEY_PATH: classpath:keys/jwt-public.pem
 JWT_SECRET: yNnC7M3ZqgV4bD0lFJm9Q2w5tSe8XpR1pWc7UjK4oHs=
 AUTH_ENC_KEY: SLOqKf8lS2hidTDsXQe25ZSaoaGcczUX6gySXUxjE1M=
 AUTH_HMAC_KEY: krFcA7/MYPXQWbtSGMM87Dzxu2euOsRckVFeUyOC6dw=
-AUTH_SERVICE_URL: http://13.204.61.111:6001
-NOTIFICATION_SERVICE_URL: http://13.232.146.140:6002
-ASSET_SERVICE_URL: http://13.233.124.217:6003
+AUTH_SERVICE_URL: http://localhost:8081
+NOTIFICATION_SERVICE_URL: http://localhost:8082
+ASSET_SERVICE_URL: http://localhost:8083
 
 # Swagger/OpenAPI Configuration
 springdoc:
