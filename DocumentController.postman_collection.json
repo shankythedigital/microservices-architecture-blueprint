@@ -1,0 +1,382 @@
+{
+	"info": {
+		"_postman_id": "document-controller-collection",
+		"name": "Document Controller API",
+		"description": "Complete Postman collection for DocumentController endpoints - Asset Service",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "document-controller"
+	},
+	"item": [
+		{
+			"name": "Upload Document",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{bearerToken}}",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "file",
+							"type": "file",
+							"src": []
+						},
+						{
+							"key": "entityType",
+							"value": "ASSET",
+							"type": "text",
+							"description": "Entity type: ASSET, COMPONENT, AMC, WARRANTY, CATEGORY, SUBCATEGORY, OUTLET, MAKE, MODEL, VENDOR"
+						},
+						{
+							"key": "entityId",
+							"value": "1",
+							"type": "text",
+							"description": "ID of the entity"
+						},
+						{
+							"key": "userId",
+							"value": "1",
+							"type": "text"
+						},
+						{
+							"key": "username",
+							"value": "admin",
+							"type": "text"
+						},
+						{
+							"key": "projectType",
+							"value": "ASSET_SERVICE",
+							"type": "text",
+							"description": "Optional - defaults to ASSET_SERVICE"
+						},
+						{
+							"key": "docType",
+							"value": "PDF",
+							"type": "text",
+							"description": "Optional - e.g., IMAGE, PDF, RECEIPT, AGREEMENT"
+						}
+					]
+				},
+				"url": {
+					"raw": "{{assetbaseUrl}}/api/asset/v1/documents/upload",
+					"host": [
+						"{{assetbaseUrl}}"
+					],
+					"path": [
+						"api",
+						"asset",
+						"v1",
+						"documents",
+						"upload"
+					]
+				},
+				"description": "Upload a single document file. Supports linking to various entity types (ASSET, COMPONENT, AMC, WARRANTY, etc.)"
+			},
+			"response": []
+		},
+		{
+			"name": "Get Document Details",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{bearerToken}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{assetbaseUrl}}/api/asset/v1/documents/:id",
+					"host": [
+						"{{assetbaseUrl}}"
+					],
+					"path": [
+						"api",
+						"asset",
+						"v1",
+						"documents",
+						":id"
+					],
+					"variable": [
+						{
+							"key": "id",
+							"value": "1",
+							"description": "Document ID"
+						}
+					]
+				},
+				"description": "Get document details by ID"
+			},
+			"response": []
+		},
+		{
+			"name": "Download Document",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{bearerToken}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{assetbaseUrl}}/api/asset/v1/documents/download/:id",
+					"host": [
+						"{{assetbaseUrl}}"
+					],
+					"path": [
+						"api",
+						"asset",
+						"v1",
+						"documents",
+						"download",
+						":id"
+					],
+					"variable": [
+						{
+							"key": "id",
+							"value": "1",
+							"description": "Document ID"
+						}
+					]
+				},
+				"description": "Download the actual document file"
+			},
+			"response": []
+		},
+		{
+			"name": "Delete Document (Soft Delete)",
+			"request": {
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{bearerToken}}",
+						"type": "text"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"userId\": 1,\n    \"username\": \"admin\",\n    \"projectType\": \"ASSET_SERVICE\",\n    \"entityType\": \"ASSET\",\n    \"entityId\": 1\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{assetbaseUrl}}/api/asset/v1/documents/:id",
+					"host": [
+						"{{assetbaseUrl}}"
+					],
+					"path": [
+						"api",
+						"asset",
+						"v1",
+						"documents",
+						":id"
+					],
+					"variable": [
+						{
+							"key": "id",
+							"value": "1",
+							"description": "Document ID to delete"
+						}
+					]
+				},
+				"description": "Soft delete a document (sets active=false)"
+			},
+			"response": []
+		},
+		{
+			"name": "Bulk Upload Documents (with Files)",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{bearerToken}}",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "files",
+							"type": "file",
+							"src": [],
+							"description": "First file - must match order in request JSON"
+						},
+						{
+							"key": "files",
+							"type": "file",
+							"src": [],
+							"description": "Second file - add more files as needed"
+						},
+						{
+							"key": "request",
+							"value": "{\n    \"documents\": [\n        {\n            \"entityType\": \"ASSET\",\n            \"entityId\": 1,\n            \"fileName\": \"document1.pdf\",\n            \"docType\": \"PDF\"\n        },\n        {\n            \"entityType\": \"ASSET\",\n            \"entityId\": 2,\n            \"fileName\": \"document2.jpg\",\n            \"docType\": \"IMAGE\"\n        }\n    ]\n}",
+							"type": "text",
+							"description": "JSON string with document metadata. Number of documents must match number of files."
+						},
+						{
+							"key": "userId",
+							"value": "1",
+							"type": "text"
+						},
+						{
+							"key": "username",
+							"value": "admin",
+							"type": "text"
+						},
+						{
+							"key": "projectType",
+							"value": "ASSET_SERVICE",
+							"type": "text",
+							"description": "Optional - defaults to ASSET_SERVICE"
+						}
+					]
+				},
+				"url": {
+					"raw": "{{assetbaseUrl}}/api/asset/v1/documents/bulk",
+					"host": [
+						"{{assetbaseUrl}}"
+					],
+					"path": [
+						"api",
+						"asset",
+						"v1",
+						"documents",
+						"bulk"
+					]
+				},
+				"description": "Bulk upload multiple documents with files. Files are uploaded and stored. The number of files must match the number of documents in the request JSON.\n\nNote: You can also send 'request' as a JSON part using @RequestPart for automatic deserialization."
+			},
+			"response": []
+		},
+		{
+			"name": "Bulk Upload Documents (with File Paths)",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{bearerToken}}",
+						"type": "text"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"userId\": 1,\n    \"username\": \"admin\",\n    \"projectType\": \"ASSET_SERVICE\",\n    \"documents\": [\n        {\n            \"entityType\": \"ASSET\",\n            \"entityId\": 1,\n            \"fileName\": \"document1.pdf\",\n            \"filePath\": \"/path/to/existing/file/document1.pdf\",\n            \"docType\": \"PDF\"\n        },\n        {\n            \"entityType\": \"COMPONENT\",\n            \"entityId\": 2,\n            \"fileName\": \"document2.jpg\",\n            \"filePath\": \"/path/to/existing/file/document2.jpg\",\n            \"docType\": \"IMAGE\"\n        }\n    ]\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{assetbaseUrl}}/api/asset/v1/documents/bulk/paths",
+					"host": [
+						"{{assetbaseUrl}}"
+					],
+					"path": [
+						"api",
+						"asset",
+						"v1",
+						"documents",
+						"bulk",
+						"paths"
+					]
+				},
+				"description": "Bulk upload documents using existing file paths. Files must already exist on the server at the specified paths.\n\nRequired fields for each document:\n- entityType: ASSET, COMPONENT, AMC, WARRANTY, CATEGORY, SUBCATEGORY, MAKE, MODEL, OUTLET, VENDOR\n- entityId: ID of the entity\n- fileName: Name of the file\n- filePath: Full path to the existing file on server\n- docType: Optional document type"
+			},
+			"response": []
+		},
+		{
+			"name": "Bulk Upload from Excel",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{bearerToken}}",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "file",
+							"type": "file",
+							"src": [],
+							"description": "Excel file (.xlsx or .xls) with document data"
+						},
+						{
+							"key": "userId",
+							"value": "1",
+							"type": "text"
+						},
+						{
+							"key": "username",
+							"value": "admin",
+							"type": "text"
+						},
+						{
+							"key": "projectType",
+							"value": "ASSET_SERVICE",
+							"type": "text",
+							"description": "Optional - defaults to ASSET_SERVICE"
+						}
+					]
+				},
+				"url": {
+					"raw": "{{assetbaseUrl}}/api/asset/v1/documents/bulk/excel",
+					"host": [
+						"{{assetbaseUrl}}"
+					],
+					"path": [
+						"api",
+						"asset",
+						"v1",
+						"documents",
+						"bulk",
+						"excel"
+					]
+				},
+				"description": "Bulk upload documents from an Excel file. The Excel file should contain document metadata.\n\nThe Excel file is parsed and documents are created based on the data in the file.\n\nNote: This endpoint expects file paths in the Excel, so files must already exist on the server."
+			},
+			"response": []
+		}
+	],
+	"variable": [
+		{
+			"key": "assetassetbaseUrl",
+			"value": "http://localhost:8083",
+			"type": "string"
+		},
+		{
+			"key": "bearerToken",
+			"value": "your-jwt-token-here",
+			"type": "string"
+		}
+	]
+}
+

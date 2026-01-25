@@ -1,0 +1,13 @@
+entity_type,entity_id,file_name,file_path,doc_type
+ASSET,1,invoice_001.pdf,/uploads/documents/invoice_001.pdf,PDF
+ASSET,2,receipt_002.jpg,/uploads/documents/receipt_002.jpg,IMAGE
+COMPONENT,1,manual_001.pdf,/uploads/documents/manual_001.pdf,PDF
+WARRANTY,1,warranty_001.pdf,/uploads/documents/warranty_001.pdf,PDF
+AMC,1,amc_agreement_001.pdf,/uploads/documents/amc_agreement_001.pdf,AGREEMENT
+CATEGORY,1,category_image_001.jpg,/uploads/documents/category_image_001.jpg,IMAGE
+SUBCATEGORY,1,subcategory_image_001.jpg,/uploads/documents/subcategory_image_001.jpg,IMAGE
+MAKE,1,make_logo_001.png,/uploads/documents/make_logo_001.png,IMAGE
+MODEL,1,model_spec_001.pdf,/uploads/documents/model_spec_001.pdf,PDF
+OUTLET,1,outlet_photo_001.jpg,/uploads/documents/outlet_photo_001.jpg,IMAGE
+VENDOR,1,vendor_contract_001.pdf,/uploads/documents/vendor_contract_001.pdf,PDF
+

@@ -181,7 +181,92 @@ public class DocumentService {
     }
 
     // ============================================================
-    // 📦 BULK UPLOAD DOCUMENTS (NEW - using BulkDocumentRequest)
+    // 📦 BULK UPLOAD DOCUMENTS (with file uploads)
+    // ============================================================
+    @Transactional
+    public BulkUploadResponse<AssetDocument> bulkCreateWithFiles(
+            HttpHeaders headers,
+            MultipartFile[] files,
+            BulkDocumentRequest bulkRequest) {
+        BulkUploadResponse<AssetDocument> response = new BulkUploadResponse<>();
+        
+        if (bulkRequest == null || bulkRequest.getDocuments() == null) {
+            throw new IllegalArgumentException("Bulk request cannot be null");
+        }
+
+        List<BulkDocumentRequest.SimpleDocumentDto> items = bulkRequest.getDocuments();
+        
+        // Validate files count matches documents count
+        if (files == null || files.length != items.size()) {
+            throw new IllegalArgumentException(
+                String.format("Number of files (%d) must match number of documents (%d)", 
+                    files != null ? files.length : 0, items.size()));
+        }
+
+        response.setTotalCount(items.size());
+
+        String username = bulkRequest.getUsername();
+        Long userId = bulkRequest.getUserId();
+        String projectType = Optional.ofNullable(bulkRequest.getProjectType()).orElse("ASSET_SERVICE");
+
+        for (int i = 0; i < items.size(); i++) {
+            try {
+                BulkDocumentRequest.SimpleDocumentDto item = items.get(i);
+                MultipartFile file = files[i];
+
+                // ✅ VALIDATION: Required fields
+                if (item.getEntityType() == null || item.getEntityType().trim().isEmpty()) {
+                    response.addFailure(i, "Entity type is required");
+                    continue;
+                }
+
+                if (item.getEntityId() == null) {
+                    response.addFailure(i, "Entity ID is required");
+                    continue;
+                }
+
+                if (file == null || file.isEmpty()) {
+                    response.addFailure(i, "File is required");
+                    continue;
+                }
+
+                String entityType = item.getEntityType().trim().toUpperCase();
+                Long entityId = item.getEntityId();
+
+                // ✅ VALIDATION: Entity exists and is active
+                if (!validateEntityExists(entityType, entityId)) {
+                    response.addFailure(i, String.format("Entity not found or inactive: %s with ID %d", entityType, entityId));
+                    continue;
+                }
+
+                // Create DocumentRequest for upload
+                DocumentRequest docRequest = new DocumentRequest();
+                docRequest.setEntityType(entityType);
+                docRequest.setEntityId(entityId);
+                docRequest.setUserId(userId);
+                docRequest.setUsername(username);
+                docRequest.setProjectType(projectType);
+                docRequest.setDocType(item.getDocType());
+
+                // Upload file and create document
+                AssetDocument created = upload(headers, file, docRequest);
+                
+                response.addSuccess(i, created);
+                log.debug("✅ Created document fileName={} for {} ID={}", file.getOriginalFilename(), entityType, entityId);
+
+            } catch (Exception e) {
+                log.error("❌ Bulk document failed at index {}: {}", i, e.getMessage());
+                response.addFailure(i, e.getMessage());
+            }
+        }
+
+        log.info("📦 Bulk document upload: {}/{} success",
+                response.getSuccessCount(), response.getTotalCount());
+        return response;
+    }
+
+    // ============================================================
+    // 📦 BULK UPLOAD DOCUMENTS (with file paths - for existing files)
     // ============================================================
     @Transactional
     public BulkUploadResponse<AssetDocument> bulkCreate(HttpHeaders headers, BulkDocumentRequest bulkRequest) {

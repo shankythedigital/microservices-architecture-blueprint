@@ -11,6 +11,9 @@ public class FAQResponse {
     private String category;
     private Integer viewCount;
     private Integer helpfulCount;
+    private Integer sequenceOrder;
+    private Boolean isFavourite;
+    private Boolean isMostLike;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -29,6 +32,12 @@ public class FAQResponse {
     public void setViewCount(Integer viewCount) { this.viewCount = viewCount; }
     public Integer getHelpfulCount() { return helpfulCount; }
     public void setHelpfulCount(Integer helpfulCount) { this.helpfulCount = helpfulCount; }
+    public Integer getSequenceOrder() { return sequenceOrder; }
+    public void setSequenceOrder(Integer sequenceOrder) { this.sequenceOrder = sequenceOrder; }
+    public Boolean getIsFavourite() { return isFavourite; }
+    public void setIsFavourite(Boolean isFavourite) { this.isFavourite = isFavourite; }
+    public Boolean getIsMostLike() { return isMostLike; }
+    public void setIsMostLike(Boolean isMostLike) { this.isMostLike = isMostLike; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }

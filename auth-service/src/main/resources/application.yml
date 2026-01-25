@@ -1,26 +1,26 @@
 # Auth-service
 server:
-  port: 8081
+  port: 6001
 
 auth:
   service:
-    url: http://localhost:8081
+    url: http://13.204.61.111:6001
 
 notification:
   service:
-    url: http://localhost:8082/api/notifications
+    url: http://13.232.146.140:6002/api/notifications
 
 asset:
   service:
-    url: http://localhost:8083
+    url: http://13.233.124.217:6003
 
 spring:
   application:
     name: auth-service
   datasource:
-    url: jdbc:mysql://localhost:3306/authdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
-    username: root
-    password: Snmysql@1110
+    url: jdbc:mysql://db-auth.c5csym0gc4my.ap-south-1.rds.amazonaws.com:3306/authdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    username: admin
+    password: AuthPass123
   jpa:
     hibernate:
       ddl-auto: update

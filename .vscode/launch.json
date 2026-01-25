@@ -1,0 +1,58 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+
+
+        {
+            "type": "java",
+            "name": "Current File",
+            "request": "launch",
+            "mainClass": "${file}"
+        },
+        {
+            "type": "java",
+            "name": "AssetServiceApplication",
+            "request": "launch",
+            "mainClass": "com.example.asset.AssetServiceApplication",
+            "projectName": "asset-service"
+        },
+        {
+            "type": "java",
+            "name": "Application",
+            "request": "launch",
+            "mainClass": "com.example.authservice.Application",
+            "projectName": "auth-service"
+        },
+        {
+            "type": "java",
+            "name": "MainClass",
+            "request": "launch",
+            "mainClass": "com.example.common.MainClass",
+            "projectName": "common-lib"
+        },
+        {
+            "type": "java",
+            "name": "MainClass(1)",
+            "request": "launch",
+            "mainClass": "com.example.common.MainClass",
+            "projectName": "common-service"
+        },
+        {
+            "type": "java",
+            "name": "NotificationServiceApplication",
+            "request": "launch",
+            "mainClass": "com.example.notification.NotificationServiceApplication",
+            "projectName": "notification-service"
+        },
+        {
+            "type": "java",
+            "name": "HelpdeskServiceApplication",
+            "request": "launch",
+            "mainClass": "com.example.helpdesk.HelpdeskServiceApplication",
+            "projectName": "helpdesk-service"
+        }
+    ]
+}

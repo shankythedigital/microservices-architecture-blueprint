@@ -1,0 +1,2078 @@
+{
+  "info": {
+    "_postman_id": "helpdesk-service-complete-v1",
+    "name": "Helpdesk Service - Complete API Collection",
+    "description": "Complete Postman collection for Helpdesk Service with all controllers and endpoints",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "helpdesk-service"
+  },
+  "item": [
+    {
+      "name": "1. Issues",
+      "item": [
+        {
+          "name": "Create Issue",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bearerToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{helpdeskbaseUrl}}/api/helpdesk/issues",
+              "host": [
+                "{{helpdeskbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "helpdesk",
+                "issues"
+              ]
+            },
+            "description": "Create a new issue ticket",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Network connectivity issue\",\n  \"description\": \"Unable to connect to network\",\n  \"priority\": \"{{issuePriority}}\",\n  \"relatedService\": \"{{relatedService}}\",\n  \"reportedBy\": \"{{reportedBy}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Issues",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bearerToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{helpdeskbaseUrl}}/api/helpdesk/issues",
+              "host": [
+                "{{helpdeskbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "helpdesk",
+                "issues"
+              ]
+            },
+            "description": "Retrieve all issues"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Issue by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bearerToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{helpdeskbaseUrl}}/api/helpdesk/issues/:id",
+              "host": [
+                "{{helpdeskbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "helpdesk",
+                "issues",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{issueId}}",
+                  "description": "id"
+                }
+              ]
+            },
+            "description": "Retrieve a specific issue by its ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Issues by Status",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bearerToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{helpdeskbaseUrl}}/api/helpdesk/issues/status/:status",
+              "host": [
+                "{{helpdeskbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "helpdesk",
+                "issues",
+                "status",
+                ":status"
+              ],
+              "variable": [
+                {
+                  "key": "status",
+                  "value": "{{issueStatus}}",
+                  "description": "status"
+                }
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "{{issueStatus}}",
+                  "description": "Issue status"
+                }
+              ]
+            },
+            "description": "Retrieve issues filtered by status"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Issues by Service",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bearerToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{helpdeskbaseUrl}}/api/helpdesk/issues/service/:service",
+              "host": [
+                "{{helpdeskbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "helpdesk",
+                "issues",
+                "service",
+                ":service"
+              ],
+              "variable": [
+                {
+                  "key": "service",
+                  "value": "{{relatedService}}",
+                  "description": "service"
+                }
+              ]
+            },
+            "description": "Retrieve issues filtered by related service"
+          },
+          "response": []
+        },
+        {
+          "name": "Get My Issues",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bearerToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{helpdeskbaseUrl}}/api/helpdesk/issues/my-issues",
+              "host": [
+                "{{helpdeskbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "helpdesk",
+                "issues",
+                "my-issues"
+              ]
+            },
+            "description": "Retrieve issues reported by the current user"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Issue Status",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bearerToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{helpdeskbaseUrl}}/api/helpdesk/issues/:id/status",
+              "host": [
+                "{{helpdeskbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "helpdesk",
+                "issues",
+                ":id",
+                "status"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{issueId}}",
+                  "description": "id"
+                }
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "{{issueStatus}}"
+                }
+              ]
+            },
+            "description": "Update the status of an issue"
+          },
+          "response": []
+        },
+        {
+          "name": "Assign Issue",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bearerToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{helpdeskbaseUrl}}/api/helpdesk/issues/:id/assign",
+              "host": [
+                "{{helpdeskbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "helpdesk",
+                "issues",
+                ":id",
+                "assign"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{issueId}}",
+                  "description": "id"
+                }
+              ],
+              "query": [
+                {
+                  "key": "assignedTo",
+                  "value": "{{assignedTo}}"
+                }
+              ]
+            },
+            "description": "Assign an issue to a support agent"
+          },
+          "response": []
+        },
+        {
+          "name": "Resolve Issue",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bearerToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{helpdeskbaseUrl}}/api/helpdesk/issues/:id/resolve",
+              "host": [
+                "{{helpdeskbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "helpdesk",
+                "issues",
+                ":id",
+                "resolve"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{issueId}}",
+                  "description": "id"
+                }
+              ]
+            },
+            "description": "Resolve an issue with a resolution description",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"resolutionDescription\": \"Issue resolved by restarting the router\",\n  \"resolvedBy\": \"{{resolvedBy}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Close Issue",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bearerToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{helpdeskbaseUrl}}/api/helpdesk/issues/:id/close",
+              "host": [
+                "{{helpdeskbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "helpdesk",
+                "issues",
+                ":id",
+                "close"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{issueId}}",
+                  "description": "id"
+                }
+              ]
+            },
+            "description": "Close an issue"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "2. Escalations",
+      "item": [
+        {
+          "name": "Escalate Issue",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bearerToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{helpdeskbaseUrl}}/api/helpdesk/escalations/issue/:issueId",
+              "host": [
+                "{{helpdeskbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "helpdesk",
+                "escalations",
+                "issue",
+                ":issueId"
+              ],
+              "variable": [
+                {
+                  "key": "issueId",
+                  "value": "{{issueId}}",
+                  "description": "issue ID"
+                }
+              ]
+            },
+            "description": "Manually escalate an issue to a higher support level",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"escalationReason\": \"Issue not resolved within SLA\",\n  \"escalatedBy\": \"{{escalatedBy}}\",\n  \"targetLevel\": \"{{escalationLevel}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Auto-escalate Issue",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bearerToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{helpdeskbaseUrl}}/api/helpdesk/escalations/issue/:issueId/auto-escalate",
+              "host": [
+                "{{helpdeskbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "helpdesk",
+                "escalations",
+                "issue",
+                ":issueId",
+                "auto-escalate"
+              ],
+              "variable": [
+                {
+                  "key": "issueId",
+                  "value": "{{issueId}}",
+                  "description": "issue ID"
+                }
+              ]
+            },
+            "description": "Trigger auto-escalation check for an issue"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Issue Escalations",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bearerToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{helpdeskbaseUrl}}/api/helpdesk/escalations/issue/:issueId",
+              "host": [
+                "{{helpdeskbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "helpdesk",
+                "escalations",
+                "issue",
+                ":issueId"
+              ],
+              "variable": [
+                {
+                  "key": "issueId",
+                  "value": "{{issueId}}",
+                  "description": "issue ID"
+                }
+              ]
+            },
+            "description": "Retrieve escalation history for an issue"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "3. Escalation Matrix",
+      "item": [
+        {
+          "name": "Create Escalation Matrix",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bearerToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{helpdeskbaseUrl}}/api/helpdesk/escalation-matrix",
+              "host": [
+                "{{helpdeskbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "helpdesk",
+                "escalation-matrix"
+              ]
+            },
+            "description": "Create a new escalation matrix entry with SLA configuration",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"relatedService\": \"{{relatedService}}\",\n  \"priority\": \"{{issuePriority}}\",\n  \"firstResponseTimeMinutes\": {{firstResponseTimeMinutes}},\n  \"resolutionTimeMinutes\": {{resolutionTimeMinutes}},\n  \"level1EscalationMinutes\": {{level1EscalationMinutes}},\n  \"level2EscalationMinutes\": {{level2EscalationMinutes}},\n  \"level3EscalationMinutes\": {{level3EscalationMinutes}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Escalation Matrices",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bearerToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{helpdeskbaseUrl}}/api/helpdesk/escalation-matrix",
+              "host": [
+                "{{helpdeskbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "helpdesk",
+                "escalation-matrix"
+              ]
+            },
+            "description": "Retrieve all escalation matrix configurations"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Escalation Matrix by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bearerToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{helpdeskbaseUrl}}/api/helpdesk/escalation-matrix/:id",
+              "host": [
+                "{{helpdeskbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "helpdesk",
+                "escalation-matrix",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{escalationMatrixId}}",
+                  "description": "id"
+                }
+              ]
+            },
+            "description": "Retrieve a specific escalation matrix by its ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Escalation Matrices by Service",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bearerToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{helpdeskbaseUrl}}/api/helpdesk/escalation-matrix/service/:service",
+              "host": [
+                "{{helpdeskbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "helpdesk",
+                "escalation-matrix",
+                "service",
+                ":service"
+              ],
+              "variable": [
+                {
+                  "key": "service",
+                  "value": "{{relatedService}}",
+                  "description": "service"
+                }
+              ]
+            },
+            "description": "Retrieve escalation matrices for a specific service"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Escalation Matrix",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bearerToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{helpdeskbaseUrl}}/api/helpdesk/escalation-matrix/service/:service/priority/:priority",
+              "host": [
+                "{{helpdeskbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "helpdesk",
+                "escalation-matrix",
+                "service",
+                ":service",
+                "priority",
+                ":priority"
+              ],
+              "variable": [
+                {
+                  "key": "service",
+                  "value": "{{relatedService}}",
+                  "description": "service"
+                },
+                {
+                  "key": "priority",
+                  "value": "{{issuePriority}}",
+                  "description": "priority"
+                }
+              ]
+            },
+            "description": "Get active escalation matrix for service and priority"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Escalation Matrix",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bearerToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{helpdeskbaseUrl}}/api/helpdesk/escalation-matrix/:id",
+              "host": [
+                "{{helpdeskbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "helpdesk",
+                "escalation-matrix",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{escalationMatrixId}}",
+                  "description": "id"
+                }
+              ]
+            },
+            "description": "Update an existing escalation matrix",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"relatedService\": \"{{relatedService}}\",\n  \"priority\": \"{{issuePriority}}\",\n  \"firstResponseTimeMinutes\": {{firstResponseTimeMinutes}},\n  \"resolutionTimeMinutes\": {{resolutionTimeMinutes}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Escalation Matrix",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bearerToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{helpdeskbaseUrl}}/api/helpdesk/escalation-matrix/:id",
+              "host": [
+                "{{helpdeskbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "helpdesk",
+                "escalation-matrix",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{escalationMatrixId}}",
+                  "description": "id"
+                }
+              ]
+            },
+            "description": "Delete an escalation matrix"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "4. SLA",
+      "item": [
+        {
+          "name": "Get SLA Tracking",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bearerToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{helpdeskbaseUrl}}/api/helpdesk/sla/issue/:issueId",
+              "host": [
+                "{{helpdeskbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "helpdesk",
+                "sla",
+                "issue",
+                ":issueId"
+              ],
+              "variable": [
+                {
+                  "key": "issueId",
+                  "value": "{{issueId}}",
+                  "description": "issue ID"
+                }
+              ]
+            },
+            "description": "Retrieve SLA tracking information for an issue"
+          },
+          "response": []
+        },
+        {
+          "name": "Get SLA Breaches",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bearerToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{helpdeskbaseUrl}}/api/helpdesk/sla/breaches",
+              "host": [
+                "{{helpdeskbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "helpdesk",
+                "sla",
+                "breaches"
+              ]
+            },
+            "description": "Retrieve all issues with SLA breaches"
+          },
+          "response": []
+        },
+        {
+          "name": "Record First Response",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bearerToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{helpdeskbaseUrl}}/api/helpdesk/sla/issue/:issueId/first-response",
+              "host": [
+                "{{helpdeskbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "helpdesk",
+                "sla",
+                "issue",
+                ":issueId",
+                "first-response"
+              ],
+              "variable": [
+                {
+                  "key": "issueId",
+                  "value": "{{issueId}}",
+                  "description": "issue ID"
+                }
+              ]
+            },
+            "description": "Record the first response time for an issue"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "5. FAQs",
+      "item": [
+        {
+          "name": "Create FAQ",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bearerToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{helpdeskbaseUrl}}/api/helpdesk/faqs",
+              "host": [
+                "{{helpdeskbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "helpdesk",
+                "faqs"
+              ]
+            },
+            "description": "Add a new frequently asked question",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"question\": \"How do I reset my password?\",\n  \"answer\": \"Click on forgot password link\",\n  \"category\": \"{{faqCategory}}\",\n  \"relatedService\": \"{{relatedService}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get All FAQs",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bearerToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{helpdeskbaseUrl}}/api/helpdesk/faqs",
+              "host": [
+                "{{helpdeskbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "helpdesk",
+                "faqs"
+              ]
+            },
+            "description": "Retrieve all FAQs"
+          },
+          "response": []
+        },
+        {
+          "name": "Get FAQ by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bearerToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{helpdeskbaseUrl}}/api/helpdesk/faqs/:id",
+              "host": [
+                "{{helpdeskbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "helpdesk",
+                "faqs",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{faqId}}",
+                  "description": "id"
+                }
+              ]
+            },
+            "description": "Retrieve a specific FAQ by its ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Get FAQs by Service",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bearerToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{helpdeskbaseUrl}}/api/helpdesk/faqs/service/:service",
+              "host": [
+                "{{helpdeskbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "helpdesk",
+                "faqs",
+                "service",
+                ":service"
+              ],
+              "variable": [
+                {
+                  "key": "service",
+                  "value": "{{relatedService}}",
+                  "description": "service"
+                }
+              ]
+            },
+            "description": "Retrieve FAQs filtered by related service"
+          },
+          "response": []
+        },
+        {
+          "name": "Get FAQs by Category",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bearerToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{helpdeskbaseUrl}}/api/helpdesk/faqs/category/:category",
+              "host": [
+                "{{helpdeskbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "helpdesk",
+                "faqs",
+                "category",
+                ":category"
+              ],
+              "variable": [
+                {
+                  "key": "category",
+                  "value": "{{faqCategory}}",
+                  "description": "category"
+                }
+              ]
+            },
+            "description": "Retrieve FAQs filtered by category"
+          },
+          "response": []
+        },
+        {
+          "name": "Search FAQs",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bearerToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{helpdeskbaseUrl}}/api/helpdesk/faqs/search",
+              "host": [
+                "{{helpdeskbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "helpdesk",
+                "faqs",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "keyword",
+                  "value": "{{searchKeyword}}"
+                }
+              ]
+            },
+            "description": "Search FAQs by keyword"
+          },
+          "response": []
+        },
+        {
+          "name": "Search FAQs by Service",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bearerToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{helpdeskbaseUrl}}/api/helpdesk/faqs/service/:service/search",
+              "host": [
+                "{{helpdeskbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "helpdesk",
+                "faqs",
+                "service",
+                ":service",
+                "search"
+              ],
+              "variable": [
+                {
+                  "key": "service",
+                  "value": "{{relatedService}}",
+                  "description": "service"
+                }
+              ],
+              "query": [
+                {
+                  "key": "keyword",
+                  "value": "{{searchKeyword}}"
+                }
+              ]
+            },
+            "description": "Search FAQs by service and keyword"
+          },
+          "response": []
+        },
+        {
+          "name": "Update FAQ",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bearerToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{helpdeskbaseUrl}}/api/helpdesk/faqs/:id",
+              "host": [
+                "{{helpdeskbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "helpdesk",
+                "faqs",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{faqId}}",
+                  "description": "id"
+                }
+              ]
+            },
+            "description": "Update an existing FAQ",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"question\": \"Updated question\",\n  \"answer\": \"Updated answer\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Mark FAQ as Helpful",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bearerToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{helpdeskbaseUrl}}/api/helpdesk/faqs/:id/helpful",
+              "host": [
+                "{{helpdeskbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "helpdesk",
+                "faqs",
+                ":id",
+                "helpful"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{faqId}}",
+                  "description": "id"
+                }
+              ]
+            },
+            "description": "Increment the helpful count for an FAQ"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete FAQ",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bearerToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{helpdeskbaseUrl}}/api/helpdesk/faqs/:id",
+              "host": [
+                "{{helpdeskbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "helpdesk",
+                "faqs",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{faqId}}",
+                  "description": "id"
+                }
+              ]
+            },
+            "description": "Delete an FAQ"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "6. Queries",
+      "item": [
+        {
+          "name": "Create Query",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bearerToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{helpdeskbaseUrl}}/api/helpdesk/queries",
+              "host": [
+                "{{helpdeskbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "helpdesk",
+                "queries"
+              ]
+            },
+            "description": "Submit a new query",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"question\": \"How do I create an asset?\",\n  \"relatedService\": \"{{relatedService}}\",\n  \"askedBy\": \"user@example.com\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Queries",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bearerToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{helpdeskbaseUrl}}/api/helpdesk/queries",
+              "host": [
+                "{{helpdeskbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "helpdesk",
+                "queries"
+              ]
+            },
+            "description": "Retrieve all queries"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Query by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bearerToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{helpdeskbaseUrl}}/api/helpdesk/queries/:id",
+              "host": [
+                "{{helpdeskbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "helpdesk",
+                "queries",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{queryId}}",
+                  "description": "id"
+                }
+              ]
+            },
+            "description": "Retrieve a specific query by its ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Queries by Status",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bearerToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{helpdeskbaseUrl}}/api/helpdesk/queries/status/:status",
+              "host": [
+                "{{helpdeskbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "helpdesk",
+                "queries",
+                "status",
+                ":status"
+              ],
+              "variable": [
+                {
+                  "key": "status",
+                  "value": "{{queryStatus}}",
+                  "description": "status"
+                }
+              ]
+            },
+            "description": "Retrieve queries filtered by status"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Queries by Service",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bearerToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{helpdeskbaseUrl}}/api/helpdesk/queries/service/:service",
+              "host": [
+                "{{helpdeskbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "helpdesk",
+                "queries",
+                "service",
+                ":service"
+              ],
+              "variable": [
+                {
+                  "key": "service",
+                  "value": "{{relatedService}}",
+                  "description": "service"
+                }
+              ]
+            },
+            "description": "Retrieve queries filtered by related service"
+          },
+          "response": []
+        },
+        {
+          "name": "Get My Queries",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bearerToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{helpdeskbaseUrl}}/api/helpdesk/queries/my-queries",
+              "host": [
+                "{{helpdeskbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "helpdesk",
+                "queries",
+                "my-queries"
+              ]
+            },
+            "description": "Retrieve queries asked by the current user"
+          },
+          "response": []
+        },
+        {
+          "name": "Answer Query",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bearerToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{helpdeskbaseUrl}}/api/helpdesk/queries/:id/answer",
+              "host": [
+                "{{helpdeskbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "helpdesk",
+                "queries",
+                ":id",
+                "answer"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{queryId}}",
+                  "description": "id"
+                }
+              ]
+            },
+            "description": "Provide an answer to a pending query",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"answer\": \"You can create an asset using the asset creation API\",\n  \"answeredBy\": \"{{answeredBy}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Close Query",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bearerToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{helpdeskbaseUrl}}/api/helpdesk/queries/:id/close",
+              "host": [
+                "{{helpdeskbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "helpdesk",
+                "queries",
+                ":id",
+                "close"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{queryId}}",
+                  "description": "id"
+                }
+              ]
+            },
+            "description": "Close a query"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "7. Chatbot",
+      "item": [
+        {
+          "name": "Send Message to Chatbot",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bearerToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{helpdeskbaseUrl}}/api/helpdesk/chatbot/message",
+              "host": [
+                "{{helpdeskbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "helpdesk",
+                "chatbot",
+                "message"
+              ]
+            },
+            "description": "Send a message to the chatbot and get a response",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": \"How do I create an asset?\",\n  \"sessionId\": \"{{sessionId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Session History",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bearerToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{helpdeskbaseUrl}}/api/helpdesk/chatbot/session/:sessionId",
+              "host": [
+                "{{helpdeskbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "helpdesk",
+                "chatbot",
+                "session",
+                ":sessionId"
+              ],
+              "variable": [
+                {
+                  "key": "sessionId",
+                  "value": "{{sessionId}}",
+                  "description": "session ID"
+                }
+              ]
+            },
+            "description": "Retrieve conversation history for a chatbot session"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "8. Service Knowledge",
+      "item": [
+        {
+          "name": "Create Knowledge Entry",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bearerToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{helpdeskbaseUrl}}/api/helpdesk/knowledge",
+              "host": [
+                "{{helpdeskbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "helpdesk",
+                "knowledge"
+              ]
+            },
+            "description": "Add new knowledge about a service",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Asset Creation Process\",\n  \"content\": \"To create an asset, use the POST /api/asset/v1/assets endpoint\",\n  \"relatedService\": \"{{relatedService}}\",\n  \"category\": \"Asset Management\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Knowledge",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bearerToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{helpdeskbaseUrl}}/api/helpdesk/knowledge",
+              "host": [
+                "{{helpdeskbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "helpdesk",
+                "knowledge"
+              ]
+            },
+            "description": "Retrieve all knowledge entries"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Knowledge by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bearerToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{helpdeskbaseUrl}}/api/helpdesk/knowledge/:id",
+              "host": [
+                "{{helpdeskbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "helpdesk",
+                "knowledge",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{knowledgeId}}",
+                  "description": "id"
+                }
+              ]
+            },
+            "description": "Retrieve a specific knowledge entry by its ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Knowledge by Service",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bearerToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{helpdeskbaseUrl}}/api/helpdesk/knowledge/service/:service",
+              "host": [
+                "{{helpdeskbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "helpdesk",
+                "knowledge",
+                "service",
+                ":service"
+              ],
+              "variable": [
+                {
+                  "key": "service",
+                  "value": "{{relatedService}}",
+                  "description": "service"
+                }
+              ]
+            },
+            "description": "Retrieve knowledge entries filtered by service"
+          },
+          "response": []
+        },
+        {
+          "name": "Search Knowledge",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bearerToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{helpdeskbaseUrl}}/api/helpdesk/knowledge/service/:service/search",
+              "host": [
+                "{{helpdeskbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "helpdesk",
+                "knowledge",
+                "service",
+                ":service",
+                "search"
+              ],
+              "variable": [
+                {
+                  "key": "service",
+                  "value": "{{relatedService}}",
+                  "description": "service"
+                }
+              ],
+              "query": [
+                {
+                  "key": "keyword",
+                  "value": "{{searchKeyword}}"
+                }
+              ]
+            },
+            "description": "Search knowledge entries by service and keyword"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Knowledge",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bearerToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{helpdeskbaseUrl}}/api/helpdesk/knowledge/:id",
+              "host": [
+                "{{helpdeskbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "helpdesk",
+                "knowledge",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{knowledgeId}}",
+                  "description": "id"
+                }
+              ]
+            },
+            "description": "Update an existing knowledge entry",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Updated Title\",\n  \"content\": \"Updated content\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Knowledge",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bearerToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{helpdeskbaseUrl}}/api/helpdesk/knowledge/:id",
+              "host": [
+                "{{helpdeskbaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "helpdesk",
+                "knowledge",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{knowledgeId}}",
+                  "description": "id"
+                }
+              ]
+            },
+            "description": "Delete a knowledge entry"
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "helpdeskbaseUrl",
+      "value": "http://localhost:8084",
+      "type": "string"
+    },
+    {
+      "key": "bearerToken",
+      "value": "your-jwt-token-here",
+      "type": "string"
+    }
+  ]
+}

@@ -106,14 +106,34 @@ public class AssetScanAiAgentService {
         // Extract asset basic info
         request.setAssetNameUdv(getStringValue(data, "assetName", "assetNameUdv", "name", "title", "asset"));
         request.setSerialNumber(getStringValue(data, "serialNumber", "serial", "serialNo", "sn"));
+        request.setAssetStatus(getStringValue(data, "assetStatus", "status", "state", "assetStatus"));
+        request.setPurchaseDate(parseDate(getStringValue(data, "purchaseDate", "purchase_date", "purchased", "purchaseDate")));
         
-        // Extract IDs
-        request.setCategoryId(getLongValue(data, "categoryId", "category_id", "category"));
-        request.setSubCategoryId(getLongValue(data, "subCategoryId", "sub_category_id", "subCategory"));
-        request.setMakeId(getLongValue(data, "makeId", "make_id", "make"));
-        request.setModelId(getLongValue(data, "modelId", "model_id", "model"));
-        request.setAssetStatus(getStringValue(data, "assetStatus", "status", "state"));
-        request.setPurchaseDate(parseDate(getStringValue(data, "purchaseDate", "purchase_date", "purchased")));
+        // Extract IDs (if provided directly)
+        request.setCategoryId(getLongValue(data, "categoryId", "category_id", "categoryId"));
+        request.setSubCategoryId(getLongValue(data, "subCategoryId", "sub_category_id", "subCategoryId"));
+        request.setMakeId(getLongValue(data, "makeId", "make_id", "makeId"));
+        request.setModelId(getLongValue(data, "modelId", "model_id", "modelId"));
+        
+        // Extract Names (for AI agent to resolve to IDs later)
+        request.setCategoryName(getStringValue(data, "categoryName", "category_name", "category", "cat"));
+        request.setSubCategoryName(getStringValue(data, "subCategoryName", "sub_category_name", "subCategory", "subcategory", "subCat"));
+        request.setMakeName(getStringValue(data, "makeName", "make_name", "make", "brand", "manufacturer"));
+        request.setModelName(getStringValue(data, "modelName", "model_name", "model", "modelNo", "modelNumber"));
+        
+        // If names are provided but IDs are not, prioritize names (will be resolved later)
+        if (request.getCategoryName() != null && request.getCategoryId() == null) {
+            // Name will be resolved to ID in the service layer
+        }
+        if (request.getSubCategoryName() != null && request.getSubCategoryId() == null) {
+            // Name will be resolved to ID in the service layer
+        }
+        if (request.getMakeName() != null && request.getMakeId() == null) {
+            // Name will be resolved to ID in the service layer
+        }
+        if (request.getModelName() != null && request.getModelId() == null) {
+            // Name will be resolved to ID in the service layer
+        }
         
         // Extract warranty data
         Object warrantyObj = data.get("warranty");
@@ -189,9 +209,9 @@ public class AssetScanAiAgentService {
         }
         
         // Pattern 2: Structured text with delimiters
-        // Example: "ASSET-12345|SERIAL-ABC123|WARRANTY-2024-01-01"
-        if (scanValue.contains("|") || scanValue.contains(";")) {
-            String[] parts = scanValue.split("[|;]");
+        // Example: "ASSET-12345|SERIAL-ABC123|CATEGORY-Electronics|SUBCATEGORY-Laptops|MAKE-Dell|MODEL-XPS15|STATUS-ACTIVE|PURCHASE-2024-01-01"
+        if (scanValue.contains("|") || scanValue.contains(";") || scanValue.contains(",")) {
+            String[] parts = scanValue.split("[|;,]");
             for (String part : parts) {
                 String[] keyValue = part.split("[:=]", 2);
                 if (keyValue.length == 2) {
@@ -206,10 +226,46 @@ public class AssetScanAiAgentService {
                             break;
                         case "serial":
                         case "serialnumber":
+                        case "sn":
                             request.setSerialNumber(value);
+                            break;
+                        case "category":
+                        case "categoryname":
+                        case "cat":
+                            request.setCategoryName(value);
+                            break;
+                        case "subcategory":
+                        case "subcategoryname":
+                        case "subcat":
+                        case "sub_category":
+                            request.setSubCategoryName(value);
+                            break;
+                        case "make":
+                        case "makename":
+                        case "brand":
+                        case "manufacturer":
+                            request.setMakeName(value);
+                            break;
+                        case "model":
+                        case "modelname":
+                        case "modelno":
+                        case "modelnumber":
+                            request.setModelName(value);
+                            break;
+                        case "status":
+                        case "assetstatus":
+                        case "state":
+                            request.setAssetStatus(value);
+                            break;
+                        case "purchase":
+                        case "purchasedate":
+                        case "purchase_date":
+                        case "purchased":
+                            request.setPurchaseDate(parseDate(value));
                             break;
                         case "warrantystart":
                         case "warrantyfrom":
+                        case "warranty_start":
                             if (request.getWarranty() == null) {
                                 request.setWarranty(new AssetScanCreateRequest.WarrantyData());
                             }
@@ -218,6 +274,7 @@ public class AssetScanAiAgentService {
                         case "warrantyend":
                         case "warrantyto":
                         case "warrantyexpiry":
+                        case "warranty_end":
                             if (request.getWarranty() == null) {
                                 request.setWarranty(new AssetScanCreateRequest.WarrantyData());
                             }
@@ -226,6 +283,63 @@ public class AssetScanAiAgentService {
                     }
                 }
             }
+        }
+        
+        // Pattern 3: Try to extract from common text patterns
+        // Example: "Dell XPS 15 Laptop - Serial: ABC123 - Category: Electronics"
+        extractFromTextPatterns(scanValue, request);
+    }
+    
+    // ============================================================
+    // 📝 EXTRACT FROM TEXT PATTERNS (AI-like extraction)
+    // ============================================================
+    private void extractFromTextPatterns(String scanValue, AssetScanCreateRequest request) {
+        // Extract serial number patterns
+        // Patterns: "SN: ABC123", "Serial: XYZ789", "S/N: DEF456"
+        Pattern serialPattern = Pattern.compile("(?:serial|sn|s/n)[\\s:]*([A-Z0-9-]+)", Pattern.CASE_INSENSITIVE);
+        java.util.regex.Matcher serialMatcher = serialPattern.matcher(scanValue);
+        if (serialMatcher.find() && request.getSerialNumber() == null) {
+            request.setSerialNumber(serialMatcher.group(1).trim());
+        }
+        
+        // Extract category patterns
+        // Patterns: "Category: Electronics", "Cat: Laptops"
+        Pattern categoryPattern = Pattern.compile("(?:category|cat)[\\s:]*([A-Za-z\\s]+)", Pattern.CASE_INSENSITIVE);
+        java.util.regex.Matcher categoryMatcher = categoryPattern.matcher(scanValue);
+        if (categoryMatcher.find() && request.getCategoryName() == null) {
+            request.setCategoryName(categoryMatcher.group(1).trim());
+        }
+        
+        // Extract make/brand patterns
+        // Patterns: "Make: Dell", "Brand: Apple", "Manufacturer: HP"
+        Pattern makePattern = Pattern.compile("(?:make|brand|manufacturer)[\\s:]*([A-Za-z0-9\\s]+)", Pattern.CASE_INSENSITIVE);
+        java.util.regex.Matcher makeMatcher = makePattern.matcher(scanValue);
+        if (makeMatcher.find() && request.getMakeName() == null) {
+            request.setMakeName(makeMatcher.group(1).trim());
+        }
+        
+        // Extract model patterns
+        // Patterns: "Model: XPS 15", "Model No: iPhone 15 Pro"
+        Pattern modelPattern = Pattern.compile("(?:model|model\\s*no|model\\s*number)[\\s:]*([A-Za-z0-9\\s-]+)", Pattern.CASE_INSENSITIVE);
+        java.util.regex.Matcher modelMatcher = modelPattern.matcher(scanValue);
+        if (modelMatcher.find() && request.getModelName() == null) {
+            request.setModelName(modelMatcher.group(1).trim());
+        }
+        
+        // Extract status patterns
+        // Patterns: "Status: ACTIVE", "State: INACTIVE"
+        Pattern statusPattern = Pattern.compile("(?:status|state)[\\s:]*([A-Za-z]+)", Pattern.CASE_INSENSITIVE);
+        java.util.regex.Matcher statusMatcher = statusPattern.matcher(scanValue);
+        if (statusMatcher.find() && request.getAssetStatus() == null) {
+            request.setAssetStatus(statusMatcher.group(1).trim().toUpperCase());
+        }
+        
+        // Extract date patterns
+        // Patterns: "Purchase: 2024-01-01", "Date: 01/01/2024"
+        Pattern datePattern = Pattern.compile("(?:purchase|purchased|date)[\\s:]*([0-9]{4}[-/][0-9]{1,2}[-/][0-9]{1,2}|[0-9]{1,2}[-/][0-9]{1,2}[-/][0-9]{4})", Pattern.CASE_INSENSITIVE);
+        java.util.regex.Matcher dateMatcher = datePattern.matcher(scanValue);
+        if (dateMatcher.find() && request.getPurchaseDate() == null) {
+            request.setPurchaseDate(parseDate(dateMatcher.group(1).trim()));
         }
     }
 

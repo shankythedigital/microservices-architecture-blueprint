@@ -439,6 +439,14 @@ spring:
     url: ${RDS_HELPDESK_DB}
     username: ${RDS_HELPDESK_USER}
     password: ${RDS_HELPDESK_PASS}
+    hikari:
+      minimum-idle: 5
+      maximum-pool-size: 20
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+      leak-detection-threshold: 60000
+      pool-name: HelpdeskHikariPool
   jpa:
     hibernate:
       ddl-auto: update

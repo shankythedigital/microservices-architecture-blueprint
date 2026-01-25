@@ -103,6 +103,39 @@ public class FAQService {
     }
 
     @Transactional
+    public FAQResponse updateFavourite(Long id, Boolean isFavourite) {
+        String username = JwtUtil.getUsernameOrThrow();
+        FAQ faq = faqRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("FAQ not found with id: " + id));
+        faq.setIsFavourite(isFavourite);
+        faq.setUpdatedBy(username);
+        FAQ saved = faqRepository.save(faq);
+        return mapToResponse(saved);
+    }
+
+    @Transactional
+    public FAQResponse updateMostLike(Long id, Boolean isMostLike) {
+        String username = JwtUtil.getUsernameOrThrow();
+        FAQ faq = faqRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("FAQ not found with id: " + id));
+        faq.setIsMostLike(isMostLike);
+        faq.setUpdatedBy(username);
+        FAQ saved = faqRepository.save(faq);
+        return mapToResponse(saved);
+    }
+
+    @Transactional
+    public FAQResponse updateSequenceOrder(Long id, Integer sequenceOrder) {
+        String username = JwtUtil.getUsernameOrThrow();
+        FAQ faq = faqRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("FAQ not found with id: " + id));
+        faq.setSequenceOrder(sequenceOrder);
+        faq.setUpdatedBy(username);
+        FAQ saved = faqRepository.save(faq);
+        return mapToResponse(saved);
+    }
+
+    @Transactional
     private void incrementViewCount(FAQ faq) {
         faq.setViewCount(faq.getViewCount() + 1);
         faqRepository.save(faq);
@@ -117,6 +150,9 @@ public class FAQService {
         response.setCategory(faq.getCategory());
         response.setViewCount(faq.getViewCount());
         response.setHelpfulCount(faq.getHelpfulCount());
+        response.setSequenceOrder(faq.getSequenceOrder());
+        response.setIsFavourite(faq.getIsFavourite());
+        response.setIsMostLike(faq.getIsMostLike());
         response.setCreatedAt(faq.getCreatedAt());
         response.setUpdatedAt(faq.getUpdatedAt());
         return response;

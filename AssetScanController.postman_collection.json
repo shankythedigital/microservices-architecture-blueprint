@@ -1,0 +1,539 @@
+{
+	"info": {
+		"_postman_id": "asset-scan-controller-collection",
+		"name": "Asset Scan Controller API",
+		"description": "Complete Postman collection for AssetScanController endpoints - Universal QR Code and Barcode Scanning API with AI Agent support",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "asset-scan-controller"
+	},
+	"item": [
+		{
+			"name": "Scan Asset (POST)",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{accessToken}}",
+						"type": "text"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"scanValue\": \"12345\",\n    \"scanType\": \"AUTO\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{assetbaseUrl}}/api/asset/v1/scan",
+					"host": [
+						"{{assetbaseUrl}}"
+					],
+					"path": [
+						"api",
+						"asset",
+						"v1",
+						"scan"
+					]
+				},
+				"description": "Scan asset by QR code or barcode using POST method. Supports matching by:\n- Asset ID (numeric)\n- Asset Name UDV\n- Serial Number\n\nAll scan operations are automatically logged in the audit log."
+			},
+			"response": []
+		},
+		{
+			"name": "Scan Asset (GET)",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{bearerToken}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{assetbaseUrl}}/api/asset/v1/scan?value=12345&type=AUTO",
+					"host": [
+						"{{assetbaseUrl}}"
+					],
+					"path": [
+						"api",
+						"asset",
+						"v1",
+						"scan"
+					],
+					"query": [
+						{
+							"key": "value",
+							"value": "12345",
+							"description": "QR code or barcode value to scan"
+						},
+						{
+							"key": "type",
+							"value": "AUTO",
+							"description": "Scan type: QR, BARCODE, or AUTO (default)",
+							"disabled": true
+						}
+					]
+				},
+				"description": "Convenience GET endpoint for scanning. Pass scan value as query parameter. Supports matching by Asset ID, Asset Name UDV, or Serial Number."
+			},
+			"response": []
+		},
+		{
+			"name": "Scan and Save - JSON Format",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{accessToken}}",
+						"type": "text"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"scanValue\": \"{\\\"assetNameUdv\\\":\\\"Laptop-001\\\",\\\"serialNumber\\\":\\\"SN123456\\\",\\\"categoryName\\\":\\\"Electronics\\\",\\\"subCategoryName\\\":\\\"Laptops\\\",\\\"makeName\\\":\\\"Dell\\\",\\\"modelName\\\":\\\"XPS 15\\\",\\\"assetStatus\\\":\\\"ACTIVE\\\",\\\"purchaseDate\\\":\\\"2024-01-15\\\"}\",\n    \"scanType\": \"QR\",\n    \"userId\": {{userId}},\n    \"username\": \"{{username}}\",\n    \"projectType\": \"{{projectType}}\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{assetbaseUrl}}/api/asset/v1/scan/save",
+					"host": [
+						"{{assetbaseUrl}}"
+					],
+					"path": [
+						"api",
+						"asset",
+						"v1",
+						"scan",
+						"save"
+					]
+				},
+				"description": "Scan QR/barcode with JSON data format. The AI agent automatically extracts structured data from JSON QR codes.\n\nExample JSON in scanValue:\n```json\n{\n  \"assetNameUdv\": \"Laptop-001\",\n  \"serialNumber\": \"SN123456\",\n  \"categoryName\": \"Electronics\",\n  \"subCategoryName\": \"Laptops\",\n  \"makeName\": \"Dell\",\n  \"modelName\": \"XPS 15\",\n  \"assetStatus\": \"ACTIVE\",\n  \"purchaseDate\": \"2024-01-15\"\n}\n```\n\nThe AI agent will automatically:\n- Extract all fields from JSON\n- Resolve category/subcategory/make/model names to IDs\n- Create or update asset with all related entities"
+			},
+			"response": []
+		},
+		{
+			"name": "Scan and Save - Delimited Format",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{accessToken}}",
+						"type": "text"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"scanValue\": \"ASSET-Laptop-001|SERIAL-SN123456|CATEGORY-Electronics|SUBCATEGORY-Laptops|MAKE-Dell|MODEL-XPS15|STATUS-ACTIVE|PURCHASE-2024-01-15\",\n    \"scanType\": \"QR\",\n    \"userId\": {{userId}},\n    \"username\": \"{{username}}\",\n    \"projectType\": \"{{projectType}}\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{assetbaseUrl}}/api/asset/v1/scan/save",
+					"host": [
+						"{{assetbaseUrl}}"
+					],
+					"path": [
+						"api",
+						"asset",
+						"v1",
+						"scan",
+						"save"
+					]
+				},
+				"description": "Scan QR/barcode with delimited format (pipe-separated). The AI agent automatically extracts data from delimited text.\n\nFormat: KEY1-VALUE1|KEY2-VALUE2|KEY3-VALUE3\n\nSupported keys:\n- ASSET or ASSETNAME or NAME: Asset name\n- SERIAL or SERIALNUMBER or SN: Serial number\n- CATEGORY or CATEGORYNAME or CAT: Category name\n- SUBCATEGORY or SUBCATEGORYNAME or SUBCAT: Subcategory name\n- MAKE or MAKENAME or BRAND: Make/Brand name\n- MODEL or MODELNAME or MODELNO: Model name\n- STATUS or ASSETSTATUS or STATE: Asset status\n- PURCHASE or PURCHASEDATE or PURCHASED: Purchase date\n\nSeparators: | (pipe), ; (semicolon), or , (comma)"
+			},
+			"response": []
+		},
+		{
+			"name": "Scan and Save - Text Pattern Format",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{accessToken}}",
+						"type": "text"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"scanValue\": \"Dell XPS 15 Laptop - Serial: SN123456 - Category: Electronics - SubCategory: Laptops - Status: ACTIVE - Purchase: 2024-01-15\",\n    \"scanType\": \"QR\",\n    \"userId\": {{userId}},\n    \"username\": \"{{username}}\",\n    \"projectType\": \"{{projectType}}\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{assetbaseUrl}}/api/asset/v1/scan/save",
+					"host": [
+						"{{assetbaseUrl}}"
+					],
+					"path": [
+						"api",
+						"asset",
+						"v1",
+						"scan",
+						"save"
+					]
+				},
+				"description": "Scan QR/barcode with natural language text pattern. The AI agent uses regex patterns to extract structured data from text.\n\nSupported patterns:\n- \"Serial: ABC123\" or \"SN: ABC123\" or \"S/N: ABC123\"\n- \"Category: Electronics\" or \"Cat: Electronics\"\n- \"Make: Dell\" or \"Brand: Apple\" or \"Manufacturer: HP\"\n- \"Model: XPS 15\" or \"Model No: iPhone 15 Pro\"\n- \"Status: ACTIVE\" or \"State: INACTIVE\"\n- \"Purchase: 2024-01-01\" or \"Date: 01/01/2024\"\n\nThe AI agent intelligently extracts all available information from the text."
+			},
+			"response": []
+		},
+		{
+			"name": "Scan and Save - Simple Serial Number",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{accessToken}}",
+						"type": "text"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"scanValue\": \"SN123456\",\n    \"scanType\": \"BARCODE\",\n    \"userId\": {{userId}},\n    \"username\": \"{{username}}\",\n    \"projectType\": \"{{projectType}}\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{assetbaseUrl}}/api/asset/v1/scan/save",
+					"host": [
+						"{{assetbaseUrl}}"
+					],
+					"path": [
+						"api",
+						"asset",
+						"v1",
+						"scan",
+						"save"
+					]
+				},
+				"description": "Scan simple serial number or asset identifier. The AI agent will:\n- Detect if it's a serial number (alphanumeric pattern)\n- Create asset with serial number if not exists\n- Use serial number as asset name if name not provided"
+			},
+			"response": []
+		},
+		{
+			"name": "Scan and Save - With Warranty & AMC",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{accessToken}}",
+						"type": "text"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"scanValue\": \"{\\\"assetNameUdv\\\":\\\"Laptop-001\\\",\\\"serialNumber\\\":\\\"SN123456\\\",\\\"categoryName\\\":\\\"Electronics\\\",\\\"makeName\\\":\\\"Dell\\\",\\\"modelName\\\":\\\"XPS 15\\\",\\\"warranty\\\":{\\\"status\\\":\\\"ACTIVE\\\",\\\"provider\\\":\\\"Dell\\\",\\\"startDate\\\":\\\"2024-01-01\\\",\\\"endDate\\\":\\\"2025-01-01\\\"},\\\"amc\\\":{\\\"status\\\":\\\"ACTIVE\\\",\\\"startDate\\\":\\\"2024-01-01\\\",\\\"endDate\\\":\\\"2026-01-01\\\"}}\",\n    \"scanType\": \"QR\",\n    \"userId\": {{userId}},\n    \"username\": \"{{username}}\",\n    \"projectType\": \"{{projectType}}\",\n    \"warranty\": {\n        \"warrantyStatus\": \"{{warrantyStatus}}\",\n        \"warrantyProvider\": \"{{warrantyProvider}}\",\n        \"warrantyTerms\": \"{{warrantyTerms}}\",\n        \"startDate\": \"{{startDate}}\",\n        \"endDate\": \"{{endDate}}\"\n    },\n    \"amc\": {\n        \"amcStatus\": \"{{amcStatus}}\",\n        \"startDate\": \"{{startDate}}\",\n        \"endDate\": \"{{endDate}}\"\n    }\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{assetbaseUrl}}/api/asset/v1/scan/save",
+					"host": [
+						"{{assetbaseUrl}}"
+					],
+					"path": [
+						"api",
+						"asset",
+						"v1",
+						"scan",
+						"save"
+					]
+				},
+				"description": "Scan and save asset with warranty and AMC information. The AI agent can extract warranty and AMC data from JSON QR codes, or you can provide it explicitly in the request body.\n\nWarranty fields:\n- warrantyStatus: ACTIVE, EXPIRED, etc.\n- warrantyProvider: Provider name\n- warrantyTerms: Terms description\n- startDate: Warranty start date (YYYY-MM-DD)\n- endDate: Warranty end date (YYYY-MM-DD)\n\nAMC fields:\n- amcStatus: ACTIVE, EXPIRED, etc.\n- startDate: AMC start date (YYYY-MM-DD)\n- endDate: AMC end date (YYYY-MM-DD)"
+			},
+			"response": []
+		},
+		{
+			"name": "Scan and Save - With User Assignment",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{accessToken}}",
+						"type": "text"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"scanValue\": \"ASSET-Laptop-001|SERIAL-SN123456|CATEGORY-Electronics|MAKE-Dell|MODEL-XPS15\",\n    \"scanType\": \"QR\",\n    \"userId\": {{userId}},\n    \"username\": \"{{username}}\",\n    \"projectType\": \"{{projectType}}\",\n    \"targetUserId\": {{targetUserId}},\n    \"targetUsername\": \"{{targetUsername}}\",\n    \"componentIds\": [{{componentId}}]\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{assetbaseUrl}}/api/asset/v1/scan/save",
+					"host": [
+						"{{assetbaseUrl}}"
+					],
+					"path": [
+						"api",
+						"asset",
+						"v1",
+						"scan",
+						"save"
+					]
+				},
+				"description": "Scan and save asset with user assignment and component links.\n\nAdditional fields:\n- targetUserId: ID of user to assign asset to\n- targetUsername: Username of user to assign asset to\n- componentIds: Array of component IDs to link to asset"
+			},
+			"response": []
+		},
+		{
+			"name": "Scan and Save - Minimal Request",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{accessToken}}",
+						"type": "text"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"scanValue\": \"Laptop-001\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{assetbaseUrl}}/api/asset/v1/scan/save",
+					"host": [
+						"{{assetbaseUrl}}"
+					],
+					"path": [
+						"api",
+						"asset",
+						"v1",
+						"scan",
+						"save"
+					]
+				},
+				"description": "Minimal request - only scanValue is required. The AI agent will:\n- Extract username and userId from JWT token automatically\n- Analyze scanValue and extract available data\n- Create asset with default values if needed\n- Use scanValue as asset name if no name found"
+			},
+			"response": []
+		},
+		{
+			"name": "Scan and Save - With Explicit Fields",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{accessToken}}",
+						"type": "text"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"scanValue\": \"SN123456\",\n    \"scanType\": \"BARCODE\",\n    \"userId\": {{userId}},\n    \"username\": \"{{username}}\",\n    \"projectType\": \"{{projectType}}\",\n    \"assetNameUdv\": \"Laptop-001\",\n    \"serialNumber\": \"SN123456\",\n    \"categoryName\": \"Electronics\",\n    \"subCategoryName\": \"Laptops\",\n    \"makeName\": \"Dell\",\n    \"modelName\": \"XPS 15\",\n    \"assetStatus\": \"ACTIVE\",\n    \"purchaseDate\": \"2024-01-15\",\n    \"categoryId\": {{categoryId}},\n    \"subCategoryId\": {{subCategoryId}},\n    \"makeId\": {{makeId}},\n    \"modelId\": {{modelId}}\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{assetbaseUrl}}/api/asset/v1/scan/save",
+					"host": [
+						"{{assetbaseUrl}}"
+					],
+					"path": [
+						"api",
+						"asset",
+						"v1",
+						"scan",
+						"save"
+					]
+				},
+				"description": "Scan and save with explicit fields. You can provide:\n- Names (categoryName, subCategoryName, makeName, modelName) - will be resolved to IDs\n- IDs (categoryId, subCategoryId, makeId, modelId) - used directly\n- Explicit fields take precedence over AI-extracted fields\n\nNote: If both name and ID are provided, ID takes precedence."
+			},
+			"response": []
+		}
+	],
+	"variable": [
+		{
+			"key": "assetbaseUrl",
+			"value": "http://localhost:8083",
+			"type": "string",
+			"description": "Base URL for Asset Service API"
+		},
+		{
+			"key": "accessToken",
+			"value": "",
+			"type": "secret",
+			"description": "JWT Bearer token from auth-service login endpoint"
+		},
+		{
+			"key": "userId",
+			"value": "1",
+			"type": "string",
+			"description": "Current user ID for operations"
+		},
+		{
+			"key": "username",
+			"value": "admin",
+			"type": "string",
+			"description": "Current username for operations"
+		},
+		{
+			"key": "projectType",
+			"value": "ASSET_SERVICE",
+			"type": "string",
+			"description": "Project type for notifications and audit"
+		},
+		{
+			"key": "categoryId",
+			"value": "1",
+			"type": "string",
+			"description": "Category ID for operations"
+		},
+		{
+			"key": "subCategoryId",
+			"value": "1",
+			"type": "string",
+			"description": "SubCategory ID for operations"
+		},
+		{
+			"key": "makeId",
+			"value": "1",
+			"type": "string",
+			"description": "Make ID for operations"
+		},
+		{
+			"key": "modelId",
+			"value": "1",
+			"type": "string",
+			"description": "Model ID for operations"
+		},
+		{
+			"key": "componentId",
+			"value": "1",
+			"type": "string",
+			"description": "Component ID for operations"
+		},
+		{
+			"key": "targetUserId",
+			"value": "2",
+			"type": "string",
+			"description": "Target user ID for linking operations"
+		},
+		{
+			"key": "targetUsername",
+			"value": "user1",
+			"type": "string",
+			"description": "Target username for linking operations"
+		},
+		{
+			"key": "warrantyStatus",
+			"value": "ACTIVE",
+			"type": "string",
+			"description": "Warranty status (e.g., ACTIVE, EXPIRED, PENDING)"
+		},
+		{
+			"key": "warrantyProvider",
+			"value": "Dell Inc",
+			"type": "string",
+			"description": "Warranty provider name"
+		},
+		{
+			"key": "warrantyTerms",
+			"value": "3 years standard warranty",
+			"type": "string",
+			"description": "Warranty terms description"
+		},
+		{
+			"key": "amcStatus",
+			"value": "ACTIVE",
+			"type": "string",
+			"description": "AMC status (e.g., ACTIVE, EXPIRED, PENDING)"
+		},
+		{
+			"key": "startDate",
+			"value": "2024-01-01",
+			"type": "string",
+			"description": "Start date in format yyyy-MM-dd"
+		},
+		{
+			"key": "endDate",
+			"value": "2027-01-01",
+			"type": "string",
+			"description": "End date in format yyyy-MM-dd"
+		}
+	]
+}
+

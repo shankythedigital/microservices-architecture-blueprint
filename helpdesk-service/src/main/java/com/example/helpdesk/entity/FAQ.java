@@ -27,6 +27,15 @@ public class FAQ extends BaseEntity {
 
     private Integer helpfulCount = 0;
 
+    @Column(name = "sequence_order")
+    private Integer sequenceOrder;
+
+    @Column(name = "is_favourite")
+    private Boolean isFavourite = false;
+
+    @Column(name = "is_most_like")
+    private Boolean isMostLike = false;
+
     // Getters and Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -42,5 +51,11 @@ public class FAQ extends BaseEntity {
     public void setViewCount(Integer viewCount) { this.viewCount = viewCount; }
     public Integer getHelpfulCount() { return helpfulCount; }
     public void setHelpfulCount(Integer helpfulCount) { this.helpfulCount = helpfulCount; }
+    public Integer getSequenceOrder() { return sequenceOrder; }
+    public void setSequenceOrder(Integer sequenceOrder) { this.sequenceOrder = sequenceOrder; }
+    public Boolean getIsFavourite() { return isFavourite; }
+    public void setIsFavourite(Boolean isFavourite) { this.isFavourite = isFavourite; }
+    public Boolean getIsMostLike() { return isMostLike; }
+    public void setIsMostLike(Boolean isMostLike) { this.isMostLike = isMostLike; }
 }
 

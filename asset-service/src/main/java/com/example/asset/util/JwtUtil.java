@@ -1,5 +1,8 @@
 package com.example.asset.util;
 
+import io.jsonwebtoken.Claims;
+import com.example.common.security.JwtVerifier;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -9,12 +12,26 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 public final class JwtUtil {
+    private static JwtVerifier jwtVerifier;
+    
     private JwtUtil() {}
+    
+    // Set JwtVerifier via static method (called from configuration)
+    public static void setJwtVerifier(JwtVerifier verifier) {
+        jwtVerifier = verifier;
+    }
 
     public static Optional<String> getUserId() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth instanceof JwtAuthenticationToken jwt) {
             return Optional.ofNullable(jwt.getToken().getSubject());
+        }
+        // Handle UsernamePasswordAuthenticationToken (set by JwtAuthFilter)
+        if (auth instanceof UsernamePasswordAuthenticationToken upat) {
+            Object principal = upat.getPrincipal();
+            if (principal instanceof String) {
+                return Optional.of((String) principal);
+            }
         }
         return Optional.empty();
     }
@@ -25,6 +42,21 @@ public final class JwtUtil {
             Object u = jwt.getToken().getClaim("preferred_username");
             if (u==null) u = jwt.getToken().getClaim("username");
             return Optional.ofNullable(u!=null?u.toString():null);
+        }
+        // Handle UsernamePasswordAuthenticationToken (set by JwtAuthFilter)
+        if (auth instanceof UsernamePasswordAuthenticationToken upat) {
+            Object credentials = upat.getCredentials();
+            if (credentials instanceof String token && jwtVerifier != null) {
+                try {
+                    Claims claims = jwtVerifier.parseToken(token).getBody();
+                    Object u = claims.get("preferred_username");
+                    if (u == null) u = claims.get("username");
+                    return Optional.ofNullable(u != null ? u.toString() : null);
+                } catch (Exception e) {
+                    // If token parsing fails, return empty
+                    return Optional.empty();
+                }
+            }
         }
         return Optional.empty();
     }

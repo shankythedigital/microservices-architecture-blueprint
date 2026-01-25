@@ -197,6 +197,9 @@ public class AssetScanService {
         // Merge explicit request data with AI-extracted data
         mergeRequestData(request, enrichedRequest);
         
+        // Step 1.5: Resolve names to IDs (if names are provided but IDs are not)
+        resolveNamesToIds(enrichedRequest);
+        
         // Step 2: Find or create asset
         AssetMaster asset = findOrCreateAsset(enrichedRequest, username);
         
@@ -474,6 +477,13 @@ public class AssetScanService {
         if (StringUtils.hasText(source.getSerialNumber())) {
             target.setSerialNumber(source.getSerialNumber());
         }
+        if (StringUtils.hasText(source.getAssetStatus())) {
+            target.setAssetStatus(source.getAssetStatus());
+        }
+        if (source.getPurchaseDate() != null) {
+            target.setPurchaseDate(source.getPurchaseDate());
+        }
+        // Merge IDs (explicit IDs take precedence)
         if (source.getCategoryId() != null) {
             target.setCategoryId(source.getCategoryId());
         }
@@ -486,6 +496,19 @@ public class AssetScanService {
         if (source.getModelId() != null) {
             target.setModelId(source.getModelId());
         }
+        // Merge Names (only if IDs are not already set)
+        if (StringUtils.hasText(source.getCategoryName()) && target.getCategoryId() == null) {
+            target.setCategoryName(source.getCategoryName());
+        }
+        if (StringUtils.hasText(source.getSubCategoryName()) && target.getSubCategoryId() == null) {
+            target.setSubCategoryName(source.getSubCategoryName());
+        }
+        if (StringUtils.hasText(source.getMakeName()) && target.getMakeId() == null) {
+            target.setMakeName(source.getMakeName());
+        }
+        if (StringUtils.hasText(source.getModelName()) && target.getModelId() == null) {
+            target.setModelName(source.getModelName());
+        }
         if (source.getWarranty() != null) {
             target.setWarranty(source.getWarranty());
         }
@@ -497,6 +520,102 @@ public class AssetScanService {
         }
         if (source.getComponentIds() != null) {
             target.setComponentIds(source.getComponentIds());
+        }
+    }
+    
+    // ============================================================
+    // 🔍 RESOLVE NAMES TO IDs (Generic AI Agent Resolution)
+    // ============================================================
+    private void resolveNamesToIds(AssetScanCreateRequest request) {
+        // Resolve Category Name to ID
+        if (request.getCategoryName() != null && !request.getCategoryName().trim().isEmpty() 
+            && request.getCategoryId() == null) {
+            categoryRepo.findByCategoryNameIgnoreCase(request.getCategoryName().trim())
+                    .ifPresent(category -> {
+                        request.setCategoryId(category.getCategoryId());
+                        log.debug("✅ Resolved category name '{}' to ID: {}", 
+                                request.getCategoryName(), category.getCategoryId());
+                    });
+        }
+        
+        // Resolve SubCategory Name to ID (requires category context if available)
+        if (request.getSubCategoryName() != null && !request.getSubCategoryName().trim().isEmpty() 
+            && request.getSubCategoryId() == null) {
+            subCategoryRepo.findBySubCategoryNameIgnoreCase(request.getSubCategoryName().trim())
+                    .ifPresent(subCategory -> {
+                        // If category ID is set, verify it matches
+                        if (request.getCategoryId() == null || 
+                            (subCategory.getCategory() != null && 
+                             subCategory.getCategory().getCategoryId().equals(request.getCategoryId()))) {
+                            request.setSubCategoryId(subCategory.getSubCategoryId());
+                            // Also set category ID if not already set
+                            if (request.getCategoryId() == null && subCategory.getCategory() != null) {
+                                request.setCategoryId(subCategory.getCategory().getCategoryId());
+                            }
+                            log.debug("✅ Resolved subcategory name '{}' to ID: {}", 
+                                    request.getSubCategoryName(), subCategory.getSubCategoryId());
+                        }
+                    });
+        }
+        
+        // Resolve Make Name to ID (requires subcategory context if available)
+        if (request.getMakeName() != null && !request.getMakeName().trim().isEmpty() 
+            && request.getMakeId() == null) {
+            makeRepo.findByMakeNameIgnoreCase(request.getMakeName().trim())
+                    .ifPresent(make -> {
+                        // If subcategory ID is set, verify it matches
+                        if (request.getSubCategoryId() == null || 
+                            (make.getSubCategory() != null && 
+                             make.getSubCategory().getSubCategoryId().equals(request.getSubCategoryId()))) {
+                            request.setMakeId(make.getMakeId());
+                            // Also set subcategory and category IDs if not already set
+                            if (request.getSubCategoryId() == null && make.getSubCategory() != null) {
+                                request.setSubCategoryId(make.getSubCategory().getSubCategoryId());
+                                if (request.getCategoryId() == null && make.getSubCategory().getCategory() != null) {
+                                    request.setCategoryId(make.getSubCategory().getCategory().getCategoryId());
+                                }
+                            }
+                            log.debug("✅ Resolved make name '{}' to ID: {}", 
+                                    request.getMakeName(), make.getMakeId());
+                        }
+                    });
+        }
+        
+        // Resolve Model Name to ID (requires make context if available)
+        if (request.getModelName() != null && !request.getModelName().trim().isEmpty() 
+            && request.getModelId() == null) {
+            if (request.getMakeId() != null) {
+                // Look up model by name and make ID
+                modelRepo.findByModelNameIgnoreCaseAndMake_MakeId(request.getModelName().trim(), request.getMakeId())
+                        .ifPresent(model -> {
+                            request.setModelId(model.getModelId());
+                            log.debug("✅ Resolved model name '{}' to ID: {} (for make ID: {})", 
+                                    request.getModelName(), model.getModelId(), request.getMakeId());
+                        });
+            } else {
+                // Try to find model by name only (less precise but still works)
+                // Note: This might return wrong model if multiple makes have same model name
+                modelRepo.findAll().stream()
+                        .filter(m -> m.getModelName() != null && 
+                                m.getModelName().equalsIgnoreCase(request.getModelName().trim()))
+                        .findFirst()
+                        .ifPresent(model -> {
+                            request.setModelId(model.getModelId());
+                            // Also set make, subcategory, and category if not set
+                            if (request.getMakeId() == null && model.getMake() != null) {
+                                request.setMakeId(model.getMake().getMakeId());
+                                if (request.getSubCategoryId() == null && model.getMake().getSubCategory() != null) {
+                                    request.setSubCategoryId(model.getMake().getSubCategory().getSubCategoryId());
+                                    if (request.getCategoryId() == null && 
+                                        model.getMake().getSubCategory().getCategory() != null) {
+                                        request.setCategoryId(model.getMake().getSubCategory().getCategory().getCategoryId());
+                                    }
+                                }
+                            }
+                            log.debug("✅ Resolved model name '{}' to ID: {}", 
+                                    request.getModelName(), model.getModelId());
+                        });
+            }
         }
     }
     

@@ -274,7 +274,7 @@ import org.slf4j.Logger;
 
 @Component
 public class JwtVerifier {
-    private static final Logger log = LoggerFactory.getLogger(JwtAuthFilter.class);
+    private static final Logger log = LoggerFactory.getLogger(JwtVerifier.class);
 
     // =============================================================
     // 🔧 CONFIG

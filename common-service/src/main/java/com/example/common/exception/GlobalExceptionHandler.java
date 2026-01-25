@@ -68,6 +68,22 @@ public class GlobalExceptionHandler {
     }
 
     // ------------------------------------------------------------------------
+    // 🔐 Authentication errors (No authenticated user)
+    // ------------------------------------------------------------------------
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<ResponseWrapper<Map<String, Object>>> handleRuntimeException(RuntimeException ex) {
+        // Check if it's an authentication error
+        if (ex.getMessage() != null && ex.getMessage().contains("No authenticated user")) {
+            return ResponseEntity
+                    .status(HttpStatus.UNAUTHORIZED)
+                    .body(new ResponseWrapper<>(false, "❌ Error: No authenticated user", null));
+        }
+
+        // For other runtime exceptions, fall through to generic handler
+        return handleGenericException(ex);
+    }
+
+    // ------------------------------------------------------------------------
     // 💥 Catch-all fallback
     // ------------------------------------------------------------------------
     @ExceptionHandler(Exception.class)

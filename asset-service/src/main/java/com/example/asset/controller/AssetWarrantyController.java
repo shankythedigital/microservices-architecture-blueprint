@@ -9,6 +9,7 @@ import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -136,6 +137,15 @@ public class AssetWarrantyController {
             return ResponseEntity.ok(
                     new ResponseWrapper<>(true, "⭐ Warranty favourite updated successfully", updated)
             );
+        } catch (RuntimeException e) {
+            if (e.getMessage() != null && e.getMessage().contains("No authenticated user")) {
+                log.error("❌ Failed to update warranty favourite: Authentication required");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(new ResponseWrapper<>(false, "❌ Authentication required. Please provide a valid JWT token.", null));
+            }
+            log.error("❌ Failed to update warranty favourite: {}", e.getMessage(), e);
+            return ResponseEntity.internalServerError()
+                    .body(new ResponseWrapper<>(false, "❌ Error: " + e.getMessage(), null));
         } catch (Exception e) {
             log.error("❌ Failed to update warranty favourite: {}", e.getMessage(), e);
             return ResponseEntity.internalServerError()
@@ -157,6 +167,15 @@ public class AssetWarrantyController {
             return ResponseEntity.ok(
                     new ResponseWrapper<>(true, "⭐ Warranty most like updated successfully", updated)
             );
+        } catch (RuntimeException e) {
+            if (e.getMessage() != null && e.getMessage().contains("No authenticated user")) {
+                log.error("❌ Failed to update warranty most like: Authentication required");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(new ResponseWrapper<>(false, "❌ Authentication required. Please provide a valid JWT token.", null));
+            }
+            log.error("❌ Failed to update warranty most like: {}", e.getMessage(), e);
+            return ResponseEntity.internalServerError()
+                    .body(new ResponseWrapper<>(false, "❌ Error: " + e.getMessage(), null));
         } catch (Exception e) {
             log.error("❌ Failed to update warranty most like: {}", e.getMessage(), e);
             return ResponseEntity.internalServerError()
@@ -178,6 +197,20 @@ public class AssetWarrantyController {
             return ResponseEntity.ok(
                     new ResponseWrapper<>(true, "📊 Warranty sequence order updated successfully", updated)
             );
+        } catch (RuntimeException e) {
+            if (e.getMessage() != null && e.getMessage().contains("No authenticated user")) {
+                log.error("❌ Failed to update warranty sequence order: Authentication required");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(new ResponseWrapper<>(false, "❌ Authentication required. Please provide a valid JWT token.", null));
+            }
+            if (e.getMessage() != null && e.getMessage().contains("Access denied")) {
+                log.error("❌ Failed to update warranty sequence order: {}", e.getMessage());
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(new ResponseWrapper<>(false, "❌ " + e.getMessage(), null));
+            }
+            log.error("❌ Failed to update warranty sequence order: {}", e.getMessage(), e);
+            return ResponseEntity.internalServerError()
+                    .body(new ResponseWrapper<>(false, "❌ Error: " + e.getMessage(), null));
         } catch (Exception e) {
             log.error("❌ Failed to update warranty sequence order: {}", e.getMessage(), e);
             return ResponseEntity.internalServerError()

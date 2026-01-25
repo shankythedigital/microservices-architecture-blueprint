@@ -1,4 +1,5 @@
 package com.example.asset.config;
+import com.example.asset.util.JwtUtil;
 import com.example.common.security.JwtAuthFilter;
 import com.example.common.security.JwtVerifier;
 import org.springframework.context.annotation.Bean;
@@ -6,6 +7,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
+import jakarta.annotation.PostConstruct;
 
 /**
  * ✅ Security configuration for Notification Service.
@@ -19,6 +22,12 @@ public class SecurityConfig {
 
     public SecurityConfig(JwtVerifier jwtVerifier) {
         this.jwtVerifier = jwtVerifier;
+    }
+    
+    @PostConstruct
+    public void init() {
+        // Initialize JwtUtil with JwtVerifier to enable token parsing
+        JwtUtil.setJwtVerifier(jwtVerifier);
     }
 
     @Bean

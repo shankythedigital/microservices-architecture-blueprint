@@ -33,6 +33,11 @@ public class AssetScanCreateRequest {
     private Long subCategoryId;
     private Long makeId;
     private Long modelId;
+    // Name fields for AI agent extraction (will be resolved to IDs)
+    private String categoryName;
+    private String subCategoryName;
+    private String makeName;
+    private String modelName;
     private String assetStatus;
     private LocalDate purchaseDate;
     
@@ -153,6 +158,38 @@ public class AssetScanCreateRequest {
     
     public void setModelId(Long modelId) {
         this.modelId = modelId;
+    }
+    
+    public String getCategoryName() {
+        return categoryName;
+    }
+    
+    public void setCategoryName(String categoryName) {
+        this.categoryName = categoryName;
+    }
+    
+    public String getSubCategoryName() {
+        return subCategoryName;
+    }
+    
+    public void setSubCategoryName(String subCategoryName) {
+        this.subCategoryName = subCategoryName;
+    }
+    
+    public String getMakeName() {
+        return makeName;
+    }
+    
+    public void setMakeName(String makeName) {
+        this.makeName = makeName;
+    }
+    
+    public String getModelName() {
+        return modelName;
+    }
+    
+    public void setModelName(String modelName) {
+        this.modelName = modelName;
     }
     
     public String getAssetStatus() {

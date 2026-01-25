@@ -144,6 +144,14 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         }
 
         String token = header.substring(7).trim();
+        
+        // Check if token is empty or blank after extraction
+        if (token == null || token.isBlank()) {
+            log.warn("⚠️ [JwtAuthFilter] Empty or blank token detected for path={}", path);
+            chain.doFilter(req, res);
+            return;
+        }
+        
         log.debug("🔍 [JwtAuthFilter] Bearer token detected for path={}", path);
 
         // ---------------------------------------------------------------

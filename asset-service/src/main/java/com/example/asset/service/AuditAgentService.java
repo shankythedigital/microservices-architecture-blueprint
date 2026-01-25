@@ -6,6 +6,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
@@ -32,7 +33,7 @@ public class AuditAgentService {
     // ============================================================
     // 📝 LOG AUDIT EVENT
     // ============================================================
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public AuditLog logEvent(String username, String eventMessage, HttpServletRequest request) {
         // Edge case: Null username
         if (!StringUtils.hasText(username)) {
@@ -70,7 +71,7 @@ public class AuditAgentService {
     // ============================================================
     // 📝 LOG AUDIT EVENT (Detailed)
     // ============================================================
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public AuditLog logEvent(String username, String eventMessage, String ipAddress,
                             String userAgent, String url, String httpMethod) {
         // Edge case: Null username
@@ -103,7 +104,7 @@ public class AuditAgentService {
     // ============================================================
     // 📝 LOG ENTITY OPERATION
     // ============================================================
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public AuditLog logEntityOperation(String username, String operation, String entityType,
                                       Long entityId, String details, HttpServletRequest request) {
         String eventMessage = String.format("%s %s %s (ID: %d)", 

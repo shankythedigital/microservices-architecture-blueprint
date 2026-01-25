@@ -146,10 +146,77 @@ public class DocumentController {
     }
 
     // ============================================================
-    // 📦 BULK UPLOAD DOCUMENTS
+    // 📦 BULK UPLOAD DOCUMENTS (with file uploads)
     // ============================================================
-    @PostMapping("/bulk")
+    @PostMapping(value = "/bulk", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ResponseWrapper<BulkUploadResponse<AssetDocument>>> bulkCreate(
+            @RequestHeader HttpHeaders headers,
+            @RequestParam("files") MultipartFile[] files,
+            @RequestParam(value = "request", required = false) String requestJson,
+            @RequestPart(value = "request", required = false) BulkDocumentRequest requestPart,
+            @RequestParam("userId") Long userId,
+            @RequestParam("username") String username,
+            @RequestParam(value = "projectType", required = false, defaultValue = "ASSET_SERVICE") String projectType) {
+        try {
+            if (files == null || files.length == 0) {
+                return ResponseEntity.badRequest()
+                        .body(new ResponseWrapper<>(false, "Files cannot be empty", null));
+            }
+
+            BulkDocumentRequest request = requestPart;
+            
+            // If requestPart is null, try to parse from JSON string
+            if (request == null && requestJson != null && !requestJson.trim().isEmpty()) {
+                try {
+                    com.fasterxml.jackson.databind.ObjectMapper objectMapper = 
+                        new com.fasterxml.jackson.databind.ObjectMapper();
+                    request = objectMapper.readValue(requestJson, BulkDocumentRequest.class);
+                } catch (Exception e) {
+                    log.error("❌ Failed to parse request JSON: {}", e.getMessage());
+                    return ResponseEntity.badRequest()
+                            .body(new ResponseWrapper<>(false, "Invalid request JSON format: " + e.getMessage(), null));
+                }
+            }
+
+            if (request == null || request.getDocuments() == null || request.getDocuments().isEmpty()) {
+                return ResponseEntity.badRequest()
+                        .body(new ResponseWrapper<>(false, "Document list cannot be empty. Provide 'request' as JSON part or parameter.", null));
+            }
+
+            // Set user context
+            request.setUserId(userId);
+            request.setUsername(username);
+            request.setProjectType(projectType);
+
+            // Validate file count matches document count
+            if (files.length != request.getDocuments().size()) {
+                return ResponseEntity.badRequest()
+                        .body(new ResponseWrapper<>(false, 
+                            String.format("Number of files (%d) must match number of documents (%d)", 
+                                files.length, request.getDocuments().size()), null));
+            }
+
+            BulkUploadResponse<AssetDocument> result =
+                    documentService.bulkCreateWithFiles(headers, files, request);
+
+            return ResponseEntity.ok(new ResponseWrapper<>(
+                    true,
+                    String.format("Bulk upload completed: %d/%d successful",
+                            result.getSuccessCount(), result.getTotalCount()),
+                    result
+            ));
+        } catch (Exception e) {
+            log.error("❌ Failed to bulk create documents: {}", e.getMessage(), e);
+            return ResponseEntity.internalServerError()
+                    .body(new ResponseWrapper<>(false, "❌ " + e.getMessage(), null));
+        }
+    }
+
+    // ============================================================
+    // 📦 BULK UPLOAD DOCUMENTS (with file paths - for existing files)
+    // ============================================================
+    @PostMapping(value = "/bulk/paths", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ResponseWrapper<BulkUploadResponse<AssetDocument>>> bulkCreateWithPaths(
             @RequestHeader HttpHeaders headers,
             @RequestBody BulkDocumentRequest request) {
         try {

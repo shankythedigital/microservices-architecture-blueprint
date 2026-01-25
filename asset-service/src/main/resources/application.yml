@@ -1,18 +1,18 @@
 # Asset-service
 server:
-  port: 8083
+  port: 6003
 
 auth:
   service:
-    url: http://localhost:8081
+    url: http://13.204.61.111:6001
 
 notification:
   service:
-    url: http://localhost:8082/api/notifications
+    url: http://13.232.146.140:6002/api/notifications
 
 asset:
   service:
-    url: http://localhost:8083
+    url: http://13.233.124.217:6003
   upload:
     dir: /asset-uploads/amc-docs
 
@@ -20,9 +20,9 @@ spring:
   application:
     name: asset-service
   datasource:
-    url: jdbc:mysql://localhost:3306/assetdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
-    username: root
-    password: Snmysql@1110
+    url: jdbc:mysql://db-auth.c5csym0gc4my.ap-south-1.rds.amazonaws.com:3306/assetdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    username: admin
+    password: AuthPass123
   jpa:
     hibernate:
       ddl-auto: update
@@ -35,9 +35,9 @@ spring:
 
 services:
   auth:
-    base-url: http://localhost:8081
+    base-url: http://13.204.61.111:6001
   notification:
-    base-url: http://localhost:8082
+    base-url: http://13.232.146.140:6002
 
 security:
   jwt:
@@ -53,8 +53,8 @@ JWT_PUBLIC_KEY_PATH: classpath:keys/jwt-public.pem
 JWT_SECRET: yNnC7M3ZqgV4bD0lFJm9Q2w5tSe8XpR1pWc7UjK4oHs=
 AUTH_ENC_KEY: SLOqKf8lS2hidTDsXQe25ZSaoaGcczUX6gySXUxjE1M=
 AUTH_HMAC_KEY: krFcA7/MYPXQWbtSGMM87Dzxu2euOsRckVFeUyOC6dw=
-AUTH_SERVICE_URL: http://localhost:8081
-NOTIFICATION_SERVICE_URL: http://localhost:8082
+AUTH_SERVICE_URL: http://13.204.61.111:6001
+NOTIFICATION_SERVICE_URL: http://13.232.146.140:6002
 
 # Swagger/OpenAPI Configuration
 springdoc:
