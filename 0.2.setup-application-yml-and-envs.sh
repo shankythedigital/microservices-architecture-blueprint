@@ -33,7 +33,7 @@ if [ "$MODE" = "cloud" ]; then
 
   RDS_AUTH_DB="jdbc:mysql://${RDS_HOST}:3306/authdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
   RDS_ASSET_DB="jdbc:mysql://${RDS_HOST}:3306/assetdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
-  RDS_NOTIFY_DB="jdbc:mysql://${RDS_HOST}:3306/notificationdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
+  RDS_NOTIFY_DB="jdbc:mysql://${RDS_HOST}:3306/notificationdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8&useUnicode=true&connectionCollation=utf8mb4_unicode_ci"
   RDS_HELPDESK_DB="jdbc:mysql://${RDS_HOST}:3306/helpdeskdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
 
   RDS_AUTH_USER="admin"
@@ -73,7 +73,7 @@ elif [ "$MODE" = "cloud_local" ]; then
 
   RDS_AUTH_DB="jdbc:mysql://${RDS_HOST}:3306/authdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
   RDS_ASSET_DB="jdbc:mysql://${RDS_HOST}:3306/assetdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
-  RDS_NOTIFY_DB="jdbc:mysql://${RDS_HOST}:3306/notificationdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
+  RDS_NOTIFY_DB="jdbc:mysql://${RDS_HOST}:3306/notificationdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8&useUnicode=true&connectionCollation=utf8mb4_unicode_ci"
   RDS_HELPDESK_DB="jdbc:mysql://${RDS_HOST}:3306/helpdeskdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
 
   RDS_AUTH_USER="admin"
@@ -96,12 +96,44 @@ elif [ "$MODE" = "cloud_local" ]; then
   NOTIF_URL="http://localhost:${NOTIF_PORT}"
   HELPDESK_URL="http://localhost:${HELPDESK_PORT}"
 
+
+
+elif [ "$MODE" = "OWN_SERVER" ]; then
+  echo "🌥️ Generating Own Server DB + Local Services..."
+
+  RDS_HOST="194.163.173.37"
+
+  RDS_AUTH_DB="jdbc:mysql://${RDS_HOST}:3306/authdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
+  RDS_ASSET_DB="jdbc:mysql://${RDS_HOST}:3306/assetdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
+  RDS_NOTIFY_DB="jdbc:mysql://${RDS_HOST}:3306/notificationdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8&useUnicode=true&connectionCollation=utf8mb4_unicode_ci"
+  RDS_HELPDESK_DB="jdbc:mysql://${RDS_HOST}:3306/helpdeskdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
+
+  RDS_AUTH_USER="authdb"
+  RDS_ASSET_USER="assetdb"
+  RDS_NOTIFY_USER="notificationdb"
+  RDS_HELPDESK_USER="helpdeskdb"
+
+  RDS_AUTH_PASS="authdb"
+  RDS_ASSET_PASS="assetdb"
+  RDS_NOTIFY_PASS="notificationdb"
+  RDS_HELPDESK_PASS="helpdeskdb"
+
+  AUTH_PORT="8081"
+  NOTIF_PORT="8082"
+  ASSET_PORT="8083"
+  HELPDESK_PORT="8084"
+
+  AUTH_URL="http://localhost:${AUTH_PORT}"
+  ASSET_URL="http://localhost:${ASSET_PORT}"
+  NOTIF_URL="http://localhost:${NOTIF_PORT}"
+  HELPDESK_URL="http://localhost:${HELPDESK_PORT}"
+
 else
   echo "💻 Generating Local YAML..."
 
   RDS_AUTH_DB="jdbc:mysql://localhost:3306/authdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
   RDS_ASSET_DB="jdbc:mysql://localhost:3306/assetdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
-  RDS_NOTIFY_DB="jdbc:mysql://localhost:3306/notificationdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
+  RDS_NOTIFY_DB="jdbc:mysql://localhost:3306/notificationdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8&useUnicode=true&connectionCollation=utf8mb4_unicode_ci"
   RDS_HELPDESK_DB="jdbc:mysql://localhost:3306/helpdeskdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
 
   RDS_AUTH_USER="root"
@@ -165,6 +197,9 @@ spring:
     hibernate:
       ddl-auto: update
     show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
 
 common:
   notification:
@@ -238,6 +273,9 @@ spring:
     hibernate:
       ddl-auto: update
     show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
   servlet:
     multipart:
       enabled: true
@@ -325,6 +363,9 @@ spring:
     hibernate:
       ddl-auto: update
     show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
 
 auth:
   service:
@@ -451,6 +492,9 @@ spring:
     hibernate:
       ddl-auto: update
     show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
   servlet:
     multipart:
       enabled: true
