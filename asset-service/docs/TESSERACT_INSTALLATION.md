@@ -1,145 +1,198 @@
-# Tesseract OCR Installation Guide
+# Tesseract OCR Installation Guide for macOS 13
 
-## Overview
-Tesseract OCR is required for extracting text from images (JPG, PNG, GIF, etc.) in the Asset Management system.
+## Problem
+On macOS 13 (Ventura) with outdated Xcode/Command Line Tools, Homebrew fails to install Tesseract due to compiler issues. This guide provides multiple solutions.
 
-## Quick Installation (Automated)
+## Quick Fix (Recommended for macOS 13)
 
-### Using the Installation Script (Recommended)
+### Option 1: Install MacPorts (BEST for macOS 13) ⭐
+
+MacPorts supports older macOS versions and doesn't require Xcode updates.
+
+1. **Download MacPorts:**
+   - Visit: https://www.macports.org/install.php
+   - Download the appropriate package:
+     - **Intel Mac**: `MacPorts-2.10.0-13-Ventura.pkg`
+     - **Apple Silicon**: `MacPorts-2.10.0-13-Ventura-arm64.pkg`
+
+2. **Install MacPorts:**
+   - Double-click the downloaded `.pkg` file
+   - Follow the installation wizard
+   - Enter your admin password when prompted
+
+3. **Install Tesseract:**
+   ```bash
+   sudo port install tesseract
+   ```
+
+4. **Verify Installation:**
+   ```bash
+   tesseract --version
+   ```
+
+5. **Add to PATH (if needed):**
+   ```bash
+   echo 'export PATH="/opt/local/bin:/opt/local/sbin:$PATH"' >> ~/.zshrc
+   source ~/.zshrc
+   ```
+
+### Option 2: Update Command Line Tools, then Homebrew
+
+1. **Remove old Command Line Tools:**
+   ```bash
+   sudo rm -rf /Library/Developer/CommandLineTools
+   ```
+
+2. **Install new Command Line Tools:**
+   ```bash
+   sudo xcode-select --install
+   ```
+   - A dialog will appear - click "Install"
+   - Wait for installation to complete (10-15 minutes)
+
+3. **Verify Xcode path:**
+   ```bash
+   xcode-select -p
+   ```
+   Should show: `/Library/Developer/CommandLineTools` or `/Applications/Xcode.app/Contents/Developer`
+
+4. **Install Tesseract via Homebrew:**
+   ```bash
+   brew install tesseract
+   ```
+
+5. **Verify Installation:**
+   ```bash
+   tesseract --version
+   ```
+
+### Option 3: Install Miniconda, then Tesseract
+
+1. **Download Miniconda:**
+   - Visit: https://docs.conda.io/en/latest/miniconda.html
+   - Download the macOS installer for your architecture
+
+2. **Install Miniconda:**
+   ```bash
+   bash Miniconda3-latest-MacOSX-x86_64.sh  # Intel
+   # OR
+   bash Miniconda3-latest-MacOSX-arm64.sh   # Apple Silicon
+   ```
+
+3. **Install Tesseract:**
+   ```bash
+   conda install -c conda-forge tesseract -y
+   ```
+
+4. **Verify Installation:**
+   ```bash
+   tesseract --version
+   ```
+
+## Automated Installation Scripts
+
+### Script 1: Main Installation Script
 ```bash
-# Navigate to the asset-service directory
-cd asset-service
-
-# Run the installation script
-./docs/install-tesseract.sh
+cd asset-service/docs
+./install-tesseract.sh
 ```
 
-The script will:
-- Detect your operating system
-- Install Tesseract using the appropriate package manager
-- Verify the installation
-- Provide next steps
+This script tries multiple installation methods automatically.
 
-## Manual Installation Instructions
-
-### macOS
-
-#### Using Homebrew (Recommended)
+### Script 2: Interactive Fix Script
 ```bash
-# Install Tesseract
-brew install tesseract
-
-# Verify installation
-tesseract --version
-
-# Check data path (usually /opt/homebrew/share/tessdata for Apple Silicon or /usr/local/share/tessdata for Intel)
-ls /opt/homebrew/share/tessdata
+cd asset-service/docs
+./fix-and-install-tesseract.sh
 ```
 
-#### Using MacPorts
-```bash
-sudo port install tesseract
-```
-
-### Linux (Ubuntu/Debian)
-```bash
-sudo apt-get update
-sudo apt-get install tesseract-ocr
-```
-
-### Linux (CentOS/RHEL/Fedora)
-```bash
-# For CentOS/RHEL
-sudo yum install tesseract
-
-# For Fedora
-sudo dnf install tesseract
-```
-
-### Windows
-1. Download the installer from: https://github.com/UB-Mannheim/tesseract/wiki
-2. Run the installer
-3. Default installation path: `C:\Program Files\Tesseract-OCR\tessdata`
-4. Add Tesseract to your system PATH
-
-## Environment Variables (Optional)
-
-If Tesseract is installed in a non-standard location, set the `TESSDATA_PREFIX` environment variable:
-
-```bash
-# macOS/Linux
-export TESSDATA_PREFIX=/path/to/tessdata
-
-# Windows
-set TESSDATA_PREFIX=C:\path\to\tessdata
-```
+This script guides you through the installation process step-by-step.
 
 ## Verification
 
-After installation, restart the application and check the logs. You should see:
-```
-✅ Tesseract OCR initialized successfully. Data path: /opt/homebrew/share/tessdata
-```
+After installation, verify Tesseract is working:
 
-If you see an error, ensure:
-1. Tesseract is installed correctly
-2. The tessdata directory exists and contains language files (e.g., `eng.traineddata`)
-3. The application has read permissions to the tessdata directory
+```bash
+# Check version
+tesseract --version
+
+# Test OCR on an image (if you have one)
+tesseract test-image.png stdout
+```
 
 ## Troubleshooting
 
-### Error: "Unable to load library 'tesseract'"
-- **Solution**: Install Tesseract using the instructions above
-- **macOS**: `brew install tesseract`
-- **Linux**: `sudo apt-get install tesseract-ocr`
-- **Windows**: Download and install from the official website
+### Issue: "tesseract: command not found"
 
-### Error: "Tesseract data path not found"
-- **Solution**: Set the `TESSDATA_PREFIX` environment variable to point to your tessdata directory
-- Or ensure Tesseract is installed in the default location
+**Solution:**
+1. Check if tesseract is in your PATH:
+   ```bash
+   which tesseract
+   ```
 
-### Error: "No language data found"
-- **Solution**: Ensure the tessdata directory contains language files (e.g., `eng.traineddata`)
-- Download additional language data if needed from: https://github.com/tesseract-ocr/tessdata
+2. If using MacPorts, add to PATH:
+   ```bash
+   echo 'export PATH="/opt/local/bin:/opt/local/sbin:$PATH"' >> ~/.zshrc
+   source ~/.zshrc
+   ```
 
-## Quick Fix for Current Error
+3. If using Conda, activate the environment:
+   ```bash
+   conda activate base
+   ```
 
-If you're seeing the error: "Tesseract OCR is not installed on the server", follow these steps:
+### Issue: "Tesseract data path not found"
 
-### macOS (Quick Fix)
+**Solution:**
+The Java application looks for tessdata in these locations:
+- `/opt/homebrew/share/tessdata` (Homebrew - Apple Silicon)
+- `/usr/local/share/tessdata` (Homebrew - Intel)
+- `/opt/local/share/tessdata` (MacPorts)
+
+Set the environment variable if needed:
 ```bash
-# 1. Install Tesseract
-brew install tesseract
-
-# 2. Verify installation
-tesseract --version
-
-# 3. Restart your Spring Boot application
+export TESSDATA_PREFIX="/opt/local/share/tessdata"  # MacPorts
+# OR
+export TESSDATA_PREFIX="/opt/homebrew/share/tessdata"  # Homebrew
 ```
 
-### Linux (Quick Fix)
+### Issue: Homebrew still fails after updating Command Line Tools
+
+**Solution:**
+1. Try updating Homebrew:
+   ```bash
+   brew update
+   brew upgrade
+   ```
+
+2. Clean Homebrew cache:
+   ```bash
+   brew cleanup
+   ```
+
+3. If still failing, use MacPorts (Option 1) instead.
+
+## For Spring Boot Application
+
+After installing Tesseract, restart your Spring Boot application:
+
 ```bash
-# 1. Install Tesseract
-sudo apt-get update
-sudo apt-get install tesseract-ocr
-
-# 2. Verify installation
-tesseract --version
-
-# 3. Restart your Spring Boot application
+cd asset-service
+mvn spring-boot:run
 ```
 
-### Windows (Quick Fix)
-1. Download installer from: https://github.com/UB-Mannheim/tesseract/wiki
-2. Run the installer (default path: `C:\Program Files\Tesseract-OCR`)
-3. Add to PATH: Add `C:\Program Files\Tesseract-OCR` to your system PATH
-4. Verify: Open Command Prompt and run `tesseract --version`
-5. Restart your Spring Boot application
+The `OcrService` will automatically detect Tesseract if it's in the system PATH.
 
-## Notes
+## Additional Resources
 
-- The application will work for PDF, Word, Excel, and PowerPoint files even without Tesseract
-- Image OCR (JPG, PNG, GIF) requires Tesseract to be installed
-- The application will provide clear error messages if Tesseract is not available
-- After installation, **always restart the application** for changes to take effect
+- **Tesseract Official**: https://github.com/tesseract-ocr/tesseract
+- **MacPorts**: https://www.macports.org
+- **Homebrew**: https://brew.sh
+- **Conda**: https://docs.conda.io
 
+## Support
+
+If you encounter issues:
+1. Check the installation logs
+2. Verify Tesseract is in your PATH
+3. Check the Spring Boot application logs for OCR service initialization messages
+4. Ensure the tessdata directory exists and contains language files
