@@ -1,11 +1,13 @@
 package com.example.notification.entity;
 
-// import com.example.notification.crypto.JpaAttributeEncryptor;
-
+import com.example.common.converter.JpaAttributeEncryptor;
 import jakarta.persistence.*;
 import com.example.common.jpa.BaseEntity;
 import java.time.LocalDateTime;
 
+/**
+ * 🔐 DPDPA Compliance: All PII data (username) is encrypted at rest.
+ */
 @Entity
 @Table(name = "inapp_log")
 public class InappLog extends BaseEntity {
@@ -14,7 +16,9 @@ public class InappLog extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // @Convert(converter = com.example.notification.crypto.JpaAttributeEncryptor.class)
+    // 🔐 DPDPA Compliance: Encrypted PII data
+    @Convert(converter = JpaAttributeEncryptor.class)
+    @Column(name = "username_enc", columnDefinition = "TEXT")
     private String username;
 
     private String title;

@@ -25,9 +25,9 @@ spring:
   application:
     name: helpdesk-service
   datasource:
-    url: jdbc:mysql://194.163.173.37:3306/helpdeskdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
-    username: helpdeskdb
-    password: helpdeskdb
+    url: jdbc:mysql://localhost:3306/helpdeskdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    username: root
+    password: Snmysql@1110
     hikari:
       minimum-idle: 5
       maximum-pool-size: 20

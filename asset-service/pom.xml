@@ -162,6 +162,51 @@
         <version>2.15.1</version>
     </dependency>
 
+    <!-- 🟢 Tesseract OCR for image text extraction -->
+    <dependency>
+        <groupId>net.sourceforge.tess4j</groupId>
+        <artifactId>tess4j</artifactId>
+        <version>5.8.0</version>
+    </dependency>
+
+    <!-- 🟢 Image processing libraries -->
+    <dependency>
+        <groupId>org.imgscalr</groupId>
+        <artifactId>imgscalr-lib</artifactId>
+        <version>4.2</version>
+    </dependency>
+
+    <!-- 🟢 Apache PDFBox for PDF text extraction -->
+    <dependency>
+        <groupId>org.apache.pdfbox</groupId>
+        <artifactId>pdfbox</artifactId>
+        <version>3.0.1</version>
+    </dependency>
+    <dependency>
+        <groupId>org.apache.pdfbox</groupId>
+        <artifactId>pdfbox-tools</artifactId>
+        <version>3.0.1</version>
+    </dependency>
+
+    <!-- 🟢 Apache POI for PowerPoint (already have for Excel) -->
+    <dependency>
+        <groupId>org.apache.poi</groupId>
+        <artifactId>poi-scratchpad</artifactId>
+        <version>5.2.5</version>
+    </dependency>
+
+    <!-- 🟢 Apache Tika for document text extraction (fallback) -->
+    <dependency>
+        <groupId>org.apache.tika</groupId>
+        <artifactId>tika-core</artifactId>
+        <version>2.9.1</version>
+    </dependency>
+    <dependency>
+        <groupId>org.apache.tika</groupId>
+        <artifactId>tika-parsers-standard-package</artifactId>
+        <version>2.9.1</version>
+    </dependency>
+
   </dependencies>
 
   <!-- 🧩 Spring Cloud dependency alignment -->

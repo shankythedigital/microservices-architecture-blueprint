@@ -1,5 +1,6 @@
 package com.example.asset.entity;
 
+import com.example.common.converter.JpaAttributeEncryptor;
 import com.example.common.jpa.BaseEntity;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
@@ -11,6 +12,7 @@ import java.time.LocalDate;
  * Represents warranty details for an asset.
  * Linked with AssetMaster and optionally an AssetDocument.
  * Handles null-safe document_id persistence.
+ * 🔐 DPDPA Compliance: All PII data (username) is encrypted at rest.
  */
 @Entity
 @Table(name = "asset_warranty")
@@ -40,7 +42,9 @@ public class AssetWarranty extends BaseEntity implements Serializable {
     @Column(name = "user_id")
     private Long userId;
 
-    @Column(name = "username")
+    // 🔐 DPDPA Compliance: Encrypted PII data
+    @Convert(converter = JpaAttributeEncryptor.class)
+    @Column(name = "username_enc", columnDefinition = "TEXT")
     private String username;
 
     @Column(name = "component_id")

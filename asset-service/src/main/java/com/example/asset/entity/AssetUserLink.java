@@ -1,5 +1,6 @@
 package com.example.asset.entity;
 
+import com.example.common.converter.JpaAttributeEncryptor;
 import com.example.common.jpa.BaseEntity;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
@@ -9,6 +10,7 @@ import java.time.LocalDateTime;
  * AssetUserLink — assignment record that links asset or component to a user.
  * - Uses asset_id / component_id columns (nullable for component-only or asset-only).
  * - Keeps audit via BaseEntity (createdBy, createdAt, updatedBy, updatedAt, active).
+ * - 🔐 DPDPA Compliance: All PII data (username, email, mobile) is encrypted at rest.
  */
 @Entity
 @Table(name = "asset_user_link")
@@ -28,13 +30,19 @@ public class AssetUserLink extends BaseEntity {
     @Column(name = "user_id", nullable = false)
     private Long userId;
 
-    @Column(name = "username", nullable = false, length = 255)
+    // 🔐 DPDPA Compliance: Encrypted PII data
+    @Convert(converter = JpaAttributeEncryptor.class)
+    @Column(name = "username_enc", nullable = false, columnDefinition = "TEXT")
     private String username;
 
-    @Column(name = "email", length = 150)
+    // 🔐 DPDPA Compliance: Encrypted PII data
+    @Convert(converter = JpaAttributeEncryptor.class)
+    @Column(name = "email_enc", columnDefinition = "TEXT")
     private String email;
 
-    @Column(name = "mobile", length = 15)
+    // 🔐 DPDPA Compliance: Encrypted PII data
+    @Convert(converter = JpaAttributeEncryptor.class)
+    @Column(name = "mobile_enc", columnDefinition = "TEXT")
     private String mobile;
 
     @Column(name = "assigned_date")

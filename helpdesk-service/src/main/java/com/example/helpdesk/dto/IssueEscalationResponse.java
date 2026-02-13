@@ -1,8 +1,12 @@
 package com.example.helpdesk.dto;
 
+import com.example.common.util.PiiMaskingUtil;
 import com.example.helpdesk.enums.SupportLevel;
 import java.time.LocalDateTime;
 
+/**
+ * 🔐 DPDPA Compliance: All PII fields are automatically masked when serialized to JSON.
+ */
 public class IssueEscalationResponse {
     private Long id;
     private Long issueId;
@@ -10,7 +14,10 @@ public class IssueEscalationResponse {
     private SupportLevel toLevel;
     private LocalDateTime escalatedAt;
     private String escalationReason;
-    private String escalatedBy;
+    private String escalatedBy;  // Masked in getter
+    
+    // Internal storage for unmasked values
+    private transient String escalatedByUnmasked;
 
     // Getters and Setters
     public Long getId() { return id; }
@@ -25,7 +32,20 @@ public class IssueEscalationResponse {
     public void setEscalatedAt(LocalDateTime escalatedAt) { this.escalatedAt = escalatedAt; }
     public String getEscalationReason() { return escalationReason; }
     public void setEscalationReason(String escalationReason) { this.escalationReason = escalationReason; }
-    public String getEscalatedBy() { return escalatedBy; }
-    public void setEscalatedBy(String escalatedBy) { this.escalatedBy = escalatedBy; }
+    
+    /**
+     * 🔐 DPDPA Compliance: Returns masked escalatedBy
+     */
+    public String getEscalatedBy() {
+        if (escalatedByUnmasked != null) {
+            return PiiMaskingUtil.maskUserId(escalatedByUnmasked);
+        }
+        return escalatedBy != null ? PiiMaskingUtil.maskUserId(escalatedBy) : null;
+    }
+    
+    public void setEscalatedBy(String escalatedBy) {
+        this.escalatedByUnmasked = escalatedBy;
+        this.escalatedBy = escalatedBy;
+    }
 }
 

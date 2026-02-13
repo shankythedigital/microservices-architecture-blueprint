@@ -1,5 +1,6 @@
 package com.example.authservice.dto;
 
+import com.example.common.util.PiiMaskingUtil;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import java.time.LocalDateTime;
 import java.util.Set;
@@ -7,6 +8,7 @@ import java.util.Set;
 /**
  * ✅ UserDto
  * Safe data transfer object for exposing user information.
+ * 🔐 DPDPA Compliance: All PII fields are automatically masked when serialized to JSON.
  * Used for:
  *  - GET /users/me
  *  - GET /users/{id}
@@ -16,13 +18,18 @@ import java.util.Set;
 public class UserDto {
 
     private Long userId;             // System-generated user ID
-    private String username;         // Decrypted username
-    private String email;            // Decrypted email
-    private String mobile;           // Decrypted mobile
+    private String username;         // Decrypted username (masked in getter)
+    private String email;            // Decrypted email (masked in getter)
+    private String mobile;           // Decrypted mobile (masked in getter)
     private String projectType;      // ECOM / ASSET / etc.
     private Boolean enabled;         // Account active?
     private Set<String> roles;       // ROLE_USER / ROLE_ADMIN
     private LocalDateTime lastLoginDate; // Last login timestamp
+    
+    // Internal storage for unmasked values (used internally, not serialized)
+    private transient String usernameUnmasked;
+    private transient String emailUnmasked;
+    private transient String mobileUnmasked;
 
     public UserDto() {}
 
@@ -44,14 +51,62 @@ public class UserDto {
     public Long getUserId() { return userId; }
     public void setUserId(Long userId) { this.userId = userId; }
 
-    public String getUsername() { return username; }
-    public void setUsername(String username) { this.username = username; }
+    /**
+     * 🔐 DPDPA Compliance: Returns masked username for frontend display
+     * Example: "john_doe" → "j***_doe"
+     */
+    public String getUsername() {
+        if (usernameUnmasked != null) {
+            return PiiMaskingUtil.maskUsername(usernameUnmasked);
+        }
+        return username != null ? PiiMaskingUtil.maskUsername(username) : null;
+    }
+    
+    /**
+     * Sets username (stores unmasked value internally)
+     */
+    public void setUsername(String username) {
+        this.usernameUnmasked = username;
+        this.username = username;
+    }
 
-    public String getEmail() { return email; }
-    public void setEmail(String email) { this.email = email; }
+    /**
+     * 🔐 DPDPA Compliance: Returns masked email for frontend display
+     * Example: "john.doe@example.com" → "j***@e***.com"
+     */
+    public String getEmail() {
+        if (emailUnmasked != null) {
+            return PiiMaskingUtil.maskEmail(emailUnmasked);
+        }
+        return email != null ? PiiMaskingUtil.maskEmail(email) : null;
+    }
+    
+    /**
+     * Sets email (stores unmasked value internally)
+     */
+    public void setEmail(String email) {
+        this.emailUnmasked = email;
+        this.email = email;
+    }
 
-    public String getMobile() { return mobile; }
-    public void setMobile(String mobile) { this.mobile = mobile; }
+    /**
+     * 🔐 DPDPA Compliance: Returns masked mobile for frontend display
+     * Example: "9876543210" → "98765*****"
+     */
+    public String getMobile() {
+        if (mobileUnmasked != null) {
+            return PiiMaskingUtil.maskMobile(mobileUnmasked);
+        }
+        return mobile != null ? PiiMaskingUtil.maskMobile(mobile) : null;
+    }
+    
+    /**
+     * Sets mobile (stores unmasked value internally)
+     */
+    public void setMobile(String mobile) {
+        this.mobileUnmasked = mobile;
+        this.mobile = mobile;
+    }
 
     public String getProjectType() { return projectType; }
     public void setProjectType(String projectType) { this.projectType = projectType; }

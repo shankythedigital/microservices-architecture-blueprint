@@ -1,5 +1,6 @@
 package com.example.helpdesk.entity;
 
+import com.example.common.converter.JpaAttributeEncryptor;
 import com.example.common.jpa.BaseEntity;
 import com.example.helpdesk.enums.QueryStatus;
 import com.example.helpdesk.enums.RelatedService;
@@ -7,6 +8,9 @@ import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
 
+/**
+ * 🔐 DPDPA Compliance: All PII data (askedBy, answeredBy) is encrypted at rest.
+ */
 @Entity
 @Table(name = "queries")
 public class Query extends BaseEntity {
@@ -28,9 +32,14 @@ public class Query extends BaseEntity {
     @Column(nullable = false)
     private RelatedService relatedService;
 
-    @Column(nullable = false)
+    // 🔐 DPDPA Compliance: Encrypted PII data (may contain email addresses)
+    @Convert(converter = JpaAttributeEncryptor.class)
+    @Column(name = "asked_by_enc", nullable = false, columnDefinition = "TEXT")
     private String askedBy; // User ID or email
 
+    // 🔐 DPDPA Compliance: Encrypted PII data (may contain email addresses)
+    @Convert(converter = JpaAttributeEncryptor.class)
+    @Column(name = "answered_by_enc", columnDefinition = "TEXT")
     private String answeredBy; // Support agent ID or email
 
     @Column(name = "answered_at")

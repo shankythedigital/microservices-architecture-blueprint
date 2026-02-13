@@ -1,5 +1,6 @@
 package com.example.helpdesk.entity;
 
+import com.example.common.converter.JpaAttributeEncryptor;
 import com.example.common.jpa.BaseEntity;
 import com.example.helpdesk.enums.IssuePriority;
 import com.example.helpdesk.enums.IssueStatus;
@@ -11,6 +12,9 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * 🔐 DPDPA Compliance: All PII data (reportedBy, assignedTo) is encrypted at rest.
+ */
 @Entity
 @Table(name = "issues")
 public class Issue extends BaseEntity {
@@ -36,9 +40,14 @@ public class Issue extends BaseEntity {
     @Column(nullable = false)
     private RelatedService relatedService;
 
-    @Column(nullable = false)
+    // 🔐 DPDPA Compliance: Encrypted PII data (may contain email addresses)
+    @Convert(converter = JpaAttributeEncryptor.class)
+    @Column(name = "reported_by_enc", nullable = false, columnDefinition = "TEXT")
     private String reportedBy; // User ID or email
 
+    // 🔐 DPDPA Compliance: Encrypted PII data (may contain email addresses)
+    @Convert(converter = JpaAttributeEncryptor.class)
+    @Column(name = "assigned_to_enc", columnDefinition = "TEXT")
     private String assignedTo; // Support agent ID or email
 
     @Enumerated(EnumType.STRING)

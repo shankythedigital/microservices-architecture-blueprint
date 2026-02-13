@@ -1,9 +1,12 @@
 package com.example.notification.entity;
 
-
+import com.example.common.converter.JpaAttributeEncryptor;
 import jakarta.persistence.*;
 import com.example.common.jpa.BaseEntity;
 
+/**
+ * 🔐 DPDPA Compliance: All PII data (username, userId) is encrypted at rest.
+ */
 @Entity
 @Table(name = "audit_log")
 public class AuditLog extends BaseEntity {
@@ -12,6 +15,9 @@ public class AuditLog extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    // 🔐 DPDPA Compliance: Encrypted PII data
+    @Convert(converter = JpaAttributeEncryptor.class)
+    @Column(name = "username_enc", columnDefinition = "TEXT")
     private String username;
 
     @Column(name = "entity_name")
@@ -38,7 +44,9 @@ public class AuditLog extends BaseEntity {
 
     private String httpMethod;
 
-    @Column(name = "user_id", nullable = false)
+    // 🔐 DPDPA Compliance: Encrypted PII data (may contain email addresses)
+    @Convert(converter = JpaAttributeEncryptor.class)
+    @Column(name = "user_id_enc", nullable = false, columnDefinition = "TEXT")
     private String userId;
 
     // getters & setters...

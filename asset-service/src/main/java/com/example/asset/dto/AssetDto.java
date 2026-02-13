@@ -1,12 +1,14 @@
 
 package com.example.asset.dto;
 
+import com.example.common.util.PiiMaskingUtil;
 import java.util.Set;
 
 /**
  * ✅ AssetDto
  * Data Transfer Object for Asset information including metadata,
  * purchase details, and assigned user context.
+ * 🔐 DPDPA Compliance: All PII fields are automatically masked when serialized to JSON.
  */
 public class AssetDto {
 
@@ -27,8 +29,11 @@ public class AssetDto {
     private String salesChannelName;
     private Set<Long> componentIds;
     private String userId;      // to assign
-    private String username;    // to assign
+    private String username;    // to assign (masked in getter)
     private String projecttype; // to assign
+    
+    // Internal storage for unmasked values
+    private transient String usernameUnmasked;
 
     // ----- Getters -----
     public String getAssetNameUdv() {
@@ -99,8 +104,14 @@ public class AssetDto {
         return userId;
     }
 
+    /**
+     * 🔐 DPDPA Compliance: Returns masked username for frontend display
+     */
     public String getUsername() {
-        return username;
+        if (usernameUnmasked != null) {
+            return PiiMaskingUtil.maskUsername(usernameUnmasked);
+        }
+        return username != null ? PiiMaskingUtil.maskUsername(username) : null;
     }
 
     public String getProjecttype() {
@@ -177,6 +188,7 @@ public class AssetDto {
     }
 
     public void setUsername(String username) {
+        this.usernameUnmasked = username;
         this.username = username;
     }
 

@@ -1,11 +1,15 @@
 package com.example.helpdesk.entity;
 
+import com.example.common.converter.JpaAttributeEncryptor;
 import com.example.common.jpa.BaseEntity;
 import jakarta.persistence.*;
 
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * 🔐 DPDPA Compliance: All PII data (userId) is encrypted at rest.
+ */
 @Entity
 @Table(name = "chatbot_sessions")
 public class ChatbotSession extends BaseEntity {
@@ -13,7 +17,9 @@ public class ChatbotSession extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    // 🔐 DPDPA Compliance: Encrypted PII data (may contain email addresses)
+    @Convert(converter = JpaAttributeEncryptor.class)
+    @Column(name = "user_id_enc", nullable = false, columnDefinition = "TEXT")
     private String userId; // User ID or email
 
     @Column(name = "session_id", unique = true, nullable = false)

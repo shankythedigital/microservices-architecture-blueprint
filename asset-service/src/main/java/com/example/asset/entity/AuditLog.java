@@ -1,9 +1,13 @@
 package com.example.asset.entity;
 
+import com.example.common.converter.JpaAttributeEncryptor;
 import com.example.common.jpa.BaseEntity;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
+/**
+ * 🔐 DPDPA Compliance: All PII data (username) is encrypted at rest.
+ */
 @Entity
 @Table(name = "audit_log")
 public class AuditLog extends BaseEntity {
@@ -21,6 +25,9 @@ public class AuditLog extends BaseEntity {
 
     private String httpMethod;
 
+    // 🔐 DPDPA Compliance: Encrypted PII data
+    @Convert(converter = JpaAttributeEncryptor.class)
+    @Column(name = "username_enc", columnDefinition = "TEXT")
     private String username;
 
     @Column(name = "event_message", length = 3000)

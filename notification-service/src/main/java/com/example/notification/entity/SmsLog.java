@@ -1,10 +1,12 @@
 package com.example.notification.entity;
 
-// import com.example.notification.crypto.JpaAttributeEncryptor;
-
+import com.example.common.converter.JpaAttributeEncryptor;
 import jakarta.persistence.*;
 import com.example.common.jpa.BaseEntity;
 
+/**
+ * 🔐 DPDPA Compliance: All PII data (username, mobile) is encrypted at rest.
+ */
 @Entity
 @Table(name = "sms_log")
 public class SmsLog extends BaseEntity {
@@ -13,11 +15,14 @@ public class SmsLog extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // @Convert(converter = JpaAttributeEncryptor.class)
+    // 🔐 DPDPA Compliance: Encrypted PII data
+    @Convert(converter = JpaAttributeEncryptor.class)
+    @Column(name = "username_enc", columnDefinition = "TEXT")
     private String username;
 
-    // @Convert(converter = JpaAttributeEncryptor.class)
-    @Column(name = "mobile_enc", length = 2048)
+    // 🔐 DPDPA Compliance: Encrypted PII data
+    @Convert(converter = JpaAttributeEncryptor.class)
+    @Column(name = "mobile_enc", columnDefinition = "TEXT")
     private String mobile;
 
     private String mobileFingerprint;

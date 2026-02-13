@@ -1,5 +1,6 @@
 package com.example.helpdesk.entity;
 
+import com.example.common.converter.JpaAttributeEncryptor;
 import com.example.common.jpa.BaseEntity;
 import com.example.helpdesk.enums.SupportLevel;
 import jakarta.persistence.*;
@@ -8,6 +9,7 @@ import java.time.LocalDateTime;
 
 /**
  * Tracks escalation history for issues
+ * 🔐 DPDPA Compliance: All PII data (escalatedBy) is encrypted at rest.
  */
 @Entity
 @Table(name = "issue_escalations")
@@ -34,7 +36,9 @@ public class IssueEscalation extends BaseEntity {
     @Column(name = "escalation_reason", columnDefinition = "TEXT")
     private String escalationReason; // Auto-escalation, manual, SLA breach
 
-    @Column(name = "escalated_by")
+    // 🔐 DPDPA Compliance: Encrypted PII data (may contain email addresses)
+    @Convert(converter = JpaAttributeEncryptor.class)
+    @Column(name = "escalated_by_enc", columnDefinition = "TEXT")
     private String escalatedBy; // User who escalated or "SYSTEM" for auto-escalation
 
     @PrePersist

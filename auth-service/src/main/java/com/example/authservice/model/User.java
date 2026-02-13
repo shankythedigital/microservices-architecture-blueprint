@@ -1,6 +1,7 @@
 
 package com.example.authservice.model;
 
+import com.example.common.converter.JpaAttributeEncryptor;
 import jakarta.persistence.*;
 import com.example.common.jpa.BaseEntity;
 import java.util.Set;
@@ -26,13 +27,19 @@ public class User extends BaseEntity {
     @Embedded
     private UserId compositeId;
 
-    @Column(name = "username_enc", length = 2048)
+    // 🔐 DPDPA Compliance: Encrypted PII data
+    @Convert(converter = JpaAttributeEncryptor.class)
+    @Column(name = "username_enc", length = 2048, columnDefinition = "TEXT")
     private String usernameEnc;
 
-    @Column(name = "email_enc", length = 2048)
+    // 🔐 DPDPA Compliance: Encrypted PII data
+    @Convert(converter = JpaAttributeEncryptor.class)
+    @Column(name = "email_enc", length = 2048, columnDefinition = "TEXT")
     private String emailEnc;
 
-    @Column(name = "mobile_enc", length = 2048)
+    // 🔐 DPDPA Compliance: Encrypted PII data
+    @Convert(converter = JpaAttributeEncryptor.class)
+    @Column(name = "mobile_enc", length = 2048, columnDefinition = "TEXT")
     private String mobileEnc;
 
     private String password;

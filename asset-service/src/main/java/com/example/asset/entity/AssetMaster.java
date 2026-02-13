@@ -34,6 +34,15 @@ public class AssetMaster extends BaseEntity {
     @Column(name = "purchase_date")
     private LocalDate purchaseDate;
 
+    @Column(name = "purchase_price", precision = 15, scale = 2)
+    private java.math.BigDecimal purchasePrice;
+
+    @Column(name = "invoice_number", length = 100)
+    private String invoiceNumber;
+
+    @Column(name = "bill_number", length = 100)
+    private String billNumber;
+
     // CATEGORY / SUBCATEGORY
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id")
@@ -85,6 +94,11 @@ public class AssetMaster extends BaseEntity {
     @JsonIgnore
     private Set<AssetDocument> documents = new HashSet<>();
 
+    // PURCHASE INFO (one-to-many: an asset can have multiple purchase records)
+    @OneToMany(mappedBy = "asset", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonIgnore
+    private Set<AssetPurchaseInfo> purchaseInfo = new HashSet<>();
+
     @Transient
     private String displayName;
 
@@ -115,6 +129,15 @@ public class AssetMaster extends BaseEntity {
     public LocalDate getPurchaseDate() { return purchaseDate; }
     public void setPurchaseDate(LocalDate purchaseDate) { this.purchaseDate = purchaseDate; }
 
+    public java.math.BigDecimal getPurchasePrice() { return purchasePrice; }
+    public void setPurchasePrice(java.math.BigDecimal purchasePrice) { this.purchasePrice = purchasePrice; }
+
+    public String getInvoiceNumber() { return invoiceNumber; }
+    public void setInvoiceNumber(String invoiceNumber) { this.invoiceNumber = invoiceNumber; }
+
+    public String getBillNumber() { return billNumber; }
+    public void setBillNumber(String billNumber) { this.billNumber = billNumber; }
+
     public ProductCategory getCategory() { return category; }
     public void setCategory(ProductCategory category) { this.category = category; }
 
@@ -141,6 +164,9 @@ public class AssetMaster extends BaseEntity {
 
     public Set<AssetDocument> getDocuments() { return documents; }
     public void setDocuments(Set<AssetDocument> documents) { this.documents = documents; }
+
+    public Set<AssetPurchaseInfo> getPurchaseInfo() { return purchaseInfo; }
+    public void setPurchaseInfo(Set<AssetPurchaseInfo> purchaseInfo) { this.purchaseInfo = purchaseInfo; }
 
     public String getDisplayName() { return displayName; }
     public void setDisplayName(String displayName) { this.displayName = displayName; }

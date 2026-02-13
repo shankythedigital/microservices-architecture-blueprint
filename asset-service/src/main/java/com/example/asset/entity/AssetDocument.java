@@ -1,5 +1,6 @@
 package com.example.asset.entity;
 
+import com.example.common.converter.JpaAttributeEncryptor;
 import com.example.common.jpa.BaseEntity;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
@@ -16,6 +17,7 @@ import java.time.LocalDateTime;
  * - Supports dynamic linking via (entityType, entityId)
  * - Maintains soft delete (active flag)
  * - Includes user & audit metadata
+ * 🔐 DPDPA Compliance: All PII data (username) is encrypted at rest.
  */
 @Entity
 @Table(name = "asset_document",
@@ -70,7 +72,9 @@ public class AssetDocument extends BaseEntity implements Serializable {
     @Column(name = "user_id")
     private Long userId;
 
-    @Column(name = "username", length = 255)
+    // 🔐 DPDPA Compliance: Encrypted PII data
+    @Convert(converter = JpaAttributeEncryptor.class)
+    @Column(name = "username_enc", columnDefinition = "TEXT")
     private String username;
 
     @Column(name = "project_type", length = 255)
