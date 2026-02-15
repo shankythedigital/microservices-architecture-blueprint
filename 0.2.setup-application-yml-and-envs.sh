@@ -311,6 +311,8 @@ NOTIFICATION_SERVICE_URL: ${NOTIF_URL}
 # Tesseract OCR Configuration
 tesseract:
   enabled: true
+  # Use external process instead of native library (recommended on macOS Ventura)
+  use-process: true
   # Tesseract data path (tessdata directory)
   # MacPorts: /opt/local/share/tessdata
   # Homebrew (Intel): /usr/local/share/tessdata

@@ -12,11 +12,21 @@ import org.springframework.context.annotation.Configuration;
 public class TesseractConfig {
     
     private boolean enabled = true;
+    /** When true, call tesseract as external process (no native lib). Recommended on macOS Ventura. */
+    private boolean useProcess = true;
     private String dataPath;
     private String executablePath;
     private String language = "eng";
     private int pageSegMode = 1;
     private int ocrEngineMode = 1;
+
+    public boolean isUseProcess() {
+        return useProcess;
+    }
+
+    public void setUseProcess(boolean useProcess) {
+        this.useProcess = useProcess;
+    }
 
     public boolean isEnabled() {
         return enabled;

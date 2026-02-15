@@ -29,9 +29,14 @@ import com.example.asset.config.TesseractConfig;
 import javax.imageio.ImageIO;
 import java.awt.Graphics2D;
 import java.awt.image.*;
+import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -50,6 +55,10 @@ public class OcrService {
     private static final Logger log = LoggerFactory.getLogger(OcrService.class);
     private Tesseract tesseract;
     private boolean tesseractAvailable = false;
+    /** When true, OCR is done via external tesseract process (no native lib). */
+    private boolean useProcessMode = false;
+    /** Path to tesseract executable when using process mode. */
+    private String tesseractExecutablePath;
     
     @Autowired(required = false)
     private TesseractConfig tesseractConfig;
@@ -90,6 +99,19 @@ public class OcrService {
         if (tesseractConfig != null && !tesseractConfig.isEnabled()) {
             log.info("⚠️ Tesseract OCR is disabled in configuration.");
             tesseractAvailable = false;
+            return;
+        }
+        
+        // Process mode: call tesseract as external process (no native library). Works on macOS Ventura.
+        if (tesseractConfig != null && tesseractConfig.isUseProcess()) {
+            useProcessMode = true;
+            tesseractExecutablePath = resolveTesseractExecutable();
+            tesseractAvailable = (tesseractExecutablePath != null);
+            if (tesseractAvailable) {
+                log.info("✅ Tesseract OCR initialized in PROCESS mode (external executable). Path: {}", tesseractExecutablePath);
+            } else {
+                log.warn("⚠️ Tesseract executable not found. Image OCR will be disabled. Install tesseract or set tesseract.executable-path.");
+            }
             return;
         }
         
@@ -598,7 +620,51 @@ public class OcrService {
     // ✅ CHECK IF TESSERACT IS AVAILABLE (Public Method)
     // ============================================================
     public boolean isTesseractAvailable() {
+        if (useProcessMode) {
+            return tesseractAvailable && tesseractExecutablePath != null;
+        }
         return tesseractAvailable && tesseract != null;
+    }
+    
+    // ============================================================
+    // 🔧 RESOLVE TESSERACT EXECUTABLE (Process mode)
+    // ============================================================
+    private String resolveTesseractExecutable() {
+        if (tesseractConfig != null && tesseractConfig.getExecutablePath() != null && !tesseractConfig.getExecutablePath().isBlank()) {
+            java.io.File exe = new java.io.File(tesseractConfig.getExecutablePath());
+            if (exe.exists() && exe.canExecute()) {
+                return exe.getAbsolutePath();
+            }
+        }
+        String[] paths = {
+            "/opt/local/bin/tesseract",   // MacPorts
+            "/opt/homebrew/bin/tesseract", // Homebrew Apple Silicon
+            "/usr/local/bin/tesseract",   // Homebrew Intel
+            "tesseract"                    // PATH
+        };
+        for (String p : paths) {
+            java.io.File f = new java.io.File(p);
+            if (f.exists() && f.canExecute()) {
+                return f.getAbsolutePath();
+            }
+        }
+        try {
+            Process proc = new ProcessBuilder("which", "tesseract").start();
+            try (BufferedReader r = new BufferedReader(new InputStreamReader(proc.getInputStream(), StandardCharsets.UTF_8))) {
+                String line = r.readLine();
+                proc.waitFor();
+                if (line != null && !line.isBlank()) {
+                    java.io.File f = new java.io.File(line.trim());
+                    if (f.exists() && f.canExecute()) return f.getAbsolutePath();
+                }
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            log.debug("Interrupted while resolving tesseract: {}", e.getMessage());
+        } catch (Exception e) {
+            log.debug("Could not resolve tesseract via which: {}", e.getMessage());
+        }
+        return null;
     }
     
     // ============================================================
@@ -699,7 +765,231 @@ public class OcrService {
         }
     }
     
+    /**
+     * Resolves a tessdata directory that exists and contains the given language file (e.g. eng.traineddata).
+     * Tries: config data-path, TESSDATA_PREFIX env, path inferred from tesseract executable, then common OS paths.
+     */
+    private String resolveTessDataPrefix(String language) {
+        String langFile = (language != null && !language.isBlank() ? language : "eng") + ".traineddata";
+        java.io.File f;
+
+        // 1) Config data-path
+        if (tesseractConfig != null && tesseractConfig.getDataPath() != null && !tesseractConfig.getDataPath().isBlank()) {
+            f = new java.io.File(tesseractConfig.getDataPath(), langFile);
+            if (f.exists()) {
+                log.debug("Using tessdata from config: {}", tesseractConfig.getDataPath());
+                return tesseractConfig.getDataPath();
+            }
+        }
+        // 2) Environment TESSDATA_PREFIX
+        String envPrefix = System.getenv("TESSDATA_PREFIX");
+        if (envPrefix != null && !envPrefix.isBlank()) {
+            f = new java.io.File(envPrefix, langFile);
+            if (f.exists()) return envPrefix;
+        }
+        // 3) Infer from tesseract executable path (e.g. /opt/homebrew/bin/tesseract -> /opt/homebrew/share/tessdata)
+        if (tesseractExecutablePath != null && !tesseractExecutablePath.isBlank()) {
+            String inferred = inferTessDataFromExecutable(tesseractExecutablePath);
+            if (inferred != null) {
+                f = new java.io.File(inferred, langFile);
+                if (f.exists()) {
+                    log.info("Using tessdata path inferred from tesseract executable: {}", inferred);
+                    return inferred;
+                }
+            }
+        }
+        // 4) Common paths (macOS then Linux/Windows)
+        String osName = System.getProperty("os.name").toLowerCase();
+        if (osName.contains("mac")) {
+            for (String base : new String[]{ "/opt/local/share/tessdata", "/opt/homebrew/share/tessdata", "/usr/local/share/tessdata" }) {
+                f = new java.io.File(base, langFile);
+                if (f.exists()) {
+                    log.info("Using auto-detected tessdata path: {}", base);
+                    return base;
+                }
+            }
+            // Homebrew Cellar: e.g. /opt/homebrew/Cellar/tesseract/5.3.0/share/tessdata
+            String cellarBase = "/opt/homebrew/Cellar/tesseract";
+            java.io.File cellarDir = new java.io.File(cellarBase);
+            if (cellarDir.exists()) {
+                java.io.File[] versions = cellarDir.listFiles((dir, name) -> new java.io.File(dir, name).isDirectory());
+                if (versions != null) {
+                    for (java.io.File ver : versions) {
+                        String tessdataPath = new java.io.File(ver, "share/tessdata").getAbsolutePath();
+                        f = new java.io.File(tessdataPath, langFile);
+                        if (f.exists()) {
+                            log.info("Using tessdata from Homebrew Cellar: {}", tessdataPath);
+                            return tessdataPath;
+                        }
+                    }
+                }
+            }
+            cellarBase = "/usr/local/Cellar/tesseract";
+            cellarDir = new java.io.File(cellarBase);
+            if (cellarDir.exists()) {
+                java.io.File[] versions = cellarDir.listFiles((dir, name) -> new java.io.File(dir, name).isDirectory());
+                if (versions != null) {
+                    for (java.io.File ver : versions) {
+                        String tessdataPath = new java.io.File(ver, "share/tessdata").getAbsolutePath();
+                        f = new java.io.File(tessdataPath, langFile);
+                        if (f.exists()) {
+                            log.info("Using tessdata from Homebrew Cellar: {}", tessdataPath);
+                            return tessdataPath;
+                        }
+                    }
+                }
+            }
+        } else if (osName.contains("win")) {
+            String winPath = "C:\\Program Files\\Tesseract-OCR\\tessdata";
+            f = new java.io.File(winPath, langFile);
+            if (f.exists()) return winPath;
+        } else {
+            for (String base : new String[]{ "/usr/share/tesseract-ocr/5/tessdata", "/usr/share/tesseract-ocr/4.00/tessdata", "/usr/share/tessdata" }) {
+                f = new java.io.File(base, langFile);
+                if (f.exists()) return base;
+            }
+        }
+        return null;
+    }
+
+    /** Infers tessdata directory from tesseract executable path (e.g. /opt/homebrew/bin/tesseract -> /opt/homebrew/share/tessdata). */
+    private String inferTessDataFromExecutable(String executablePath) {
+        if (executablePath == null || executablePath.isBlank()) return null;
+        java.io.File exe = new java.io.File(executablePath);
+        try {
+            String abs = exe.getAbsolutePath();
+            String sep = java.io.File.separator;
+            // .../bin/tesseract -> .../share/tessdata
+            if (abs.contains(sep + "bin" + sep) || abs.endsWith(sep + "bin")) {
+                int idx = abs.indexOf(sep + "bin" + sep);
+                if (idx < 0) idx = abs.lastIndexOf(sep + "bin");
+                if (idx > 0) {
+                    String prefix = abs.substring(0, idx);
+                    return prefix + sep + "share" + sep + "tessdata";
+                }
+            }
+            // Handle Unix path when on Windows (e.g. from config)
+            if (abs.contains("/bin/")) {
+                String prefix = abs.substring(0, abs.indexOf("/bin/"));
+                return prefix + "/share/tessdata";
+            }
+        } catch (Exception e) {
+            log.debug("Could not infer tessdata from executable: {}", e.getMessage());
+        }
+        return null;
+    }
+
+    // ============================================================
+    // 🖼️ EXTRACT TEXT FROM IMAGE VIA EXTERNAL PROCESS (no native lib)
+    // ============================================================
+    /**
+     * Calls tesseract as an external process. Bypasses native library linking
+     * and works on macOS Ventura without DYLD_LIBRARY_PATH.
+     */
+    private String extractTextFromImageViaProcess(MultipartFile file) throws IOException, TesseractException {
+        long startTime = System.currentTimeMillis();
+        
+        if (!tesseractAvailable || tesseractExecutablePath == null) {
+            throw new TesseractException(
+                "Tesseract is not available (process mode). Install tesseract and set tesseract.executable-path, or ensure tesseract is on PATH.");
+        }
+        
+        String ext = getImageExtension(file.getContentType(), file.getOriginalFilename());
+        Path tempFile = Files.createTempFile("ocr_", ext);
+        
+        try {
+            Files.write(tempFile, file.getBytes());
+            String imagePath = tempFile.toAbsolutePath().toString();
+            String lang = (tesseractConfig != null && tesseractConfig.getLanguage() != null) 
+                ? tesseractConfig.getLanguage() 
+                : "eng";
+            
+            ProcessBuilder pb = new ProcessBuilder(
+                tesseractExecutablePath,
+                imagePath,
+                "stdout",
+                "-l",
+                lang
+            );
+            pb.redirectErrorStream(false);
+            
+            // Resolve tessdata path that actually contains the language file (e.g. eng.traineddata)
+            String tessDataPrefix = resolveTessDataPrefix(lang);
+            if (tessDataPrefix == null || tessDataPrefix.isBlank()) {
+                String osName = System.getProperty("os.name").toLowerCase();
+                String hint = osName.contains("mac")
+                    ? "MacPorts: sudo port install tesseract-eng. Homebrew: brew install tesseract. Then restart the app."
+                    : "Install Tesseract language data (e.g. eng.traineddata) and set TESSDATA_PREFIX to that directory.";
+                throw new TesseractException(
+                    "Tesseract tessdata not found: no directory contains eng.traineddata. " + hint);
+            }
+            pb.environment().put("TESSDATA_PREFIX", tessDataPrefix);
+            
+            Process process = pb.start();
+            
+            StringBuilder result = new StringBuilder();
+            try (BufferedReader reader = new BufferedReader(
+                    new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    result.append(line).append("\n");
+                }
+            }
+            
+            int exitCode;
+            try {
+                exitCode = process.waitFor();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new TesseractException("OCR process was interrupted", e);
+            }
+            
+            if (exitCode != 0) {
+                StringBuilder stderr = new StringBuilder();
+                try (BufferedReader err = new BufferedReader(
+                        new InputStreamReader(process.getErrorStream(), StandardCharsets.UTF_8))) {
+                    String line;
+                    while ((line = err.readLine()) != null) {
+                        stderr.append(line).append("\n");
+                    }
+                }
+                throw new TesseractException("Tesseract process exited with code " + exitCode + ": " + stderr.toString());
+            }
+            
+            long duration = System.currentTimeMillis() - startTime;
+            log.info("✅ OCR (process mode) completed in {}ms. Extracted {} characters", 
+                    duration, result.length());
+            
+            return result.toString().trim();
+        } finally {
+            try {
+                Files.deleteIfExists(tempFile);
+            } catch (IOException e) {
+                log.warn("Could not delete temp file {}: {}", tempFile, e.getMessage());
+            }
+        }
+    }
+    
+    private static String getImageExtension(String contentType, String filename) {
+        if (contentType != null) {
+            if (contentType.contains("jpeg") || contentType.contains("jpg")) return ".jpg";
+            if (contentType.contains("png")) return ".png";
+            if (contentType.contains("gif")) return ".gif";
+            if (contentType.contains("bmp")) return ".bmp";
+            if (contentType.contains("tiff")) return ".tiff";
+        }
+        if (filename != null) {
+            int i = filename.lastIndexOf('.');
+            if (i > 0) return filename.substring(i);
+        }
+        return ".png";
+    }
+    
     private String extractTextFromImage(MultipartFile file) throws IOException, TesseractException {
+        if (useProcessMode) {
+            return extractTextFromImageViaProcess(file);
+        }
+        
         long startTime = System.currentTimeMillis();
         
         // Ensure library is loaded before use

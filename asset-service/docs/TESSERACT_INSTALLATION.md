@@ -1,7 +1,13 @@
 # Tesseract OCR Installation Guide for macOS 13
 
-## Problem
-On macOS 13 (Ventura) with outdated Xcode/Command Line Tools, Homebrew fails to install Tesseract due to compiler issues. This guide provides multiple solutions.
+## Build vs runtime: no Tesseract required on the server
+
+- **Build:** Maven build does **not** require Tesseract. You can run `mvn clean package` on any machine (CI, server, laptop) without installing Tesseract. The app compiles and packages normally.
+- **Runtime:** Tesseract is only needed at **runtime** when the application performs image OCR. If Tesseract is not installed, the app still starts; OCR features are disabled and return a clear error when used.
+- **Server without host install:** To run the app on a server **without** installing Tesseract on the host, use the provided Docker image (see [Server deployment with Docker](#server-deployment-with-docker)) which includes Tesseract inside the container.
+
+## Problem (macOS 13 only)
+On macOS 13 (Ventura) with outdated Xcode/Command Line Tools, Homebrew may fail to install Tesseract due to compiler issues. This guide is for **local/developer** machines where you want OCR. The server does not need this if you use Docker or accept “OCR disabled”.
 
 ## Quick Fix (Recommended for macOS 13)
 
@@ -173,14 +179,43 @@ export TESSDATA_PREFIX="/opt/homebrew/share/tessdata"  # Homebrew
 
 ## For Spring Boot Application
 
-After installing Tesseract, restart your Spring Boot application:
+After installing Tesseract (on your **local** machine), restart your Spring Boot application:
 
 ```bash
 cd asset-service
 mvn spring-boot:run
 ```
 
-The `OcrService` will automatically detect Tesseract if it's in the system PATH.
+The `OcrService` uses **process mode** by default: it calls the `tesseract` executable (no native library). It auto-detects the binary from config or PATH.
+
+## Server deployment with Docker (no Tesseract on host)
+
+To run the asset service on a server **without** installing Tesseract on the host:
+
+1. **Build the JAR** (on CI or any machine; **Tesseract not required**):
+   ```bash
+   # From repo root
+   mvn clean package -DskipTests
+   ```
+2. **Build the Docker image** (from repo root; Tesseract is installed inside the image):
+   ```bash
+   docker build -f asset-service/Dockerfile -t asset-service:latest .
+   ```
+3. **Run the container.** Tesseract is inside the image; the host does not need it:
+   ```bash
+   docker run -p 8083:8083 -e SPRING_DATASOURCE_URL=... asset-service:latest
+   ```
+
+The Dockerfile installs `tesseract-ocr` in the image, so the server only needs Docker—no Tesseract install on the host.
+
+## Summary
+
+| Context | Tesseract required? |
+|--------|----------------------|
+| Maven build (`mvn clean package`) | **No** |
+| App startup | **No** (app runs; OCR disabled if missing) |
+| Image OCR at runtime | **Yes** (or use Docker image that includes it) |
+| Server host (when using Docker) | **No** (Tesseract is inside the container) |
 
 ## Additional Resources
 
