@@ -260,7 +260,9 @@ asset:
   service:
     url: ${ASSET_URL}
   upload:
-    dir: /asset-uploads/amc-docs
+    # Upload directory - use relative path (project/uploads/amc-docs) or absolute path
+    # If the configured path is not writable, the code will fallback to project/uploads/amc-docs
+    dir: uploads/amc-docs
 
 spring:
   application:
@@ -304,6 +306,24 @@ AUTH_ENC_KEY: ${AUTH_ENC_KEY}
 AUTH_HMAC_KEY: ${AUTH_HMAC_KEY}
 AUTH_SERVICE_URL: ${AUTH_URL}
 NOTIFICATION_SERVICE_URL: ${NOTIF_URL}
+
+
+# Tesseract OCR Configuration
+tesseract:
+  enabled: true
+  # Tesseract data path (tessdata directory)
+  # MacPorts: /opt/local/share/tessdata
+  # Homebrew (Intel): /usr/local/share/tessdata
+  # Homebrew (Apple Silicon): /opt/homebrew/share/tessdata
+  data-path: /opt/local/share/tessdata
+  # Tesseract executable path (optional, will use system PATH if not specified)
+  executable-path: /opt/local/bin/tesseract
+  # Language for OCR (default: eng)
+  language: eng
+  # Page segmentation mode (1 = Automatic with OSD)
+  page-seg-mode: 1
+  # OCR engine mode (1 = Neural nets LSTM engine only)
+  ocr-engine-mode: 1
 
 # Swagger/OpenAPI Configuration
 springdoc:

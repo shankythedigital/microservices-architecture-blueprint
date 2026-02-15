@@ -251,6 +251,22 @@
           <target>${java.version}</target>
         </configuration>
       </plugin>
+
+      <!-- Maven Surefire Plugin - Configure for native library paths -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <environmentVariables>
+            <!-- Set TESSDATA_PREFIX for tests -->
+            <TESSDATA_PREFIX>/opt/local/share/tessdata</TESSDATA_PREFIX>
+          </environmentVariables>
+          <systemPropertyVariables>
+            <!-- Ensure native libraries can be found -->
+            <java.library.path>/opt/local/lib:/opt/homebrew/lib:/usr/local/lib</java.library.path>
+          </systemPropertyVariables>
+        </configuration>
+      </plugin>
     </plugins>
   </build>
 </project>
