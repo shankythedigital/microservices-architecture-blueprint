@@ -1,13 +1,22 @@
 #!/bin/bash
 
 # ============================================================
-# 🔧 Fix macOS 13 Issues and Install Tesseract OCR
+# 🔧 Fix macOS 13 Issues and Install Tesseract OCR (LOCAL / DEV)
 # ============================================================
-# This script fixes Command Line Tools issues and installs Tesseract
+# Use this script on your LOCAL or DEVELOPER machine to install
+# Tesseract for image OCR. It is NOT required on the server.
+#
+# - Build: mvn clean package works WITHOUT Tesseract.
+# - Server: Use the Docker image (see Dockerfile) so the server
+#   does not need Tesseract installed on the host.
+#
 # Run with: ./fix-and-install-tesseract.sh
 
 set +e
 
+echo "🔍 Tesseract install (for local/dev OCR). Server does not need this if using Docker."
+echo "   Build never requires Tesseract."
+echo ""
 echo "🔍 Diagnosing macOS 13 Tesseract Installation Issues..."
 echo ""
 
@@ -58,12 +67,22 @@ if command -v port &> /dev/null; then
     echo "✅ MacPorts is installed!"
     echo "📥 Installing Tesseract via MacPorts..."
     sudo port install tesseract
+    echo "📥 Installing English language data (required for OCR)..."
+    sudo port install tesseract-eng 2>/dev/null || true
     
     if command -v tesseract &> /dev/null; then
-        echo ""
-        echo "✅ Tesseract installed successfully via MacPorts!"
-        tesseract --version
-        exit 0
+        TESSDATA="${TESSDATA_PREFIX:-/opt/local/share/tessdata}"
+        if [[ -f "$TESSDATA/eng.traineddata" ]]; then
+            echo ""
+            echo "✅ Tesseract + English data installed successfully via MacPorts!"
+            tesseract --version
+            exit 0
+        else
+            echo ""
+            echo "⚠️  Tesseract is installed but eng.traineddata is missing. Run:"
+            echo "   sudo port install tesseract-eng"
+            echo "   Then restart the asset-service."
+        fi
     fi
 else
     echo "❌ MacPorts not found."
@@ -121,11 +140,13 @@ echo "      sudo xcode-select --install"
 echo "   2. Wait for installation to complete"
 echo "   3. Run: brew install tesseract"
 echo ""
-echo "Option C: Use Docker (if you're containerizing your app)"
-echo "   Use a base image with tesseract pre-installed:"
-echo "   FROM ubuntu:22.04"
-echo "   RUN apt-get update && apt-get install -y tesseract-ocr"
+echo "Option C: Server deployment WITHOUT installing Tesseract on the host"
+echo "   Use the asset-service Dockerfile (includes tesseract in the image):"
+echo "   cd asset-service && docker build -f Dockerfile -t asset-service:latest ."
+echo "   docker run -p 8083:8083 asset-service:latest"
+echo "   See docs/TESSERACT_INSTALLATION.md#server-deployment-with-docker"
 echo ""
 
-echo "✅ Script completed. Choose one of the options above to install Tesseract."
+echo "✅ Script completed. Choose one of the options above to install Tesseract (local only)."
+echo "   For servers: use Docker so the host does not need Tesseract installed."
 
