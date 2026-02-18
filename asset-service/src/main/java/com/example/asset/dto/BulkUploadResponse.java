@@ -13,6 +13,7 @@ public class BulkUploadResponse<T> {
     private int totalCount;
     private int successCount;
     private int failureCount;
+    private int skippedCount;
     private List<BulkItemResult<T>> results;
     
     public BulkUploadResponse() {
@@ -53,6 +54,14 @@ public class BulkUploadResponse<T> {
         this.failureCount = failureCount;
     }
     
+    public int getSkippedCount() {
+        return skippedCount;
+    }
+    
+    public void setSkippedCount(int skippedCount) {
+        this.skippedCount = skippedCount;
+    }
+    
     public List<BulkItemResult<T>> getResults() {
         return results;
     }
@@ -72,6 +81,12 @@ public class BulkUploadResponse<T> {
     public void addFailure(int index, String errorMessage) {
         this.results.add(new BulkItemResult<>(index, false, errorMessage, null));
         this.failureCount++;
+    }
+    
+    /** Rows skipped (empty, duplicate) - not attempted save */
+    public void addSkipped(int index, String reason) {
+        this.results.add(new BulkItemResult<>(index, false, "Skipped: " + reason, null));
+        this.skippedCount++;
     }
     
     /**

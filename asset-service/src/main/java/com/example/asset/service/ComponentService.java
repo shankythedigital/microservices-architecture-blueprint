@@ -44,6 +44,11 @@ public class ComponentService {
     // ============================================================
     @Transactional
     public AssetComponent create(HttpHeaders headers, ComponentRequest request) {
+        return create(headers, request, false);
+    }
+
+    @Transactional
+    public AssetComponent create(HttpHeaders headers, ComponentRequest request, boolean skipNotifications) {
         if (request == null || request.getComponent() == null)
             throw new IllegalArgumentException("Request or component cannot be null");
 
@@ -59,7 +64,6 @@ public class ComponentService {
         
         component.setComponentName(componentName);
 
-        // ✅ Use case-insensitive check to prevent duplicates like "RAM" and "ram"
         if (repo.existsByComponentNameIgnoreCase(componentName))
             throw new RuntimeException("❌ Component with name '" + componentName + "' already exists");
 
@@ -67,18 +71,16 @@ public class ComponentService {
         component.setUpdatedBy(username);
         AssetComponent saved = repo.save(component);
 
-        Map<String, Object> placeholders = new LinkedHashMap<>();
-        placeholders.put("componentId", saved.getComponentId());
-        placeholders.put("componentName", saved.getComponentName());
-        placeholders.put("createdBy", username);
-        placeholders.put("username", username);
-        placeholders.put("timestamp", Instant.now().toString());
-
-        // 🔔 Notify across channels
-        sendMultiChannelNotification(bearer, userId, username, placeholders, projectType, "COMPONENT_CREATED");
-
-        log.info("✅ Component created successfully: id={} name={} by={}",
-                saved.getComponentId(), saved.getComponentName(), username);
+        if (!skipNotifications) {
+            Map<String, Object> placeholders = new LinkedHashMap<>();
+            placeholders.put("componentId", saved.getComponentId());
+            placeholders.put("componentName", saved.getComponentName());
+            placeholders.put("createdBy", username);
+            placeholders.put("username", username);
+            placeholders.put("timestamp", Instant.now().toString());
+            sendMultiChannelNotification(bearer, userId, username, placeholders, projectType, "COMPONENT_CREATED");
+            log.info("✅ Component created successfully: id={} name={} by={}", saved.getComponentId(), saved.getComponentName(), username);
+        }
         return saved;
     }
 
@@ -97,10 +99,13 @@ public class ComponentService {
             Long userId = request.getUserId();
             String projectType = Optional.ofNullable(request.getProjectType()).orElse("ASSET_SERVICE");
 
-            String newName = patch.getComponentName();
+            String newName = patch.getComponentName() != null ? patch.getComponentName().trim() : null;
+            if (!StringUtils.hasText(newName))
+                throw new RuntimeException("❌ Component name cannot be blank");
 
+            // ✅ Duplicate check: case-insensitive, only when name is actually changing
             if (!existing.getComponentName().equalsIgnoreCase(newName)
-                    && repo.existsByComponentName(newName))
+                    && repo.existsByComponentNameIgnoreCase(newName))
                 throw new RuntimeException("❌ Component with name '" + newName + "' already exists");
 
             String oldName = existing.getComponentName();
@@ -190,7 +195,7 @@ public class ComponentService {
 
                 // ✅ VALIDATION: Required field
                 if (item.getComponentName() == null || item.getComponentName().trim().isEmpty()) {
-                    response.addFailure(i, "Component name is required");
+                    response.addSkipped(i, "Component name is required");
                     continue;
                 }
 
@@ -204,7 +209,7 @@ public class ComponentService {
 
                 // ✅ VALIDATION: Name uniqueness (case-insensitive check to prevent duplicates)
                 if (repo.existsByComponentNameIgnoreCase(componentName)) {
-                    response.addFailure(i, "Component with name '" + componentName + "' already exists");
+                    response.addSkipped(i, "Component with name '" + componentName + "' already exists");
                     continue;
                 }
 
@@ -232,7 +237,7 @@ public class ComponentService {
                 }
 
                 createReq.setComponent(component);
-                AssetComponent created = create(headers, createReq);
+                AssetComponent created = create(headers, createReq, true); // skip per-item notifications; summary at end
                 // Convert entity to DTO to include all optional fields in JSON response
                 ComponentDto result = ComponentMapper.toDto(created);
                 response.addSuccess(i, result);
@@ -242,6 +247,26 @@ public class ComponentService {
                 log.error("❌ Bulk component failed at index {}: {}", i, e.getMessage());
                 response.addFailure(i, e.getMessage());
             }
+        }
+
+        // Notify user: Email, SMS, WhatsApp, InApp - single-line summary
+        try {
+            String bearer = extractBearer(headers);
+            Map<String, Object> placeholders = new LinkedHashMap<>();
+            placeholders.put("entityType", "Component");
+            placeholders.put("totalCount", response.getTotalCount());
+            placeholders.put("successCount", response.getSuccessCount());
+            placeholders.put("failureCount", response.getFailureCount());
+            placeholders.put("skippedCount", response.getSkippedCount());
+            placeholders.put("notUploadedCount", response.getSkippedCount());
+            placeholders.put("username", username);
+            placeholders.put("timestamp", Instant.now().toString());
+            safeNotificationHelper.safeNotifyAsync(bearer, userId, username, null, null, "EMAIL", "MASTER_DATA_BULK_UPLOAD_EMAIL", placeholders, projectType);
+            safeNotificationHelper.safeNotifyAsync(bearer, userId, username, null, null, "SMS", "MASTER_DATA_BULK_UPLOAD_SMS", placeholders, projectType);
+            safeNotificationHelper.safeNotifyAsync(bearer, userId, username, null, null, "WHATSAPP", "MASTER_DATA_BULK_UPLOAD_WHATSAPP", placeholders, projectType);
+            safeNotificationHelper.safeNotifyAsync(bearer, userId, username, null, null, "INAPP", "MASTER_DATA_BULK_UPLOAD_INAPP", placeholders, projectType);
+        } catch (Exception e) {
+            log.warn("⚠️ Failed to send bulk upload notification: {}", e.getMessage());
         }
 
         log.info("📦 Bulk component upload: {}/{} success",

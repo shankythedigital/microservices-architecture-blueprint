@@ -45,6 +45,13 @@ public class AmcService {
         Long userId = request.getUserId();
         String projectType = Optional.ofNullable(request.getProjectType()).orElse("ASSET_SERVICE");
 
+        // ✅ Duplicate check: only one active AMC per asset
+        if (amc.getAsset() != null && amc.getAsset().getAssetId() != null) {
+            Long assetId = amc.getAsset().getAssetId();
+            if (repo.existsByAsset_AssetIdAndActiveTrue(assetId)) {
+                throw new RuntimeException("❌ An active AMC already exists for this asset (assetId: " + assetId + "). Deactivate the existing one or use update.");
+            }
+        }
         amc.setCreatedBy(username);
         amc.setUpdatedBy(username);
         AssetAmc saved = repo.save(amc);

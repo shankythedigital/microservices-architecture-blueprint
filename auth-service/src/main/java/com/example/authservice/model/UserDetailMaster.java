@@ -69,6 +69,18 @@ public class UserDetailMaster extends BaseEntity {
     @Column(name = "account_locked")
     private Boolean accountLocked = false;
 
+    // 🔐 Block / Unblock / Permanent block (Security, Compliance, PDPA/DPDPA)
+    @Column(name = "block_type", length = 20)
+    private String blockType = "NONE"; // NONE | TEMPORARY | PERMANENT
+    @Column(name = "block_reason", length = 1500)
+    private String blockReason;
+    @Column(name = "blocked_at")
+    private LocalDateTime blockedAt;
+    @Column(name = "blocked_by", length = 255)
+    private String blockedBy;
+    @Column(name = "blocked_until")
+    private LocalDateTime blockedUntil;
+
     // Address fields
     @Convert(converter = JpaAttributeEncryptor.class)
     @Column(name = "pincode_enc", columnDefinition = "TEXT")
@@ -85,6 +97,18 @@ public class UserDetailMaster extends BaseEntity {
     @Convert(converter = JpaAttributeEncryptor.class)
     @Column(name = "country_enc", columnDefinition = "TEXT")
     private String country;
+
+    @Convert(converter = JpaAttributeEncryptor.class)
+    @Column(name = "address1_enc", columnDefinition = "TEXT")
+    private String address1;
+
+    @Convert(converter = JpaAttributeEncryptor.class)
+    @Column(name = "address2_enc", columnDefinition = "TEXT")
+    private String address2;
+
+    @Convert(converter = JpaAttributeEncryptor.class)
+    @Column(name = "address3_enc", columnDefinition = "TEXT")
+    private String address3;
 
     // Terms & Conditions acceptance
     @Column(name = "accept_tc")
@@ -174,6 +198,20 @@ public class UserDetailMaster extends BaseEntity {
     @Column(name = "additional_info", columnDefinition = "TEXT")
     private String additionalInfo; // JSON string for any other additional information
 
+    // ============================================================
+    // 📵 COMMUNICATION OPT-OUT (SMS, Email, WhatsApp, In-App, Push)
+    // ============================================================
+    @Column(name = "opt_out_sms")
+    private Boolean optOutSms = false;
+    @Column(name = "opt_out_email")
+    private Boolean optOutEmail = false;
+    @Column(name = "opt_out_whatsapp")
+    private Boolean optOutWhatsapp = false;
+    @Column(name = "opt_out_inapp")
+    private Boolean optOutInapp = false;
+    @Column(name = "opt_out_push")
+    private Boolean optOutPush = false;
+
     // ✅ Auto-compute HMAC values before insert/update
     @PrePersist
     @PreUpdate
@@ -225,6 +263,17 @@ public class UserDetailMaster extends BaseEntity {
     public Boolean getAccountLocked() { return accountLocked; }
     public void setAccountLocked(Boolean accountLocked) { this.accountLocked = accountLocked; }
 
+    public String getBlockType() { return blockType; }
+    public void setBlockType(String blockType) { this.blockType = blockType; }
+    public String getBlockReason() { return blockReason; }
+    public void setBlockReason(String blockReason) { this.blockReason = blockReason; }
+    public LocalDateTime getBlockedAt() { return blockedAt; }
+    public void setBlockedAt(LocalDateTime blockedAt) { this.blockedAt = blockedAt; }
+    public String getBlockedBy() { return blockedBy; }
+    public void setBlockedBy(String blockedBy) { this.blockedBy = blockedBy; }
+    public LocalDateTime getBlockedUntil() { return blockedUntil; }
+    public void setBlockedUntil(LocalDateTime blockedUntil) { this.blockedUntil = blockedUntil; }
+
     public String getPincode() { return pincode; }
     public void setPincode(String pincode) { this.pincode = pincode; }
 
@@ -236,6 +285,13 @@ public class UserDetailMaster extends BaseEntity {
 
     public String getCountry() { return country; }
     public void setCountry(String country) { this.country = country; }
+
+    public String getAddress1() { return address1; }
+    public void setAddress1(String address1) { this.address1 = address1; }
+    public String getAddress2() { return address2; }
+    public void setAddress2(String address2) { this.address2 = address2; }
+    public String getAddress3() { return address3; }
+    public void setAddress3(String address3) { this.address3 = address3; }
 
     public Boolean getAcceptTc() { return acceptTc; }
     public void setAcceptTc(Boolean acceptTc) { this.acceptTc = acceptTc; }
@@ -307,5 +363,16 @@ public class UserDetailMaster extends BaseEntity {
 
     public String getAdditionalInfo() { return additionalInfo; }
     public void setAdditionalInfo(String additionalInfo) { this.additionalInfo = additionalInfo; }
+
+    public Boolean getOptOutSms() { return optOutSms; }
+    public void setOptOutSms(Boolean optOutSms) { this.optOutSms = optOutSms; }
+    public Boolean getOptOutEmail() { return optOutEmail; }
+    public void setOptOutEmail(Boolean optOutEmail) { this.optOutEmail = optOutEmail; }
+    public Boolean getOptOutWhatsapp() { return optOutWhatsapp; }
+    public void setOptOutWhatsapp(Boolean optOutWhatsapp) { this.optOutWhatsapp = optOutWhatsapp; }
+    public Boolean getOptOutInapp() { return optOutInapp; }
+    public void setOptOutInapp(Boolean optOutInapp) { this.optOutInapp = optOutInapp; }
+    public Boolean getOptOutPush() { return optOutPush; }
+    public void setOptOutPush(Boolean optOutPush) { this.optOutPush = optOutPush; }
 }
 

@@ -47,6 +47,13 @@ public class WarrantyService {
         String projectType = Optional.ofNullable(request.getProjectType()).orElse("ASSET_SERVICE");
 
         AssetWarranty warranty = request.getWarranty();
+        // ✅ Duplicate check: only one active warranty per asset
+        if (warranty.getAsset() != null && warranty.getAsset().getAssetId() != null) {
+            Long assetId = warranty.getAsset().getAssetId();
+            if (repo.existsByAsset_AssetIdAndActiveTrue(assetId)) {
+                throw new RuntimeException("❌ An active warranty already exists for this asset (assetId: " + assetId + "). Deactivate the existing one or use update.");
+            }
+        }
         warranty.setCreatedBy(username);
         warranty.setUpdatedBy(username);
         AssetWarranty saved = repo.save(warranty);

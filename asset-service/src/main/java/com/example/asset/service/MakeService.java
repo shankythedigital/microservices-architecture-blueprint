@@ -55,6 +55,11 @@ public class MakeService {
     // ============================================================
     @Transactional
     public ProductMake create(HttpHeaders headers, MakeRequest request) {
+        return create(headers, request, false);
+    }
+
+    @Transactional
+    public ProductMake create(HttpHeaders headers, MakeRequest request, boolean skipNotifications) {
         validateAuthorization(headers);
 
         if (request == null || request.getMake() == null)
@@ -90,31 +95,22 @@ public class MakeService {
         make.setUpdatedBy(username);
         ProductMake saved = repo.save(make);
 
-        // 🔧 Notification placeholders
-        Map<String, Object> placeholders = new LinkedHashMap<>();
-        placeholders.put("makeId", saved.getMakeId());
-        placeholders.put("makeName", saved.getMakeName());
-        Long savedSubCategoryId = saved.getSubCategory() != null ? saved.getSubCategory().getSubCategoryId() : null;
-        placeholders.put("subCategoryId", savedSubCategoryId);
-        placeholders.put("createdBy", username);
-        placeholders.put("username", username);
-        placeholders.put("timestamp", new Date().toString());
-
-        // 🔔 Notify creator
-        sendMultiChannelNotification(bearer, userId, username, placeholders, projectType,
-                "MAKE_CREATED", "Make created successfully");
-
-        // 🔔 Notify admins
-        notifyAdmins(bearer, projectType, placeholders, "MAKE_CREATED_ADMIN", username);
-
-        // 🔔 Notify linked users under same subcategory
-        if (savedSubCategoryId != null) {
-            notifyLinkedUsers(bearer, savedSubCategoryId, placeholders, "MAKE_CREATED_USER", username, projectType);
+        if (!skipNotifications) {
+            Long savedSubCategoryId = saved.getSubCategory() != null ? saved.getSubCategory().getSubCategoryId() : null;
+            Map<String, Object> placeholders = new LinkedHashMap<>();
+            placeholders.put("makeId", saved.getMakeId());
+            placeholders.put("makeName", saved.getMakeName());
+            placeholders.put("subCategoryId", savedSubCategoryId);
+            placeholders.put("createdBy", username);
+            placeholders.put("username", username);
+            placeholders.put("timestamp", new Date().toString());
+            sendMultiChannelNotification(bearer, userId, username, placeholders, projectType, "MAKE_CREATED", "Make created successfully");
+            notifyAdmins(bearer, projectType, placeholders, "MAKE_CREATED_ADMIN", username);
+            if (savedSubCategoryId != null) {
+                notifyLinkedUsers(bearer, savedSubCategoryId, placeholders, "MAKE_CREATED_USER", username, projectType);
+            }
+            log.info("✅ Make created successfully: id={} name={} by={}", saved.getMakeId(), saved.getMakeName(), username);
         }
-
-        log.info("✅ Make created successfully: id={} name={} by={}",
-                saved.getMakeId(), saved.getMakeName(), username);
-
         return saved;
     }
 
@@ -134,20 +130,24 @@ public class MakeService {
         String bearer = headers.getFirst("Authorization");
 
         return repo.findById(id).map(existing -> {
-            String newName = request.getMake().getMakeName();
+            String newName = request.getMake().getMakeName() != null ? request.getMake().getMakeName().trim() : null;
             if (!StringUtils.hasText(newName))
                 throw new RuntimeException("Make name cannot be blank");
 
-            boolean duplicate = repo.findAll().stream()
-                    .anyMatch(m -> !m.getMakeId().equals(existing.getMakeId())
-                            && m.getMakeName().equalsIgnoreCase(newName)
-                            && m.getSubCategory() != null
-                            && request.getMake().getSubCategory() != null
-                            && Objects.equals(m.getSubCategory().getSubCategoryId(),
-                            request.getMake().getSubCategory().getSubCategoryId()));
-
+            // ✅ Duplicate check: case-insensitive, exclude current make (repository-based)
+            Long subCategoryId = request.getMake().getSubCategory() != null
+                    ? request.getMake().getSubCategory().getSubCategoryId()
+                    : null;
+            boolean duplicate;
+            if (subCategoryId != null) {
+                duplicate = repo.existsByMakeNameIgnoreCaseAndSubCategory_SubCategoryIdAndMakeIdNot(newName, subCategoryId, id);
+            } else {
+                duplicate = repo.existsByMakeNameIgnoreCaseAndMakeIdNot(newName, id);
+            }
             if (duplicate)
-                throw new RuntimeException("❌ Make with name '" + newName + "' already exists in this subcategory");
+                throw new RuntimeException(subCategoryId != null
+                        ? "❌ Make with name '" + newName + "' already exists in this subcategory"
+                        : "❌ Make with name '" + newName + "' already exists");
 
             existing.setMakeName(newName);
             existing.setSubCategory(request.getMake().getSubCategory());
@@ -240,7 +240,7 @@ public class MakeService {
 
                 // ✅ VALIDATION: Required field
                 if (item.getMakeName() == null || item.getMakeName().trim().isEmpty()) {
-                    response.addFailure(i, "Make name is required");
+                    response.addSkipped(i, "Make name is required");
                     continue;
                 }
 
@@ -279,13 +279,13 @@ public class MakeService {
                 // Use efficient repository method instead of stream
                 if (subCategory != null) {
                     if (repo.existsByMakeNameIgnoreCaseAndSubCategory_SubCategoryId(makeName, subCategory.getSubCategoryId())) {
-                        response.addFailure(i, "Make with name '" + makeName + "' already exists in this subcategory");
+                        response.addSkipped(i, "Make with name '" + makeName + "' already exists in this subcategory");
                         continue;
                     }
                 } else {
                     // If no subcategory, check global uniqueness (fallback)
                     if (repo.findByMakeNameIgnoreCase(makeName).isPresent()) {
-                        response.addFailure(i, "Make with name '" + makeName + "' already exists");
+                        response.addSkipped(i, "Make with name '" + makeName + "' already exists");
                         continue;
                     }
                 }
@@ -304,7 +304,7 @@ public class MakeService {
                 }
 
                 createReq.setMake(make);
-                ProductMake created = create(headers, createReq);
+                ProductMake created = create(headers, createReq, true); // skip per-item notifications; summary at end
                 // Convert entity to DTO to include all optional fields in JSON response
                 MakeDto result = MakeMapper.toDto(created);
                 response.addSuccess(i, result);
@@ -314,6 +314,31 @@ public class MakeService {
                 log.error("❌ Bulk make failed at index {}: {}", i, e.getMessage());
                 response.addFailure(i, e.getMessage());
             }
+        }
+
+        // Notify user: Email, SMS, WhatsApp, InApp - single-line summary
+        try {
+            String bearer = headers.getFirst("Authorization");
+            if (bearer != null && !bearer.isBlank() && !bearer.startsWith("Bearer ")) {
+                bearer = "Bearer " + bearer;
+            }
+            if (bearer != null && !bearer.isBlank()) {
+                Map<String, Object> placeholders = new LinkedHashMap<>();
+                placeholders.put("entityType", "Make");
+                placeholders.put("totalCount", response.getTotalCount());
+                placeholders.put("successCount", response.getSuccessCount());
+                placeholders.put("failureCount", response.getFailureCount());
+                placeholders.put("skippedCount", response.getSkippedCount());
+                placeholders.put("notUploadedCount", response.getSkippedCount());
+                placeholders.put("username", username);
+                placeholders.put("timestamp", java.time.Instant.now().toString());
+                safeNotificationHelper.safeNotifyAsync(bearer, userId, username, null, null, "EMAIL", "MASTER_DATA_BULK_UPLOAD_EMAIL", placeholders, projectType);
+                safeNotificationHelper.safeNotifyAsync(bearer, userId, username, null, null, "SMS", "MASTER_DATA_BULK_UPLOAD_SMS", placeholders, projectType);
+                safeNotificationHelper.safeNotifyAsync(bearer, userId, username, null, null, "WHATSAPP", "MASTER_DATA_BULK_UPLOAD_WHATSAPP", placeholders, projectType);
+                safeNotificationHelper.safeNotifyAsync(bearer, userId, username, null, null, "INAPP", "MASTER_DATA_BULK_UPLOAD_INAPP", placeholders, projectType);
+            }
+        } catch (Exception e) {
+            log.warn("⚠️ Failed to send bulk upload notification: {}", e.getMessage());
         }
 
         log.info("📦 Bulk make upload: {}/{} success",

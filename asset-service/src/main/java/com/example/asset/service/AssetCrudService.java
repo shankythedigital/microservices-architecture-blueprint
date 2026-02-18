@@ -595,7 +595,7 @@ public class AssetCrudService {
 
                 // ✅ VALIDATION: Name uniqueness (case-insensitive check to prevent duplicates)
                 if (assetRepo.existsByAssetNameUdv(assetNameUdv)) {
-                    response.addFailure(i, "Asset with name '" + assetNameUdv + "' already exists");
+                    response.addFailure(i, "Duplicate: Asset with name '" + assetNameUdv + "' already exists. Skipped.");
                     continue;
                 }
 

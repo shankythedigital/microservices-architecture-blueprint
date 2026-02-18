@@ -33,7 +33,7 @@ if [ "$MODE" = "cloud" ]; then
 
   RDS_AUTH_DB="jdbc:mysql://${RDS_HOST}:3306/authdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
   RDS_ASSET_DB="jdbc:mysql://${RDS_HOST}:3306/assetdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
-  RDS_NOTIFY_DB="jdbc:mysql://${RDS_HOST}:3306/notificationdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8&useUnicode=true&connectionCollation=utf8mb4_unicode_ci"
+  RDS_NOTIFY_DB="jdbc:mysql://${RDS_HOST}:3306/notificationdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8&connectionCollation=utf8mb4_unicode_ci"
   RDS_HELPDESK_DB="jdbc:mysql://${RDS_HOST}:3306/helpdeskdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
 
   RDS_AUTH_USER="admin"
@@ -73,7 +73,7 @@ elif [ "$MODE" = "cloud_local" ]; then
 
   RDS_AUTH_DB="jdbc:mysql://${RDS_HOST}:3306/authdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
   RDS_ASSET_DB="jdbc:mysql://${RDS_HOST}:3306/assetdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
-  RDS_NOTIFY_DB="jdbc:mysql://${RDS_HOST}:3306/notificationdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8&useUnicode=true&connectionCollation=utf8mb4_unicode_ci"
+  RDS_NOTIFY_DB="jdbc:mysql://${RDS_HOST}:3306/notificationdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8&connectionCollation=utf8mb4_unicode_ci"
   RDS_HELPDESK_DB="jdbc:mysql://${RDS_HOST}:3306/helpdeskdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
 
   RDS_AUTH_USER="admin"
@@ -88,7 +88,7 @@ elif [ "$MODE" = "cloud_local" ]; then
 
   AUTH_PORT="8081"
   NOTIF_PORT="8082"
-  ASSET_PORT="8083"
+  ASSET_PORT="8085"
   HELPDESK_PORT="8084"
 
   AUTH_URL="http://localhost:${AUTH_PORT}"
@@ -105,7 +105,7 @@ elif [ "$MODE" = "OWN_SERVER" ]; then
 
   RDS_AUTH_DB="jdbc:mysql://${RDS_HOST}:3306/authdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
   RDS_ASSET_DB="jdbc:mysql://${RDS_HOST}:3306/assetdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
-  RDS_NOTIFY_DB="jdbc:mysql://${RDS_HOST}:3306/notificationdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8&useUnicode=true&connectionCollation=utf8mb4_unicode_ci"
+  RDS_NOTIFY_DB="jdbc:mysql://${RDS_HOST}:3306/notificationdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8&connectionCollation=utf8mb4_unicode_ci"
   RDS_HELPDESK_DB="jdbc:mysql://${RDS_HOST}:3306/helpdeskdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
 
   RDS_AUTH_USER="authdb"
@@ -120,7 +120,7 @@ elif [ "$MODE" = "OWN_SERVER" ]; then
 
   AUTH_PORT="8081"
   NOTIF_PORT="8082"
-  ASSET_PORT="8083"
+  ASSET_PORT="8085"
   HELPDESK_PORT="8084"
 
   AUTH_URL="http://localhost:${AUTH_PORT}"
@@ -133,7 +133,7 @@ else
 
   RDS_AUTH_DB="jdbc:mysql://localhost:3306/authdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
   RDS_ASSET_DB="jdbc:mysql://localhost:3306/assetdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
-  RDS_NOTIFY_DB="jdbc:mysql://localhost:3306/notificationdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8&useUnicode=true&connectionCollation=utf8mb4_unicode_ci"
+  RDS_NOTIFY_DB="jdbc:mysql://localhost:3306/notificationdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8&connectionCollation=utf8mb4_unicode_ci"
   RDS_HELPDESK_DB="jdbc:mysql://localhost:3306/helpdeskdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
 
   RDS_AUTH_USER="root"
@@ -148,7 +148,7 @@ else
 
   AUTH_PORT="8081"
   NOTIF_PORT="8082"
-  ASSET_PORT="8083"
+  ASSET_PORT="8085"
   HELPDESK_PORT="8084"
 
   AUTH_URL="http://localhost:${AUTH_PORT}"
@@ -271,6 +271,11 @@ spring:
     url: ${RDS_ASSET_DB}
     username: ${RDS_ASSET_USER}
     password: ${RDS_ASSET_PASS}
+    hikari:
+      max-lifetime: 300000   # 5 min - recycle before server closes (avoids "connection closed" validation failures)
+      connection-timeout: 20000
+      keepalive-time: 60000   # 1 min - keep connections alive during long operations
+  
   jpa:
     hibernate:
       ddl-auto: update
@@ -358,6 +363,9 @@ server:
 notification:
   service:
     url: ${NOTIF_URL}/api/notifications
+  # When true and userId + Bearer token are present, skips sending if user opted out of that channel (auth-service).
+  opt-out-check:
+    enabled: true
   list:
     # Number of days to display notifications in notification icons
     # Default: 30 days (notifications older than 30 days will not be shown)

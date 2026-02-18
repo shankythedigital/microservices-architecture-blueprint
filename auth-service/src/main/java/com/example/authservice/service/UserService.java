@@ -8,10 +8,13 @@ import com.example.authservice.model.UserDetailMaster;
 import com.example.authservice.repository.RefreshTokenRepository;
 import com.example.authservice.repository.UserDetailMasterRepository;
 import com.example.authservice.repository.UserRepository;
-import com.example.common.util.HmacUtil;
+import com.example.authservice.service.impl.AuditService;
 import com.example.common.util.FileStorageUtil;
+import com.example.common.util.HmacUtil;
+import com.example.common.util.RequestContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
@@ -24,6 +27,7 @@ public class UserService {
     @Autowired private RefreshTokenRepository refreshRepo;
     @Autowired private UserMapper userMapper;
     @Autowired private FileStorageUtil fileStorageUtil;
+    @Autowired private AuditService auditService;
 
     public UserDto getMyProfile(Long currentUserId) {
         if (currentUserId == null) throw new RuntimeException("Unauthorized: No active user context");
@@ -220,8 +224,49 @@ public class UserService {
     }
 
     /**
-     * Update user profile (extended profile fields)
-     * Users can only update their own profile unless they are admin
+     * Get only communication opt-out preferences for a user (for notification senders).
+     * Normal user: own preferences only; admin: any user's preferences.
+     */
+    public com.example.authservice.dto.CommunicationPreferencesDto getCommunicationPreferences(Long userId, Long currentUserId) {
+        if (userId == null || currentUserId == null)
+            throw new RuntimeException("userId and currentUserId are required");
+        User current = userRepo.findByUserId(currentUserId)
+                .orElseThrow(() -> new RuntimeException("Current user not found"));
+        boolean isAdmin = current.getRoles() != null && current.getRoles().stream()
+                .anyMatch(r -> r != null && r.getName() != null && r.getName().equalsIgnoreCase("ROLE_ADMIN"));
+        if (!isAdmin && !userId.equals(currentUserId))
+            throw new RuntimeException("Access denied: not authorized to view another user's communication preferences");
+        UserDetailMaster udm = udmRepo.findByUserId(userId)
+                .orElseThrow(() -> new RuntimeException("User profile not found for userId: " + userId));
+        com.example.authservice.dto.CommunicationPreferencesDto dto = new com.example.authservice.dto.CommunicationPreferencesDto();
+        dto.setOptOutSms(Boolean.TRUE.equals(udm.getOptOutSms()));
+        dto.setOptOutEmail(Boolean.TRUE.equals(udm.getOptOutEmail()));
+        dto.setOptOutWhatsapp(Boolean.TRUE.equals(udm.getOptOutWhatsapp()));
+        dto.setOptOutInapp(Boolean.TRUE.equals(udm.getOptOutInapp()));
+        dto.setOptOutPush(Boolean.TRUE.equals(udm.getOptOutPush()));
+        return dto;
+    }
+
+    /**
+     * Reject profile update if request contains any restricted field (username, email, mobile, acceptTc).
+     * userId is not updatable (determined by path).
+     */
+    private void validateNoRestrictedProfileFields(com.example.authservice.dto.UserProfileRequest request) {
+        if (request == null) return;
+        if (request.getUsername() != null || request.getEmail() != null
+                || request.getMobile() != null || request.getAcceptTc() != null) {
+            throw new RuntimeException(
+                    "Username, email, mobile and terms acceptance cannot be updated via profile update. Use the dedicated flows for contact change and T&C.");
+        }
+    }
+
+    /**
+     * Update user profile (extended profile fields including address).
+     * <ul>
+     *   <li>Users can update their own profile (address1, address2, address3, pincode, city, state, country, etc.).</li>
+     *   <li>Admins can update any user's profile.</li>
+     *   <li>Restricted fields (cannot be updated by anyone via this endpoint): userId, username, email, mobile, acceptTc.</li>
+     * </ul>
      */
     public com.example.authservice.dto.UserProfileResponse updateUserProfileExtended(
             Long userId, 
@@ -235,12 +280,14 @@ public class UserService {
         User current = userRepo.findByUserId(currentUserId)
                 .orElseThrow(() -> new RuntimeException("Current user not found"));
 
-        boolean isAdmin = current.getRoles().stream()
-                .anyMatch(r -> r.getName().equalsIgnoreCase("ROLE_ADMIN"));
+        boolean isAdmin = current.getRoles() != null && current.getRoles().stream()
+                .anyMatch(r -> r != null && r.getName() != null && r.getName().equalsIgnoreCase("ROLE_ADMIN"));
 
         if (!isAdmin && !userId.equals(currentUserId)) {
             throw new RuntimeException("Access denied: not authorized to update another user's profile");
         }
+
+        validateNoRestrictedProfileFields(request);
 
         UserDetailMaster udm = udmRepo.findByUserId(userId)
                 .orElseThrow(() -> new RuntimeException("User profile not found for userId: " + userId));
@@ -259,6 +306,30 @@ public class UserService {
                 }
             }
             udm.setProfilePhotoUrl(request.getProfilePhotoUrl());
+        }
+        if (request.getPincode() != null) {
+            udm.setPincode(request.getPincode());
+        }
+        if (request.getCity() != null) {
+            udm.setCity(request.getCity());
+        }
+        if (request.getState() != null) {
+            udm.setState(request.getState());
+        }
+        if (request.getCountry() != null) {
+            udm.setCountry(request.getCountry());
+        }
+        if (request.getCountryCode() != null) {
+            udm.setCountryCode(request.getCountryCode());
+        }
+        if (request.getAddress1() != null) {
+            udm.setAddress1(request.getAddress1());
+        }
+        if (request.getAddress2() != null) {
+            udm.setAddress2(request.getAddress2());
+        }
+        if (request.getAddress3() != null) {
+            udm.setAddress3(request.getAddress3());
         }
         if (request.getLinkedinUrl() != null) {
             udm.setLinkedinUrl(request.getLinkedinUrl());
@@ -317,6 +388,21 @@ public class UserService {
         if (request.getAdditionalInfo() != null) {
             udm.setAdditionalInfo(request.getAdditionalInfo());
         }
+        if (request.getOptOutSms() != null) {
+            udm.setOptOutSms(request.getOptOutSms());
+        }
+        if (request.getOptOutEmail() != null) {
+            udm.setOptOutEmail(request.getOptOutEmail());
+        }
+        if (request.getOptOutWhatsapp() != null) {
+            udm.setOptOutWhatsapp(request.getOptOutWhatsapp());
+        }
+        if (request.getOptOutInapp() != null) {
+            udm.setOptOutInapp(request.getOptOutInapp());
+        }
+        if (request.getOptOutPush() != null) {
+            udm.setOptOutPush(request.getOptOutPush());
+        }
 
         udm = udmRepo.save(udm);
         return mapToProfileResponse(udm);
@@ -337,6 +423,9 @@ public class UserService {
         response.setState(udm.getState());
         response.setCountry(udm.getCountry());
         response.setCountryCode(udm.getCountryCode());
+        response.setAddress1(udm.getAddress1());
+        response.setAddress2(udm.getAddress2());
+        response.setAddress3(udm.getAddress3());
         response.setProfilePhotoUrl(udm.getProfilePhotoUrl());
         response.setLinkedinUrl(udm.getLinkedinUrl());
         response.setFacebookUrl(udm.getFacebookUrl());
@@ -360,7 +449,121 @@ public class UserService {
         response.setLastLoginDate(udm.getLastLoginDate());
         response.setAccountLocked(udm.getAccountLocked());
         response.setAcceptTc(udm.getAcceptTc());
+        response.setOptOutSms(udm.getOptOutSms());
+        response.setOptOutEmail(udm.getOptOutEmail());
+        response.setOptOutWhatsapp(udm.getOptOutWhatsapp());
+        response.setOptOutInapp(udm.getOptOutInapp());
+        response.setOptOutPush(udm.getOptOutPush());
         return response;
+    }
+
+    // =====================================================
+    // BLOCK / UNBLOCK / PERMANENT BLOCK (Security, Compliance, PDPA/DPDPA)
+    // =====================================================
+    private void ensureAdmin(Long currentUserId) {
+        User current = userRepo.findByUserId(currentUserId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        boolean isAdmin = current.getRoles().stream()
+                .anyMatch(r -> r.getName() != null && r.getName().equalsIgnoreCase("ROLE_ADMIN"));
+        if (!isAdmin)
+            throw new RuntimeException("Access denied: only admins can perform this action");
+    }
+
+    /** When unblocking a permanently blocked user, only admin is allowed. Throws with a specific message if not admin. */
+    private void ensureAdminForPermanentUnblock(Long currentUserId) {
+        User current = userRepo.findByUserId(currentUserId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        boolean isAdmin = current.getRoles().stream()
+                .anyMatch(r -> r.getName() != null && r.getName().equalsIgnoreCase("ROLE_ADMIN"));
+        if (!isAdmin)
+            throw new RuntimeException("Only an administrator can unblock a permanently blocked account.");
+    }
+
+    /** Store actor as userId for PDPA-friendly audit (no PII in block record). */
+    private String actorForAudit(Long userId) {
+        return "userId:" + userId;
+    }
+
+    /**
+     * Temporary block: user cannot log in until unblocked. Stores reason and optional blockedUntil for audit.
+     */
+    @Transactional
+    public void blockUser(Long targetUserId, String reason, LocalDateTime blockedUntil, Long currentUserId) {
+        ensureAdmin(currentUserId);
+        User target = userRepo.findByUserId(targetUserId)
+                .orElseThrow(() -> new RuntimeException("Target user not found"));
+        UserDetailMaster udm = udmRepo.findByUserId(targetUserId)
+                .orElseThrow(() -> new RuntimeException("User detail not found"));
+
+        target.setEnabled(false);
+        userRepo.save(target);
+        udm.setAccountLocked(true);
+        udm.setBlockType("TEMPORARY");
+        udm.setBlockReason(reason);
+        udm.setBlockedAt(LocalDateTime.now());
+        udm.setBlockedBy(actorForAudit(currentUserId));
+        udm.setBlockedUntil(blockedUntil);
+        udmRepo.save(udm);
+
+        auditService.log(currentUserId, "USER_BLOCK", "User", String.valueOf(targetUserId),
+                (reason != null ? reason : "") + (blockedUntil != null ? "|until=" + blockedUntil : ""),
+                RequestContext.getIp(), RequestContext.getUserAgent());
+    }
+
+    /**
+     * Unblock: restore access. Temporarily blocked users require admin; permanently blocked users can be unblocked only by admin.
+     */
+    @Transactional
+    public void unblockUser(Long targetUserId, Long currentUserId) {
+        User target = userRepo.findByUserId(targetUserId)
+                .orElseThrow(() -> new RuntimeException("Target user not found"));
+        UserDetailMaster udm = udmRepo.findByUserId(targetUserId)
+                .orElseThrow(() -> new RuntimeException("User detail not found"));
+
+        if ("PERMANENT".equalsIgnoreCase(udm.getBlockType())) {
+            ensureAdminForPermanentUnblock(currentUserId);
+        } else {
+            ensureAdmin(currentUserId);
+        }
+
+        target.setEnabled(true);
+        userRepo.save(target);
+        udm.setAccountLocked(false);
+        udm.setBlockType("NONE");
+        udm.setBlockReason(null);
+        udm.setBlockedAt(null);
+        udm.setBlockedBy(null);
+        udm.setBlockedUntil(null);
+        udmRepo.save(udm);
+
+        auditService.log(currentUserId, "USER_UNBLOCK", "User", String.valueOf(targetUserId), null,
+                RequestContext.getIp(), RequestContext.getUserAgent());
+    }
+
+    /**
+     * Permanent block: revoke access indefinitely. Reversal requires separate process (e.g. data protection request).
+     */
+    @Transactional
+    public void permanentBlockUser(Long targetUserId, String reason, Long currentUserId) {
+        ensureAdmin(currentUserId);
+        User target = userRepo.findByUserId(targetUserId)
+                .orElseThrow(() -> new RuntimeException("Target user not found"));
+        UserDetailMaster udm = udmRepo.findByUserId(targetUserId)
+                .orElseThrow(() -> new RuntimeException("User detail not found"));
+
+        target.setEnabled(false);
+        userRepo.save(target);
+        udm.setAccountLocked(true);
+        udm.setBlockType("PERMANENT");
+        udm.setBlockReason(reason);
+        udm.setBlockedAt(LocalDateTime.now());
+        udm.setBlockedBy(actorForAudit(currentUserId));
+        udm.setBlockedUntil(null);
+        udmRepo.save(udm);
+
+        auditService.log(currentUserId, "USER_PERMANENT_BLOCK", "User", String.valueOf(targetUserId),
+                reason != null ? reason : "",
+                RequestContext.getIp(), RequestContext.getUserAgent());
     }
 
 }

@@ -491,4 +491,36 @@ INSERT INTO whatsapp_template_master (template_code, name, subject, body, placeh
 INSERT INTO inapp_template_master (template_code, name, subject, body, placeholders, project_type) VALUES
 ('FILE_DOWNLOAD_INAPP', 'File Download', 'File Downloaded', '📥 File {{fileName}} downloaded successfully by {{username}}.', '{"fileName":"File Name","username":"Downloaded By"}', 'ASSET_MGMT');
 
+
+
+-- =======================================================================
+-- Master Data Bulk Upload - Single notification when bulk option is used
+-- Placeholders: entityType, totalCount, successCount, failureCount, notUploadedCount, username, timestamp
+-- =======================================================================
+INSERT INTO inapp_template_master (template_code, name, subject, body, placeholders, project_type) VALUES
+('MASTER_DATA_BULK_UPLOAD_INAPP', 'Master Data Bulk Upload Summary', 'Bulk Upload Completed',
+ '📦 Bulk upload for {{entityType}} completed. Total: {{totalCount}} | Success: {{successCount}} | Failed: {{failureCount}} | Not uploaded: {{notUploadedCount}}. By {{username}} at {{timestamp}}.',
+ '{"entityType":"Entity Type (e.g. Product Category)","totalCount":"Total Rows","successCount":"Successful","failureCount":"Failed","notUploadedCount":"Not Uploaded","username":"User","timestamp":"Time"}', 'ASSET_MGMT');
+
+-- =======================================================================
+-- Update Master Data Bulk Upload templates to include skippedCount for single-line summary
+-- Placeholders: entityType, totalCount, successCount, failureCount, skippedCount, username, timestamp
+-- =======================================================================
+UPDATE notification_template_master SET body = 'Bulk upload for {{entityType}} completed. Total: {{totalCount}} | Success: {{successCount}} | Failed: {{failureCount}} | Skipped: {{skippedCount}}. By {{username}} at {{timestamp}}.',
+ placeholders = '{"entityType":"Entity Type","totalCount":"Total Rows","successCount":"Successful","failureCount":"Failed","skippedCount":"Skipped","username":"User","timestamp":"Time"}'
+ WHERE template_code = 'MASTER_DATA_BULK_UPLOAD_EMAIL' AND project_type = 'ASSET_MGMT';
+
+UPDATE sms_template_master SET body = 'Bulk upload {{entityType}}: Total {{totalCount}}, Success {{successCount}}, Failed {{failureCount}}, Skipped {{skippedCount}}. By {{username}}.',
+ placeholders = '{"entityType":"Entity Type","totalCount":"Total Rows","successCount":"Successful","failureCount":"Failed","skippedCount":"Skipped","username":"User","timestamp":"Time"}'
+ WHERE template_code = 'MASTER_DATA_BULK_UPLOAD_SMS' AND project_type = 'ASSET_MGMT';
+
+UPDATE whatsapp_template_master SET body = 'Bulk upload for {{entityType}} completed. Total: {{totalCount}} | Success: {{successCount}} | Failed: {{failureCount}} | Skipped: {{skippedCount}}. By {{username}} at {{timestamp}}.',
+ placeholders = '{"entityType":"Entity Type","totalCount":"Total Rows","successCount":"Successful","failureCount":"Failed","skippedCount":"Skipped","username":"User","timestamp":"Time"}'
+ WHERE template_code = 'MASTER_DATA_BULK_UPLOAD_WHATSAPP' AND project_type = 'ASSET_MGMT';
+
+-- InApp template (from V5)
+UPDATE inapp_template_master SET body = 'Bulk upload for {{entityType}} completed. Total: {{totalCount}} | Success: {{successCount}} | Failed: {{failureCount}} | Skipped: {{skippedCount}}. By {{username}} at {{timestamp}}.',
+ placeholders = '{"entityType":"Entity Type","totalCount":"Total Rows","successCount":"Successful","failureCount":"Failed","skippedCount":"Skipped","username":"User","timestamp":"Time"}'
+ WHERE template_code = 'MASTER_DATA_BULK_UPLOAD_INAPP' AND project_type = 'ASSET_MGMT';
+
 -- Select * from  sms_template_master;  Select * from  whatsapp_template_master;  Select * from notification_template_master;

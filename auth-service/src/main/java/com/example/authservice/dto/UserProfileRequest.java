@@ -4,14 +4,35 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import jakarta.validation.constraints.Pattern;
 
 /**
- * UserProfileRequest DTO for updating user profile information
- * Includes: photo, social media links, demographic info, behaviors, and additional info
+ * UserProfileRequest DTO for updating user profile information.
+ * Includes: photo, social media links, demographic info, behaviors, and additional info.
+ *
+ * <p><b>Restricted fields (cannot be updated via this endpoint):</b>
+ * username, email, mobile, userId, acceptTc. If any of these are sent in the request,
+ * the update will be rejected. Only admin can change which user's profile is updated (via path);
+ * username, email, mobile and T&C flag are never updatable here.
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class UserProfileRequest {
 
+    // ----- Read-only: if present in request, update will be rejected -----
+    private String username;
+    private String email;
+    private String mobile;
+    private Boolean acceptTc;
+
     // Profile Photo
     private String profilePhotoUrl;
+
+    // Address Information (admin only can update)
+    private String pincode;
+    private String city;
+    private String state;
+    private String country;
+    private String countryCode;
+    private String address1;
+    private String address2;
+    private String address3;
 
     // Social Media Links
     private String linkedinUrl;
@@ -43,9 +64,42 @@ public class UserProfileRequest {
     private String timezone; // User's timezone
     private String additionalInfo; // JSON string for additional information
 
-    // Getters and Setters
+    // Communication opt-out (true = user opted out of that channel)
+    private Boolean optOutSms;
+    private Boolean optOutEmail;
+    private Boolean optOutWhatsapp;
+    private Boolean optOutInapp;
+    private Boolean optOutPush;
+
+    // Getters and Setters (restricted fields - used only for validation; never persisted from request)
+    public String getUsername() { return username; }
+    public void setUsername(String username) { this.username = username; }
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
+    public String getMobile() { return mobile; }
+    public void setMobile(String mobile) { this.mobile = mobile; }
+    public Boolean getAcceptTc() { return acceptTc; }
+    public void setAcceptTc(Boolean acceptTc) { this.acceptTc = acceptTc; }
+
     public String getProfilePhotoUrl() { return profilePhotoUrl; }
     public void setProfilePhotoUrl(String profilePhotoUrl) { this.profilePhotoUrl = profilePhotoUrl; }
+
+    public String getPincode() { return pincode; }
+    public void setPincode(String pincode) { this.pincode = pincode; }
+    public String getCity() { return city; }
+    public void setCity(String city) { this.city = city; }
+    public String getState() { return state; }
+    public void setState(String state) { this.state = state; }
+    public String getCountry() { return country; }
+    public void setCountry(String country) { this.country = country; }
+    public String getCountryCode() { return countryCode; }
+    public void setCountryCode(String countryCode) { this.countryCode = countryCode; }
+    public String getAddress1() { return address1; }
+    public void setAddress1(String address1) { this.address1 = address1; }
+    public String getAddress2() { return address2; }
+    public void setAddress2(String address2) { this.address2 = address2; }
+    public String getAddress3() { return address3; }
+    public void setAddress3(String address3) { this.address3 = address3; }
 
     public String getLinkedinUrl() { return linkedinUrl; }
     public void setLinkedinUrl(String linkedinUrl) { this.linkedinUrl = linkedinUrl; }
@@ -103,5 +157,16 @@ public class UserProfileRequest {
 
     public String getAdditionalInfo() { return additionalInfo; }
     public void setAdditionalInfo(String additionalInfo) { this.additionalInfo = additionalInfo; }
+
+    public Boolean getOptOutSms() { return optOutSms; }
+    public void setOptOutSms(Boolean optOutSms) { this.optOutSms = optOutSms; }
+    public Boolean getOptOutEmail() { return optOutEmail; }
+    public void setOptOutEmail(Boolean optOutEmail) { this.optOutEmail = optOutEmail; }
+    public Boolean getOptOutWhatsapp() { return optOutWhatsapp; }
+    public void setOptOutWhatsapp(Boolean optOutWhatsapp) { this.optOutWhatsapp = optOutWhatsapp; }
+    public Boolean getOptOutInapp() { return optOutInapp; }
+    public void setOptOutInapp(Boolean optOutInapp) { this.optOutInapp = optOutInapp; }
+    public Boolean getOptOutPush() { return optOutPush; }
+    public void setOptOutPush(Boolean optOutPush) { this.optOutPush = optOutPush; }
 }
 

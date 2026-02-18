@@ -1,5 +1,7 @@
 package com.example.notification.service;
 
+import com.example.notification.client.AuthServiceClient;
+import com.example.notification.dto.CommunicationPreferencesDto;
 import com.example.notification.dto.NotificationRequest;
 import com.example.notification.dto.NotificationListResponse;
 import com.example.notification.entity.*;
@@ -8,6 +10,10 @@ import com.example.notification.config.NotificationListProperties;
 import com.example.notification.util.TemplateEngineUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,6 +34,10 @@ public class NotificationService {
     private final InappLogRepository inappRepo;
     private final TemplateResolverService templateResolver;
     private final NotificationListProperties listProperties;
+    private final AuthServiceClient authServiceClient;
+
+    @Value("${notification.opt-out-check.enabled:true}")
+    private boolean optOutCheckEnabled;
 
     public NotificationService(
             SmsLogRepository smsRepo,
@@ -35,17 +45,30 @@ public class NotificationService {
             WhatsappLogRepository whatsappRepo,
             InappLogRepository inappRepo,
             TemplateResolverService templateResolver,
-            NotificationListProperties listProperties) {
+            NotificationListProperties listProperties,
+            @Autowired(required = false) AuthServiceClient authServiceClient) {
         this.smsRepo = smsRepo;
         this.notificationRepo = notificationRepo;
         this.whatsappRepo = whatsappRepo;
         this.inappRepo = inappRepo;
         this.templateResolver = templateResolver;
         this.listProperties = listProperties;
+        this.authServiceClient = authServiceClient;
     }
 
+    /**
+     * Enqueue notification (no headers — opt-out check skipped; preserves existing behaviour).
+     */
     @Transactional
     public void enqueue(NotificationRequest req) {
+        enqueue(req, null);
+    }
+
+    /**
+     * Enqueue notification. If headers contain Bearer token and userId is set, respects user communication opt-out.
+     */
+    @Transactional
+    public void enqueue(NotificationRequest req, @Nullable HttpHeaders headers) {
         // Step 1: Resolve template subject + body
         String rawBody = templateResolver.resolveBody(req.getChannel(), req.getTemplateCode());
         String subject = templateResolver.resolveSubject(req.getChannel(), req.getTemplateCode());
@@ -53,8 +76,40 @@ public class NotificationService {
         // Step 2: Render body with placeholders
         String renderedBody = TemplateEngineUtil.render(rawBody, req.getPlaceholders());
 
-        // Step 3: Persist based on channel
-        switch (req.getChannel().toUpperCase()) {
+        // Step 3: Optional opt-out check (when userId + Bearer token available)
+        Optional<CommunicationPreferencesDto> prefs = Optional.empty();
+        if (optOutCheckEnabled && authServiceClient != null && req.getUserId() != null && !req.getUserId().isBlank() && headers != null) {
+            String token = headers.getFirst("Authorization");
+            if (token != null && !token.isBlank()) {
+                prefs = authServiceClient.getCommunicationPreferences(req.getUserId(), token);
+            }
+        }
+
+        final Optional<CommunicationPreferencesDto> preferences = prefs;
+        String channel = req.getChannel().toUpperCase();
+
+        // Step 4: Skip if user opted out of this channel
+        if (preferences.isPresent()) {
+            if ("SMS".equals(channel) && preferences.get().isOptOutSms()) {
+                log.info("📵 Skipping SMS for userId {} (user opted out)", req.getUserId());
+                return;
+            }
+            if ("WHATSAPP".equals(channel) && preferences.get().isOptOutWhatsapp()) {
+                log.info("📵 Skipping WhatsApp for userId {} (user opted out)", req.getUserId());
+                return;
+            }
+            if (("EMAIL".equals(channel) || "NOTIFICATION".equals(channel)) && preferences.get().isOptOutEmail()) {
+                log.info("📵 Skipping Email/Notification for userId {} (user opted out)", req.getUserId());
+                return;
+            }
+            if ("INAPP".equals(channel) && preferences.get().isOptOutInapp()) {
+                log.info("📵 Skipping In-App for userId {} (user opted out)", req.getUserId());
+                return;
+            }
+        }
+
+        // Step 5: Persist based on channel
+        switch (channel) {
             case "SMS" -> saveSms(req, renderedBody);
             case "WHATSAPP" -> saveWhatsapp(req, renderedBody);
             case "EMAIL", "NOTIFICATION" -> saveNotification(req, renderedBody, subject);
@@ -114,12 +169,17 @@ public class NotificationService {
     }
 
     private void saveInapp(NotificationRequest req, String body) {
+        // user_id is NOT NULL; use username as fallback when userId is null (e.g. system user)
+        String effectiveUserId = (req.getUserId() != null && !req.getUserId().isBlank())
+                ? req.getUserId()
+                : (req.getUsername() != null && !req.getUsername().isBlank() ? req.getUsername() : "system");
+
         InappLog in = new InappLog();
         in.setUsername(req.getUsername());
         in.setTitle(req.getSubject()); // in-app often uses a title
         in.setMessage(body);
         in.setTemplateCode(req.getTemplateCode());
-        in.setUserId(req.getUserId());
+        in.setUserId(effectiveUserId);
         in.setCreatedAt(LocalDateTime.now());
 
         inappRepo.save(in);

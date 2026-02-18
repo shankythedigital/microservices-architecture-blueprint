@@ -22,6 +22,14 @@ public class UserDto {
     private String email;            // Decrypted email (masked in getter)
     private String mobile;           // Decrypted mobile (masked in getter)
     private String projectType;      // ECOM / ASSET / etc.
+    private String pincode;
+    private String city;
+    private String state;
+    private String country;
+    private String countryCode;
+    private String address1;
+    private String address2;
+    private String address3;
     private Boolean enabled;         // Account active?
     private Set<String> roles;       // ROLE_USER / ROLE_ADMIN
     private LocalDateTime lastLoginDate; // Last login timestamp
@@ -111,6 +119,23 @@ public class UserDto {
     public String getProjectType() { return projectType; }
     public void setProjectType(String projectType) { this.projectType = projectType; }
 
+    public String getPincode() { return pincode; }
+    public void setPincode(String pincode) { this.pincode = pincode; }
+    public String getCity() { return city; }
+    public void setCity(String city) { this.city = city; }
+    public String getState() { return state; }
+    public void setState(String state) { this.state = state; }
+    public String getCountry() { return country; }
+    public void setCountry(String country) { this.country = country; }
+    public String getCountryCode() { return countryCode; }
+    public void setCountryCode(String countryCode) { this.countryCode = countryCode; }
+    public String getAddress1() { return address1; }
+    public void setAddress1(String address1) { this.address1 = address1; }
+    public String getAddress2() { return address2; }
+    public void setAddress2(String address2) { this.address2 = address2; }
+    public String getAddress3() { return address3; }
+    public void setAddress3(String address3) { this.address3 = address3; }
+
     public Boolean getEnabled() { return enabled; }
     public void setEnabled(Boolean enabled) { this.enabled = enabled; }
 
@@ -135,6 +160,14 @@ public class UserDto {
         public UserDtoBuilder email(String v) { dto.setEmail(v); return this; }
         public UserDtoBuilder mobile(String v) { dto.setMobile(v); return this; }
         public UserDtoBuilder projectType(String v) { dto.setProjectType(v); return this; }
+        public UserDtoBuilder pincode(String v) { dto.setPincode(v); return this; }
+        public UserDtoBuilder city(String v) { dto.setCity(v); return this; }
+        public UserDtoBuilder state(String v) { dto.setState(v); return this; }
+        public UserDtoBuilder country(String v) { dto.setCountry(v); return this; }
+        public UserDtoBuilder countryCode(String v) { dto.setCountryCode(v); return this; }
+        public UserDtoBuilder address1(String v) { dto.setAddress1(v); return this; }
+        public UserDtoBuilder address2(String v) { dto.setAddress2(v); return this; }
+        public UserDtoBuilder address3(String v) { dto.setAddress3(v); return this; }
         public UserDtoBuilder enabled(Boolean v) { dto.setEnabled(v); return this; }
         public UserDtoBuilder roles(Set<String> v) { dto.setRoles(v); return this; }
         public UserDtoBuilder lastLoginDate(LocalDateTime v) { dto.setLastLoginDate(v); return this; }

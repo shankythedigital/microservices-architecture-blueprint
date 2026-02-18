@@ -286,6 +286,10 @@ public class JwtVerifier {
     @Value("${JWT_SECRET:#{null}}")
     private String hmacSecret;
 
+    /** Allowed clock skew in seconds when validating exp/nbf (default 30 min). Tolerates server clock drift. */
+    @Value("${JWT_ALLOWED_CLOCK_SKEW_SECONDS:1800}")
+    private long allowedClockSkewSeconds = 1800;
+
     private PublicKey rsaPublicKey;
     private Key hmacKey;
 
@@ -316,7 +320,7 @@ public class JwtVerifier {
         }
 
         log.info("--------------------------------------------------");
-        log.info("✔ JwtVerifier initialized — Mode: {}", useRsa ? "RSA (RS256)" : "HMAC (HS256)");
+        log.info("✔ JwtVerifier initialized — Mode: {} | Allowed clock skew: {} seconds", useRsa ? "RSA (RS256)" : "HMAC (HS256)", allowedClockSkewSeconds);
         if (useRsa)
             log.info("🔎 RSA Public Fingerprint: {}", fingerprint(rsaPublicKey.getEncoded()));
         else
@@ -421,6 +425,9 @@ public class JwtVerifier {
 
         if (useRsa) builder.setSigningKey(rsaPublicKey);
         else builder.setSigningKey(hmacKey);
+
+        // Allow clock skew so expiry validation tolerates server clock drift (expired-by minutes still accepted)
+        builder.setAllowedClockSkewSeconds(allowedClockSkewSeconds);
 
         return builder.build().parseClaimsJws(token);
     }

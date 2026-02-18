@@ -66,6 +66,9 @@ public class AuthController {
                     req.city,
                     req.state,
                     req.country,
+                    req.address1,
+                    req.address2,
+                    req.address3,
                     req.acceptTc
             );
             
@@ -105,6 +108,9 @@ public class AuthController {
                     req.city,
                     req.state,
                     req.country,
+                    req.address1,
+                    req.address2,
+                    req.address3,
                     req.acceptTc
             );
             
@@ -395,9 +401,41 @@ public class AuthController {
     }
 
     /**
+     * Get communication opt-out preferences only (lightweight, for notification senders).
+     * GET /api/auth/profile/me/communication-preferences - current user
+     * GET /api/auth/profile/{userId}/communication-preferences - specific user (admin or self)
+     */
+    @GetMapping("/profile/me/communication-preferences")
+    public ResponseEntity<?> getMyCommunicationPreferences() {
+        try {
+            Long currentUserId = SecurityUtil.getCurrentUserId();
+            if (currentUserId == null) {
+                return ResponseEntity.status(401).body(Map.of("error", "Unauthorized: No active user context"));
+            }
+            return ResponseEntity.ok(userService.getCommunicationPreferences(currentUserId, currentUserId));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @GetMapping("/profile/{userId}/communication-preferences")
+    public ResponseEntity<?> getUserCommunicationPreferences(@PathVariable Long userId) {
+        try {
+            Long currentUserId = SecurityUtil.getCurrentUserId();
+            if (currentUserId == null) {
+                return ResponseEntity.status(401).body(Map.of("error", "Unauthorized: No active user context"));
+            }
+            return ResponseEntity.ok(userService.getCommunicationPreferences(userId, currentUserId));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    /**
      * Update user profile with file upload support
-     * PUT /api/auth/profile/me - Update current user's profile
-     * PUT /api/auth/profile/{userId} - Update specific user's profile (admin only or self)
+     * PUT /api/auth/profile/me - Update current user's profile (user or admin)
+     * PUT /api/auth/profile/{userId} - Update specific user's profile (admin or self only)
+     * Users can update their own address (address1, address2, address3, pincode, city, state, country). Restricted: userId, username, email, mobile, acceptTc.
      * 
      * Supports both JSON and form-data:
      * - JSON: Use @RequestBody for all fields except photo
@@ -409,6 +447,14 @@ public class AuthController {
             @RequestPart(value = "request", required = false) @Valid UserProfileRequest request,
             @RequestParam(value = "profilePhoto", required = false) MultipartFile profilePhoto,
             // Form-data fields (when not using JSON request part)
+            @RequestParam(value = "pincode", required = false) String pincode,
+            @RequestParam(value = "city", required = false) String city,
+            @RequestParam(value = "state", required = false) String state,
+            @RequestParam(value = "country", required = false) String country,
+            @RequestParam(value = "countryCode", required = false) String countryCode,
+            @RequestParam(value = "address1", required = false) String address1,
+            @RequestParam(value = "address2", required = false) String address2,
+            @RequestParam(value = "address3", required = false) String address3,
             @RequestParam(value = "linkedinUrl", required = false) String linkedinUrl,
             @RequestParam(value = "facebookUrl", required = false) String facebookUrl,
             @RequestParam(value = "twitterUrl", required = false) String twitterUrl,
@@ -427,7 +473,12 @@ public class AuthController {
             @RequestParam(value = "skills", required = false) String skills,
             @RequestParam(value = "languages", required = false) String languages,
             @RequestParam(value = "timezone", required = false) String timezone,
-            @RequestParam(value = "additionalInfo", required = false) String additionalInfo) {
+            @RequestParam(value = "additionalInfo", required = false) String additionalInfo,
+            @RequestParam(value = "optOutSms", required = false) String optOutSms,
+            @RequestParam(value = "optOutEmail", required = false) String optOutEmail,
+            @RequestParam(value = "optOutWhatsapp", required = false) String optOutWhatsapp,
+            @RequestParam(value = "optOutInapp", required = false) String optOutInapp,
+            @RequestParam(value = "optOutPush", required = false) String optOutPush) {
         try {
             Long currentUserId = SecurityUtil.getCurrentUserId();
             if (currentUserId == null) {
@@ -437,6 +488,14 @@ public class AuthController {
             // Build request from form-data if JSON request part is not provided
             if (request == null) {
                 request = new UserProfileRequest();
+                request.setPincode(pincode);
+                request.setCity(city);
+                request.setState(state);
+                request.setCountry(country);
+                request.setCountryCode(countryCode);
+                request.setAddress1(address1);
+                request.setAddress2(address2);
+                request.setAddress3(address3);
                 request.setLinkedinUrl(linkedinUrl);
                 request.setFacebookUrl(facebookUrl);
                 request.setTwitterUrl(twitterUrl);
@@ -456,6 +515,7 @@ public class AuthController {
                 request.setLanguages(languages);
                 request.setTimezone(timezone);
                 request.setAdditionalInfo(additionalInfo);
+                setOptOutFromParams(request, optOutSms, optOutEmail, optOutWhatsapp, optOutInapp, optOutPush);
             }
             
             // Handle file upload
@@ -482,6 +542,14 @@ public class AuthController {
             @RequestPart(value = "request", required = false) @Valid UserProfileRequest request,
             @RequestParam(value = "profilePhoto", required = false) MultipartFile profilePhoto,
             // Form-data fields (when not using JSON request part)
+            @RequestParam(value = "pincode", required = false) String pincode,
+            @RequestParam(value = "city", required = false) String city,
+            @RequestParam(value = "state", required = false) String state,
+            @RequestParam(value = "country", required = false) String country,
+            @RequestParam(value = "countryCode", required = false) String countryCode,
+            @RequestParam(value = "address1", required = false) String address1,
+            @RequestParam(value = "address2", required = false) String address2,
+            @RequestParam(value = "address3", required = false) String address3,
             @RequestParam(value = "linkedinUrl", required = false) String linkedinUrl,
             @RequestParam(value = "facebookUrl", required = false) String facebookUrl,
             @RequestParam(value = "twitterUrl", required = false) String twitterUrl,
@@ -500,7 +568,12 @@ public class AuthController {
             @RequestParam(value = "skills", required = false) String skills,
             @RequestParam(value = "languages", required = false) String languages,
             @RequestParam(value = "timezone", required = false) String timezone,
-            @RequestParam(value = "additionalInfo", required = false) String additionalInfo) {
+            @RequestParam(value = "additionalInfo", required = false) String additionalInfo,
+            @RequestParam(value = "optOutSms", required = false) String optOutSms,
+            @RequestParam(value = "optOutEmail", required = false) String optOutEmail,
+            @RequestParam(value = "optOutWhatsapp", required = false) String optOutWhatsapp,
+            @RequestParam(value = "optOutInapp", required = false) String optOutInapp,
+            @RequestParam(value = "optOutPush", required = false) String optOutPush) {
         try {
             Long currentUserId = SecurityUtil.getCurrentUserId();
             if (currentUserId == null) {
@@ -510,6 +583,14 @@ public class AuthController {
             // Build request from form-data if JSON request part is not provided
             if (request == null) {
                 request = new UserProfileRequest();
+                request.setPincode(pincode);
+                request.setCity(city);
+                request.setState(state);
+                request.setCountry(country);
+                request.setCountryCode(countryCode);
+                request.setAddress1(address1);
+                request.setAddress2(address2);
+                request.setAddress3(address3);
                 request.setLinkedinUrl(linkedinUrl);
                 request.setFacebookUrl(facebookUrl);
                 request.setTwitterUrl(twitterUrl);
@@ -529,6 +610,7 @@ public class AuthController {
                 request.setLanguages(languages);
                 request.setTimezone(timezone);
                 request.setAdditionalInfo(additionalInfo);
+                setOptOutFromParams(request, optOutSms, optOutEmail, optOutWhatsapp, optOutInapp, optOutPush);
             }
             
             // Handle file upload
@@ -546,6 +628,24 @@ public class AuthController {
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
+    }
+
+    private static void setOptOutFromParams(UserProfileRequest request, String optOutSms, String optOutEmail,
+                                            String optOutWhatsapp, String optOutInapp, String optOutPush) {
+        if (request == null) return;
+        if (optOutSms != null) request.setOptOutSms(parseBooleanParam(optOutSms));
+        if (optOutEmail != null) request.setOptOutEmail(parseBooleanParam(optOutEmail));
+        if (optOutWhatsapp != null) request.setOptOutWhatsapp(parseBooleanParam(optOutWhatsapp));
+        if (optOutInapp != null) request.setOptOutInapp(parseBooleanParam(optOutInapp));
+        if (optOutPush != null) request.setOptOutPush(parseBooleanParam(optOutPush));
+    }
+
+    private static Boolean parseBooleanParam(String value) {
+        if (value == null || value.isBlank()) return null;
+        String v = value.trim().toLowerCase();
+        if ("true".equals(v) || "1".equals(v) || "yes".equals(v)) return true;
+        if ("false".equals(v) || "0".equals(v) || "no".equals(v)) return false;
+        return null;
     }
 }
 

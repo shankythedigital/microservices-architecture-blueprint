@@ -3,7 +3,10 @@ package com.example.asset.controller;
 import com.example.asset.dto.AssetScanCreateRequest;
 import com.example.asset.dto.AssetScanRequest;
 import com.example.asset.dto.AssetScanResponse;
+import com.example.asset.dto.QrScanResponseDto;
 import com.example.asset.service.AssetScanService;
+import com.example.asset.service.QrBarcodeImageService;
+import com.example.asset.service.QrScanService;
 import com.example.asset.util.JwtUtil;
 import com.example.common.security.JwtVerifier;
 import com.example.common.util.ResponseWrapper;
@@ -17,6 +20,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Optional;
 
@@ -34,10 +38,15 @@ public class AssetScanController {
     private static final Logger log = LoggerFactory.getLogger(AssetScanController.class);
 
     private final AssetScanService scanService;
+    private final QrScanService qrScanService;
+    private final QrBarcodeImageService qrBarcodeImageService;
     private final JwtVerifier jwtVerifier;
 
-    public AssetScanController(AssetScanService scanService, JwtVerifier jwtVerifier) {
+    public AssetScanController(AssetScanService scanService, QrScanService qrScanService,
+                              QrBarcodeImageService qrBarcodeImageService, JwtVerifier jwtVerifier) {
         this.scanService = scanService;
+        this.qrScanService = qrScanService;
+        this.qrBarcodeImageService = qrBarcodeImageService;
         this.jwtVerifier = jwtVerifier;
     }
 
@@ -241,6 +250,147 @@ public class AssetScanController {
             return ResponseEntity.internalServerError()
                     .body(new ResponseWrapper<>(false, "❌ " + e.getMessage(), null));
         }
+    }
+
+    // ============================================================
+    // 📱 UNIVERSAL QR SCAN - Master Data (Category, SubCategory, Make, Model, etc.)
+    // ============================================================
+    /**
+     * Scan any QR code and return the entity in its respective JSON format.
+     * Order: asset → category, subcategory, make, model, component, warranty, amc, outlet, vendor → universal.
+     * For QR codes NOT in entity master: returns universal standard JSON format.
+     */
+    @PostMapping("/qr")
+    @Operation(
+        summary = "Universal QR scan - asset and master data",
+        description = "Scan any QR code. Returns entity in its respective JSON format: asset, category, subcategory, " +
+                     "make, model, component, warranty, amc, outlet, vendor. If not in entity master, returns universal format."
+    )
+    public ResponseEntity<ResponseWrapper<QrScanResponseDto>> scanQr(
+            @RequestHeader HttpHeaders headers,
+            @RequestBody AssetScanRequest request,
+            HttpServletRequest httpRequest) {
+        try {
+            if (request == null || !org.springframework.util.StringUtils.hasText(request.getScanValue())) {
+                return ResponseEntity.badRequest()
+                        .body(new ResponseWrapper<>(false, "❌ QR scan value cannot be empty", null));
+            }
+            Optional<QrScanResponseDto> result = resolveScanValue(
+                    request.getScanValue(), "AUTO", headers, httpRequest);
+            return result.map(r -> ResponseEntity.ok(
+                            new ResponseWrapper<>(true, formatMessageForEntityType(r.getEntityType()), r)))
+                    .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND)
+                            .body(new ResponseWrapper<>(false,
+                                    String.format("❌ No entity found for QR value: '%s'", request.getScanValue()),
+                                    null)));
+        } catch (Exception e) {
+            log.error("❌ QR scan failed: {}", e.getMessage(), e);
+            return ResponseEntity.internalServerError()
+                    .body(new ResponseWrapper<>(false, "❌ " + e.getMessage(), null));
+        }
+    }
+
+    @PostMapping("/qr/image")
+    @Operation(
+        summary = "Scan QR/barcode image and return respective JSON format",
+        description = "Upload an image (PNG, JPEG, GIF, BMP, WebP) containing a QR code or barcode. " +
+                     "Decodes the image, extracts the data, and returns the entity in its respective JSON format: " +
+                     "asset, category, subcategory, make, model, component, warranty, amc, outlet, vendor. " +
+                     "If entityType not in entity master: universal standard JSON format."
+    )
+    public ResponseEntity<ResponseWrapper<QrScanResponseDto>> scanQrImage(
+            @RequestHeader HttpHeaders headers,
+            @RequestParam("file") MultipartFile file,
+            HttpServletRequest httpRequest) {
+        try {
+            if (file == null || file.isEmpty()) {
+                return ResponseEntity.badRequest()
+                        .body(new ResponseWrapper<>(false, "❌ Image file cannot be empty", null));
+            }
+
+            Optional<String> decodedText = qrBarcodeImageService.decodeFromImage(file);
+            if (decodedText.isEmpty()) {
+                log.warn("⚠️ No QR code or barcode found in image: {}", file.getOriginalFilename());
+                return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
+                        .body(new ResponseWrapper<>(false,
+                                "❌ No QR code or barcode found in the image. Please upload a valid image.",
+                                null));
+            }
+
+            Optional<QrScanResponseDto> result = resolveScanValue(
+                    decodedText.get(), "AUTO", headers, httpRequest);
+            return result.map(r -> ResponseEntity.ok(
+                            new ResponseWrapper<>(true, formatMessageForEntityType(r.getEntityType()), r)))
+                    .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND)
+                            .body(new ResponseWrapper<>(false,
+                                    String.format("❌ Could not process decoded value: '%s'",
+                                            decodedText.get().length() > 50
+                                                    ? decodedText.get().substring(0, 50) + "..." : decodedText.get()),
+                                    null)));
+        } catch (Exception e) {
+            log.error("❌ QR/barcode image scan failed: {}", e.getMessage(), e);
+            return ResponseEntity.internalServerError()
+                    .body(new ResponseWrapper<>(false, "❌ " + e.getMessage(), null));
+        }
+    }
+
+    @GetMapping("/qr")
+    @Operation(
+        summary = "Universal QR scan - asset and master data (GET)",
+        description = "Convenience GET endpoint. Pass QR value as query parameter ?value=..."
+    )
+    public ResponseEntity<ResponseWrapper<QrScanResponseDto>> scanQrGet(
+            @RequestHeader HttpHeaders headers,
+            @RequestParam("value") String scanValue,
+            @RequestParam(value = "type", required = false, defaultValue = "AUTO") String scanType,
+            HttpServletRequest httpRequest) {
+        try {
+            if (!org.springframework.util.StringUtils.hasText(scanValue)) {
+                return ResponseEntity.badRequest()
+                        .body(new ResponseWrapper<>(false, "❌ QR scan value cannot be empty", null));
+            }
+            Optional<QrScanResponseDto> result = resolveScanValue(scanValue, scanType, headers, httpRequest);
+            return result.map(r -> ResponseEntity.ok(
+                            new ResponseWrapper<>(true, formatMessageForEntityType(r.getEntityType()), r)))
+                    .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND)
+                            .body(new ResponseWrapper<>(false,
+                                    String.format("❌ No entity found for QR value: '%s'", scanValue),
+                                    null)));
+        } catch (Exception e) {
+            log.error("❌ QR scan failed: {}", e.getMessage(), e);
+            return ResponseEntity.internalServerError()
+                    .body(new ResponseWrapper<>(false, "❌ " + e.getMessage(), null));
+        }
+    }
+
+    /**
+     * Unified resolve: asset first, then master data (category, subcategory, make, model, component,
+     * warranty, amc, outlet, vendor), then product/wifi/contact, then universal.
+     */
+    private Optional<QrScanResponseDto> resolveScanValue(String scanValue, String scanType,
+                                                         HttpHeaders headers, HttpServletRequest httpRequest) {
+        String username = extractUsernameFromToken(headers);
+
+        // 1. Try asset (asset ID, asset name UDV, serial number)
+        Optional<AssetScanResponse> assetResult = scanService.scanAsset(
+                scanValue, scanType != null ? scanType : "AUTO", username, httpRequest);
+        if (assetResult.isPresent()) {
+            return Optional.of(new QrScanResponseDto("asset", assetResult.get()));
+        }
+
+        // 2. Try master data (category, subcategory, make, model, component, warranty, amc, outlet, vendor)
+        //    and other formats (product, wifi, contact, universal) - QrScanService always returns a result
+        return qrScanService.scanQr(scanValue);
+    }
+
+    private String formatMessageForEntityType(String entityType) {
+        return switch (entityType != null ? entityType : "") {
+            case "universal" -> "QR data received (not part of asset management - universal format)";
+            case "asset" -> "✅ Asset found";
+            case "product", "wifi", "email", "phone", "geo", "bitcoin", "contact" ->
+                    String.format("✅ %s format recognized", entityType);
+            default -> String.format("✅ %s found", entityType);
+        };
     }
 
     // ============================================================

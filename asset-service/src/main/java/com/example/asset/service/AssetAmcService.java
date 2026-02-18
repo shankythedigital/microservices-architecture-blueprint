@@ -81,6 +81,12 @@ public class AssetAmcService {
             amc.setDocument(doc);
         }
 
+        // ✅ Duplicate check: only one active AMC per asset
+        Long assetId = asset.getAssetId();
+        if (assetId != null && amcRepo.existsByAsset_AssetIdAndActiveTrue(assetId)) {
+            throw new RuntimeException("❌ An active AMC already exists for this asset (assetId: " + assetId + "). Deactivate the existing one or use update.");
+        }
+
         AssetAmc saved = amcRepo.save(amc);
         log.info("✅ AMC created successfully (ID={}) for assetId={}", saved.getAmcId(), asset.getAssetId());
 

@@ -104,6 +104,17 @@ public class DocumentService {
             doc.setCreatedAt(LocalDateTime.now());
             doc.setUpdatedAt(LocalDateTime.now());
 
+            // ✅ Duplicate check: only one active document per (entityType, entityId, docType)
+            String entityType = request.getEntityType();
+            Long entityId = request.getEntityId();
+            String docType = request.getDocType();
+            if (entityType != null && entityId != null && docType != null && !docType.isBlank()) {
+                if (repo.existsByEntityTypeIgnoreCaseAndEntityIdAndDocTypeIgnoreCaseAndActiveTrue(
+                        entityType.trim(), entityId, docType.trim())) {
+                    throw new RuntimeException("Duplicate: Active document with docType '" + docType + "' already exists for " + entityType + " ID " + entityId + ". Skipped.");
+                }
+            }
+
             // 3️⃣ Handle linking and previous deactivation
             linkDocumentToEntity(doc, request);
 
@@ -239,6 +250,15 @@ public class DocumentService {
                     continue;
                 }
 
+                // ✅ Duplicate: one active document per (entityType, entityId, docType) — skip and continue
+                String docType = item.getDocType();
+                if (docType != null && !docType.trim().isEmpty()) {
+                    if (repo.existsByEntityTypeIgnoreCaseAndEntityIdAndDocTypeIgnoreCaseAndActiveTrue(entityType, entityId, docType.trim())) {
+                        response.addFailure(i, "Duplicate: Active document with docType '" + docType + "' already exists for " + entityType + " ID " + entityId + ". Skipped.");
+                        continue;
+                    }
+                }
+
                 // Create DocumentRequest for upload
                 DocumentRequest docRequest = new DocumentRequest();
                 docRequest.setEntityType(entityType);
@@ -355,6 +375,16 @@ public class DocumentService {
                 doc.setCreatedAt(LocalDateTime.now());
                 doc.setUpdatedAt(LocalDateTime.now());
                 doc.setUpdatedBy(username);
+
+                // ✅ Duplicate check: only one active document per (entityType, entityId, docType)
+                String docTypeVal = doc.getDocType();
+                if (docTypeVal != null && !docTypeVal.isBlank()) {
+                    if (repo.existsByEntityTypeIgnoreCaseAndEntityIdAndDocTypeIgnoreCaseAndActiveTrue(
+                            entityType, entityId, docTypeVal)) {
+                        response.addFailure(i, "Duplicate: Active document with docType '" + docTypeVal + "' already exists for " + entityType + " ID " + entityId + ". Skipped.");
+                        continue;
+                    }
+                }
 
                 // Link document to entity
                 linkDocumentToEntityBulk(doc, entityType, entityId, username);

@@ -93,12 +93,13 @@ public class VendorService {
         String projectType = Optional.ofNullable(request.getProjectType()).orElse("ASSET_SERVICE");
 
         return repo.findById(id).map(existing -> {
-            String newName = request.getVendor().getVendorName();
+            String newName = request.getVendor().getVendorName() != null ? request.getVendor().getVendorName().trim() : null;
 
             if (!StringUtils.hasText(newName)) {
                 throw new RuntimeException("Vendor name cannot be blank");
             }
 
+            // ✅ Duplicate check: case-insensitive, only when name is actually changing
             if (!existing.getVendorName().equalsIgnoreCase(newName)
                     && repo.existsByVendorNameIgnoreCase(newName)) {
                 throw new RuntimeException("❌ Vendor with name '" + newName + "' already exists");
@@ -215,7 +216,7 @@ public class VendorService {
 
                 // ✅ VALIDATION: Name uniqueness (checked in create method, but pre-check for better error message)
                 if (repo.existsByVendorNameIgnoreCase(vendorName)) {
-                    response.addFailure(i, "Vendor with name '" + vendorName + "' already exists");
+                    response.addFailure(i, "Duplicate: Vendor with name '" + vendorName + "' already exists. Skipped.");
                     continue;
                 }
 

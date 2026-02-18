@@ -815,10 +815,9 @@ public List<BulkMakeRequest.SimpleMakeDto> parseMakesSimple(MultipartFile file) 
  * 
  * <h3>📊 Excel File Format:</h3>
  * <pre>
- * Row 0 (Header): | model_id | model_name | description | make_id | make_name |
- * Row 1 (Data):  | 1        | XPS 13     | Dell XPS 13 | 1       | Dell      |
- * Row 2 (Data):  | 2        | Pavilion   | HP Pavilion | 2       | HP        |
- * Row 3 (Data):  |          | ThinkPad   | Lenovo ThinkPad |      | Lenovo   |
+ * Row 0 (Header): | model_id | model_name | description | make_id |
+ * Row 1 (Data):  | 1        | XPS 13     | Dell XPS 13 | 1       |
+ * Row 2 (Data):  | 2        | Pavilion   | HP Pavilion | 2       |
  * </pre>
  * 
  * <h3>Expected Excel Columns:</h3>
@@ -827,13 +826,11 @@ public List<BulkMakeRequest.SimpleMakeDto> parseMakesSimple(MultipartFile file) 
  *   <tr><td>model_id</td><td>Long</td><td>No</td><td>Primary key (for updates)</td></tr>
  *   <tr><td>model_name</td><td>String</td><td>Yes</td><td>Name of the model</td></tr>
  *   <tr><td>description</td><td>String</td><td>No</td><td>Description of the model</td></tr>
- *   <tr><td>make_id</td><td>Long</td><td>No</td><td>Foreign key to ProductMake</td></tr>
- *   <tr><td>make_name</td><td>String</td><td>No</td><td>Make name for lookup (alternative to make_id)</td></tr>
+ *   <tr><td>make_id</td><td>Long</td><td>Yes</td><td>Foreign key to ProductMake (required for bulk upload)</td></tr>
  * </table>
  * 
  * <h3>Foreign Key Handling:</h3>
- * <p>The parser extracts both make_id (foreign key) and make_name (for lookup).
- * Services can use either the ID directly or perform a lookup by name.</p>
+ * <p>The parser extracts make_id (foreign key to ProductMake). make_name is not used.</p>
  * 
  * <h3>Relationship:</h3>
  * <p>ProductModel → ProductMake (Many-to-One via make_id)</p>
@@ -878,13 +875,18 @@ public List<BulkModelRequest.SimpleModelDto> parseModelsSimple(MultipartFile fil
                 
                 // Get make_id (optional - foreign key from Excel)
                 Long makeId = getLongValueByColumnName(row, columnMap, "make_id");
+                // Get make_name (optional - for lookup when make_id not in Excel, e.g. "Model Master.xlsx")
+                String makeName = getCellValueByColumnName(row, columnMap, "make_name");
+                if (makeName == null || makeName.trim().isEmpty()) {
+                    makeName = getCellValueByColumnName(row, columnMap, "make"); // alternate header "Make"
+                }
 
                 BulkModelRequest.SimpleModelDto dto = new BulkModelRequest.SimpleModelDto();
                 dto.setModelId(modelId); // Set primary key from Excel
                 dto.setMakeId(makeId); // Set foreign key from Excel
+                dto.setMakeName(makeName != null ? makeName.trim() : null);
                 dto.setModelName(modelName.trim());
                 dto.setDescription(getCellValueByColumnName(row, columnMap, "description"));
-                dto.setMakeName(getCellValueByColumnName(row, columnMap, "make_name"));
 
                 list.add(dto);
             } catch (Exception ex) {

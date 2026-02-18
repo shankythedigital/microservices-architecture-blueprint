@@ -22,6 +22,9 @@ public class UserProfileResponse {
     private String state;
     private String country;
     private String countryCode;
+    private String address1;
+    private String address2;
+    private String address3;
 
     // Profile Photo
     private String profilePhotoUrl;
@@ -58,6 +61,13 @@ public class UserProfileResponse {
     private Boolean accountLocked;
     private Boolean acceptTc;
 
+    // Communication opt-out (true = user opted out of that channel)
+    private Boolean optOutSms;
+    private Boolean optOutEmail;
+    private Boolean optOutWhatsapp;
+    private Boolean optOutInapp;
+    private Boolean optOutPush;
+
     // Getters and Setters
     public Long getUserId() { return userId; }
     public void setUserId(Long userId) { this.userId = userId; }
@@ -88,6 +98,12 @@ public class UserProfileResponse {
 
     public String getCountryCode() { return countryCode; }
     public void setCountryCode(String countryCode) { this.countryCode = countryCode; }
+    public String getAddress1() { return address1; }
+    public void setAddress1(String address1) { this.address1 = address1; }
+    public String getAddress2() { return address2; }
+    public void setAddress2(String address2) { this.address2 = address2; }
+    public String getAddress3() { return address3; }
+    public void setAddress3(String address3) { this.address3 = address3; }
 
     public String getProfilePhotoUrl() { return profilePhotoUrl; }
     public void setProfilePhotoUrl(String profilePhotoUrl) { this.profilePhotoUrl = profilePhotoUrl; }
@@ -157,5 +173,16 @@ public class UserProfileResponse {
 
     public Boolean getAcceptTc() { return acceptTc; }
     public void setAcceptTc(Boolean acceptTc) { this.acceptTc = acceptTc; }
+
+    public Boolean getOptOutSms() { return optOutSms; }
+    public void setOptOutSms(Boolean optOutSms) { this.optOutSms = optOutSms; }
+    public Boolean getOptOutEmail() { return optOutEmail; }
+    public void setOptOutEmail(Boolean optOutEmail) { this.optOutEmail = optOutEmail; }
+    public Boolean getOptOutWhatsapp() { return optOutWhatsapp; }
+    public void setOptOutWhatsapp(Boolean optOutWhatsapp) { this.optOutWhatsapp = optOutWhatsapp; }
+    public Boolean getOptOutInapp() { return optOutInapp; }
+    public void setOptOutInapp(Boolean optOutInapp) { this.optOutInapp = optOutInapp; }
+    public Boolean getOptOutPush() { return optOutPush; }
+    public void setOptOutPush(Boolean optOutPush) { this.optOutPush = optOutPush; }
 }
 

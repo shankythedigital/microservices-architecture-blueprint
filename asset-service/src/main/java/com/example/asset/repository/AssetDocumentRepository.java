@@ -36,6 +36,13 @@ public interface AssetDocumentRepository extends JpaRepository<AssetDocument, Lo
     List<AssetDocument> findAllByEntityTypeIgnoreCaseAndEntityIdAndActiveFalse(
             String entityType, Long entityId);
 
+    /**
+     * Check if an active document already exists for the same entity and doc type.
+     * Used to prevent duplicate document entry per (entityType, entityId, docType).
+     * Only use when docType is not null/blank.
+     */
+    boolean existsByEntityTypeIgnoreCaseAndEntityIdAndDocTypeIgnoreCaseAndActiveTrue(
+            String entityType, Long entityId, String docType);
 
     // ============================================================
     // 🔹 Additional Methods Required for Unified Validation System

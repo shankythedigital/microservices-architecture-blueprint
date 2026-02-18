@@ -34,6 +34,15 @@ public class UserMapper {
         // ✅ Access projectType from compositeId
         dto.setProjectType(user.getCompositeId() != null ? user.getCompositeId().getProjectType() : null);
 
+        dto.setPincode(detail != null ? detail.getPincode() : null);
+        dto.setCity(detail != null ? detail.getCity() : null);
+        dto.setState(detail != null ? detail.getState() : null);
+        dto.setCountry(detail != null ? detail.getCountry() : null);
+        dto.setCountryCode(detail != null ? detail.getCountryCode() : null);
+        dto.setAddress1(detail != null ? detail.getAddress1() : null);
+        dto.setAddress2(detail != null ? detail.getAddress2() : null);
+        dto.setAddress3(detail != null ? detail.getAddress3() : null);
+
         dto.setEnabled(user.getEnabled());
         dto.setRoles(mapRoles(user.getRoles()));
         dto.setLastLoginDate(detail != null ? detail.getLastLoginDate() : null);

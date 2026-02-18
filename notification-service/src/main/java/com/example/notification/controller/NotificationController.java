@@ -31,10 +31,14 @@ public class NotificationController {
         this.jwtVerifier = jwtVerifier;
     }
 
+    /**
+     * Send notification. When Authorization header and userId are present, user communication opt-out is respected.
+     */
     @PostMapping
-    public ResponseEntity<String> send(@Valid @RequestBody NotificationRequest req) {
-        service.enqueue(req);
-        
+    public ResponseEntity<String> send(
+            @RequestHeader(required = false) HttpHeaders headers,
+            @Valid @RequestBody NotificationRequest req) {
+        service.enqueue(req, headers);
         return ResponseEntity.accepted().body(req.getChannel() + " Notification accepted");
     }
 

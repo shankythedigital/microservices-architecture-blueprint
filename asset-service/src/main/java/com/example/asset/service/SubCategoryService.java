@@ -48,6 +48,11 @@ public class SubCategoryService {
     // ============================================================
     @Transactional
     public ProductSubCategory create(HttpHeaders headers, SubCategoryRequest request) {
+        return create(headers, request, false);
+    }
+
+    @Transactional
+    public ProductSubCategory create(HttpHeaders headers, SubCategoryRequest request, boolean skipNotifications) {
         if (request == null || request.getSubCategory() == null)
             throw new IllegalArgumentException("Request or subCategory cannot be null");
 
@@ -56,52 +61,40 @@ public class SubCategoryService {
         Long userId = request.getUserId();
         String projectType = Optional.ofNullable(request.getProjectType()).orElse("ASSET_SERVICE");
 
-        // ✅ Validate subcategory name
         String subCategoryName = sub.getSubCategoryName() != null ? sub.getSubCategoryName().trim() : null;
         if (!StringUtils.hasText(subCategoryName))
             throw new IllegalArgumentException("Subcategory name must not be blank");
         
         sub.setSubCategoryName(subCategoryName);
 
-        // ✅ Check uniqueness per category (subcategories can have same name in different categories)
         Long categoryId = sub.getCategory() != null ? sub.getCategory().getCategoryId() : null;
         if (categoryId != null) {
-            // Check if subcategory with same name exists in this category
             if (repo.existsBySubCategoryNameIgnoreCaseAndCategory_CategoryId(subCategoryName, categoryId)) {
                 throw new IllegalArgumentException("Subcategory with name '" + subCategoryName + "' already exists in this category");
             }
         } else {
-            // If no category, check global uniqueness (fallback)
             if (repo.existsBySubCategoryNameIgnoreCase(subCategoryName)) {
                 throw new IllegalArgumentException("Subcategory already exists: " + subCategoryName);
             }
         }
 
-        // Set favourite and mostLike if provided
-        if (sub.getIsFavourite() == null) {
-            sub.setIsFavourite(false);
-        }
-        if (sub.getIsMostLike() == null) {
-            sub.setIsMostLike(false);
-        }
+        if (sub.getIsFavourite() == null) sub.setIsFavourite(false);
+        if (sub.getIsMostLike() == null) sub.setIsMostLike(false);
         sub.setCreatedBy(username);
         sub.setUpdatedBy(username);
         ProductSubCategory saved = repo.save(sub);
 
-        String bearer = extractBearerToken(headers);
-
-        // 🔔 Prepare notification placeholders
-        Map<String, Object> placeholders = new LinkedHashMap<>();
-        placeholders.put("subCategoryId", saved.getSubCategoryId());
-        placeholders.put("subCategoryName", saved.getSubCategoryName());
-        placeholders.put("actor", username);
-        placeholders.put("username", username);
-        placeholders.put("timestamp", Instant.now().toString());
-
-        sendNotification(bearer, userId, username, "INAPP", "SUBCATEGORY_CREATED_INAPP", placeholders, projectType);
-
-        log.info("✅ Created ProductSubCategory id={} name={} by={}",
-                saved.getSubCategoryId(), saved.getSubCategoryName(), username);
+        if (!skipNotifications) {
+            String bearer = extractBearerToken(headers);
+            Map<String, Object> placeholders = new LinkedHashMap<>();
+            placeholders.put("subCategoryId", saved.getSubCategoryId());
+            placeholders.put("subCategoryName", saved.getSubCategoryName());
+            placeholders.put("actor", username);
+            placeholders.put("username", username);
+            placeholders.put("timestamp", Instant.now().toString());
+            sendNotification(bearer, userId, username, "INAPP", "SUBCATEGORY_CREATED_INAPP", placeholders, projectType);
+            log.info("✅ Created ProductSubCategory id={} name={} by={}", saved.getSubCategoryId(), saved.getSubCategoryName(), username);
+        }
         return saved;
     }
 
@@ -263,7 +256,7 @@ public class SubCategoryService {
 
                 // ✅ VALIDATION: Required field
                 if (item.getSubCategoryName() == null || item.getSubCategoryName().trim().isEmpty()) {
-                    response.addFailure(i, "SubCategory name is required");
+                    response.addSkipped(i, "SubCategory name is required");
                     continue;
                 }
 
@@ -320,10 +313,10 @@ public class SubCategoryService {
                 }
                 
                 if (isDuplicate) {
-                    String errorMsg = category != null 
+                    String reason = category != null 
                             ? "SubCategory with name '" + subCategoryName + "' already exists in this category"
                             : "SubCategory with name '" + subCategoryName + "' already exists";
-                    response.addFailure(i, errorMsg);
+                    response.addSkipped(i, reason);
                     continue;
                 }
 
@@ -345,7 +338,7 @@ public class SubCategoryService {
                 }
 
                 createReq.setSubCategory(subCategory);
-                ProductSubCategory created = create(headers, createReq);
+                ProductSubCategory created = create(headers, createReq, true); // skip per-item notifications; summary at end
                 // Convert entity to DTO to include all optional fields in JSON response
                 ProductSubCategoryDto result = ProductSubCategoryMapper.toDto(created);
                 response.addSuccess(i, result);
@@ -355,6 +348,26 @@ public class SubCategoryService {
                 log.error("❌ Bulk subcategory failed at index {}: {}", i, e.getMessage());
                 response.addFailure(i, e.getMessage());
             }
+        }
+
+        // Notify user: Email, SMS, WhatsApp, InApp - single-line summary
+        try {
+            String bearer = extractBearerToken(headers);
+            Map<String, Object> placeholders = new LinkedHashMap<>();
+            placeholders.put("entityType", "Sub-Category");
+            placeholders.put("totalCount", response.getTotalCount());
+            placeholders.put("successCount", response.getSuccessCount());
+            placeholders.put("failureCount", response.getFailureCount());
+            placeholders.put("skippedCount", response.getSkippedCount());
+            placeholders.put("notUploadedCount", response.getSkippedCount());
+            placeholders.put("username", username);
+            placeholders.put("timestamp", Instant.now().toString());
+            sendNotification(bearer, userId, username, "EMAIL", "MASTER_DATA_BULK_UPLOAD_EMAIL", placeholders, projectType);
+            sendNotification(bearer, userId, username, "SMS", "MASTER_DATA_BULK_UPLOAD_SMS", placeholders, projectType);
+            sendNotification(bearer, userId, username, "WHATSAPP", "MASTER_DATA_BULK_UPLOAD_WHATSAPP", placeholders, projectType);
+            sendNotification(bearer, userId, username, "INAPP", "MASTER_DATA_BULK_UPLOAD_INAPP", placeholders, projectType);
+        } catch (Exception e) {
+            log.warn("⚠️ Failed to send bulk upload notification: {}", e.getMessage());
         }
 
         log.info("📦 Bulk subcategory upload: {}/{} success",

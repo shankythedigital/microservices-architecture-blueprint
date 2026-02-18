@@ -521,12 +521,12 @@ public class AuthServiceImpl {
     // 🔹 Standard USER Registration
     // =====================================================
     public User register(String usernamePlain, String password, String emailPlain, String mobilePlain, String projectType) {
-        return register(usernamePlain, password, emailPlain, mobilePlain, null, projectType, null, null, null, null, null);
+        return register(usernamePlain, password, emailPlain, mobilePlain, null, projectType, null, null, null, null, null, null, null, null);
     }
 
     public User register(String usernamePlain, String password, String emailPlain, String mobilePlain, 
                         String countryCode, String projectType, String pincode, String city, 
-                        String state, String country, Boolean acceptTc) {
+                        String state, String country, String address1, String address2, String address3, Boolean acceptTc) {
         if (usernamePlain == null || usernamePlain.isBlank())
             throw new IllegalArgumentException("Username is required");
 
@@ -567,6 +567,9 @@ public class AuthServiceImpl {
         detail.setCity(city);
         detail.setState(state);
         detail.setCountry(country);
+        detail.setAddress1(address1);
+        detail.setAddress2(address2);
+        detail.setAddress3(address3);
         detail.setAcceptTc(acceptTc != null ? acceptTc : false);
         detail.setCreatedBy("system");
         detail.setActive(true);
@@ -580,12 +583,12 @@ public class AuthServiceImpl {
     // 🔹 ADMIN Registration (Same duplicate rule)
     // =====================================================
     public User adminregister(String usernamePlain, String password, String emailPlain, String mobilePlain, String projectType) {
-        return adminregister(usernamePlain, password, emailPlain, mobilePlain, null, projectType, null, null, null, null, null);
+        return adminregister(usernamePlain, password, emailPlain, mobilePlain, null, projectType, null, null, null, null, null, null, null, null);
     }
 
     public User adminregister(String usernamePlain, String password, String emailPlain, String mobilePlain,
                              String countryCode, String projectType, String pincode, String city,
-                             String state, String country, Boolean acceptTc) {
+                             String state, String country, String address1, String address2, String address3, Boolean acceptTc) {
         if (usernamePlain == null || usernamePlain.isBlank())
             throw new IllegalArgumentException("Username is required");
 
@@ -625,6 +628,9 @@ public class AuthServiceImpl {
         detail.setCity(city);
         detail.setState(state);
         detail.setCountry(country);
+        detail.setAddress1(address1);
+        detail.setAddress2(address2);
+        detail.setAddress3(address3);
         detail.setAcceptTc(acceptTc != null ? acceptTc : false);
         detail.setCreatedBy("system");
         detail.setActive(true);
@@ -728,8 +734,28 @@ public class AuthServiceImpl {
     }
 
     // =====================================================
-    // LOGIN METHODS
+    // LOGIN METHODS (Block/Unblock enforced per Security & PDPA/DPDPA)
     // =====================================================
+    /**
+     * Ensures user is allowed to log in: enabled, not locked, not blocked (temporary/permanent).
+     * Throws with a generic message to avoid leaking account state.
+     */
+    private void ensureUserAllowedToLogin(User user, UserDetailMaster udm) {
+        if (Boolean.FALSE.equals(user.getEnabled()))
+            throw new RuntimeException("Account is not allowed to access the system. Contact administrator.");
+        if (udm != null) {
+            if (Boolean.TRUE.equals(udm.getAccountLocked()))
+                throw new RuntimeException("Account is not allowed to access the system. Contact administrator.");
+            String bt = udm.getBlockType();
+            if (bt != null && !bt.isBlank()) {
+                if ("PERMANENT".equalsIgnoreCase(bt))
+                    throw new RuntimeException("Account is not allowed to access the system. Contact administrator.");
+                if ("TEMPORARY".equalsIgnoreCase(bt))
+                    throw new RuntimeException("Account is not allowed to access the system. Contact administrator.");
+            }
+        }
+    }
+
     public AuthResponse loginWithPassword(String usernamePlain, String password, String deviceInfo) {
         if (usernamePlain == null || password == null)
             throw new IllegalArgumentException("Username and password are required");
@@ -743,6 +769,8 @@ public class AuthServiceImpl {
 
         UserDetailMaster udm = udmRepo.findByUserId(user.getUserId())
                 .orElseThrow(() -> new RuntimeException("User detail not found"));
+
+        ensureUserAllowedToLogin(user, udm);
 
         udm.setLastLoginDate(udm.getLoginDate());
         udm.setLoginDate(LocalDateTime.now());
@@ -767,6 +795,8 @@ public class AuthServiceImpl {
         Optional<UserDetailMaster> od = udmRepo.findByMobileHash(mobileHash);
         User user = od.map(d -> userRepo.findById(d.getUserId()).orElseThrow())
                 .orElseGet(() -> register(mobilePlain, null, null, mobilePlain, projectType));
+        UserDetailMaster udmOtp = udmRepo.findByUserId(user.getUserId()).orElse(null);
+        ensureUserAllowedToLogin(user, udmOtp);
 
         AuthResponse resp = createSessionAndTokens(user, deviceInfo);
         auditService.log(user.getUserId(), "OTP_LOGIN", "User", null, null,
@@ -781,6 +811,8 @@ public class AuthServiceImpl {
             throw new RuntimeException("Invalid MPIN");
 
         User user = userRepo.findById(userId).orElseThrow();
+        UserDetailMaster udmMpin = udmRepo.findByUserId(userId).orElse(null);
+        ensureUserAllowedToLogin(user, udmMpin);
         AuthResponse resp = createSessionAndTokens(user, deviceInfo);
         auditService.log(userId, "MPIN_LOGIN", "User", null, null,
                 RequestContext.getIp(), RequestContext.getUserAgent());

@@ -40,6 +40,18 @@ public interface ProductMakeRepository extends JpaRepository<ProductMake, Long> 
     boolean existsByMakeNameIgnoreCaseAndSubCategory_SubCategoryId(String makeName, Long subCategoryId);
 
     /**
+     * Check if another make (excluding makeId) exists by name and subcategory (case-insensitive).
+     * Used for duplicate detection on update.
+     */
+    boolean existsByMakeNameIgnoreCaseAndSubCategory_SubCategoryIdAndMakeIdNot(String makeName, Long subCategoryId, Long makeId);
+
+    /**
+     * Check if another make (excluding makeId) exists by name globally (case-insensitive).
+     * Used for duplicate detection on update when subcategory is null.
+     */
+    boolean existsByMakeNameIgnoreCaseAndMakeIdNot(String makeName, Long makeId);
+
+    /**
      * Default SME method: check if ANY asset under THIS MAKE
      * is linked to ANY active user.
      *

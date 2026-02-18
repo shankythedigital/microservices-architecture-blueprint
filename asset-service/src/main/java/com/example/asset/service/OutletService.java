@@ -246,7 +246,7 @@ public class OutletService {
 
                 // ✅ VALIDATION: Required field
                 if (item.getOutletName() == null || item.getOutletName().trim().isEmpty()) {
-                    response.addFailure(i, "Outlet name is required");
+                    response.addSkipped(i, "Outlet name is required");
                     continue;
                 }
 
@@ -260,7 +260,7 @@ public class OutletService {
 
                 // ✅ VALIDATION: Name uniqueness (case-insensitive check to prevent duplicates)
                 if (repo.existsByOutletNameIgnoreCase(outletName)) {
-                    response.addFailure(i, "Outlet with name '" + outletName + "' already exists");
+                    response.addSkipped(i, "Outlet with name '" + outletName + "' already exists");
                     continue;
                 }
 
@@ -327,23 +327,24 @@ public class OutletService {
             }
         }
 
-        // ✅ Send single notification for bulk operation (not per item)
-        if (response.getSuccessCount() > 0) {
-            try {
-                Map<String, Object> placeholders = new LinkedHashMap<>();
-                placeholders.put("totalCount", response.getTotalCount());
-                placeholders.put("successCount", response.getSuccessCount());
-                placeholders.put("failureCount", response.getFailureCount());
-                placeholders.put("username", username);
-                placeholders.put("timestamp", new Date().toString());
+        // ✅ Send single notification for bulk operation: Email, SMS, WhatsApp, InApp - single-line summary
+        try {
+            Map<String, Object> placeholders = new LinkedHashMap<>();
+            placeholders.put("entityType", "Outlet");
+            placeholders.put("totalCount", response.getTotalCount());
+            placeholders.put("successCount", response.getSuccessCount());
+            placeholders.put("failureCount", response.getFailureCount());
+            placeholders.put("skippedCount", response.getSkippedCount());
+            placeholders.put("notUploadedCount", response.getSkippedCount());
+            placeholders.put("username", username);
+            placeholders.put("timestamp", new Date().toString());
 
-                sendNotifications(bearer, userId, username, placeholders, projectType,
-                        "OUTLET_BULK_UPLOAD", "Bulk outlet upload completed");
-                
-                notifyAdmins(bearer, projectType, placeholders, "OUTLET_BULK_UPLOAD_ADMIN", username);
-            } catch (Exception e) {
-                log.warn("⚠️ Failed to send bulk upload notification: {}", e.getMessage());
-            }
+            safeNotificationHelper.safeNotifyAsync(bearer, userId, username, null, null, "EMAIL", "MASTER_DATA_BULK_UPLOAD_EMAIL", placeholders, projectType);
+            safeNotificationHelper.safeNotifyAsync(bearer, userId, username, null, null, "SMS", "MASTER_DATA_BULK_UPLOAD_SMS", placeholders, projectType);
+            safeNotificationHelper.safeNotifyAsync(bearer, userId, username, null, null, "WHATSAPP", "MASTER_DATA_BULK_UPLOAD_WHATSAPP", placeholders, projectType);
+            safeNotificationHelper.safeNotifyAsync(bearer, userId, username, null, null, "INAPP", "MASTER_DATA_BULK_UPLOAD_INAPP", placeholders, projectType);
+        } catch (Exception e) {
+            log.warn("⚠️ Failed to send bulk upload notification: {}", e.getMessage());
         }
 
         log.info("📦 Bulk outlet upload: {}/{} success",

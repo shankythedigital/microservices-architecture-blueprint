@@ -95,6 +95,12 @@ public class AssetWarrantyService {
         if (savedDoc != null)
             warranty.setDocument(savedDoc);
 
+        // ✅ Duplicate check: only one active warranty per asset
+        Long assetId = asset.getAssetId();
+        if (assetId != null && warrantyRepo.existsByAsset_AssetIdAndActiveTrue(assetId)) {
+            throw new RuntimeException("❌ An active warranty already exists for this asset (assetId: " + assetId + "). Deactivate the existing one or use update.");
+        }
+
         AssetWarranty saved = warrantyRepo.save(warranty);
         log.info("✅ Warranty created successfully (ID={}) for assetId={}", saved.getWarrantyId(), asset.getAssetId());
 

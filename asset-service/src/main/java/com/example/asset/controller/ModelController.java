@@ -121,47 +121,65 @@ public class ModelController {
     }
 
     // ============================================================
-    // 📊 EXCEL BULK UPLOAD MODELS
+    // 📊 EXCEL BULK UPLOAD MODELS (validate first, then process in background)
     // ============================================================
     @PostMapping("/bulk/excel")
-    public ResponseEntity<ResponseWrapper<BulkUploadResponse<ModelDto>>> bulkUploadFromExcel(
+    public ResponseEntity<ResponseWrapper<Object>> bulkUploadFromExcel(
             @RequestHeader HttpHeaders headers,
             @RequestParam("file") MultipartFile file,
             @RequestParam("userId") Long userId,
             @RequestParam("username") String username,
             @RequestParam(value = "projectType", required = false, defaultValue = "ASSET_SERVICE") String projectType) {
-    
+
         try {
             if (file == null || file.isEmpty()) {
                 return ResponseEntity.badRequest()
                         .body(new ResponseWrapper<>(false, "Excel file cannot be empty", null));
             }
-    
-            List<BulkModelRequest.SimpleModelDto> rows =
-                    excelParsingService.parseModelsSimple(file);
-    
+
+            List<BulkModelRequest.SimpleModelDto> rows = excelParsingService.parseModelsSimple(file);
+
             if (rows.isEmpty()) {
                 return ResponseEntity.badRequest()
                         .body(new ResponseWrapper<>(false, "No valid model data in Excel", null));
             }
-    
+
             BulkModelRequest request = new BulkModelRequest();
             request.setUserId(userId);
             request.setUsername(username);
             request.setProjectType(projectType);
             request.setModels(rows);
-    
-            BulkUploadResponse<ModelDto> result =
-                    modelService.bulkCreate(headers, request);
-    
-            return ResponseEntity.ok(new ResponseWrapper<>(
+
+            // 1. Validate Excel (no persist)
+            BulkUploadResponse<ModelDto> validationResult = modelService.validateBulkModels(request);
+
+            if (validationResult.getFailureCount() > 0) {
+                return ResponseEntity.badRequest()
+                        .body(new ResponseWrapper<>(false,
+                                String.format("Validation failed: %d error(s). Fix and re-upload.", validationResult.getFailureCount()),
+                                validationResult));
+            }
+
+            // 2. Validation passed – process in background
+            String bearer = headers.getFirst("Authorization");
+            if (bearer == null || bearer.isBlank()) bearer = "";
+            if (!bearer.startsWith("Bearer ")) bearer = "Bearer " + bearer;
+
+            modelService.bulkCreateAsync(bearer, request);
+
+            java.util.Map<String, Object> acceptedData = new java.util.LinkedHashMap<>();
+            acceptedData.put("totalCount", rows.size());
+            acceptedData.put("status", "PROCESSING");
+            acceptedData.put("message", "Excel validated successfully. Processing in background. You will receive Email, SMS and WhatsApp with results when complete.");
+
+            return ResponseEntity.status(202).body(new ResponseWrapper<>(
                     true,
-                    String.format("Excel upload completed: %d/%d successful",
-                            result.getSuccessCount(), result.getTotalCount()),
-                    result
+                    String.format("Validated %d models. Processing in background. Check your notifications for outcomes.", rows.size()),
+                    acceptedData
             ));
-    
+
         } catch (Exception e) {
+            log.error("❌ Bulk model Excel upload failed: {}", e.getMessage(), e);
             return ResponseEntity.internalServerError()
                     .body(new ResponseWrapper<>(false, "❌ " + e.getMessage(), null));
         }

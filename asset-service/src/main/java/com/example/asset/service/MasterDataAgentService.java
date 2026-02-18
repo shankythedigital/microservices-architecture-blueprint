@@ -314,8 +314,8 @@ public class MasterDataAgentService {
             throw new IllegalArgumentException("❌ Outlet name cannot be null or empty");
         }
 
-        // Edge case: Duplicate outlet name
-        if (outletRepo.existsByOutletName(outletName.trim())) {
+        // Edge case: Duplicate outlet name (case-insensitive)
+        if (outletRepo.existsByOutletNameIgnoreCase(outletName.trim())) {
             throw new IllegalArgumentException("❌ Outlet with name '" + outletName + "' already exists");
         }
 
@@ -338,6 +338,11 @@ public class MasterDataAgentService {
         // Edge case: Null/empty name
         if (!StringUtils.hasText(componentName)) {
             throw new IllegalArgumentException("❌ Component name cannot be null or empty");
+        }
+
+        // Edge case: Duplicate component name (case-insensitive)
+        if (componentRepo.existsByComponentNameIgnoreCase(componentName.trim())) {
+            throw new IllegalArgumentException("❌ Component with name '" + componentName + "' already exists");
         }
 
         AssetComponent component = new AssetComponent();

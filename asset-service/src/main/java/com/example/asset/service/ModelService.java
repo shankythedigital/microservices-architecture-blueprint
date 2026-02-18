@@ -15,10 +15,12 @@ import com.example.common.service.SafeNotificationHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import jakarta.persistence.EntityManager;
 import java.util.*;
 
 /**
@@ -30,8 +32,10 @@ import java.util.*;
 public class ModelService {
 
     private static final Logger log = LoggerFactory.getLogger(ModelService.class);
+    private static final int BULK_BATCH_SIZE = 500;
 
     private final ProductModelRepository repo;
+    private final EntityManager entityManager;
     private final ProductMakeRepository makeRepo;
     private final SafeNotificationHelper safeNotificationHelper;
     @SuppressWarnings("unused")
@@ -40,11 +44,13 @@ public class ModelService {
     public ModelService(ProductModelRepository repo,
                         ProductMakeRepository makeRepo,
                         SafeNotificationHelper safeNotificationHelper,
-                        AdminClient adminClient) {
+                        AdminClient adminClient,
+                        EntityManager entityManager) {
         this.repo = repo;
         this.makeRepo = makeRepo;
         this.safeNotificationHelper = safeNotificationHelper;
         this.adminClient = adminClient;
+        this.entityManager = entityManager;
     }
 
     // ============================================================
@@ -237,6 +243,106 @@ public class ModelService {
     }
 
     // ============================================================
+    // 📋 VALIDATE BULK MODELS (no persist - for pre-check before background processing)
+    // ============================================================
+    @Transactional(readOnly = true)
+    public BulkUploadResponse<ModelDto> validateBulkModels(BulkModelRequest bulkRequest) {
+        BulkUploadResponse<ModelDto> response = new BulkUploadResponse<>();
+        if (bulkRequest == null || bulkRequest.getModels() == null) {
+            throw new IllegalArgumentException("Bulk request cannot be null");
+        }
+        List<BulkModelRequest.SimpleModelDto> items = bulkRequest.getModels();
+        response.setTotalCount(items.size());
+
+        for (int i = 0; i < items.size(); i++) {
+            try {
+                BulkModelRequest.SimpleModelDto item = items.get(i);
+                if (item.getModelName() == null || item.getModelName().trim().isEmpty()) {
+                    response.addSkipped(i, "Model name is required");
+                    continue;
+                }
+                String modelName = item.getModelName().trim();
+                if (modelName.length() > 150) {
+                    response.addFailure(i, "Model name exceeds maximum length of 150 characters");
+                    continue;
+                }
+                if (item.getDescription() != null && !item.getDescription().trim().isEmpty()) {
+                    String desc = item.getDescription().trim();
+                    if (desc.length() > 255) {
+                        response.addFailure(i, "Description exceeds maximum length of 255 characters");
+                        continue;
+                    }
+                }
+                ProductMake make = null;
+                if (item.getMakeId() != null) {
+                    make = makeRepo.findById(item.getMakeId())
+                            .filter(m -> m.getActive() == null || m.getActive())
+                            .orElse(null);
+                    if (make == null) {
+                        response.addFailure(i, "Make not found with id: " + item.getMakeId());
+                        continue;
+                    }
+                } else if (item.getMakeName() != null && !item.getMakeName().trim().isEmpty()) {
+                    make = makeRepo.findByMakeNameIgnoreCase(item.getMakeName().trim())
+                            .filter(m -> m.getActive() == null || m.getActive())
+                            .orElse(null);
+                    if (make == null) {
+                        response.addFailure(i, "Make not found with name: " + item.getMakeName());
+                        continue;
+                    }
+                } else {
+                    response.addFailure(i, "Make is required (provide make_id or make_name)");
+                    continue;
+                }
+                if (repo.existsByModelNameIgnoreCaseAndMake_MakeId(modelName, make.getMakeId())) {
+                    response.addSkipped(i, "Model '" + modelName + "' already exists for this make");
+                    continue;
+                }
+                response.addSuccess(i, null); // Valid, no DTO yet
+            } catch (Exception e) {
+                response.addFailure(i, e.getMessage());
+            }
+        }
+        return response;
+    }
+
+    /**
+     * Run bulk create in background. Outcomes are sent via Email, SMS and WhatsApp when complete.
+     */
+    @Async
+    @Transactional
+    public void bulkCreateAsync(String bearerToken, BulkModelRequest bulkRequest) {
+        try {
+            HttpHeaders headers = new HttpHeaders();
+            headers.set("Authorization", bearerToken != null && bearerToken.startsWith("Bearer ") ? bearerToken : "Bearer " + bearerToken);
+            bulkCreate(headers, bulkRequest);
+            log.info("📦 Background bulk model upload completed for user={}", bulkRequest.getUsername());
+        } catch (Exception e) {
+            log.error("❌ Background bulk model upload failed: {}", e.getMessage(), e);
+            try {
+                String bearer = bearerToken != null && bearerToken.startsWith("Bearer ") ? bearerToken : "Bearer " + bearerToken;
+                HttpHeaders h = new HttpHeaders();
+                h.set("Authorization", bearer);
+                int total = bulkRequest != null && bulkRequest.getModels() != null ? bulkRequest.getModels().size() : 0;
+                Map<String, Object> placeholders = new LinkedHashMap<>();
+                placeholders.put("entityType", "Model");
+                placeholders.put("totalCount", total);
+                placeholders.put("successCount", 0);
+                placeholders.put("failureCount", total);
+                placeholders.put("error", e.getMessage());
+                placeholders.put("username", bulkRequest != null ? bulkRequest.getUsername() : "unknown");
+                placeholders.put("timestamp", java.time.Instant.now().toString());
+                safeNotificationHelper.safeNotifyAsync(bearer, bulkRequest != null ? bulkRequest.getUserId() : null,
+                        bulkRequest != null ? bulkRequest.getUsername() : "unknown",
+                        null, null, "EMAIL", "MASTER_DATA_BULK_UPLOAD_EMAIL", placeholders,
+                        bulkRequest != null && bulkRequest.getProjectType() != null ? bulkRequest.getProjectType() : "ASSET_SERVICE");
+            } catch (Exception ex) {
+                log.warn("⚠️ Failed to send failure notification: {}", ex.getMessage());
+            }
+        }
+    }
+
+    // ============================================================
     // 📦 BULK UPLOAD MODELS (NEW - using BulkModelRequest)
     // ============================================================
     @Transactional
@@ -260,7 +366,7 @@ public class ModelService {
 
                 // ✅ VALIDATION: Required field
                 if (item.getModelName() == null || item.getModelName().trim().isEmpty()) {
-                    response.addFailure(i, "Model name is required");
+                    response.addSkipped(i, "Model name is required");
                     continue;
                 }
 
@@ -282,23 +388,33 @@ public class ModelService {
                     }
                 }
 
-                // ✅ VALIDATION: Foreign key - Make is REQUIRED via makeId only (no make_name in bulk upload)
-                if (item.getMakeId() == null) {
-                    response.addFailure(i, "Make ID is required");
-                    continue;
-                }
-                ProductMake make = makeRepo.findById(item.getMakeId())
-                        .filter(m -> m.getActive() == null || m.getActive())
-                        .orElse(null);
-                if (make == null) {
-                    response.addFailure(i, "Make not found with id: " + item.getMakeId());
+                // ✅ VALIDATION: Foreign key - Make is REQUIRED via makeId or make_name (Excel may have "Make" / "Make Name")
+                ProductMake make = null;
+                if (item.getMakeId() != null) {
+                    make = makeRepo.findById(item.getMakeId())
+                            .filter(m -> m.getActive() == null || m.getActive())
+                            .orElse(null);
+                    if (make == null) {
+                        response.addFailure(i, "Make not found with id: " + item.getMakeId());
+                        continue;
+                    }
+                } else if (item.getMakeName() != null && !item.getMakeName().trim().isEmpty()) {
+                    make = makeRepo.findByMakeNameIgnoreCase(item.getMakeName().trim())
+                            .filter(m -> m.getActive() == null || m.getActive())
+                            .orElse(null);
+                    if (make == null) {
+                        response.addFailure(i, "Make not found with name: " + item.getMakeName());
+                        continue;
+                    }
+                } else {
+                    response.addFailure(i, "Make is required (provide make_id or make_name)");
                     continue;
                 }
 
                 // ✅ VALIDATION: Uniqueness check (model name must be unique per make)
                 boolean exists = repo.existsByModelNameIgnoreCaseAndMake_MakeId(modelName, make.getMakeId());
                 if (exists) {
-                    response.addFailure(i, "Duplicate: Model with name '" + modelName + "' already exists for this make. Skipped.");
+                    response.addSkipped(i, "Model with name '" + modelName + "' already exists for this make");
                     continue;
                 }
 
@@ -319,23 +435,35 @@ public class ModelService {
                 log.error("❌ Bulk model failed at index {}: {}", i, e.getMessage());
                 response.addFailure(i, e.getMessage());
             }
+
+            // Periodic flush/clear to prevent session bloat and avoid transaction/DataSource issues at scale
+            if ((i + 1) % BULK_BATCH_SIZE == 0) {
+                try {
+                    entityManager.flush();
+                    entityManager.clear();
+                    log.debug("📦 Flushed persistence context at index {}", i + 1);
+                } catch (Exception ex) {
+                    log.warn("⚠️ Flush/clear at index {}: {}", i + 1, ex.getMessage());
+                }
+            }
         }
 
-        // Notify user once per channel only: one Email, one SMS, one WhatsApp (no in-app)
+        // Notify user: Email, SMS, WhatsApp, InApp - single-line summary
         try {
             String bearer = extractBearer(headers);
-            int notUploaded = response.getTotalCount() - response.getSuccessCount() - response.getFailureCount();
             Map<String, Object> placeholders = new LinkedHashMap<>();
             placeholders.put("entityType", "Model");
             placeholders.put("totalCount", response.getTotalCount());
             placeholders.put("successCount", response.getSuccessCount());
             placeholders.put("failureCount", response.getFailureCount());
-            placeholders.put("notUploadedCount", Math.max(0, notUploaded));
+            placeholders.put("skippedCount", response.getSkippedCount());
+            placeholders.put("notUploadedCount", response.getSkippedCount());
             placeholders.put("username", username);
             placeholders.put("timestamp", java.time.Instant.now().toString());
             safeNotificationHelper.safeNotifyAsync(bearer, userId, username, null, null, "EMAIL", "MASTER_DATA_BULK_UPLOAD_EMAIL", placeholders, projectType);
             safeNotificationHelper.safeNotifyAsync(bearer, userId, username, null, null, "SMS", "MASTER_DATA_BULK_UPLOAD_SMS", placeholders, projectType);
             safeNotificationHelper.safeNotifyAsync(bearer, userId, username, null, null, "WHATSAPP", "MASTER_DATA_BULK_UPLOAD_WHATSAPP", placeholders, projectType);
+            safeNotificationHelper.safeNotifyAsync(bearer, userId, username, null, null, "INAPP", "MASTER_DATA_BULK_UPLOAD_INAPP", placeholders, projectType);
         } catch (Exception e) {
             log.warn("⚠️ Failed to send bulk upload notification: {}", e.getMessage());
         }

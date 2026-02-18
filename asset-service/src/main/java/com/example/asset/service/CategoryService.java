@@ -43,6 +43,11 @@ public class CategoryService {
     // ============================================================
     @Transactional
     public CategoryDto create(HttpHeaders headers, CategoryRequest request) {
+        return create(headers, request, false);
+    }
+
+    @Transactional
+    public CategoryDto create(HttpHeaders headers, CategoryRequest request, boolean skipNotifications) {
         if (request == null || request.getCategory() == null)
             throw new IllegalArgumentException("Request body or category cannot be null");
 
@@ -55,7 +60,6 @@ public class CategoryService {
         String name = normalizeName(payload.getCategoryName());
         if (!StringUtils.hasText(name))
             throw new IllegalArgumentException("Category name must not be blank");
-        // ✅ Use case-insensitive check to prevent duplicates like "Electronics" and "electronics"
         if (repo.existsByCategoryNameIgnoreCase(name))
             throw new IllegalArgumentException("Category already exists: " + name);
 
@@ -69,19 +73,18 @@ public class CategoryService {
 
         ProductCategory saved = repo.save(entity);
 
-        // 🔔 Prepare placeholders
-        Map<String, Object> placeholders = Map.of(
-                "categoryId", saved.getCategoryId(),
-                "categoryName", saved.getCategoryName(),
-                "actor", username,
-                "username", username,
-                "timestamp", Instant.now().toString()
-        );
-
-        sendNotification(bearer, userId, username, "INAPP", "CATEGORY_CREATED_INAPP", placeholders, projectType);
-        sendNotification(bearer, userId, username, "EMAIL", "CATEGORY_CREATED_EMAIL", placeholders, projectType);
-
-        log.info("✅ Category created: id={} name={} by={}", saved.getCategoryId(), name, username);
+        if (!skipNotifications) {
+            Map<String, Object> placeholders = Map.of(
+                    "categoryId", saved.getCategoryId(),
+                    "categoryName", saved.getCategoryName(),
+                    "actor", username,
+                    "username", username,
+                    "timestamp", Instant.now().toString()
+            );
+            sendNotification(bearer, userId, username, "INAPP", "CATEGORY_CREATED_INAPP", placeholders, projectType);
+            sendNotification(bearer, userId, username, "EMAIL", "CATEGORY_CREATED_EMAIL", placeholders, projectType);
+            log.info("✅ Category created: id={} name={} by={}", saved.getCategoryId(), name, username);
+        }
 
         return CategoryMapper.toDto(saved);
     }
@@ -241,7 +244,7 @@ public BulkUploadResponse<CategoryDto> bulkCreate(
 
             // ✅ VALIDATION: Required field
             if (item.getCategoryName() == null || item.getCategoryName().trim().isEmpty()) {
-                response.addFailure(i, "Category name is required");
+                response.addSkipped(i, "Category name is required");
                 continue;
             }
 
@@ -255,7 +258,7 @@ public BulkUploadResponse<CategoryDto> bulkCreate(
 
             // ✅ VALIDATION: Name uniqueness (case-insensitive check to prevent duplicates)
             if (repo.existsByCategoryNameIgnoreCase(categoryName)) {
-                response.addFailure(i, "Category with name '" + categoryName + "' already exists");
+                response.addSkipped(i, "Category with name '" + categoryName + "' already exists");
                 continue;
             }
 
@@ -284,7 +287,7 @@ public BulkUploadResponse<CategoryDto> bulkCreate(
 
             createReq.setCategory(pc);
 
-            CategoryDto result = create(headers, createReq);
+            CategoryDto result = create(headers, createReq, true); // skip per-item notifications; summary at end
             response.addSuccess(i, result);
             log.debug("✅ Created category name={}", categoryName);
 
@@ -292,6 +295,26 @@ public BulkUploadResponse<CategoryDto> bulkCreate(
             log.error("❌ Bulk category failed at index {}: {}", i, e.getMessage());
             response.addFailure(i, e.getMessage());
         }
+    }
+
+    // Notify user: Email, SMS, WhatsApp, InApp - single-line summary
+    try {
+        String bearer = extractBearer(headers);
+        Map<String, Object> placeholders = new LinkedHashMap<>();
+        placeholders.put("entityType", "Product Category");
+        placeholders.put("totalCount", response.getTotalCount());
+        placeholders.put("successCount", response.getSuccessCount());
+        placeholders.put("failureCount", response.getFailureCount());
+        placeholders.put("skippedCount", response.getSkippedCount());
+        placeholders.put("notUploadedCount", response.getSkippedCount());
+        placeholders.put("username", username);
+        placeholders.put("timestamp", Instant.now().toString());
+        sendNotification(bearer, userId, username, "EMAIL", "MASTER_DATA_BULK_UPLOAD_EMAIL", placeholders, projectType);
+        sendNotification(bearer, userId, username, "SMS", "MASTER_DATA_BULK_UPLOAD_SMS", placeholders, projectType);
+        sendNotification(bearer, userId, username, "WHATSAPP", "MASTER_DATA_BULK_UPLOAD_WHATSAPP", placeholders, projectType);
+        sendNotification(bearer, userId, username, "INAPP", "MASTER_DATA_BULK_UPLOAD_INAPP", placeholders, projectType);
+    } catch (Exception e) {
+        log.warn("⚠️ Failed to send bulk upload notification: {}", e.getMessage());
     }
 
     log.info("📦 Bulk category upload: {}/{} success",
