@@ -52,6 +52,15 @@ public class ModelService {
     // ============================================================
     @Transactional
     public ModelDto create(HttpHeaders headers, ModelRequest request) {
+        return create(headers, request, false);
+    }
+
+    /**
+     * Create model, optionally skipping per-item notifications (used by bulk upload to avoid
+     * thousands of async notification tasks that can cause resource/context issues).
+     */
+    @Transactional
+    public ModelDto create(HttpHeaders headers, ModelRequest request, boolean skipNotifications) {
         validateAuthorization(headers);
 
         ProductModel model = request.getModel();
@@ -84,12 +93,12 @@ public class ModelService {
         model.setUpdatedBy(username);
         ProductModel saved = repo.save(model);
 
-        // 🔔 Send notifications
-        sendNotification(bearer, userId, username, "INAPP", "MODEL_CREATED_INAPP", saved, projectType);
-        sendNotification(bearer, userId, username, "EMAIL", "MODEL_CREATED_EMAIL", saved, projectType);
-        sendNotification(bearer, userId, username, "SMS", "MODEL_CREATED_SMS", saved, projectType);
-
-        log.info("✅ Model created: id={} name={} by={}", saved.getModelId(), saved.getModelName(), username);
+        if (!skipNotifications) {
+            sendNotification(bearer, userId, username, "INAPP", "MODEL_CREATED_INAPP", saved, projectType);
+            sendNotification(bearer, userId, username, "EMAIL", "MODEL_CREATED_EMAIL", saved, projectType);
+            sendNotification(bearer, userId, username, "SMS", "MODEL_CREATED_SMS", saved, projectType);
+            log.info("✅ Model created: id={} name={} by={}", saved.getModelId(), saved.getModelName(), username);
+        }
 
         return ModelMapper.toDto(saved);
     }
@@ -111,7 +120,7 @@ public class ModelService {
 
         return repo.findById(id).map(existing -> {
 
-            String newName = patch.getModelName();
+            String newName = patch.getModelName() != null ? patch.getModelName().trim() : null;
             if (!StringUtils.hasText(newName))
                 throw new RuntimeException("Model name cannot be blank");
 
@@ -123,11 +132,14 @@ public class ModelService {
             if (patch.getMake() == null)
                 throw new RuntimeException("❌ Model must have a valid make");
 
-            // ✅ Uniqueness check
+            // ✅ Uniqueness check: duplicate only when name is actually changing (case-insensitive)
             boolean duplicate = repo.existsByModelNameIgnoreCaseAndMake_MakeId(
                     newName, patch.getMake().getMakeId());
-            if (duplicate && !Objects.equals(existing.getModelName(), newName))
-                throw new RuntimeException("❌ Duplicate model name for same make");
+            boolean nameChanged = existing.getModelName() == null
+                    ? StringUtils.hasText(newName)
+                    : !existing.getModelName().equalsIgnoreCase(newName);
+            if (duplicate && nameChanged)
+                throw new RuntimeException("❌ Model with name '" + newName + "' already exists for this make");
 
             String oldName = existing.getModelName();
             existing.setModelName(newName);
@@ -270,62 +282,62 @@ public class ModelService {
                     }
                 }
 
-                // ✅ VALIDATION: Foreign key - Make is REQUIRED (nullable = false in entity)
-                ProductMake make = null;
-                if (item.getMakeId() != null) {
-                    // Prioritize ID over name
-                    make = makeRepo.findById(item.getMakeId())
-                            .filter(m -> m.getActive() == null || m.getActive())
-                            .orElse(null);
-                    if (make == null) {
-                        response.addFailure(i, "Make not found with id: " + item.getMakeId());
-                        continue;
-                    }
-                } else if (item.getMakeName() != null && !item.getMakeName().trim().isEmpty()) {
-                    // Fallback to name lookup
-                    make = makeRepo.findByMakeNameIgnoreCase(item.getMakeName().trim())
-                            .filter(m -> m.getActive() == null || m.getActive())
-                            .orElse(null);
-                    if (make == null) {
-                        response.addFailure(i, "Make not found with name: " + item.getMakeName().trim());
-                        continue;
-                    }
-                } else {
-                    response.addFailure(i, "Make is required (provide makeId or makeName)");
+                // ✅ VALIDATION: Foreign key - Make is REQUIRED via makeId only (no make_name in bulk upload)
+                if (item.getMakeId() == null) {
+                    response.addFailure(i, "Make ID is required");
+                    continue;
+                }
+                ProductMake make = makeRepo.findById(item.getMakeId())
+                        .filter(m -> m.getActive() == null || m.getActive())
+                        .orElse(null);
+                if (make == null) {
+                    response.addFailure(i, "Make not found with id: " + item.getMakeId());
                     continue;
                 }
 
                 // ✅ VALIDATION: Uniqueness check (model name must be unique per make)
                 boolean exists = repo.existsByModelNameIgnoreCaseAndMake_MakeId(modelName, make.getMakeId());
                 if (exists) {
-                    response.addFailure(i, "Model with name '" + modelName + "' already exists for this make");
+                    response.addFailure(i, "Duplicate: Model with name '" + modelName + "' already exists for this make. Skipped.");
                     continue;
                 }
 
-                // CREATE: Primary key is auto-generated
-                ModelRequest createReq = new ModelRequest();
-                createReq.setUserId(userId);
-                createReq.setUsername(username);
-                createReq.setProjectType(projectType);
-
+                // CREATE: persist only (no create() to avoid auth/DataSource path in loop)
                 ProductModel model = new ProductModel();
                 model.setModelName(modelName);
-                // Only set description if provided (optional field)
-                if (description != null) {
-                    model.setDescription(description);
-                }
-                // Make is required
+                if (description != null) model.setDescription(description);
                 model.setMake(make);
-
-                createReq.setModel(model);
-                ModelDto result = create(headers, createReq);
-                response.addSuccess(i, result);
+                model.setIsFavourite(false);
+                model.setIsMostLike(false);
+                model.setCreatedBy(username);
+                model.setUpdatedBy(username);
+                ProductModel saved = repo.save(model);
+                response.addSuccess(i, ModelMapper.toDto(saved));
                 log.debug("✅ Created model name={}", modelName);
 
             } catch (Exception e) {
                 log.error("❌ Bulk model failed at index {}: {}", i, e.getMessage());
                 response.addFailure(i, e.getMessage());
             }
+        }
+
+        // Notify user once per channel only: one Email, one SMS, one WhatsApp (no in-app)
+        try {
+            String bearer = extractBearer(headers);
+            int notUploaded = response.getTotalCount() - response.getSuccessCount() - response.getFailureCount();
+            Map<String, Object> placeholders = new LinkedHashMap<>();
+            placeholders.put("entityType", "Model");
+            placeholders.put("totalCount", response.getTotalCount());
+            placeholders.put("successCount", response.getSuccessCount());
+            placeholders.put("failureCount", response.getFailureCount());
+            placeholders.put("notUploadedCount", Math.max(0, notUploaded));
+            placeholders.put("username", username);
+            placeholders.put("timestamp", java.time.Instant.now().toString());
+            safeNotificationHelper.safeNotifyAsync(bearer, userId, username, null, null, "EMAIL", "MASTER_DATA_BULK_UPLOAD_EMAIL", placeholders, projectType);
+            safeNotificationHelper.safeNotifyAsync(bearer, userId, username, null, null, "SMS", "MASTER_DATA_BULK_UPLOAD_SMS", placeholders, projectType);
+            safeNotificationHelper.safeNotifyAsync(bearer, userId, username, null, null, "WHATSAPP", "MASTER_DATA_BULK_UPLOAD_WHATSAPP", placeholders, projectType);
+        } catch (Exception e) {
+            log.warn("⚠️ Failed to send bulk upload notification: {}", e.getMessage());
         }
 
         log.info("📦 Bulk model upload: {}/{} success",
