@@ -3,6 +3,7 @@ package com.example.asset.service;
 
 import com.example.asset.dto.BulkOutletRequest;
 import com.example.asset.dto.BulkUploadResponse;
+import com.example.asset.dto.DocumentRequest;
 import com.example.asset.dto.OutletDto;
 import com.example.asset.dto.OutletRequest;
 import com.example.asset.entity.PurchaseOutlet;
@@ -18,6 +19,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.*;
 
@@ -35,15 +37,21 @@ public class OutletService {
     private final VendorRepository vendorRepo;
     private final SafeNotificationHelper safeNotificationHelper;
     private final AdminClient adminClient;
+    private final DocumentService documentService;
+    private final DocumentTypeMasterService documentTypeMasterService;
 
     public OutletService(PurchaseOutletRepository repo,
                          VendorRepository vendorRepo,
                          SafeNotificationHelper safeNotificationHelper,
-                         AdminClient adminClient) {
+                         AdminClient adminClient,
+                         DocumentService documentService,
+                         DocumentTypeMasterService documentTypeMasterService) {
         this.repo = repo;
         this.vendorRepo = vendorRepo;
         this.safeNotificationHelper = safeNotificationHelper;
         this.adminClient = adminClient;
+        this.documentService = documentService;
+        this.documentTypeMasterService = documentTypeMasterService;
     }
 
     // ============================================================
@@ -51,6 +59,11 @@ public class OutletService {
     // ============================================================
     @Transactional
     public PurchaseOutlet create(HttpHeaders headers, OutletRequest request) {
+        return create(headers, request, null, null);
+    }
+
+    @Transactional
+    public PurchaseOutlet create(HttpHeaders headers, OutletRequest request, MultipartFile document, String docType) {
         validateAuthorization(headers);
 
         if (request == null || request.getOutlet() == null)
@@ -87,6 +100,19 @@ public class OutletService {
         outlet.setCreatedBy(username);
         outlet.setUpdatedBy(username);
         PurchaseOutlet saved = repo.save(outlet);
+
+        // 📎 Upload document and store in AssetDocument (required for create)
+        if (document != null && !document.isEmpty() && docType != null && !docType.isBlank()) {
+            DocumentRequest docRequest = new DocumentRequest();
+            docRequest.setUserId(userId);
+            docRequest.setUsername(username);
+            docRequest.setProjectType(projectType);
+            docRequest.setEntityType("OUTLET");
+            docRequest.setEntityId(saved.getOutletId());
+            docRequest.setDocType(docType.trim());
+            documentService.upload(headers, document, docRequest);
+            log.info("✅ Document uploaded for outlet ID={} with docType={}", saved.getOutletId(), docType);
+        }
 
         Map<String, Object> placeholders = new LinkedHashMap<>();
         placeholders.put("outletId", saved.getOutletId());
@@ -174,6 +200,24 @@ public class OutletService {
             log.info("✏️ Outlet updated: id={} name={} by={}", id, newName, username);
             return saved;
         }).orElseThrow(() -> new RuntimeException("Outlet not found with id: " + id));
+    }
+
+    @Transactional
+    public PurchaseOutlet updateWithDocument(HttpHeaders headers, Long id, OutletRequest request, MultipartFile document, String docType) {
+        documentTypeMasterService.validate(docType);
+        if (document == null || document.isEmpty())
+            throw new IllegalArgumentException("Document is required for update");
+        PurchaseOutlet updated = update(headers, id, request);
+        DocumentRequest docRequest = new DocumentRequest();
+        docRequest.setUserId(request.getUserId());
+        docRequest.setUsername(request.getUsername());
+        docRequest.setProjectType(Optional.ofNullable(request.getProjectType()).orElse("ASSET_SERVICE"));
+        docRequest.setEntityType("OUTLET");
+        docRequest.setEntityId(id);
+        docRequest.setDocType(docType.trim());
+        documentService.upload(headers, document, docRequest);
+        log.info("✅ Document uploaded for outlet ID={} with docType={}", id, docType);
+        return updated;
     }
 
     // ============================================================

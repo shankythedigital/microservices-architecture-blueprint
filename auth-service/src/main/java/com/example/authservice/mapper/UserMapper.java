@@ -30,6 +30,8 @@ public class UserMapper {
         dto.setUsername(detail != null ? detail.getUsername() : null);
         dto.setEmail(detail != null ? detail.getEmail() : null);
         dto.setMobile(detail != null ? detail.getMobile() : null);
+        dto.setFirstName(detail != null ? detail.getFirstName() : null);
+        dto.setLastName(detail != null ? detail.getLastName() : null);
 
         // ✅ Access projectType from compositeId
         dto.setProjectType(user.getCompositeId() != null ? user.getCompositeId().getProjectType() : null);

@@ -13,6 +13,8 @@ public class ComponentRequest {
     private String username;
     private String projectType;
     private AssetComponent component;
+    /** Optional: when provided, links the component to this asset after create/update */
+    private Long assetId;
 
     // ----- Getters -----
     public Long getUserId() {
@@ -31,6 +33,10 @@ public class ComponentRequest {
         return component;
     }
 
+    public Long getAssetId() {
+        return assetId;
+    }
+
     // ----- Setters -----
     public void setUserId(Long userId) {
         this.userId = userId;
@@ -46,6 +52,10 @@ public class ComponentRequest {
 
     public void setComponent(AssetComponent component) {
         this.component = component;
+    }
+
+    public void setAssetId(Long assetId) {
+        this.assetId = assetId;
     }
 }
 

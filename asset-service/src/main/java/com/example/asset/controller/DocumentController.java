@@ -7,6 +7,7 @@ import com.example.asset.dto.BulkUploadResponse;
 import com.example.asset.dto.DocumentRequest;
 import com.example.asset.entity.AssetDocument;
 import com.example.asset.service.DocumentService;
+import com.example.asset.service.DocumentTypeMasterService;
 import com.example.asset.service.ExcelParsingService;
 import com.example.common.util.ResponseWrapper;
 
@@ -30,11 +31,22 @@ public class DocumentController {
 
     private static final Logger log = LoggerFactory.getLogger(DocumentController.class);
     private final DocumentService documentService;
+    private final DocumentTypeMasterService documentTypeMasterService;
     private final ExcelParsingService excelParsingService;
 
-    public DocumentController(DocumentService documentService, ExcelParsingService excelParsingService) {
+    public DocumentController(DocumentService documentService, DocumentTypeMasterService documentTypeMasterService, ExcelParsingService excelParsingService) {
         this.documentService = documentService;
+        this.documentTypeMasterService = documentTypeMasterService;
         this.excelParsingService = excelParsingService;
+    }
+
+    // ============================================================
+    // 📋 ALLOWED DOCUMENT TYPES
+    // ============================================================
+    @GetMapping("/allowed-types")
+    public ResponseEntity<ResponseWrapper<List<String>>> getAllowedDocumentTypes() {
+        List<String> types = documentTypeMasterService.getAllowedTypes().stream().sorted().toList();
+        return ResponseEntity.ok(new ResponseWrapper<>(true, "Allowed document types (icons, pdf, doc, docx, txt, etc.)", types));
     }
 
     // ============================================================

@@ -5,6 +5,12 @@ import com.example.asset.dto.BulkModelRequest;
 import com.example.asset.dto.BulkUploadResponse;
 import com.example.asset.dto.ModelDto;
 import com.example.asset.dto.ModelRequest;
+import com.example.asset.util.ByteArrayMultipartFile;
+import com.example.asset.service.DocumentTypeMasterService;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import java.util.Base64;
+import java.util.Map;
 import com.example.asset.service.ExcelParsingService;
 import com.example.asset.service.ModelService;
 import com.example.common.util.ResponseWrapper;
@@ -27,24 +33,55 @@ public class ModelController {
 
     private static final Logger log = LoggerFactory.getLogger(ModelController.class);
     private final ModelService modelService;
+    private final DocumentTypeMasterService documentTypeMasterService;
     private final ExcelParsingService excelParsingService;
 
-    public ModelController(ModelService modelService, ExcelParsingService excelParsingService) {
+    public ModelController(ModelService modelService, DocumentTypeMasterService documentTypeMasterService, ExcelParsingService excelParsingService) {
         this.modelService = modelService;
+        this.documentTypeMasterService = documentTypeMasterService;
         this.excelParsingService = excelParsingService;
     }
 
-    @PostMapping
+    @PostMapping(consumes = "application/json")
     public ResponseEntity<ResponseWrapper<ModelDto>> create(
             @RequestHeader HttpHeaders headers,
             @RequestBody ModelRequest request) {
         try {
-            ModelDto dto = modelService.create(headers, request);
+            ModelDto dto = modelService.create(headers, request, null, null, false);
             return ResponseEntity.ok(new ResponseWrapper<>(true, "✅ Model created successfully", dto));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest()
+                    .body(new ResponseWrapper<>(false, "❌ " + e.getMessage(), null));
         } catch (Exception e) {
             log.error("❌ Model create failed: {}", e.getMessage(), e);
             return ResponseEntity.internalServerError()
                     .body(new ResponseWrapper<>(false, e.getMessage(), null));
+        }
+    }
+
+    @PostMapping(path = "/with-document", consumes = "application/json")
+    public ResponseEntity<ResponseWrapper<ModelDto>> createWithDocument(
+            @RequestHeader HttpHeaders headers,
+            @RequestBody Map<String, Object> body) {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            ModelRequest request = mapper.convertValue(body.get("request"), ModelRequest.class);
+            String document = (String) body.get("document");
+            String docType = (String) body.get("docType");
+            if (document == null || document.isBlank())
+                return ResponseEntity.badRequest().body(new ResponseWrapper<>(false, "❌ document is required (base64)", null));
+            if (docType == null || docType.isBlank())
+                return ResponseEntity.badRequest().body(new ResponseWrapper<>(false, "❌ docType is required", null));
+            documentTypeMasterService.validate(docType);
+            byte[] bytes = Base64.getDecoder().decode(document);
+            MultipartFile multipartFile = new ByteArrayMultipartFile(bytes, "document", "document." + docType);
+            ModelDto created = modelService.create(headers, request, multipartFile, docType.trim(), false);
+            return ResponseEntity.ok(new ResponseWrapper<>(true, "✅ Model created successfully with document", created));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(new ResponseWrapper<>(false, "❌ " + e.getMessage(), null));
+        } catch (Exception e) {
+            log.error("❌ Failed to create model with document: {}", e.getMessage(), e);
+            return ResponseEntity.internalServerError().body(new ResponseWrapper<>(false, "❌ Error: " + e.getMessage(), null));
         }
     }
 
@@ -60,6 +97,33 @@ public class ModelController {
             log.error("❌ Model update failed: {}", e.getMessage(), e);
             return ResponseEntity.internalServerError()
                     .body(new ResponseWrapper<>(false, e.getMessage(), null));
+        }
+    }
+
+    @PutMapping(path = "/{id}/with-document", consumes = "application/json")
+    public ResponseEntity<ResponseWrapper<ModelDto>> updateWithDocument(
+            @RequestHeader HttpHeaders headers,
+            @PathVariable Long id,
+            @RequestBody Map<String, Object> body) {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            ModelRequest request = mapper.convertValue(body.get("request"), ModelRequest.class);
+            String document = (String) body.get("document");
+            String docType = (String) body.get("docType");
+            if (document == null || document.isBlank())
+                return ResponseEntity.badRequest().body(new ResponseWrapper<>(false, "❌ document is required (base64)", null));
+            if (docType == null || docType.isBlank())
+                return ResponseEntity.badRequest().body(new ResponseWrapper<>(false, "❌ docType is required", null));
+            documentTypeMasterService.validate(docType);
+            byte[] bytes = Base64.getDecoder().decode(document);
+            MultipartFile multipartFile = new ByteArrayMultipartFile(bytes, "document", "document." + docType);
+            ModelDto updated = modelService.updateWithDocument(headers, id, request, multipartFile, docType.trim());
+            return ResponseEntity.ok(new ResponseWrapper<>(true, "✏️ Model updated successfully with document", updated));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(new ResponseWrapper<>(false, "❌ " + e.getMessage(), null));
+        } catch (Exception e) {
+            log.error("❌ Failed to update model with document: {}", e.getMessage(), e);
+            return ResponseEntity.internalServerError().body(new ResponseWrapper<>(false, "❌ Error: " + e.getMessage(), null));
         }
     }
 

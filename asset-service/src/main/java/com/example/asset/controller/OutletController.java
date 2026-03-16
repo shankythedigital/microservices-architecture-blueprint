@@ -5,6 +5,12 @@ import com.example.asset.dto.BulkOutletRequest;
 import com.example.asset.dto.BulkUploadResponse;
 import com.example.asset.dto.OutletDto;
 import com.example.asset.dto.OutletRequest;
+import com.example.asset.util.ByteArrayMultipartFile;
+import com.example.asset.service.DocumentTypeMasterService;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import java.util.Base64;
+import java.util.Map;
 import com.example.asset.entity.PurchaseOutlet;
 import com.example.asset.mapper.OutletMapper;
 import com.example.asset.service.ExcelParsingService;
@@ -30,29 +36,59 @@ public class OutletController {
 
     private static final Logger log = LoggerFactory.getLogger(OutletController.class);
     private final OutletService outletService;
+    private final DocumentTypeMasterService documentTypeMasterService;
     private final ExcelParsingService excelParsingService;
 
-    public OutletController(OutletService outletService, ExcelParsingService excelParsingService) {
+    public OutletController(OutletService outletService, DocumentTypeMasterService documentTypeMasterService, ExcelParsingService excelParsingService) {
         this.outletService = outletService;
+        this.documentTypeMasterService = documentTypeMasterService;
         this.excelParsingService = excelParsingService;
     }
 
     // ============================================================
-    // 🟢 CREATE OUTLET
+    // 🟢 CREATE OUTLET (JSON body - document via Document API separately)
     // ============================================================
-    @PostMapping
+    @PostMapping(consumes = "application/json")
     public ResponseEntity<ResponseWrapper<OutletDto>> create(@RequestHeader HttpHeaders headers,
                                                                   @RequestBody OutletRequest request) {
         try {
-            PurchaseOutlet created = outletService.create(headers, request);
-            // Convert entity to DTO to include all optional fields in JSON response
+            PurchaseOutlet created = outletService.create(headers, request, null, null);
             OutletDto result = OutletMapper.toDto(created);
-            log.info("✅ Outlet created successfully: {}", created.getOutletName());
+            log.info("✅ Outlet created successfully");
             return ResponseEntity.ok(new ResponseWrapper<>(true, "Outlet created successfully", result));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest()
+                    .body(new ResponseWrapper<>(false, "❌ " + e.getMessage(), null));
         } catch (Exception e) {
             log.error("❌ Failed to create outlet: {}", e.getMessage(), e);
             return ResponseEntity.internalServerError()
                     .body(new ResponseWrapper<>(false, e.getMessage(), null));
+        }
+    }
+
+    @PostMapping(path = "/with-document", consumes = "application/json")
+    public ResponseEntity<ResponseWrapper<OutletDto>> createWithDocument(
+            @RequestHeader HttpHeaders headers,
+            @RequestBody Map<String, Object> body) {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            OutletRequest request = mapper.convertValue(body.get("request"), OutletRequest.class);
+            String document = (String) body.get("document");
+            String docType = (String) body.get("docType");
+            if (document == null || document.isBlank())
+                return ResponseEntity.badRequest().body(new ResponseWrapper<>(false, "❌ document is required (base64)", null));
+            if (docType == null || docType.isBlank())
+                return ResponseEntity.badRequest().body(new ResponseWrapper<>(false, "❌ docType is required", null));
+            documentTypeMasterService.validate(docType);
+            byte[] bytes = Base64.getDecoder().decode(document);
+            MultipartFile multipartFile = new ByteArrayMultipartFile(bytes, "document", "document." + docType);
+            PurchaseOutlet created = outletService.create(headers, request, multipartFile, docType.trim());
+            return ResponseEntity.ok(new ResponseWrapper<>(true, "✅ Outlet created successfully with document", OutletMapper.toDto(created)));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(new ResponseWrapper<>(false, "❌ " + e.getMessage(), null));
+        } catch (Exception e) {
+            log.error("❌ Failed to create outlet with document: {}", e.getMessage(), e);
+            return ResponseEntity.internalServerError().body(new ResponseWrapper<>(false, "❌ Error: " + e.getMessage(), null));
         }
     }
 
@@ -71,6 +107,33 @@ public class OutletController {
             log.error("❌ Failed to update outlet: {}", e.getMessage(), e);
             return ResponseEntity.internalServerError()
                     .body(new ResponseWrapper<>(false, e.getMessage(), null));
+        }
+    }
+
+    @PutMapping(path = "/{id}/with-document", consumes = "application/json")
+    public ResponseEntity<ResponseWrapper<PurchaseOutlet>> updateWithDocument(
+            @RequestHeader HttpHeaders headers,
+            @PathVariable Long id,
+            @RequestBody Map<String, Object> body) {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            OutletRequest request = mapper.convertValue(body.get("request"), OutletRequest.class);
+            String document = (String) body.get("document");
+            String docType = (String) body.get("docType");
+            if (document == null || document.isBlank())
+                return ResponseEntity.badRequest().body(new ResponseWrapper<>(false, "❌ document is required (base64)", null));
+            if (docType == null || docType.isBlank())
+                return ResponseEntity.badRequest().body(new ResponseWrapper<>(false, "❌ docType is required", null));
+            documentTypeMasterService.validate(docType);
+            byte[] bytes = Base64.getDecoder().decode(document);
+            MultipartFile multipartFile = new ByteArrayMultipartFile(bytes, "document", "document." + docType);
+            PurchaseOutlet updated = outletService.updateWithDocument(headers, id, request, multipartFile, docType.trim());
+            return ResponseEntity.ok(new ResponseWrapper<>(true, "✏️ Outlet updated successfully with document", updated));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(new ResponseWrapper<>(false, "❌ " + e.getMessage(), null));
+        } catch (Exception e) {
+            log.error("❌ Failed to update outlet with document: {}", e.getMessage(), e);
+            return ResponseEntity.internalServerError().body(new ResponseWrapper<>(false, "❌ Error: " + e.getMessage(), null));
         }
     }
 

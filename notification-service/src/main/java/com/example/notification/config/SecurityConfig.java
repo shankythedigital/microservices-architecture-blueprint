@@ -29,7 +29,8 @@ public class SecurityConfig {
         JwtAuthFilter jwtAuthFilter = new JwtAuthFilter(jwtVerifier);
 
         http
-            .csrf(csrf -> csrf.disable()) // Disable CSRF for REST APIs
+            .csrf(csrf -> csrf.disable())
+            .cors(customizer -> {})
             .authorizeHttpRequests(auth -> auth
                 // Swagger/OpenAPI endpoints
                 .requestMatchers(

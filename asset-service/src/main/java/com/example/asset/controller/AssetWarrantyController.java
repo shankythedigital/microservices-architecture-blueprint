@@ -4,6 +4,13 @@ package com.example.asset.controller;
 import com.example.asset.dto.AssetWarrantyDto;
 import com.example.asset.dto.AssetWarrantyRequest;
 import com.example.asset.service.AssetWarrantyService;
+import com.example.asset.util.ByteArrayMultipartFile;
+import com.example.asset.service.DocumentTypeMasterService;
+import org.springframework.web.multipart.MultipartFile;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import java.util.Base64;
+import java.util.Map;
 import com.example.common.util.ResponseWrapper;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
@@ -26,9 +33,11 @@ public class AssetWarrantyController {
 
     private static final Logger log = LoggerFactory.getLogger(AssetWarrantyController.class);
     private final AssetWarrantyService warrantyService;
+    private final DocumentTypeMasterService documentTypeMasterService;
 
-    public AssetWarrantyController(AssetWarrantyService warrantyService) {
+    public AssetWarrantyController(AssetWarrantyService warrantyService, DocumentTypeMasterService documentTypeMasterService) {
         this.warrantyService = warrantyService;
+        this.documentTypeMasterService = documentTypeMasterService;
     }
 
     // ============================================================
@@ -50,6 +59,33 @@ public class AssetWarrantyController {
         }
     }
 
+    @PostMapping(path = "/with-document", consumes = "application/json")
+    public ResponseEntity<ResponseWrapper<AssetWarrantyDto>> createWithDocument(
+            @RequestHeader HttpHeaders headers,
+            @RequestBody Map<String, Object> body) {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            AssetWarrantyRequest request = mapper.convertValue(body.get("request"), AssetWarrantyRequest.class);
+            String document = (String) body.get("document");
+            String docType = (String) body.get("docType");
+            if (document == null || document.isBlank())
+                return ResponseEntity.badRequest().body(new ResponseWrapper<>(false, "❌ document is required (base64)", null));
+            if (docType == null || docType.isBlank())
+                return ResponseEntity.badRequest().body(new ResponseWrapper<>(false, "❌ docType is required", null));
+            documentTypeMasterService.validate(docType);
+            request.setDocType(docType.trim());
+            byte[] bytes = Base64.getDecoder().decode(document);
+            MultipartFile multipartFile = new ByteArrayMultipartFile(bytes, "document", "document." + docType);
+            AssetWarrantyDto created = warrantyService.create(headers, request, multipartFile);
+            return ResponseEntity.ok(new ResponseWrapper<>(true, "✅ Warranty created successfully with document", created));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(new ResponseWrapper<>(false, "❌ " + e.getMessage(), null));
+        } catch (Exception e) {
+            log.error("❌ Warranty creation with document failed: {}", e.getMessage(), e);
+            return ResponseEntity.internalServerError().body(new ResponseWrapper<>(false, "❌ " + e.getMessage(), null));
+        }
+    }
+
     // ============================================================
     // ✏️ UPDATE WARRANTY (JSON only)
     // ============================================================
@@ -67,6 +103,34 @@ public class AssetWarrantyController {
             log.error("❌ Warranty update failed: {}", e.getMessage(), e);
             return ResponseEntity.internalServerError()
                     .body(new ResponseWrapper<>(false, "❌ Warranty update failed: " + e.getMessage(), null));
+        }
+    }
+
+    @PutMapping(path = "/{id}/with-document", consumes = "application/json")
+    public ResponseEntity<ResponseWrapper<AssetWarrantyDto>> updateWithDocument(
+            @RequestHeader HttpHeaders headers,
+            @PathVariable Long id,
+            @RequestBody Map<String, Object> body) {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            AssetWarrantyRequest request = mapper.convertValue(body.get("request"), AssetWarrantyRequest.class);
+            String document = (String) body.get("document");
+            String docType = (String) body.get("docType");
+            if (document == null || document.isBlank())
+                return ResponseEntity.badRequest().body(new ResponseWrapper<>(false, "❌ document is required (base64)", null));
+            if (docType == null || docType.isBlank())
+                return ResponseEntity.badRequest().body(new ResponseWrapper<>(false, "❌ docType is required", null));
+            documentTypeMasterService.validate(docType);
+            request.setDocType(docType.trim());
+            byte[] bytes = Base64.getDecoder().decode(document);
+            MultipartFile multipartFile = new ByteArrayMultipartFile(bytes, "document", "document." + docType);
+            AssetWarrantyDto updated = warrantyService.update(headers, id, request, multipartFile);
+            return ResponseEntity.ok(new ResponseWrapper<>(true, "✏️ Warranty updated successfully with document", updated));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(new ResponseWrapper<>(false, "❌ " + e.getMessage(), null));
+        } catch (Exception e) {
+            log.error("❌ Warranty update with document failed: {}", e.getMessage(), e);
+            return ResponseEntity.internalServerError().body(new ResponseWrapper<>(false, "❌ " + e.getMessage(), null));
         }
     }
 

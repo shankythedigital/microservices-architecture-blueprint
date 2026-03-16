@@ -50,8 +50,169 @@ tags:
     description: Status master data
   - name: Entity Types
     description: Entity type master data
+  - name: Asset Scanning
+    description: QR Code and Barcode scanning for asset lookup
 
 paths:
+  # ============================================================
+  # ASSET SCAN ENDPOINTS (Mobile QR/Barcode Scanner)
+  # ============================================================
+  /api/asset/v1/scan:
+    post:
+      tags:
+        - Asset Scanning
+      summary: Scan asset by QR code or barcode
+      description: |
+        Universal endpoint for mobile to scan QR codes or barcodes and lookup asset.
+        Supports matching by:
+        - Asset ID (numeric)
+        - Asset Name UDV (e.g. AST-LAP-001)
+        - Serial Number
+        
+        All scan operations are logged in the audit log.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssetScanRequest'
+      responses:
+        '200':
+          description: Asset found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssetScanResponseWrapper'
+        '400':
+          description: Bad request - empty scan value
+        '404':
+          description: No asset found for scan value
+        '500':
+          description: Internal server error
+
+    get:
+      tags:
+        - Asset Scanning
+      summary: Scan asset by QR code or barcode (GET)
+      description: Convenience GET endpoint. Pass scan value as query parameter ?value=...
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: value
+          in: query
+          required: true
+          description: QR code or barcode value to scan
+          schema:
+            type: string
+        - name: type
+          in: query
+          required: false
+          description: Scan type - QR, BARCODE, or AUTO (default)
+          schema:
+            type: string
+            default: AUTO
+      responses:
+        '200':
+          description: Asset found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssetScanResponseWrapper'
+        '400':
+          description: Bad request - empty scan value
+        '404':
+          description: No asset found for scan value
+        '500':
+          description: Internal server error
+
+  /api/asset/v1/scan/save:
+    post:
+      tags:
+        - Asset Scanning
+      summary: Scan and create/update asset
+      description: |
+        Scan QR/barcode and create/update asset with AI agent extraction.
+        Supports JSON, delimited, or text pattern formats in scanValue.
+        Automatically extracts category, make, model, warranty, AMC from QR data.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssetScanCreateRequest'
+      responses:
+        '200':
+          description: Asset scanned and saved
+
+  /api/asset/v1/scan/qr:
+    post:
+      tags:
+        - Asset Scanning
+      summary: Universal QR scan
+      description: Scan any QR code. Returns asset or master data entity in respective JSON format.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssetScanRequest'
+      responses:
+        '200':
+          description: Entity found
+        '404':
+          description: No entity found
+
+    get:
+      tags:
+        - Asset Scanning
+      summary: Universal QR scan (GET)
+      parameters:
+        - name: value
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: type
+          in: query
+          schema:
+            type: string
+            default: AUTO
+      responses:
+        '200':
+          description: Entity found
+        '404':
+          description: No entity found
+
+  /api/asset/v1/scan/qr/image:
+    post:
+      tags:
+        - Asset Scanning
+      summary: Scan QR/barcode from image
+      description: Upload image (PNG, JPEG, GIF, BMP, WebP) containing QR code or barcode.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: QR/barcode decoded and entity found
+        '422':
+          description: No QR/barcode found in image
+
   # ============================================================
   # ASSET ENDPOINTS
   # ============================================================
@@ -1544,6 +1705,150 @@ components:
           type: string
         data:
           type: object
+
+    AssetScanRequest:
+      type: object
+      required:
+        - scanValue
+      description: Request for scanning QR code or barcode
+      properties:
+        scanValue:
+          type: string
+          description: QR code or barcode value (e.g. AST-LAP-001, 12345, SN123456)
+        scanType:
+          type: string
+          enum: [QR, BARCODE, AUTO]
+          default: AUTO
+          description: Scan type - AUTO detects automatically
+
+    AssetScanResponse:
+      type: object
+      description: Asset details returned after successful scan
+      properties:
+        assetId:
+          type: integer
+          format: int64
+        assetNameUdv:
+          type: string
+        serialNumber:
+          type: string
+        assetStatus:
+          type: string
+        purchaseDate:
+          type: string
+          format: date
+        categoryName:
+          type: string
+        subCategoryName:
+          type: string
+        makeName:
+          type: string
+        modelName:
+          type: string
+        matchedBy:
+          type: string
+          enum: [ASSET_ID, ASSET_NAME_UDV, SERIAL_NUMBER]
+          description: How the asset was matched
+        scanValue:
+          type: string
+        scanType:
+          type: string
+
+    AssetScanResponseWrapper:
+      type: object
+      description: Wrapper for scan API response
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        data:
+          $ref: '#/components/schemas/AssetScanResponse'
+
+    AssetScanCreateRequest:
+      type: object
+      required:
+        - scanValue
+      description: Request for scan and create/update asset with AI extraction
+      properties:
+        scanValue:
+          type: string
+          description: QR/barcode value - can be JSON, delimited, or text
+        scanType:
+          type: string
+          enum: [QR, BARCODE, AUTO]
+        userId:
+          type: integer
+          format: int64
+        username:
+          type: string
+        projectType:
+          type: string
+        assetNameUdv:
+          type: string
+        serialNumber:
+          type: string
+        categoryId:
+          type: integer
+          format: int64
+        subCategoryId:
+          type: integer
+          format: int64
+        makeId:
+          type: integer
+          format: int64
+        modelId:
+          type: integer
+          format: int64
+        categoryName:
+          type: string
+        subCategoryName:
+          type: string
+        makeName:
+          type: string
+        modelName:
+          type: string
+        assetStatus:
+          type: string
+        purchaseDate:
+          type: string
+          format: date
+        targetUserId:
+          type: integer
+          format: int64
+        targetUsername:
+          type: string
+        componentIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+        warranty:
+          type: object
+          properties:
+            warrantyStatus:
+              type: string
+            warrantyProvider:
+              type: string
+            warrantyTerms:
+              type: string
+            startDate:
+              type: string
+              format: date
+            endDate:
+              type: string
+              format: date
+        amc:
+          type: object
+          properties:
+            amcStatus:
+              type: string
+            startDate:
+              type: string
+              format: date
+            endDate:
+              type: string
+              format: date
 
     AssetRequest:
       type: object

@@ -21,6 +21,10 @@ public class UserProfileRequest {
     private String mobile;
     private Boolean acceptTc;
 
+    // First and last name
+    private String firstName;
+    private String lastName;
+
     // Profile Photo
     private String profilePhotoUrl;
 
@@ -80,6 +84,11 @@ public class UserProfileRequest {
     public void setMobile(String mobile) { this.mobile = mobile; }
     public Boolean getAcceptTc() { return acceptTc; }
     public void setAcceptTc(Boolean acceptTc) { this.acceptTc = acceptTc; }
+
+    public String getFirstName() { return firstName; }
+    public void setFirstName(String firstName) { this.firstName = firstName; }
+    public String getLastName() { return lastName; }
+    public void setLastName(String lastName) { this.lastName = lastName; }
 
     public String getProfilePhotoUrl() { return profilePhotoUrl; }
     public void setProfilePhotoUrl(String profilePhotoUrl) { this.profilePhotoUrl = profilePhotoUrl; }

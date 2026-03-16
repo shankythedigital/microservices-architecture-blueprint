@@ -35,20 +35,23 @@ public class AssetAmcService {
     private final AssetComponentRepository componentRepo;
     private final DocumentService documentService;
     private final SafeNotificationHelper notificationHelper;
+    private final DocumentTypeMasterService documentTypeMasterService;
 
-       public AssetAmcService(
+    public AssetAmcService(
             AssetAmcRepository amcRepo,
             AssetMasterRepository assetRepo,
             AssetDocumentRepository documentRepo,
             AssetComponentRepository componentRepo,
             DocumentService documentService,
-            SafeNotificationHelper notificationHelper) {
+            SafeNotificationHelper notificationHelper,
+            DocumentTypeMasterService documentTypeMasterService) {
         this.amcRepo = amcRepo;
         this.assetRepo = assetRepo;
         this.documentRepo = documentRepo;
         this.componentRepo = componentRepo;
         this.documentService = documentService;
         this.notificationHelper = notificationHelper;
+        this.documentTypeMasterService = documentTypeMasterService;
     }
 
     // ============================================================
@@ -74,13 +77,6 @@ public class AssetAmcService {
         amc.setUpdatedBy(request.getUsername());
         amc.setActive(true);
 
-        // ✅ Upload Document (if present)
-        if (file != null && !file.isEmpty()) {
-            DocumentRequest docReq = buildDocumentRequest(request, "AMC_DOCUMENT");
-            AssetDocument doc = documentService.upload(headers, file, docReq);
-            amc.setDocument(doc);
-        }
-
         // ✅ Duplicate check: only one active AMC per asset
         Long assetId = asset.getAssetId();
         if (assetId != null && amcRepo.existsByAsset_AssetIdAndActiveTrue(assetId)) {
@@ -88,6 +84,19 @@ public class AssetAmcService {
         }
 
         AssetAmc saved = amcRepo.save(amc);
+
+        if (file != null && !file.isEmpty()) {
+            String docType = (request.getDocType() != null && !request.getDocType().isBlank())
+                    ? request.getDocType().trim() : "pdf";
+            documentTypeMasterService.validate(docType);
+            DocumentRequest docReq = buildDocumentRequest(request, docType);
+            docReq.setEntityType("AMC");
+            docReq.setEntityId(saved.getAmcId());
+            AssetDocument doc = documentService.upload(headers, file, docReq);
+            saved.setDocument(doc);
+            saved = amcRepo.save(saved);
+        }
+
         log.info("✅ AMC created successfully (ID={}) for assetId={}", saved.getAmcId(), asset.getAssetId());
 
         sendNotification(headers, request, "AMC_CREATED_INAPP",
@@ -113,7 +122,12 @@ public class AssetAmcService {
 
         // ✅ Replace or add document
         if (file != null && !file.isEmpty()) {
-            DocumentRequest docReq = buildDocumentRequest(request, "AMC_DOCUMENT");
+            String docType = (request.getDocType() != null && !request.getDocType().isBlank())
+                    ? request.getDocType().trim() : "pdf";
+            documentTypeMasterService.validate(docType);
+            DocumentRequest docReq = buildDocumentRequest(request, docType);
+            docReq.setEntityType("AMC");
+            docReq.setEntityId(id);
             AssetDocument newDoc = documentService.upload(headers, file, docReq);
             existing.setDocument(newDoc);
         }

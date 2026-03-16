@@ -2,6 +2,7 @@ package com.example.authservice.security;
 
 import com.example.common.util.JwtUtil;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
@@ -105,9 +106,13 @@ public class JwtFilter extends OncePerRequestFilter {
             System.out.println("      • Roles: " + roles);
             System.out.println("      • Authentication set in SecurityContext\n");
 
+        } catch (ExpiredJwtException e) {
+            System.out.println("   ❌ Session expired: " + e.getMessage());
+            res.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            res.getWriter().write("Session expired");
+            return;
         } catch (JwtException e) {
             System.out.println("   ❌ Invalid JWT: " + e.getMessage());
-
             res.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             res.getWriter().write("Invalid or expired token");
             return;

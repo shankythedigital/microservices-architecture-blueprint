@@ -5,6 +5,12 @@ import com.example.asset.dto.BulkMakeRequest;
 import com.example.asset.dto.BulkUploadResponse;
 import com.example.asset.dto.MakeDto;
 import com.example.asset.dto.MakeRequest;
+import com.example.asset.util.ByteArrayMultipartFile;
+import com.example.asset.service.DocumentTypeMasterService;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import java.util.Base64;
+import java.util.Map;
 import com.example.asset.entity.ProductMake;
 import com.example.asset.mapper.MakeMapper;
 import com.example.asset.service.ExcelParsingService;
@@ -30,29 +36,59 @@ public class MakeController {
     private static final Logger log = LoggerFactory.getLogger(MakeController.class);
 
     private final MakeService makeService;
+    private final DocumentTypeMasterService documentTypeMasterService;
     private final ExcelParsingService excelParsingService;
 
-    public MakeController(MakeService makeService, ExcelParsingService excelParsingService) {
+    public MakeController(MakeService makeService, DocumentTypeMasterService documentTypeMasterService, ExcelParsingService excelParsingService) {
         this.makeService = makeService;
+        this.documentTypeMasterService = documentTypeMasterService;
         this.excelParsingService = excelParsingService;
     }
 
     // ============================================================
-    // 🟢 CREATE
+    // 🟢 CREATE (JSON body - document via Document API separately)
     // ============================================================
-    @PostMapping
+    @PostMapping(consumes = "application/json")
     public ResponseEntity<ResponseWrapper<MakeDto>> create(@RequestHeader HttpHeaders headers,
                                                                @RequestBody MakeRequest request) {
         try {
-            ProductMake created = makeService.create(headers, request);
-            // Convert entity to DTO to include all optional fields in JSON response
+            ProductMake created = makeService.create(headers, request, null, null, false);
             MakeDto result = MakeMapper.toDto(created);
-            log.info("✅ Make created successfully: {}", created.getMakeName());
+            log.info("✅ Make created successfully");
             return ResponseEntity.ok(new ResponseWrapper<>(true, "Make created successfully", result));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest()
+                    .body(new ResponseWrapper<>(false, "❌ " + e.getMessage(), null));
         } catch (Exception e) {
             log.error("❌ Failed to create make: {}", e.getMessage(), e);
             return ResponseEntity.internalServerError()
                     .body(new ResponseWrapper<>(false, e.getMessage(), null));
+        }
+    }
+
+    @PostMapping(path = "/with-document", consumes = "application/json")
+    public ResponseEntity<ResponseWrapper<MakeDto>> createWithDocument(
+            @RequestHeader HttpHeaders headers,
+            @RequestBody Map<String, Object> body) {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            MakeRequest request = mapper.convertValue(body.get("request"), MakeRequest.class);
+            String document = (String) body.get("document");
+            String docType = (String) body.get("docType");
+            if (document == null || document.isBlank())
+                return ResponseEntity.badRequest().body(new ResponseWrapper<>(false, "❌ document is required (base64)", null));
+            if (docType == null || docType.isBlank())
+                return ResponseEntity.badRequest().body(new ResponseWrapper<>(false, "❌ docType is required", null));
+            documentTypeMasterService.validate(docType);
+            byte[] bytes = Base64.getDecoder().decode(document);
+            MultipartFile multipartFile = new ByteArrayMultipartFile(bytes, "document", "document." + docType);
+            ProductMake created = makeService.create(headers, request, multipartFile, docType.trim(), false);
+            return ResponseEntity.ok(new ResponseWrapper<>(true, "✅ Make created successfully with document", MakeMapper.toDto(created)));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(new ResponseWrapper<>(false, "❌ " + e.getMessage(), null));
+        } catch (Exception e) {
+            log.error("❌ Failed to create make with document: {}", e.getMessage(), e);
+            return ResponseEntity.internalServerError().body(new ResponseWrapper<>(false, "❌ Error: " + e.getMessage(), null));
         }
     }
 
@@ -71,6 +107,33 @@ public class MakeController {
             log.error("❌ Failed to update make: {}", e.getMessage(), e);
             return ResponseEntity.internalServerError()
                     .body(new ResponseWrapper<>(false, e.getMessage(), null));
+        }
+    }
+
+    @PutMapping(path = "/{id}/with-document", consumes = "application/json")
+    public ResponseEntity<ResponseWrapper<ProductMake>> updateWithDocument(
+            @RequestHeader HttpHeaders headers,
+            @PathVariable Long id,
+            @RequestBody Map<String, Object> body) {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            MakeRequest request = mapper.convertValue(body.get("request"), MakeRequest.class);
+            String document = (String) body.get("document");
+            String docType = (String) body.get("docType");
+            if (document == null || document.isBlank())
+                return ResponseEntity.badRequest().body(new ResponseWrapper<>(false, "❌ document is required (base64)", null));
+            if (docType == null || docType.isBlank())
+                return ResponseEntity.badRequest().body(new ResponseWrapper<>(false, "❌ docType is required", null));
+            documentTypeMasterService.validate(docType);
+            byte[] bytes = Base64.getDecoder().decode(document);
+            MultipartFile multipartFile = new ByteArrayMultipartFile(bytes, "document", "document." + docType);
+            ProductMake updated = makeService.updateWithDocument(headers, id, request, multipartFile, docType.trim());
+            return ResponseEntity.ok(new ResponseWrapper<>(true, "✏️ Make updated successfully with document", updated));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(new ResponseWrapper<>(false, "❌ " + e.getMessage(), null));
+        } catch (Exception e) {
+            log.error("❌ Failed to update make with document: {}", e.getMessage(), e);
+            return ResponseEntity.internalServerError().body(new ResponseWrapper<>(false, "❌ Error: " + e.getMessage(), null));
         }
     }
 

@@ -41,6 +41,7 @@ public class AssetWarrantyService {
     private final AssetMasterRepository assetRepo;
     private final DocumentService documentService;
     private final SafeNotificationHelper notificationHelper;
+    private final DocumentTypeMasterService documentTypeMasterService;
 
     private final AssetComponentRepository componentRepo;
     private final AssetDocumentRepository documentRepo;
@@ -51,13 +52,15 @@ public class AssetWarrantyService {
             AssetDocumentRepository documentRepo,
             AssetComponentRepository componentRepo,
             DocumentService documentService,
-            SafeNotificationHelper notificationHelper) {
+            SafeNotificationHelper notificationHelper,
+            DocumentTypeMasterService documentTypeMasterService) {
         this.warrantyRepo = warrantyRepo;
         this.assetRepo = assetRepo;
         this.documentRepo = documentRepo;
         this.componentRepo = componentRepo;
         this.documentService = documentService;
         this.notificationHelper = notificationHelper;
+        this.documentTypeMasterService = documentTypeMasterService;
     }
 
     // ============================================================
@@ -70,12 +73,6 @@ public class AssetWarrantyService {
 
         // Fetch validated asset directly
         AssetMaster asset = assetRepo.findById(request.getAssetId()).get();
-
-        AssetDocument savedDoc = null;
-        if (file != null && !file.isEmpty()) {
-            DocumentRequest docReq = buildDocumentRequest(request, "WARRANTY_DOC");
-            savedDoc = documentService.upload(headers, file, docReq);
-        }
 
         AssetWarranty warranty = new AssetWarranty();
         warranty.setAsset(asset);
@@ -92,9 +89,6 @@ public class AssetWarrantyService {
         warranty.setCreatedBy(request.getUsername());
         warranty.setUpdatedBy(request.getUsername());
 
-        if (savedDoc != null)
-            warranty.setDocument(savedDoc);
-
         // ✅ Duplicate check: only one active warranty per asset
         Long assetId = asset.getAssetId();
         if (assetId != null && warrantyRepo.existsByAsset_AssetIdAndActiveTrue(assetId)) {
@@ -102,6 +96,19 @@ public class AssetWarrantyService {
         }
 
         AssetWarranty saved = warrantyRepo.save(warranty);
+
+        if (file != null && !file.isEmpty()) {
+            String docType = (request.getDocType() != null && !request.getDocType().isBlank())
+                    ? request.getDocType().trim() : "pdf";
+            documentTypeMasterService.validate(docType);
+            DocumentRequest docReq = buildDocumentRequest(request, docType);
+            docReq.setEntityType("WARRANTY");
+            docReq.setEntityId(saved.getWarrantyId());
+            AssetDocument savedDoc = documentService.upload(headers, file, docReq);
+            saved.setDocument(savedDoc);
+            saved = warrantyRepo.save(saved);
+        }
+
         log.info("✅ Warranty created successfully (ID={}) for assetId={}", saved.getWarrantyId(), asset.getAssetId());
 
         sendNotification(headers, request, "WARRANTY_CREATED_INAPP",
@@ -131,7 +138,12 @@ public class AssetWarrantyService {
 
         // ✅ Replace or add document
         if (file != null && !file.isEmpty()) {
-            DocumentRequest docReq = buildDocumentRequest(request, "WARRANTY_DOC");
+            String docType = (request.getDocType() != null && !request.getDocType().isBlank())
+                    ? request.getDocType().trim() : "pdf";
+            documentTypeMasterService.validate(docType);
+            DocumentRequest docReq = buildDocumentRequest(request, docType);
+            docReq.setEntityType("WARRANTY");
+            docReq.setEntityId(id);
             AssetDocument newDoc = documentService.upload(headers, file, docReq);
             warranty.setDocument(newDoc);
         }

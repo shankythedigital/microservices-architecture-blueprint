@@ -9,6 +9,7 @@ import com.example.authservice.repository.RefreshTokenRepository;
 import com.example.authservice.repository.UserDetailMasterRepository;
 import com.example.authservice.repository.UserRepository;
 import com.example.authservice.service.impl.AuditService;
+import com.example.authservice.service.impl.AuthServiceImpl;
 import com.example.common.util.FileStorageUtil;
 import com.example.common.util.HmacUtil;
 import com.example.common.util.RequestContext;
@@ -28,12 +29,15 @@ public class UserService {
     @Autowired private UserMapper userMapper;
     @Autowired private FileStorageUtil fileStorageUtil;
     @Autowired private AuditService auditService;
+    @Autowired private AuthServiceImpl authService;
 
     public UserDto getMyProfile(Long currentUserId) {
         if (currentUserId == null) throw new RuntimeException("Unauthorized: No active user context");
 
         User user = userRepo.findByUserId(currentUserId)
                 .orElseThrow(() -> new RuntimeException("User not found for ID: " + currentUserId));
+        if (user.getDeletedAt() != null)
+            throw new RuntimeException("Account has been deleted");
 
         UserDetailMaster udm = udmRepo.findByUserId(currentUserId)
                 .orElseThrow(() -> new RuntimeException("User details not found for ID: " + currentUserId));
@@ -56,6 +60,8 @@ public class UserService {
 
         User target = userRepo.findByUserId(targetUserId)
                 .orElseThrow(() -> new RuntimeException("Target user not found"));
+        if (target.getDeletedAt() != null)
+            throw new RuntimeException("Account has been deleted");
         UserDetailMaster udm = udmRepo.findByUserId(targetUserId)
                 .orElseThrow(() -> new RuntimeException("User details not found"));
 
@@ -74,6 +80,7 @@ public class UserService {
         var users = userRepo.findAll();
         var out = new java.util.ArrayList<UserDto>();
         for (User u : users) {
+            if (u.getDeletedAt() != null) continue; // Exclude soft-deleted users
             UserDetailMaster udm = udmRepo.findByUserId(u.getUserId()).orElse(null);
             out.add(userMapper.toDto(u, udm));
         }
@@ -217,10 +224,89 @@ public class UserService {
             throw new RuntimeException("Access denied: not authorized to view another user's profile");
         }
 
+        User targetUser = userRepo.findByUserId(userId).orElse(null);
+        if (targetUser != null && targetUser.getDeletedAt() != null)
+            throw new RuntimeException("Account has been deleted");
+
         UserDetailMaster udm = udmRepo.findByUserId(userId)
                 .orElseThrow(() -> new RuntimeException("User profile not found for userId: " + userId));
 
         return mapToProfileResponse(udm);
+    }
+
+    /**
+     * Get a single decrypted field for a user. Call once per field.
+     * User: own fields only. Admin: any user's fields.
+     * Allowed fields: username, email, mobile, firstName, lastName, employeeId, pincode, city, state,
+     * country, address1, address2, address3, countryCode, dateOfBirth, gender, occupation, education,
+     * maritalStatus, profilePhotoUrl, linkedinUrl, facebookUrl, twitterUrl, instagramUrl, githubUrl,
+     * websiteUrl, preferences, activityPatterns, interests, bio, skills, languages, timezone, additionalInfo.
+     */
+    public com.example.authservice.dto.DecryptFieldResponse getDecryptedField(Long targetUserId, String fieldName, Long currentUserId) {
+        if (targetUserId == null || currentUserId == null || fieldName == null || fieldName.isBlank()) {
+            throw new RuntimeException("Invalid request: userId, currentUserId and field are required");
+        }
+
+        User current = userRepo.findByUserId(currentUserId)
+                .orElseThrow(() -> new RuntimeException("Current user not found"));
+
+        boolean isAdmin = current.getRoles().stream()
+                .anyMatch(r -> r != null && r.getName() != null && r.getName().equalsIgnoreCase("ROLE_ADMIN"));
+
+        if (!isAdmin && !targetUserId.equals(currentUserId)) {
+            throw new RuntimeException("Access denied: not authorized to view another user's data");
+        }
+
+        User targetUser = userRepo.findByUserId(targetUserId).orElse(null);
+        if (targetUser != null && targetUser.getDeletedAt() != null) {
+            throw new RuntimeException("Account has been deleted");
+        }
+
+        UserDetailMaster udm = udmRepo.findByUserId(targetUserId)
+                .orElseThrow(() -> new RuntimeException("User profile not found for userId: " + targetUserId));
+
+        String value = getFieldValue(udm, fieldName.trim());
+        return new com.example.authservice.dto.DecryptFieldResponse(fieldName.trim(), value);
+    }
+
+    private String getFieldValue(UserDetailMaster udm, String field) {
+        switch (field.toLowerCase()) {
+            case "username": return udm.getUsername();
+            case "email": return udm.getEmail();
+            case "mobile": return udm.getMobile();
+            case "firstname": return udm.getFirstName();
+            case "lastname": return udm.getLastName();
+            case "employeeid": return udm.getEmployeeId();
+            case "pincode": return udm.getPincode();
+            case "city": return udm.getCity();
+            case "state": return udm.getState();
+            case "country": return udm.getCountry();
+            case "address1": return udm.getAddress1();
+            case "address2": return udm.getAddress2();
+            case "address3": return udm.getAddress3();
+            case "countrycode": return udm.getCountryCode();
+            case "dateofbirth": return udm.getDateOfBirth();
+            case "gender": return udm.getGender();
+            case "occupation": return udm.getOccupation();
+            case "education": return udm.getEducation();
+            case "maritalstatus": return udm.getMaritalStatus();
+            case "profilephotourl": return udm.getProfilePhotoUrl();
+            case "linkedinurl": return udm.getLinkedinUrl();
+            case "facebookurl": return udm.getFacebookUrl();
+            case "twitterurl": return udm.getTwitterUrl();
+            case "instagramurl": return udm.getInstagramUrl();
+            case "githuburl": return udm.getGithubUrl();
+            case "websiteurl": return udm.getWebsiteUrl();
+            case "preferences": return udm.getPreferences();
+            case "activitypatterns": return udm.getActivityPatterns();
+            case "interests": return udm.getInterests();
+            case "bio": return udm.getBio();
+            case "skills": return udm.getSkills();
+            case "languages": return udm.getLanguages();
+            case "timezone": return udm.getTimezone();
+            case "additionalinfo": return udm.getAdditionalInfo();
+            default: throw new RuntimeException("Unknown field: " + field + ". Allowed: username, email, mobile, firstName, lastName, employeeId, pincode, city, state, country, address1-3, countryCode, dateOfBirth, gender, occupation, education, maritalStatus, profilePhotoUrl, linkedinUrl, facebookUrl, twitterUrl, instagramUrl, githubUrl, websiteUrl, preferences, activityPatterns, interests, bio, skills, languages, timezone, additionalInfo");
+        }
     }
 
     /**
@@ -236,6 +322,9 @@ public class UserService {
                 .anyMatch(r -> r != null && r.getName() != null && r.getName().equalsIgnoreCase("ROLE_ADMIN"));
         if (!isAdmin && !userId.equals(currentUserId))
             throw new RuntimeException("Access denied: not authorized to view another user's communication preferences");
+        User targetUser = userRepo.findByUserId(userId).orElse(null);
+        if (targetUser != null && targetUser.getDeletedAt() != null)
+            throw new RuntimeException("Account has been deleted");
         UserDetailMaster udm = udmRepo.findByUserId(userId)
                 .orElseThrow(() -> new RuntimeException("User profile not found for userId: " + userId));
         com.example.authservice.dto.CommunicationPreferencesDto dto = new com.example.authservice.dto.CommunicationPreferencesDto();
@@ -293,6 +382,12 @@ public class UserService {
                 .orElseThrow(() -> new RuntimeException("User profile not found for userId: " + userId));
 
         // Handle profile photo update - delete old photo if new one is provided
+        if (request.getFirstName() != null) {
+            udm.setFirstName(request.getFirstName());
+        }
+        if (request.getLastName() != null) {
+            udm.setLastName(request.getLastName());
+        }
         if (request.getProfilePhotoUrl() != null) {
             // Delete old photo if it exists and is different from the new one
             String oldPhotoUrl = udm.getProfilePhotoUrl();
@@ -418,6 +513,8 @@ public class UserService {
         response.setEmail(udm.getEmail());
         response.setMobile(udm.getMobile());
         response.setEmployeeId(udm.getEmployeeId());
+        response.setFirstName(udm.getFirstName());
+        response.setLastName(udm.getLastName());
         response.setPincode(udm.getPincode());
         response.setCity(udm.getCity());
         response.setState(udm.getState());
@@ -563,6 +660,33 @@ public class UserService {
 
         auditService.log(currentUserId, "USER_PERMANENT_BLOCK", "User", String.valueOf(targetUserId),
                 reason != null ? reason : "",
+                RequestContext.getIp(), RequestContext.getUserAgent());
+    }
+
+    /**
+     * Soft self-delete: user deletes their own account. Marks account as deleted, revokes all sessions,
+     * and prevents future login. Data is retained for audit/compliance.
+     */
+    @Transactional
+    public void softDeleteSelf(Long currentUserId) {
+        if (currentUserId == null) throw new RuntimeException("Unauthorized: No active user context");
+
+        User user = userRepo.findByUserId(currentUserId)
+                .orElseThrow(() -> new RuntimeException("User not found for ID: " + currentUserId));
+
+        if (user.getDeletedAt() != null)
+            throw new RuntimeException("Account has already been deleted");
+
+        // Revoke all sessions and delete refresh tokens so user cannot continue using the app
+        authService.revokeAllUserSessions(currentUserId);
+        authService.deleteAllTokensForUser(currentUserId);
+
+        user.setEnabled(false);
+        user.setDeletedAt(LocalDateTime.now());
+        user.setDeletedBy("userId:" + currentUserId);
+        userRepo.save(user);
+
+        auditService.log(currentUserId, "USER_SELF_DELETE", "User", String.valueOf(currentUserId), null,
                 RequestContext.getIp(), RequestContext.getUserAgent());
     }
 

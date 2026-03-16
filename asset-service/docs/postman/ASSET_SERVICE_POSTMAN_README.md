@@ -6,7 +6,7 @@ Complete Postman collection for Asset Management Service with all controllers, e
 
 ## 📁 Files
 
-1. **Asset_Service_API.postman_collection.json** - Complete API collection
+1. **Asset_Service_Complete_API_Collection.postman_collection.json** - Complete API collection (23 folders, includes Document Types, Component-Asset linking)
 2. **Asset_Service_Environment.postman_environment.json** - Environment variables
 
 ## 🚀 Setup
@@ -57,7 +57,7 @@ Update the following variables in the environment:
 
 ## 📂 Collection Structure
 
-The collection is organized into 19 folders:
+The collection is organized into 23 folders (including Document Types):
 
 ### 1. Assets
 - Create Asset
@@ -121,10 +121,10 @@ The collection is organized into 19 folders:
 - Bulk Upload Outlets (Excel)
 
 ### 8. Components
-- Create Component
+- Create Component (optional assetId links component to asset)
 - List All Components
 - Get Component by ID
-- Update Component
+- Update Component (optional assetId links component to asset)
 - Delete Component
 - Bulk Create Components
 - Bulk Upload Components (Excel)
@@ -183,7 +183,13 @@ The collection is organized into 19 folders:
 - Get Entity Type by ID
 - Initialize Entity Types
 
-### 16. Status
+### 16. Document Types
+- List All Document Types
+- List Active Document Types
+- Get Document Type by Code
+- Get Document Type by ID
+
+### 17. Status
 - List All Statuses
 - List Active Statuses
 - Get Statuses by Category
@@ -191,7 +197,7 @@ The collection is organized into 19 folders:
 - Get Status by ID
 - Initialize Statuses
 
-### 17. Master Data Agent
+### 18. Master Data Agent
 - Create Category (Agent)
 - Create SubCategory (Agent)
 - Create Make (Agent)
@@ -200,14 +206,14 @@ The collection is organized into 19 folders:
 - Create Outlet (Agent)
 - Get Master Data Summary
 
-### 18. User Asset Link Agent
+### 19. User Asset Link Agent
 - Link Asset
 - Link Component
 - Get User Assets
 - Get Asset Link History
 - Bulk Link Assets
 
-### 19. Audit Agent
+### 20. Audit Agent
 - Create Audit Log
 - List Audit Logs
 - Get Logs by Username

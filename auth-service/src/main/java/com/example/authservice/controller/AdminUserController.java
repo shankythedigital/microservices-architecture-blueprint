@@ -2,6 +2,7 @@ package com.example.authservice.controller;
 
 import com.example.authservice.dto.BlockUserRequest;
 import com.example.authservice.dto.UserDto;
+import com.example.authservice.dto.UserProfileResponse;
 import com.example.authservice.service.UserService;
 import com.example.authservice.util.SecurityUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +17,33 @@ import java.util.Map;
 public class AdminUserController {
 
     @Autowired private UserService userService;
+
+    /**
+     * Get user's profile with full decrypted (unmasked) PII. Admin only.
+     */
+    @GetMapping("/{userId}/details-decrypted")
+    public ResponseEntity<UserProfileResponse> getUserDetailsDecrypted(@PathVariable Long userId) {
+        Long currentUserId = SecurityUtil.getCurrentUserId();
+        if (currentUserId == null) return ResponseEntity.status(401).build();
+        UserProfileResponse profile = userService.getUserProfileExtended(userId, currentUserId);
+        return ResponseEntity.ok(profile);
+    }
+
+    /**
+     * Decrypt a single field for any user. Call once per field. Admin only.
+     * Same allowed fields as user decrypt.
+     */
+    @GetMapping("/{userId}/decrypt/{field}")
+    public ResponseEntity<?> decryptUserField(@PathVariable Long userId, @PathVariable String field) {
+        Long currentUserId = SecurityUtil.getCurrentUserId();
+        if (currentUserId == null) return ResponseEntity.status(401).build();
+        try {
+            com.example.authservice.dto.DecryptFieldResponse response = userService.getDecryptedField(userId, field, currentUserId);
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(java.util.Map.of("error", e.getMessage()));
+        }
+    }
 
     @GetMapping("")
     public ResponseEntity<List<UserDto>> listUsers() {

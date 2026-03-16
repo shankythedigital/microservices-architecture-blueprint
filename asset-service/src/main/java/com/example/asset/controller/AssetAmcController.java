@@ -4,6 +4,13 @@ package com.example.asset.controller;
 import com.example.asset.dto.AssetAmcDto;
 import com.example.asset.dto.AssetAmcRequest;
 import com.example.asset.service.AssetAmcService;
+import com.example.asset.util.ByteArrayMultipartFile;
+import com.example.asset.service.DocumentTypeMasterService;
+import org.springframework.web.multipart.MultipartFile;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import java.util.Base64;
+import java.util.Map;
 import com.example.common.util.ResponseWrapper;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
@@ -26,9 +33,11 @@ public class AssetAmcController {
 
     private static final Logger log = LoggerFactory.getLogger(AssetAmcController.class);
     private final AssetAmcService assetAmcService;
+    private final DocumentTypeMasterService documentTypeMasterService;
 
-    public AssetAmcController(AssetAmcService assetAmcService) {
+    public AssetAmcController(AssetAmcService assetAmcService, DocumentTypeMasterService documentTypeMasterService) {
         this.assetAmcService = assetAmcService;
+        this.documentTypeMasterService = documentTypeMasterService;
     }
 
     // ============================================================
@@ -56,6 +65,33 @@ public class AssetAmcController {
         }
     }
 
+    @PostMapping(path = "/with-document", consumes = "application/json")
+    public ResponseEntity<ResponseWrapper<AssetAmcDto>> createWithDocument(
+            @RequestHeader HttpHeaders headers,
+            @RequestBody Map<String, Object> body) {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            AssetAmcRequest request = mapper.convertValue(body.get("request"), AssetAmcRequest.class);
+            String document = (String) body.get("document");
+            String docType = (String) body.get("docType");
+            if (document == null || document.isBlank())
+                return ResponseEntity.badRequest().body(new ResponseWrapper<>(false, "❌ document is required (base64)", null));
+            if (docType == null || docType.isBlank())
+                return ResponseEntity.badRequest().body(new ResponseWrapper<>(false, "❌ docType is required", null));
+            documentTypeMasterService.validate(docType);
+            request.setDocType(docType.trim());
+            byte[] bytes = Base64.getDecoder().decode(document);
+            MultipartFile multipartFile = new ByteArrayMultipartFile(bytes, "document", "document." + docType);
+            AssetAmcDto created = assetAmcService.create(headers, request, multipartFile);
+            return ResponseEntity.ok(new ResponseWrapper<>(true, "✅ AMC created successfully with document", created));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(new ResponseWrapper<>(false, "❌ " + e.getMessage(), null));
+        } catch (Exception e) {
+            log.error("❌ AMC creation with document failed: {}", e.getMessage(), e);
+            return ResponseEntity.internalServerError().body(new ResponseWrapper<>(false, "❌ " + e.getMessage(), null));
+        }
+    }
+
     // ============================================================
     // ✏️ UPDATE AMC
     // ============================================================
@@ -78,6 +114,34 @@ public class AssetAmcController {
 
             return ResponseEntity.internalServerError()
                     .body(new ResponseWrapper<>(false, "❌ AMC update failed: " + e.getMessage(), null));
+        }
+    }
+
+    @PutMapping(path = "/{id}/with-document", consumes = "application/json")
+    public ResponseEntity<ResponseWrapper<AssetAmcDto>> updateWithDocument(
+            @RequestHeader HttpHeaders headers,
+            @PathVariable Long id,
+            @RequestBody Map<String, Object> body) {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            AssetAmcRequest request = mapper.convertValue(body.get("request"), AssetAmcRequest.class);
+            String document = (String) body.get("document");
+            String docType = (String) body.get("docType");
+            if (document == null || document.isBlank())
+                return ResponseEntity.badRequest().body(new ResponseWrapper<>(false, "❌ document is required (base64)", null));
+            if (docType == null || docType.isBlank())
+                return ResponseEntity.badRequest().body(new ResponseWrapper<>(false, "❌ docType is required", null));
+            documentTypeMasterService.validate(docType);
+            request.setDocType(docType.trim());
+            byte[] bytes = Base64.getDecoder().decode(document);
+            MultipartFile multipartFile = new ByteArrayMultipartFile(bytes, "document", "document." + docType);
+            AssetAmcDto updated = assetAmcService.update(headers, id, request, multipartFile);
+            return ResponseEntity.ok(new ResponseWrapper<>(true, "✏️ AMC updated successfully with document", updated));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(new ResponseWrapper<>(false, "❌ " + e.getMessage(), null));
+        } catch (Exception e) {
+            log.error("❌ AMC update with document failed: {}", e.getMessage(), e);
+            return ResponseEntity.internalServerError().body(new ResponseWrapper<>(false, "❌ " + e.getMessage(), null));
         }
     }
 

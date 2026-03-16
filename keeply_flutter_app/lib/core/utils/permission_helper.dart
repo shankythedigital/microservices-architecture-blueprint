@@ -7,7 +7,7 @@ class PermissionHelper {
   /// Request camera permission
   static Future<bool> requestCameraPermission() async {
     try {
-      final status = await Permission.camera.request();
+      final status = await ph.Permission.camera.request();
       return status.isGranted;
     } catch (e) {
       AppLogger.error('Camera permission request failed: $e');
@@ -18,7 +18,7 @@ class PermissionHelper {
   /// Request storage permission
   static Future<bool> requestStoragePermission() async {
     try {
-      final status = await Permission.storage.request();
+      final status = await ph.Permission.storage.request();
       return status.isGranted;
     } catch (e) {
       AppLogger.error('Storage permission request failed: $e');
@@ -29,7 +29,7 @@ class PermissionHelper {
   /// Request photos permission
   static Future<bool> requestPhotosPermission() async {
     try {
-      final status = await Permission.photos.request();
+      final status = await ph.Permission.photos.request();
       return status.isGranted;
     } catch (e) {
       AppLogger.error('Photos permission request failed: $e');
@@ -38,7 +38,7 @@ class PermissionHelper {
   }
 
   /// Check if permission is granted
-  static Future<bool> isPermissionGranted(Permission permission) async {
+  static Future<bool> isPermissionGranted(ph.Permission permission) async {
     try {
       final status = await permission.status;
       return status.isGranted;

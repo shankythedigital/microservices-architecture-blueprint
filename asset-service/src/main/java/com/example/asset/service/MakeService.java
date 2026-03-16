@@ -3,6 +3,7 @@ package com.example.asset.service;
 
 import com.example.asset.dto.BulkMakeRequest;
 import com.example.asset.dto.BulkUploadResponse;
+import com.example.asset.dto.DocumentRequest;
 import com.example.asset.dto.MakeDto;
 import com.example.asset.dto.MakeRequest;
 import com.example.asset.entity.ProductMake;
@@ -19,6 +20,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.*;
 
@@ -37,17 +39,23 @@ public class MakeService {
     private final SafeNotificationHelper safeNotificationHelper;
     private final AdminClient adminClient;
     private final AssetUserLinkClient assetUserLinkClient;
+    private final DocumentService documentService;
+    private final DocumentTypeMasterService documentTypeMasterService;
 
     public MakeService(ProductMakeRepository repo,
                        ProductSubCategoryRepository subCategoryRepo,
                        SafeNotificationHelper safeNotificationHelper,
                        AdminClient adminClient,
-                       AssetUserLinkClient assetUserLinkClient) {
+                       AssetUserLinkClient assetUserLinkClient,
+                       DocumentService documentService,
+                       DocumentTypeMasterService documentTypeMasterService) {
         this.repo = repo;
         this.subCategoryRepo = subCategoryRepo;
         this.safeNotificationHelper = safeNotificationHelper;
         this.adminClient = adminClient;
         this.assetUserLinkClient = assetUserLinkClient;
+        this.documentService = documentService;
+        this.documentTypeMasterService = documentTypeMasterService;
     }
 
     // ============================================================
@@ -55,11 +63,16 @@ public class MakeService {
     // ============================================================
     @Transactional
     public ProductMake create(HttpHeaders headers, MakeRequest request) {
-        return create(headers, request, false);
+        return create(headers, request, null, null, false);
     }
 
     @Transactional
     public ProductMake create(HttpHeaders headers, MakeRequest request, boolean skipNotifications) {
+        return create(headers, request, null, null, skipNotifications);
+    }
+
+    @Transactional
+    public ProductMake create(HttpHeaders headers, MakeRequest request, MultipartFile document, String docType, boolean skipNotifications) {
         validateAuthorization(headers);
 
         if (request == null || request.getMake() == null)
@@ -94,6 +107,19 @@ public class MakeService {
         make.setCreatedBy(username);
         make.setUpdatedBy(username);
         ProductMake saved = repo.save(make);
+
+        // 📎 Upload document and store in AssetDocument (required for create, skip for bulk)
+        if (document != null && !document.isEmpty() && docType != null && !docType.isBlank()) {
+            DocumentRequest docRequest = new DocumentRequest();
+            docRequest.setUserId(userId);
+            docRequest.setUsername(username);
+            docRequest.setProjectType(projectType);
+            docRequest.setEntityType("MAKE");
+            docRequest.setEntityId(saved.getMakeId());
+            docRequest.setDocType(docType.trim());
+            documentService.upload(headers, document, docRequest);
+            log.info("✅ Document uploaded for make ID={} with docType={}", saved.getMakeId(), docType);
+        }
 
         if (!skipNotifications) {
             Long savedSubCategoryId = saved.getSubCategory() != null ? saved.getSubCategory().getSubCategoryId() : null;
@@ -169,6 +195,24 @@ public class MakeService {
             log.info("✏️ Make updated: id={} name={} by={}", id, newName, username);
             return saved;
         }).orElseThrow(() -> new RuntimeException("Make not found with id: " + id));
+    }
+
+    @Transactional
+    public ProductMake updateWithDocument(HttpHeaders headers, Long id, MakeRequest request, MultipartFile document, String docType) {
+        documentTypeMasterService.validate(docType);
+        if (document == null || document.isEmpty())
+            throw new IllegalArgumentException("Document is required for update");
+        ProductMake updated = update(headers, id, request);
+        DocumentRequest docRequest = new DocumentRequest();
+        docRequest.setUserId(request.getUserId());
+        docRequest.setUsername(request.getUsername());
+        docRequest.setProjectType(Optional.ofNullable(request.getProjectType()).orElse("ASSET_SERVICE"));
+        docRequest.setEntityType("MAKE");
+        docRequest.setEntityId(id);
+        docRequest.setDocType(docType.trim());
+        documentService.upload(headers, document, docRequest);
+        log.info("✅ Document uploaded for make ID={} with docType={}", id, docType);
+        return updated;
     }
 
     // ============================================================

@@ -5,6 +5,12 @@ import com.example.asset.dto.BulkComponentRequest;
 import com.example.asset.dto.BulkUploadResponse;
 import com.example.asset.dto.ComponentDto;
 import com.example.asset.dto.ComponentRequest;
+import com.example.asset.util.ByteArrayMultipartFile;
+import com.example.asset.service.DocumentTypeMasterService;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import java.util.Base64;
+import java.util.Map;
 import com.example.asset.entity.AssetComponent;
 import com.example.asset.mapper.ComponentMapper;
 import com.example.asset.service.ComponentService;
@@ -31,30 +37,60 @@ public class ComponentController {
 
     private static final Logger log = LoggerFactory.getLogger(ComponentController.class);
     private final ComponentService componentService;
+    private final DocumentTypeMasterService documentTypeMasterService;
     private final ExcelParsingService excelParsingService;
 
-    public ComponentController(ComponentService componentService, ExcelParsingService excelParsingService) {
+    public ComponentController(ComponentService componentService, DocumentTypeMasterService documentTypeMasterService, ExcelParsingService excelParsingService) {
         this.componentService = componentService;
+        this.documentTypeMasterService = documentTypeMasterService;
         this.excelParsingService = excelParsingService;
     }
 
     // ============================================================
-    // 🟢 CREATE COMPONENT
+    // 🟢 CREATE COMPONENT (JSON body - document via Document API separately)
     // ============================================================
-    @PostMapping
+    @PostMapping(consumes = "application/json")
     public ResponseEntity<ResponseWrapper<ComponentDto>> create(
             @RequestHeader HttpHeaders headers,
             @RequestBody ComponentRequest request) {
         try {
-            AssetComponent created = componentService.create(headers, request);
-            // Convert entity to DTO to include all optional fields in JSON response
+            AssetComponent created = componentService.create(headers, request, null, null, false);
             ComponentDto result = ComponentMapper.toDto(created);
             log.info("✅ Component created successfully by user={} id={}", request.getUsername(), created.getComponentId());
             return ResponseEntity.ok(new ResponseWrapper<>(true, "✅ Component created successfully", result));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest()
+                    .body(new ResponseWrapper<>(false, "❌ " + e.getMessage(), null));
         } catch (Exception e) {
             log.error("❌ Failed to create component: {}", e.getMessage(), e);
             return ResponseEntity.internalServerError()
                     .body(new ResponseWrapper<>(false, "❌ " + e.getMessage(), null));
+        }
+    }
+
+    @PostMapping(path = "/with-document", consumes = "application/json")
+    public ResponseEntity<ResponseWrapper<ComponentDto>> createWithDocument(
+            @RequestHeader HttpHeaders headers,
+            @RequestBody Map<String, Object> body) {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            ComponentRequest request = mapper.convertValue(body.get("request"), ComponentRequest.class);
+            String document = (String) body.get("document");
+            String docType = (String) body.get("docType");
+            if (document == null || document.isBlank())
+                return ResponseEntity.badRequest().body(new ResponseWrapper<>(false, "❌ document is required (base64)", null));
+            if (docType == null || docType.isBlank())
+                return ResponseEntity.badRequest().body(new ResponseWrapper<>(false, "❌ docType is required", null));
+            documentTypeMasterService.validate(docType);
+            byte[] bytes = Base64.getDecoder().decode(document);
+            MultipartFile multipartFile = new ByteArrayMultipartFile(bytes, "document", "document." + docType);
+            AssetComponent created = componentService.create(headers, request, multipartFile, docType.trim(), false);
+            return ResponseEntity.ok(new ResponseWrapper<>(true, "✅ Component created successfully with document", ComponentMapper.toDto(created)));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(new ResponseWrapper<>(false, "❌ " + e.getMessage(), null));
+        } catch (Exception e) {
+            log.error("❌ Failed to create component with document: {}", e.getMessage(), e);
+            return ResponseEntity.internalServerError().body(new ResponseWrapper<>(false, "❌ Error: " + e.getMessage(), null));
         }
     }
 
@@ -74,6 +110,33 @@ public class ComponentController {
             log.error("❌ Failed to update component: {}", e.getMessage(), e);
             return ResponseEntity.internalServerError()
                     .body(new ResponseWrapper<>(false, "❌ " + e.getMessage(), null));
+        }
+    }
+
+    @PutMapping(path = "/{id}/with-document", consumes = "application/json")
+    public ResponseEntity<ResponseWrapper<AssetComponent>> updateWithDocument(
+            @RequestHeader HttpHeaders headers,
+            @PathVariable Long id,
+            @RequestBody Map<String, Object> body) {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            ComponentRequest request = mapper.convertValue(body.get("request"), ComponentRequest.class);
+            String document = (String) body.get("document");
+            String docType = (String) body.get("docType");
+            if (document == null || document.isBlank())
+                return ResponseEntity.badRequest().body(new ResponseWrapper<>(false, "❌ document is required (base64)", null));
+            if (docType == null || docType.isBlank())
+                return ResponseEntity.badRequest().body(new ResponseWrapper<>(false, "❌ docType is required", null));
+            documentTypeMasterService.validate(docType);
+            byte[] bytes = Base64.getDecoder().decode(document);
+            MultipartFile multipartFile = new ByteArrayMultipartFile(bytes, "document", "document." + docType);
+            AssetComponent updated = componentService.updateWithDocument(headers, id, request, multipartFile, docType.trim());
+            return ResponseEntity.ok(new ResponseWrapper<>(true, "✏️ Component updated successfully with document", updated));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(new ResponseWrapper<>(false, "❌ " + e.getMessage(), null));
+        } catch (Exception e) {
+            log.error("❌ Failed to update component with document: {}", e.getMessage(), e);
+            return ResponseEntity.internalServerError().body(new ResponseWrapper<>(false, "❌ Error: " + e.getMessage(), null));
         }
     }
 

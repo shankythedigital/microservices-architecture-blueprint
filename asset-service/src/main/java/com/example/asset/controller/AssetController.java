@@ -8,8 +8,13 @@ import com.example.asset.dto.CompleteAssetCreationRequest;
 import com.example.asset.entity.AssetMaster;
 import com.example.asset.service.AssetCrudService;
 import com.example.asset.service.ExcelParsingService;
+import com.example.asset.util.ByteArrayMultipartFile;
+import com.example.asset.service.DocumentTypeMasterService;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import java.util.Base64;
+import java.util.Map;
 import com.example.common.util.ResponseWrapper;
-import org.springframework.web.multipart.MultipartFile;
 import jakarta.validation.Valid;
 import io.swagger.v3.oas.annotations.Operation;
 import org.slf4j.Logger;
@@ -19,10 +24,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.http.HttpStatus;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * ✅ AssetController
@@ -36,17 +41,23 @@ public class AssetController {
 
     private static final Logger log = LoggerFactory.getLogger(AssetController.class);
     private final AssetCrudService assetService;
+    private final DocumentTypeMasterService documentTypeMasterService;
     private final ExcelParsingService excelParsingService;
 
-    public AssetController(AssetCrudService assetService, ExcelParsingService excelParsingService) {
+    public AssetController(AssetCrudService assetService, DocumentTypeMasterService documentTypeMasterService, ExcelParsingService excelParsingService) {
         this.assetService = assetService;
+        this.documentTypeMasterService = documentTypeMasterService;
         this.excelParsingService = excelParsingService;
     }
 
     // ============================================================
-    // 🟢 CREATE ASSET
+    // 🟢 CREATE ASSET (JSON body - document via Document API separately)
     // ============================================================
-    @PostMapping
+    /**
+     * Create asset with JSON body.
+     * Document upload via POST /api/asset/v1/documents/upload after creation.
+     */
+    @PostMapping(consumes = "application/json")
     public ResponseEntity<ResponseWrapper<AssetMaster>> create(
             @RequestHeader HttpHeaders headers,
             @Valid @RequestBody AssetRequest request) {
@@ -59,6 +70,32 @@ public class AssetController {
             log.error("❌ Failed to create asset: {}", e.getMessage(), e);
             return ResponseEntity.internalServerError()
                     .body(new ResponseWrapper<>(false, e.getMessage(), null));
+        }
+    }
+
+    @PostMapping(path = "/with-document", consumes = "application/json")
+    public ResponseEntity<ResponseWrapper<AssetMaster>> createWithDocument(
+            @RequestHeader HttpHeaders headers,
+            @RequestBody Map<String, Object> body) {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            AssetRequest request = mapper.convertValue(body.get("request"), AssetRequest.class);
+            String document = (String) body.get("document");
+            String docType = (String) body.get("docType");
+            if (document == null || document.isBlank())
+                return ResponseEntity.badRequest().body(new ResponseWrapper<>(false, "❌ document is required (base64)", null));
+            if (docType == null || docType.isBlank())
+                return ResponseEntity.badRequest().body(new ResponseWrapper<>(false, "❌ docType is required", null));
+            documentTypeMasterService.validate(docType);
+            byte[] bytes = Base64.getDecoder().decode(document);
+            MultipartFile multipartFile = new ByteArrayMultipartFile(bytes, "document", "document." + docType);
+            AssetMaster created = assetService.create(headers, request, multipartFile, docType.trim());
+            return ResponseEntity.ok(new ResponseWrapper<>(true, "✅ Asset created successfully with document", created));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(new ResponseWrapper<>(false, "❌ " + e.getMessage(), null));
+        } catch (Exception e) {
+            log.error("❌ Failed to create asset with document: {}", e.getMessage(), e);
+            return ResponseEntity.internalServerError().body(new ResponseWrapper<>(false, "❌ Error: " + e.getMessage(), null));
         }
     }
 
@@ -78,6 +115,33 @@ public class AssetController {
             log.error("❌ Failed to update asset: {}", e.getMessage(), e);
             return ResponseEntity.internalServerError()
                     .body(new ResponseWrapper<>(false, e.getMessage(), null));
+        }
+    }
+
+    @PutMapping(path = "/{id}/with-document", consumes = "application/json")
+    public ResponseEntity<ResponseWrapper<AssetMaster>> updateWithDocument(
+            @RequestHeader HttpHeaders headers,
+            @PathVariable Long id,
+            @RequestBody Map<String, Object> body) {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            AssetRequest request = mapper.convertValue(body.get("request"), AssetRequest.class);
+            String document = (String) body.get("document");
+            String docType = (String) body.get("docType");
+            if (document == null || document.isBlank())
+                return ResponseEntity.badRequest().body(new ResponseWrapper<>(false, "❌ document is required (base64)", null));
+            if (docType == null || docType.isBlank())
+                return ResponseEntity.badRequest().body(new ResponseWrapper<>(false, "❌ docType is required", null));
+            documentTypeMasterService.validate(docType);
+            byte[] bytes = Base64.getDecoder().decode(document);
+            MultipartFile multipartFile = new ByteArrayMultipartFile(bytes, "document", "document." + docType);
+            AssetMaster updated = assetService.updateWithDocument(headers, id, request, multipartFile, docType.trim());
+            return ResponseEntity.ok(new ResponseWrapper<>(true, "✏️ Asset updated successfully with document", updated));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(new ResponseWrapper<>(false, "❌ " + e.getMessage(), null));
+        } catch (Exception e) {
+            log.error("❌ Failed to update asset with document: {}", e.getMessage(), e);
+            return ResponseEntity.internalServerError().body(new ResponseWrapper<>(false, "❌ Error: " + e.getMessage(), null));
         }
     }
 
@@ -264,13 +328,19 @@ public class AssetController {
             // User Assignment
             @RequestParam("targetUserId") Long targetUserId,
             @RequestParam(value = "targetUsername", required = false) String targetUsername,
-            // Document Upload
-            @RequestParam(value = "purchaseInvoice", required = false) MultipartFile purchaseInvoiceFile) {
+            // Document Upload (required - stored in AssetDocument with docType)
+            @RequestParam("document") MultipartFile document,
+            @RequestParam("docType") String docType) {
         
-        log.info("🚀 [POST] /assets/complete - Creating complete asset: name={}, modelId={}, targetUserId={}",
-                assetNameUdv, modelId, targetUserId);
+        log.info("🚀 [POST] /assets/complete - Creating complete asset: name={}, modelId={}, targetUserId={}, docType={}",
+                assetNameUdv, modelId, targetUserId, docType);
         
         try {
+            if (document == null || document.isEmpty()) {
+                return ResponseEntity.badRequest()
+                        .body(new ResponseWrapper<>(false, "❌ Document upload is required", null));
+            }
+            documentTypeMasterService.validate(docType);
             // Build CompleteAssetCreationRequest from parameters
             CompleteAssetCreationRequest request = new CompleteAssetCreationRequest();
             request.setUserId(userId);
@@ -291,7 +361,7 @@ public class AssetController {
             request.setTargetUserId(targetUserId);
             request.setTargetUsername(targetUsername);
             
-            Map<String, Object> result = assetService.createCompleteAsset(headers, request, purchaseInvoiceFile);
+            Map<String, Object> result = assetService.createCompleteAsset(headers, request, document, docType.trim());
             
             return ResponseEntity.ok(new ResponseWrapper<>(
                     true,

@@ -76,6 +76,24 @@ public class Issue extends BaseEntity {
     @Column(name = "last_escalated_at")
     private LocalDateTime lastEscalatedAt;
 
+    @Column(name = "asset_id")
+    private Long assetId;
+
+    @Column(name = "component_id")
+    private Long componentId;
+
+    @Column(name = "spare_part_id")
+    private Long sparePartId;
+
+    @Column(name = "issue_master_id")
+    private Long issueMasterId;
+
+    @Column(name = "category_id")
+    private Long categoryId;
+
+    @Column(name = "sub_category_id")
+    private Long subCategoryId;
+
     @OneToMany(mappedBy = "issue", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<IssueEscalation> escalations = new ArrayList<>();
 
@@ -122,6 +140,18 @@ public class Issue extends BaseEntity {
     public void setEscalationCount(Integer escalationCount) { this.escalationCount = escalationCount; }
     public LocalDateTime getLastEscalatedAt() { return lastEscalatedAt; }
     public void setLastEscalatedAt(LocalDateTime lastEscalatedAt) { this.lastEscalatedAt = lastEscalatedAt; }
+    public Long getAssetId() { return assetId; }
+    public void setAssetId(Long assetId) { this.assetId = assetId; }
+    public Long getComponentId() { return componentId; }
+    public void setComponentId(Long componentId) { this.componentId = componentId; }
+    public Long getSparePartId() { return sparePartId; }
+    public void setSparePartId(Long sparePartId) { this.sparePartId = sparePartId; }
+    public Long getIssueMasterId() { return issueMasterId; }
+    public void setIssueMasterId(Long issueMasterId) { this.issueMasterId = issueMasterId; }
+    public Long getCategoryId() { return categoryId; }
+    public void setCategoryId(Long categoryId) { this.categoryId = categoryId; }
+    public Long getSubCategoryId() { return subCategoryId; }
+    public void setSubCategoryId(Long subCategoryId) { this.subCategoryId = subCategoryId; }
     public List<IssueEscalation> getEscalations() { return escalations; }
     public void setEscalations(List<IssueEscalation> escalations) { this.escalations = escalations; }
     public SLATracking getSlaTracking() { return slaTracking; }

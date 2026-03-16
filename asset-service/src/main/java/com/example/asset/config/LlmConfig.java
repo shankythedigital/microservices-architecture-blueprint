@@ -8,7 +8,7 @@ import org.springframework.web.client.RestTemplate;
 import java.time.Duration;
 
 /**
- * RestTemplate for LLM API calls with timeout.
+ * RestTemplate for LLM API calls and external product barcode lookups.
  */
 @Configuration
 public class LlmConfig {
@@ -19,6 +19,15 @@ public class LlmConfig {
         return new RestTemplateBuilder()
                 .setConnectTimeout(Duration.ofSeconds(10))
                 .setReadTimeout(Duration.ofSeconds(timeout))
+                .build();
+    }
+
+    /** RestTemplate for OpenFoodFacts, UPC Item DB, etc. (5s timeout) */
+    @Bean(name = "productLookupRestTemplate")
+    public RestTemplate productLookupRestTemplate() {
+        return new RestTemplateBuilder()
+                .setConnectTimeout(Duration.ofSeconds(5))
+                .setReadTimeout(Duration.ofSeconds(5))
                 .build();
     }
 }

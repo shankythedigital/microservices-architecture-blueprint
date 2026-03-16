@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform, TargetPlatform;
 
 /// App Configuration
 /// Centralized configuration for API endpoints and app settings
@@ -6,18 +6,17 @@ class AppConfig {
   // Detect platform and set appropriate base URLs
   static String get _defaultHost {
     if (kIsWeb) {
-      // For web, use localhost (will work if backend is on same machine)
-      // For production, replace with actual server URL
-      // NOTE: If localhost doesn't work, use your machine's IP address
-      // Example: return '192.168.1.100'; // Your machine's IP
-      return 'localhost';
-    } else {
-      // For mobile/desktop platforms
-      // For Android emulator, use 10.0.2.2 to access host machine
-      // For iOS simulator and desktop, use localhost
-      // You can override this by setting environment variables
+      // Flutter Web: localhost works when backend is on same machine
+      // CORS must be configured on auth-service (see CorsConfig.java)
       return 'localhost';
     }
+    if (defaultTargetPlatform == TargetPlatform.android) {
+      // Android emulator: localhost refers to emulator itself
+      // 10.0.2.2 is the special alias to host machine's loopback
+      return '10.0.2.2';
+    }
+    // iOS simulator, macOS, Windows, Linux: localhost works
+    return 'localhost';
   }
 
   // API Base URLs - Can be overridden via environment variables

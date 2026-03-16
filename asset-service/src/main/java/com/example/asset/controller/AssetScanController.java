@@ -3,6 +3,7 @@ package com.example.asset.controller;
 import com.example.asset.dto.AssetScanCreateRequest;
 import com.example.asset.dto.AssetScanRequest;
 import com.example.asset.dto.AssetScanResponse;
+import com.example.asset.service.DocumentTypeMasterService;
 import com.example.asset.dto.QrScanResponseDto;
 import com.example.asset.service.AssetScanService;
 import com.example.asset.service.QrBarcodeImageService;
@@ -41,13 +42,16 @@ public class AssetScanController {
     private final QrScanService qrScanService;
     private final QrBarcodeImageService qrBarcodeImageService;
     private final JwtVerifier jwtVerifier;
+    private final DocumentTypeMasterService documentTypeMasterService;
 
     public AssetScanController(AssetScanService scanService, QrScanService qrScanService,
-                              QrBarcodeImageService qrBarcodeImageService, JwtVerifier jwtVerifier) {
+                              QrBarcodeImageService qrBarcodeImageService, JwtVerifier jwtVerifier,
+                              DocumentTypeMasterService documentTypeMasterService) {
         this.scanService = scanService;
         this.qrScanService = qrScanService;
         this.qrBarcodeImageService = qrBarcodeImageService;
         this.jwtVerifier = jwtVerifier;
+        this.documentTypeMasterService = documentTypeMasterService;
     }
 
     // ============================================================
@@ -178,23 +182,32 @@ public class AssetScanController {
     }
 
     // ============================================================
-    // 📱 SCAN AND SAVE ASSET (with AI Agent)
+    // 📱 SCAN AND SAVE ASSET (with AI Agent + required document)
     // ============================================================
-    @PostMapping("/save")
+    @PostMapping(value = "/save", consumes = "multipart/form-data")
     @Operation(
         summary = "Scan QR/barcode and create/update asset with all related entities",
         description = "Universal endpoint that scans QR/barcode, uses AI agent to extract structured data, " +
                      "and intelligently creates/updates assets with warranty, AMC, user links, and components. " +
+                     "Requires document upload with docType - stored in AssetDocument. " +
                      "All operations are logged in audit log. The AI agent automatically extracts data from " +
                      "JSON QR codes or pattern-based text."
     )
     public ResponseEntity<ResponseWrapper<AssetScanResponse>> scanAndSave(
             @RequestHeader HttpHeaders headers,
-            @RequestBody AssetScanCreateRequest request,
+            @RequestPart("request") AssetScanCreateRequest request,
+            @RequestPart("document") MultipartFile document,
+            @RequestParam("docType") String docType,
             HttpServletRequest httpRequest) {
         
         try {
-            log.info("📱 [POST] /scan/save - Scanning and saving asset with value: '{}'", request.getScanValue());
+            log.info("📱 [POST] /scan/save - Scanning and saving asset with value: '{}', docType: '{}'", request.getScanValue(), docType);
+            
+            if (document == null || document.isEmpty()) {
+                return ResponseEntity.badRequest()
+                        .body(new ResponseWrapper<>(false, "❌ Document upload is required", null));
+            }
+            documentTypeMasterService.validate(docType);
             
             // Extract username and userId from JWT token if not provided
             String username = extractUsernameFromToken(headers);
@@ -228,8 +241,8 @@ public class AssetScanController {
                         .body(new ResponseWrapper<>(false, "❌ Scan value cannot be empty", null));
             }
             
-            // Perform scan and save
-            AssetScanResponse result = scanService.scanAndSave(headers, request, httpRequest);
+            // Perform scan and save (with document stored in AssetDocument)
+            AssetScanResponse result = scanService.scanAndSave(headers, request, document, docType.trim(), httpRequest);
             
             log.info("✅ Asset scan and save successful: Asset ID={}, Matched by={}", 
                     result.getAssetId(), result.getMatchedBy());

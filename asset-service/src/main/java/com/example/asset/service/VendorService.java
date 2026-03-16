@@ -2,6 +2,7 @@ package com.example.asset.service;
 
 import com.example.asset.dto.BulkVendorRequest;
 import com.example.asset.dto.BulkUploadResponse;
+import com.example.asset.dto.DocumentRequest;
 import com.example.asset.dto.VendorDto;
 import com.example.asset.dto.VendorRequest;
 import com.example.asset.entity.VendorMaster;
@@ -14,6 +15,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.*;
 
@@ -29,11 +31,17 @@ public class VendorService {
 
     private final VendorRepository repo;
     private final SafeNotificationHelper safeNotificationHelper;
+    private final DocumentService documentService;
+    private final DocumentTypeMasterService documentTypeMasterService;
 
     public VendorService(VendorRepository repo,
-                         SafeNotificationHelper safeNotificationHelper) {
+                         SafeNotificationHelper safeNotificationHelper,
+                         DocumentService documentService,
+                         DocumentTypeMasterService documentTypeMasterService) {
         this.repo = repo;
         this.safeNotificationHelper = safeNotificationHelper;
+        this.documentService = documentService;
+        this.documentTypeMasterService = documentTypeMasterService;
     }
 
     // ============================================================
@@ -78,6 +86,24 @@ public class VendorService {
                 "VENDOR_CREATED_INAPP", projectType);
 
         log.info("✅ Vendor created successfully: {}", saved.getVendorName());
+        return saved;
+    }
+
+    @Transactional
+    public VendorMaster create(HttpHeaders headers, VendorRequest request, MultipartFile document, String docType) {
+        documentTypeMasterService.validate(docType);
+        if (document == null || document.isEmpty())
+            throw new IllegalArgumentException("Document is required for create");
+        VendorMaster saved = create(headers, request);
+        DocumentRequest docRequest = new DocumentRequest();
+        docRequest.setUserId(request.getUserId());
+        docRequest.setUsername(request.getUsername());
+        docRequest.setProjectType(Optional.ofNullable(request.getProjectType()).orElse("ASSET_SERVICE"));
+        docRequest.setEntityType("VENDOR");
+        docRequest.setEntityId(saved.getVendorId());
+        docRequest.setDocType(docType.trim());
+        documentService.upload(headers, document, docRequest);
+        log.info("✅ Document uploaded for vendor ID={} with docType={}", saved.getVendorId(), docType);
         return saved;
     }
 
@@ -131,6 +157,24 @@ public class VendorService {
             log.info("✏️ Vendor updated successfully: id={} name={}", id, newName);
             return saved;
         }).orElseThrow(() -> new RuntimeException("Vendor not found with id: " + id));
+    }
+
+    @Transactional
+    public VendorMaster updateWithDocument(HttpHeaders headers, Long id, VendorRequest request, MultipartFile document, String docType) {
+        documentTypeMasterService.validate(docType);
+        if (document == null || document.isEmpty())
+            throw new IllegalArgumentException("Document is required for update");
+        VendorMaster updated = update(headers, id, request);
+        DocumentRequest docRequest = new DocumentRequest();
+        docRequest.setUserId(request.getUserId());
+        docRequest.setUsername(request.getUsername());
+        docRequest.setProjectType(Optional.ofNullable(request.getProjectType()).orElse("ASSET_SERVICE"));
+        docRequest.setEntityType("VENDOR");
+        docRequest.setEntityId(id);
+        docRequest.setDocType(docType.trim());
+        documentService.upload(headers, document, docRequest);
+        log.info("✅ Document uploaded for vendor ID={} with docType={}", id, docType);
+        return updated;
     }
 
     // ============================================================

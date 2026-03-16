@@ -34,6 +34,12 @@ public class IssueResponse {
     private Integer escalationCount;
     private LocalDateTime lastEscalatedAt;
     private SLATrackingResponse slaTracking;
+    private Long assetId;
+    private Long componentId;
+    private Long sparePartId;
+    private Long issueMasterId;
+    private Long categoryId;
+    private Long subCategoryId;
 
     // Getters and Setters
     public Long getId() { return id; }
@@ -100,5 +106,17 @@ public class IssueResponse {
     public void setLastEscalatedAt(LocalDateTime lastEscalatedAt) { this.lastEscalatedAt = lastEscalatedAt; }
     public SLATrackingResponse getSlaTracking() { return slaTracking; }
     public void setSlaTracking(SLATrackingResponse slaTracking) { this.slaTracking = slaTracking; }
+    public Long getAssetId() { return assetId; }
+    public void setAssetId(Long assetId) { this.assetId = assetId; }
+    public Long getComponentId() { return componentId; }
+    public void setComponentId(Long componentId) { this.componentId = componentId; }
+    public Long getSparePartId() { return sparePartId; }
+    public void setSparePartId(Long sparePartId) { this.sparePartId = sparePartId; }
+    public Long getIssueMasterId() { return issueMasterId; }
+    public void setIssueMasterId(Long issueMasterId) { this.issueMasterId = issueMasterId; }
+    public Long getCategoryId() { return categoryId; }
+    public void setCategoryId(Long categoryId) { this.categoryId = categoryId; }
+    public Long getSubCategoryId() { return subCategoryId; }
+    public void setSubCategoryId(Long subCategoryId) { this.subCategoryId = subCategoryId; }
 }
 

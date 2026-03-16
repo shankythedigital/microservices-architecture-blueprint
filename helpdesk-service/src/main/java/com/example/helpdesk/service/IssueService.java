@@ -19,29 +19,68 @@ import java.util.stream.Collectors;
 @Service
 public class IssueService {
     private final IssueRepository issueRepository;
+    private final IssueMasterService issueMasterService;
     private final EscalationMatrixService escalationMatrixService;
     private final SLAService slaService;
 
     public IssueService(
             IssueRepository issueRepository,
+            IssueMasterService issueMasterService,
             EscalationMatrixService escalationMatrixService,
             SLAService slaService) {
         this.issueRepository = issueRepository;
+        this.issueMasterService = issueMasterService;
         this.escalationMatrixService = escalationMatrixService;
         this.slaService = slaService;
     }
 
     @Transactional
     public IssueResponse createIssue(IssueRequest request) {
-        String userId = JwtUtil.getUserIdOrThrow();
         String username = JwtUtil.getUsernameOrThrow();
 
+        String title;
+        String description;
+        Long categoryId = null;
+        Long subCategoryId = null;
+        Long componentId = null;
+        Long sparePartId = null;
+        Long issueMasterId = request.getIssueMasterId();
+
+        if (issueMasterId != null) {
+            // Raise ticket: select from issue master list
+            var master = issueMasterService.findEntityById(issueMasterId);
+            title = master.getIssueTitle();
+            description = request.getDescription() != null ? request.getDescription() : master.getIssueDescription();
+            categoryId = master.getCategoryId();
+            subCategoryId = master.getSubCategoryId();
+            componentId = master.getComponentId();
+            sparePartId = master.getSparePartId();
+        } else {
+            // Create custom issue: title and description required
+            if (request.getTitle() == null || request.getTitle().isBlank()) {
+                throw new IllegalArgumentException("Title is required when not selecting from issue master");
+            }
+            if (request.getDescription() == null || request.getDescription().isBlank()) {
+                throw new IllegalArgumentException("Description is required when not selecting from issue master");
+            }
+            title = request.getTitle();
+            description = request.getDescription();
+            componentId = request.getComponentId();
+            sparePartId = request.getSparePartId();
+        }
+
         Issue issue = new Issue();
-        issue.setTitle(request.getTitle());
-        issue.setDescription(request.getDescription());
+        issue.setTitle(title);
+        issue.setDescription(description);
         issue.setPriority(request.getPriority());
         issue.setRelatedService(request.getRelatedService());
         issue.setStatus(IssueStatus.OPEN);
+        issue.setAssetId(request.getAssetId());
+        issue.setComponentId(componentId);
+        issue.setSparePartId(sparePartId);
+        issue.setIssueMasterId(issueMasterId);
+        issue.setCategoryId(categoryId);
+        issue.setSubCategoryId(subCategoryId);
         issue.setReportedBy(username);
         issue.setCreatedBy(username);
 
@@ -169,6 +208,12 @@ public class IssueService {
         response.setResolvedAt(issue.getResolvedAt());
         response.setEscalationCount(issue.getEscalationCount());
         response.setLastEscalatedAt(issue.getLastEscalatedAt());
+        response.setAssetId(issue.getAssetId());
+        response.setComponentId(issue.getComponentId());
+        response.setSparePartId(issue.getSparePartId());
+        response.setIssueMasterId(issue.getIssueMasterId());
+        response.setCategoryId(issue.getCategoryId());
+        response.setSubCategoryId(issue.getSubCategoryId());
 
         // Include SLA tracking if available
         if (issue.getSlaTracking() != null) {

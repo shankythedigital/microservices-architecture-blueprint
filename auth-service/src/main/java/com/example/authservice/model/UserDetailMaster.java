@@ -54,6 +54,14 @@ public class UserDetailMaster extends BaseEntity {
     @Column(name = "employee_id_enc", columnDefinition = "TEXT")
     private String employeeId;
 
+    // First and last name (PII - encrypted)
+    @Convert(converter = JpaAttributeEncryptor.class)
+    @Column(name = "first_name_enc", columnDefinition = "TEXT")
+    private String firstName;
+    @Convert(converter = JpaAttributeEncryptor.class)
+    @Column(name = "last_name_enc", columnDefinition = "TEXT")
+    private String lastName;
+
     @Column(name = "login_date")
     private LocalDateTime loginDate;
 
@@ -247,6 +255,11 @@ public class UserDetailMaster extends BaseEntity {
 
     public String getEmployeeId() { return employeeId; }
     public void setEmployeeId(String employeeId) { this.employeeId = employeeId; }
+
+    public String getFirstName() { return firstName; }
+    public void setFirstName(String firstName) { this.firstName = firstName; }
+    public String getLastName() { return lastName; }
+    public void setLastName(String lastName) { this.lastName = lastName; }
 
     public LocalDateTime getLoginDate() { return loginDate; }
     public void setLoginDate(LocalDateTime loginDate) { this.loginDate = loginDate; }

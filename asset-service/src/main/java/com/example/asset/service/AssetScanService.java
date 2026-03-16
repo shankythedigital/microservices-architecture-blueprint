@@ -2,6 +2,8 @@ package com.example.asset.service;
 
 import com.example.asset.dto.AssetScanCreateRequest;
 import com.example.asset.dto.AssetScanResponse;
+import com.example.asset.dto.DocumentRequest;
+import com.example.asset.dto.ProductBarcodeLookupResult;
 import com.example.asset.entity.*;
 import com.example.asset.repository.*;
 import jakarta.servlet.http.HttpServletRequest;
@@ -11,6 +13,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;
@@ -21,7 +24,8 @@ import java.util.Set;
 /**
  * ✅ AssetScanService
  * Service for scanning QR codes and barcodes to identify assets.
- * Supports multiple matching strategies: Asset ID, Asset Name UDV, Serial Number.
+ * Supports: Company Asset QR Codes (internal DB) + Standard Product Barcodes (OpenFoodFacts, UPC Item DB).
+ * When category is missing, uses AI classification (keyword mapping, LLM).
  */
 @Service
 public class AssetScanService {
@@ -39,8 +43,11 @@ public class AssetScanService {
     private final ProductSubCategoryRepository subCategoryRepo;
     private final ProductMakeRepository makeRepo;
     private final ProductModelRepository modelRepo;
+    private final ProductBarcodeLookupService productBarcodeLookupService;
+    private final CategoryClassificationService categoryClassificationService;
+    private final DocumentService documentService;
 
-    public AssetScanService(AssetMasterRepository assetRepo, 
+    public AssetScanService(AssetMasterRepository assetRepo,
                            AuditAgentService auditService,
                            AssetScanAiAgentService aiAgentService,
                            AssetWarrantyRepository warrantyRepo,
@@ -50,7 +57,10 @@ public class AssetScanService {
                            ProductCategoryRepository categoryRepo,
                            ProductSubCategoryRepository subCategoryRepo,
                            ProductMakeRepository makeRepo,
-                           ProductModelRepository modelRepo) {
+                           ProductModelRepository modelRepo,
+                           ProductBarcodeLookupService productBarcodeLookupService,
+                           CategoryClassificationService categoryClassificationService,
+                           DocumentService documentService) {
         this.assetRepo = assetRepo;
         this.auditService = auditService;
         this.aiAgentService = aiAgentService;
@@ -62,6 +72,9 @@ public class AssetScanService {
         this.subCategoryRepo = subCategoryRepo;
         this.makeRepo = makeRepo;
         this.modelRepo = modelRepo;
+        this.productBarcodeLookupService = productBarcodeLookupService;
+        this.categoryClassificationService = categoryClassificationService;
+        this.documentService = documentService;
     }
 
     // ============================================================
@@ -130,23 +143,75 @@ public class AssetScanService {
                     asset.get().getAssetId(), matchedBy);
             return Optional.of(response);
         } else {
+            // Strategy 4: Try standard product barcodes (OpenFoodFacts, UPC Item DB)
+            if (productBarcodeLookupService.isProductBarcode(scanValue)) {
+                Optional<ProductBarcodeLookupResult> productOpt = productBarcodeLookupService.lookup(scanValue);
+                if (productOpt.isPresent()) {
+                    ProductBarcodeLookupResult product = productOpt.get();
+                    // Apply AI classification when category is missing
+                    CategoryClassificationService.CategoryResult catResult = categoryClassificationService
+                            .classify(product.getProductName(), product.getBrand(), product.getCategory());
+                    if (catResult != null) {
+                        if (!StringUtils.hasText(product.getCategory())) product.setCategory(catResult.category);
+                        if (!StringUtils.hasText(product.getSubcategory())) product.setSubcategory(catResult.subcategory);
+                    }
+
+                    AssetScanResponse response = convertProductToResponse(product, scanValue, scanType);
+                    String eventMessage = String.format("Product scanned via %s: %s (Source: %s)", 
+                            scanType != null ? scanType : "AUTO", scanValue, product.getSource());
+                    auditService.logEvent(username != null ? username : "SYSTEM", eventMessage, request);
+                    log.info("✅ Product scan successful: {} from {}", product.getProductName(), product.getSource());
+                    return Optional.of(response);
+                }
+            }
+
             // Log failed scan attempt
-            String eventMessage = String.format("Asset scan failed: No asset found for scan value '%s' (type: %s)", 
+            String eventMessage = String.format("Asset scan failed: No asset found for scan value '%s' (type: %s)",
                     scanValue, scanType != null ? scanType : "AUTO");
             auditService.logEvent(username != null ? username : "SYSTEM", eventMessage, request);
-            
+
             log.warn("⚠️ Asset scan failed: No asset found for value '{}'", scanValue);
             return Optional.empty();
         }
     }
 
     // ============================================================
+    // 🔄 CONVERT PRODUCT LOOKUP TO RESPONSE DTO
+    // ============================================================
+    private AssetScanResponse convertProductToResponse(ProductBarcodeLookupResult product,
+                                                      String scanValue, String scanType) {
+        AssetScanResponse response = new AssetScanResponse();
+        response.setSource(product.getSource());
+        response.setAssetId(null);
+        response.setAssetNameUdv(concatProductName(product));
+        response.setSerialNumber(null);
+        response.setAssetStatus("Product");
+        response.setPurchaseDate(null);
+        response.setCategoryName(product.getCategory() != null ? product.getCategory() : "—");
+        response.setSubCategoryName(product.getSubcategory() != null ? product.getSubcategory() : "—");
+        response.setMakeName(product.getBrand());
+        response.setModelName(product.getModel());
+        response.setMatchedBy("PRODUCT_BARCODE");
+        response.setScanValue(scanValue);
+        response.setScanType(scanType != null ? scanType : "AUTO");
+        return response;
+    }
+
+    private String concatProductName(ProductBarcodeLookupResult product) {
+        StringBuilder sb = new StringBuilder();
+        if (StringUtils.hasText(product.getBrand())) sb.append(product.getBrand()).append(" ");
+        if (StringUtils.hasText(product.getModel())) sb.append(product.getModel()).append(" ");
+        if (StringUtils.hasText(product.getProductName())) sb.append(product.getProductName());
+        return sb.length() > 0 ? sb.toString().trim() : product.getProductName();
+    }
+
+    // ============================================================
     // 🔄 CONVERT ENTITY TO RESPONSE DTO
     // ============================================================
-    private AssetScanResponse convertToResponse(AssetMaster asset, String scanValue, 
+    private AssetScanResponse convertToResponse(AssetMaster asset, String scanValue,
                                                 String scanType, String matchedBy) {
         AssetScanResponse response = new AssetScanResponse();
-        
+        response.setSource("Asset Database");
         response.setAssetId(asset.getAssetId());
         response.setAssetNameUdv(asset.getAssetNameUdv());
         response.setSerialNumber(asset.getSerialNumber());
@@ -176,15 +241,17 @@ public class AssetScanService {
     }
 
     // ============================================================
-    // 📱 SCAN AND CREATE/UPDATE ASSET (with AI Agent)
+    // 📱 SCAN AND CREATE/UPDATE ASSET (with AI Agent + document in AssetDocument)
     // ============================================================
     @Transactional
-    public AssetScanResponse scanAndSave(HttpHeaders headers, AssetScanCreateRequest request, 
+    public AssetScanResponse scanAndSave(HttpHeaders headers, AssetScanCreateRequest request,
+                                         MultipartFile document, String docType,
                                          HttpServletRequest httpRequest) {
-        log.info("📱 [SCAN & SAVE] Processing scan value: '{}'", request.getScanValue());
+        log.info("📱 [SCAN & SAVE] Processing scan value: '{}' with docType: '{}'", request.getScanValue(), docType);
         
         String username = request.getUsername() != null ? request.getUsername() : "SYSTEM";
         Long userId = request.getUserId();
+        String projectType = request.getProjectType() != null ? request.getProjectType() : "ASSET_SERVICE";
         
         // Step 1: Use AI Agent to analyze and extract data
         AssetScanCreateRequest enrichedRequest = aiAgentService.analyzeAndExtract(
@@ -224,7 +291,19 @@ public class AssetScanService {
             linkComponentsToAsset(asset, enrichedRequest.getComponentIds());
         }
         
-        // Step 7: Convert to response and log audit
+        // Step 7: Upload document and store in AssetDocument with docType
+        DocumentRequest docRequest = new DocumentRequest();
+        docRequest.setUserId(userId);
+        docRequest.setUsername(username);
+        docRequest.setProjectType(projectType);
+        docRequest.setEntityType("ASSET");
+        docRequest.setEntityId(asset.getAssetId());
+        docRequest.setAssetId(asset.getAssetId());
+        docRequest.setDocType(docType);
+        documentService.upload(headers, document, docRequest);
+        log.info("✅ Document uploaded for asset ID={} with docType={}", asset.getAssetId(), docType);
+        
+        // Step 8: Convert to response and log audit
         AssetScanResponse response = convertToResponse(asset, request.getScanValue(), 
                                                        request.getScanType(), "CREATED_OR_UPDATED");
         
@@ -233,7 +312,7 @@ public class AssetScanService {
                 request.getScanValue(), asset.getAssetId());
         auditService.logEvent(username, eventMessage, httpRequest);
         
-        log.info("✅ Asset scan and save successful: Asset ID={}", asset.getAssetId());
+        log.info("✅ Asset scan and save successful: Asset ID={} with document", asset.getAssetId());
         return response;
     }
     

@@ -3,6 +3,7 @@ package com.example.asset.service;
 
 import com.example.asset.dto.BulkSubCategoryRequest;
 import com.example.asset.dto.BulkUploadResponse;
+import com.example.asset.dto.DocumentRequest;
 import com.example.asset.dto.ProductSubCategoryDto;
 import com.example.asset.dto.SubCategoryRequest;
 import com.example.asset.entity.ProductCategory;
@@ -17,6 +18,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.Instant;
 import java.util.*;
@@ -34,13 +36,19 @@ public class SubCategoryService {
     private final ProductSubCategoryRepository repo;
     private final ProductCategoryRepository categoryRepo;
     private final SafeNotificationHelper safeNotificationHelper;
+    private final DocumentService documentService;
+    private final DocumentTypeMasterService documentTypeMasterService;
 
     public SubCategoryService(ProductSubCategoryRepository repo,
                               ProductCategoryRepository categoryRepo,
-                              SafeNotificationHelper safeNotificationHelper) {
+                              SafeNotificationHelper safeNotificationHelper,
+                              DocumentService documentService,
+                              DocumentTypeMasterService documentTypeMasterService) {
         this.repo = repo;
         this.categoryRepo = categoryRepo;
         this.safeNotificationHelper = safeNotificationHelper;
+        this.documentService = documentService;
+        this.documentTypeMasterService = documentTypeMasterService;
     }
 
     // ============================================================
@@ -48,11 +56,16 @@ public class SubCategoryService {
     // ============================================================
     @Transactional
     public ProductSubCategory create(HttpHeaders headers, SubCategoryRequest request) {
-        return create(headers, request, false);
+        return create(headers, request, null, null, false);
     }
 
     @Transactional
     public ProductSubCategory create(HttpHeaders headers, SubCategoryRequest request, boolean skipNotifications) {
+        return create(headers, request, null, null, skipNotifications);
+    }
+
+    @Transactional
+    public ProductSubCategory create(HttpHeaders headers, SubCategoryRequest request, MultipartFile document, String docType, boolean skipNotifications) {
         if (request == null || request.getSubCategory() == null)
             throw new IllegalArgumentException("Request or subCategory cannot be null");
 
@@ -83,6 +96,19 @@ public class SubCategoryService {
         sub.setCreatedBy(username);
         sub.setUpdatedBy(username);
         ProductSubCategory saved = repo.save(sub);
+
+        // 📎 Upload document and store in AssetDocument (required for create, skip for bulk)
+        if (document != null && !document.isEmpty() && docType != null && !docType.isBlank()) {
+            DocumentRequest docRequest = new DocumentRequest();
+            docRequest.setUserId(userId);
+            docRequest.setUsername(username);
+            docRequest.setProjectType(projectType);
+            docRequest.setEntityType("SUBCATEGORY");
+            docRequest.setEntityId(saved.getSubCategoryId());
+            docRequest.setDocType(docType.trim());
+            documentService.upload(headers, document, docRequest);
+            log.info("✅ Document uploaded for subcategory ID={} with docType={}", saved.getSubCategoryId(), docType);
+        }
 
         if (!skipNotifications) {
             String bearer = extractBearerToken(headers);
@@ -165,6 +191,24 @@ public class SubCategoryService {
             log.info("✏️ Updated SubCategory id={} newName={} by={}", id, newName, username);
             return saved;
         }).orElseThrow(() -> new IllegalArgumentException("Subcategory not found with id: " + id));
+    }
+
+    @Transactional
+    public ProductSubCategory updateWithDocument(HttpHeaders headers, Long id, SubCategoryRequest request, MultipartFile document, String docType) {
+        documentTypeMasterService.validate(docType);
+        if (document == null || document.isEmpty())
+            throw new IllegalArgumentException("Document is required for update");
+        ProductSubCategory updated = update(headers, id, request);
+        DocumentRequest docRequest = new DocumentRequest();
+        docRequest.setUserId(request.getUserId());
+        docRequest.setUsername(request.getUsername());
+        docRequest.setProjectType(Optional.ofNullable(request.getProjectType()).orElse("ASSET_SERVICE"));
+        docRequest.setEntityType("SUBCATEGORY");
+        docRequest.setEntityId(id);
+        docRequest.setDocType(docType.trim());
+        documentService.upload(headers, document, docRequest);
+        log.info("✅ Document uploaded for subcategory ID={} with docType={}", id, docType);
+        return updated;
     }
 
     // ============================================================

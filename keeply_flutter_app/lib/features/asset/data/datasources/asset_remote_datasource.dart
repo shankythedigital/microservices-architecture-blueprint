@@ -164,6 +164,94 @@ class AssetRemoteDataSource {
   }
 
   // ============================================================
+  // ASSET SCAN (Barcode / QR Code)
+  // ============================================================
+
+  /// Scan asset by barcode or QR code value
+  /// Looks up in internal asset database first, then optionally in external product APIs
+  Future<AssetScanResult?> scanAsset(String scanValue, {String scanType = 'AUTO'}) async {
+    try {
+      // 1. Try internal asset database first
+      final response = await _apiClient.dio.post(
+        '${AppConfig.assetServiceBaseUrl}${AppConfig.assetBasePath}/scan',
+        data: {'scanValue': scanValue, 'scanType': scanType},
+      );
+
+      if (response.statusCode == 200 && response.data != null) {
+        final wrapper = ResponseWrapper.fromJson(
+          response.data as Map<String, dynamic>,
+          (json) => AssetScanResponse.fromJson(json),
+        );
+        if (wrapper.success && wrapper.data != null) {
+          return wrapper.data!.toScanResult(source: 'Asset Database');
+        }
+      }
+
+      // 2. If not found and scan value looks like product barcode (EAN/UPC/GTIN - numeric)
+      if (_isProductBarcode(scanValue)) {
+        final productResult = await _lookupProductBarcode(scanValue);
+        if (productResult != null) return productResult;
+      }
+
+      return null;
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404) {
+        // Not found in asset DB - try external product API for numeric barcodes
+        if (_isProductBarcode(scanValue)) {
+          final productResult = await _lookupProductBarcode(scanValue);
+          if (productResult != null) return productResult;
+        }
+        return null;
+      }
+      throw _handleError(e);
+    }
+  }
+
+  bool _isProductBarcode(String value) {
+    final trimmed = value.trim();
+    if (trimmed.isEmpty) return false;
+    return RegExp(r'^\d{8,14}$').hasMatch(trimmed);
+  }
+
+  /// Lookup in external product databases (OpenFoodFacts, UPC Item DB)
+  Future<AssetScanResult?> _lookupProductBarcode(String barcode) async {
+    try {
+      // OpenFoodFacts - free, no API key required
+      final response = await _apiClient.dio.get(
+        'https://world.openfoodfacts.org/api/v0/product/$barcode.json',
+      );
+
+      if (response.statusCode == 200 && response.data != null) {
+        final data = response.data as Map<String, dynamic>;
+        final status = data['status'] as int?;
+        if (status == 1) {
+          final product = data['product'] as Map<String, dynamic>?;
+          if (product != null) {
+            final productName = (product['product_name'] ?? product['product_name_en']) as String? ?? 'Unknown Product';
+            final categories = product['categories'] as String? ?? '';
+            final categoryParts = categories.split(',');
+            final category = categoryParts.isNotEmpty ? categoryParts.first.trim() : '—';
+            final subcategory = categoryParts.length > 1 ? categoryParts[1].trim() : '—';
+
+            return AssetScanResult(
+              assetCode: barcode,
+              productName: productName,
+              category: category,
+              subcategory: subcategory,
+              status: 'Product',
+              source: 'OpenFoodFacts',
+              rawResponse: null,
+            );
+          }
+        }
+      }
+    } catch (_) {
+      // Silently ignore - external API is optional fallback
+    }
+    return null;
+  }
+
+  // ============================================================
   // CATEGORY OPERATIONS
   // ============================================================
 

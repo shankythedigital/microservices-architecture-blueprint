@@ -21,6 +21,8 @@ public class UserDto {
     private String username;         // Decrypted username (masked in getter)
     private String email;            // Decrypted email (masked in getter)
     private String mobile;           // Decrypted mobile (masked in getter)
+    private String firstName;
+    private String lastName;
     private String projectType;      // ECOM / ASSET / etc.
     private String pincode;
     private String city;
@@ -116,6 +118,11 @@ public class UserDto {
         this.mobile = mobile;
     }
 
+    public String getFirstName() { return firstName; }
+    public void setFirstName(String firstName) { this.firstName = firstName; }
+    public String getLastName() { return lastName; }
+    public void setLastName(String lastName) { this.lastName = lastName; }
+
     public String getProjectType() { return projectType; }
     public void setProjectType(String projectType) { this.projectType = projectType; }
 
@@ -159,6 +166,8 @@ public class UserDto {
         public UserDtoBuilder username(String v) { dto.setUsername(v); return this; }
         public UserDtoBuilder email(String v) { dto.setEmail(v); return this; }
         public UserDtoBuilder mobile(String v) { dto.setMobile(v); return this; }
+        public UserDtoBuilder firstName(String v) { dto.setFirstName(v); return this; }
+        public UserDtoBuilder lastName(String v) { dto.setLastName(v); return this; }
         public UserDtoBuilder projectType(String v) { dto.setProjectType(v); return this; }
         public UserDtoBuilder pincode(String v) { dto.setPincode(v); return this; }
         public UserDtoBuilder city(String v) { dto.setCity(v); return this; }

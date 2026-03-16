@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:keeply_app/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:keeply_app/features/asset/presentation/pages/assets_list_page.dart';
+import 'package:keeply_app/features/asset/presentation/pages/asset_scan_page.dart';
 import 'package:keeply_app/features/asset/presentation/pages/create_asset_page.dart';
 
 /// Home Page
@@ -99,6 +100,19 @@ class HomePage extends StatelessWidget {
                 title: 'Categories',
                 onTap: () {
                   // Navigate to categories
+                },
+              ),
+              _buildActionCard(
+                context,
+                icon: Icons.qr_code_scanner,
+                title: 'Scan Asset',
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const AssetScanPage(),
+                    ),
+                  );
                 },
               ),
               _buildActionCard(

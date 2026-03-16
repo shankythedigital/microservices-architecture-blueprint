@@ -172,3 +172,105 @@ class ResponseWrapper<T> {
   }
 }
 
+/// Asset Scan Response from API
+/// Raw response from POST /api/asset/v1/scan
+class AssetScanResponse {
+  final int? assetId;
+  final String? assetNameUdv;
+  final String? serialNumber;
+  final String? assetStatus;
+  final String? purchaseDate;
+  final String? categoryName;
+  final String? subCategoryName;
+  final String? makeName;
+  final String? modelName;
+  final String? matchedBy;
+  final String? scanValue;
+  final String? scanType;
+  final String? source;
+
+  AssetScanResponse({
+    this.assetId,
+    this.assetNameUdv,
+    this.serialNumber,
+    this.assetStatus,
+    this.purchaseDate,
+    this.categoryName,
+    this.subCategoryName,
+    this.makeName,
+    this.modelName,
+    this.matchedBy,
+    this.scanValue,
+    this.scanType,
+    this.source,
+  });
+
+  factory AssetScanResponse.fromJson(Map<String, dynamic> json) {
+    return AssetScanResponse(
+      assetId: json['assetId'] as int?,
+      assetNameUdv: json['assetNameUdv'] as String?,
+      serialNumber: json['serialNumber'] as String?,
+      assetStatus: json['assetStatus'] as String?,
+      purchaseDate: json['purchaseDate'] as String?,
+      categoryName: json['categoryName'] as String?,
+      subCategoryName: json['subCategoryName'] as String?,
+      makeName: json['makeName'] as String?,
+      modelName: json['modelName'] as String?,
+      matchedBy: json['matchedBy'] as String?,
+      scanValue: json['scanValue'] as String?,
+      scanType: json['scanType'] as String?,
+      source: json['source'] as String?,
+    );
+  }
+
+  /// Transform to required display format
+  AssetScanResult toScanResult({String? source}) {
+    final productName = [
+      if (makeName != null && makeName!.isNotEmpty) makeName,
+      if (modelName != null && modelName!.isNotEmpty) modelName,
+      if (assetNameUdv != null && assetNameUdv!.isNotEmpty) assetNameUdv,
+    ].where((e) => e != null && e.isNotEmpty).join(' ').trim();
+
+    return AssetScanResult(
+      assetCode: scanValue ?? assetNameUdv ?? serialNumber ?? '—',
+      productName: productName.isNotEmpty ? productName : (assetNameUdv ?? '—'),
+      category: categoryName ?? '—',
+      subcategory: subCategoryName ?? '—',
+      status: assetStatus ?? 'Active',
+      source: source ?? this.source ?? 'Asset Database',
+      rawResponse: this,
+    );
+  }
+}
+
+/// Asset Scan Result - Display format
+/// Transformed response for UI display
+class AssetScanResult {
+  final String assetCode;
+  final String productName;
+  final String category;
+  final String subcategory;
+  final String status;
+  final String source;
+  final AssetScanResponse? rawResponse;
+
+  AssetScanResult({
+    required this.assetCode,
+    required this.productName,
+    required this.category,
+    required this.subcategory,
+    required this.status,
+    required this.source,
+    this.rawResponse,
+  });
+
+  Map<String, dynamic> toJson() => {
+        'asset_code': assetCode,
+        'product_name': productName,
+        'category': category,
+        'subcategory': subcategory,
+        'status': status,
+        'source': source,
+      };
+}
+

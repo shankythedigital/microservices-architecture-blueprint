@@ -37,6 +37,7 @@ public class SecurityConfig {
 
         http
             .csrf(csrf -> csrf.disable())
+            .cors(customizer -> {})
             .authorizeHttpRequests(auth -> auth
                 // Asset API endpoints require authentication
                 .requestMatchers("/api/asset/**").authenticated()

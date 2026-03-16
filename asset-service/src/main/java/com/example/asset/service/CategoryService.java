@@ -5,6 +5,7 @@ import com.example.asset.dto.BulkUploadResponse;
 import com.example.asset.dto.CategoryDto;
 import com.example.asset.dto.CategoryRequest;
 import com.example.asset.dto.BulkCategoryRequest;
+import com.example.asset.dto.DocumentRequest;
 import com.example.asset.entity.ProductCategory;
 import com.example.asset.mapper.CategoryMapper;
 import com.example.asset.repository.ProductCategoryRepository;
@@ -15,6 +16,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.Instant;
 import java.util.*;
@@ -31,11 +33,17 @@ public class CategoryService {
 
     private final ProductCategoryRepository repo;
     private final SafeNotificationHelper safeNotificationHelper;
+    private final DocumentService documentService;
+    private final DocumentTypeMasterService documentTypeMasterService;
 
     public CategoryService(ProductCategoryRepository repo,
-                           SafeNotificationHelper safeNotificationHelper) {
+                           SafeNotificationHelper safeNotificationHelper,
+                           DocumentService documentService,
+                           DocumentTypeMasterService documentTypeMasterService) {
         this.repo = repo;
         this.safeNotificationHelper = safeNotificationHelper;
+        this.documentService = documentService;
+        this.documentTypeMasterService = documentTypeMasterService;
     }
 
     // ============================================================
@@ -43,11 +51,16 @@ public class CategoryService {
     // ============================================================
     @Transactional
     public CategoryDto create(HttpHeaders headers, CategoryRequest request) {
-        return create(headers, request, false);
+        return create(headers, request, null, null, false);
     }
 
     @Transactional
     public CategoryDto create(HttpHeaders headers, CategoryRequest request, boolean skipNotifications) {
+        return create(headers, request, null, null, skipNotifications);
+    }
+
+    @Transactional
+    public CategoryDto create(HttpHeaders headers, CategoryRequest request, MultipartFile document, String docType, boolean skipNotifications) {
         if (request == null || request.getCategory() == null)
             throw new IllegalArgumentException("Request body or category cannot be null");
 
@@ -72,6 +85,20 @@ public class CategoryService {
         entity.setUpdatedBy(username);
 
         ProductCategory saved = repo.save(entity);
+
+        // 📎 Upload document and store in AssetDocument (required for create with document, skip for bulk)
+        if (document != null && !document.isEmpty() && docType != null && !docType.isBlank()) {
+            documentTypeMasterService.validate(docType);
+            DocumentRequest docRequest = new DocumentRequest();
+            docRequest.setUserId(userId);
+            docRequest.setUsername(username);
+            docRequest.setProjectType(projectType);
+            docRequest.setEntityType("CATEGORY");
+            docRequest.setEntityId(saved.getCategoryId());
+            docRequest.setDocType(docType.trim());
+            documentService.upload(headers, document, docRequest);
+            log.info("✅ Document uploaded for category ID={} with docType={}", saved.getCategoryId(), docType);
+        }
 
         if (!skipNotifications) {
             Map<String, Object> placeholders = Map.of(
@@ -145,6 +172,24 @@ public class CategoryService {
 
             return CategoryMapper.toDto(saved);
         }).orElseThrow(() -> new IllegalArgumentException("Category not found with id: " + id));
+    }
+
+    @Transactional
+    public CategoryDto updateWithDocument(HttpHeaders headers, Long id, CategoryRequest request, MultipartFile document, String docType) {
+        documentTypeMasterService.validate(docType);
+        if (document == null || document.isEmpty())
+            throw new IllegalArgumentException("Document is required for update");
+        CategoryDto updated = update(headers, id, request);
+        DocumentRequest docRequest = new DocumentRequest();
+        docRequest.setUserId(request.getUserId());
+        docRequest.setUsername(request.getUsername());
+        docRequest.setProjectType(Optional.ofNullable(request.getProjectType()).orElse("ASSET_SERVICE"));
+        docRequest.setEntityType("CATEGORY");
+        docRequest.setEntityId(id);
+        docRequest.setDocType(docType.trim());
+        documentService.upload(headers, document, docRequest);
+        log.info("✅ Document uploaded for category ID={} with docType={}", id, docType);
+        return updated;
     }
 
     // ============================================================

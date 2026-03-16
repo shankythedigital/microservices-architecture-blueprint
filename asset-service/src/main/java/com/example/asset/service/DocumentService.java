@@ -17,6 +17,7 @@ import com.example.asset.repository.PurchaseOutletRepository;
 import com.example.asset.repository.VendorRepository;
 import com.example.asset.repository.AssetWarrantyRepository;
 import com.example.asset.repository.AssetAmcRepository;
+import com.example.asset.service.DocumentTypeMasterService;
 import com.example.common.util.FileStorageUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,7 +41,8 @@ public class DocumentService {
     private final AssetDocumentRepository repo;
     private final AssetMasterRepository assetRepo;
     private final FileStorageUtil fileStorageUtil;
-    
+    private final DocumentTypeMasterService documentTypeMasterService;
+
     // Repositories for entity validation
     private final ProductCategoryRepository categoryRepo;
     private final ProductSubCategoryRepository subCategoryRepo;
@@ -55,6 +57,7 @@ public class DocumentService {
     public DocumentService(AssetDocumentRepository repo,
                            AssetMasterRepository assetRepo,
                            FileStorageUtil fileStorageUtil,
+                           DocumentTypeMasterService documentTypeMasterService,
                            ProductCategoryRepository categoryRepo,
                            ProductSubCategoryRepository subCategoryRepo,
                            ProductMakeRepository makeRepo,
@@ -67,6 +70,7 @@ public class DocumentService {
         this.repo = repo;
         this.assetRepo = assetRepo;
         this.fileStorageUtil = fileStorageUtil;
+        this.documentTypeMasterService = documentTypeMasterService;
         this.categoryRepo = categoryRepo;
         this.subCategoryRepo = subCategoryRepo;
         this.makeRepo = makeRepo;
@@ -82,7 +86,13 @@ public class DocumentService {
     // 🟢 UPLOAD DOCUMENT
     // ============================================================
     public AssetDocument upload(HttpHeaders headers, MultipartFile file, DocumentRequest request) {
-        log.info("📤 Upload request: entityType={} entityId={}", request.getEntityType(), request.getEntityId());
+        log.info("📤 Upload request: entityType={} entityId={} docType={}", request.getEntityType(), request.getEntityId(), request.getDocType());
+
+        // ✅ Validate docType against document_type_master
+        if (request.getDocType() != null && !request.getDocType().isBlank()) {
+            documentTypeMasterService.validate(request.getDocType());
+            request.setDocType(documentTypeMasterService.normalize(request.getDocType()));
+        }
 
         try {
             // 1️⃣ Store file on disk

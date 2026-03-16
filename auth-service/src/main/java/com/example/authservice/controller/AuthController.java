@@ -69,7 +69,9 @@ public class AuthController {
                     req.address1,
                     req.address2,
                     req.address3,
-                    req.acceptTc
+                    req.acceptTc,
+                    req.firstName,
+                    req.lastName
             );
             
             return ResponseEntity.ok(Map.of("message", "User registered successfully", "username", req.username));
@@ -111,7 +113,9 @@ public class AuthController {
                     req.address1,
                     req.address2,
                     req.address3,
-                    req.acceptTc
+                    req.acceptTc,
+                    req.firstName,
+                    req.lastName
             );
             
             return ResponseEntity.ok(Map.of("message", "Admin user registered successfully", "username", req.username));
@@ -280,6 +284,46 @@ public class AuthController {
             return ResponseEntity.ok(authService.refresh(refreshToken));
         } catch (Exception e) {
             return ResponseEntity.status(401).body(e.getMessage());
+        }
+    }
+
+    /**
+     * Logout: revokes session(s) and invalidates tokens.
+     * - Body: { "refreshToken": "..." } — revokes session for that refresh token (works when access token expired).
+     * - Header: Authorization: Bearer &lt;token&gt; — revokes current session (requires valid token).
+     * - Query: ?all=true with Bearer — revokes all sessions for the user.
+     */
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout(
+            @RequestBody(required = false) Map<String, String> body,
+            @RequestParam(value = "all", defaultValue = "false") boolean logoutAll,
+            HttpServletRequest request) {
+        try {
+            String refreshToken = body != null ? body.get("refreshToken") : null;
+            String authHeader = request.getHeader("Authorization");
+            String bearerToken = (authHeader != null && authHeader.startsWith("Bearer "))
+                    ? authHeader.substring(7) : null;
+
+            if (refreshToken != null && !refreshToken.isBlank()) {
+                authService.logoutByRefreshToken(refreshToken);
+                return ResponseEntity.ok(Map.of("message", "Logged out successfully"));
+            }
+            if (bearerToken != null && !bearerToken.isBlank()) {
+                if (logoutAll) {
+                    String uid = authService.getUserIdFromToken(bearerToken);
+                    if (uid == null || uid.isBlank()) throw new RuntimeException("Invalid token");
+                    Long userId = Long.parseLong(uid);
+                    authService.revokeAllUserSessions(userId);
+                    authService.deleteAllTokensForUser(userId);
+                    return ResponseEntity.ok(Map.of("message", "Logged out from all devices"));
+                }
+                authService.logoutByAccessToken(bearerToken);
+                return ResponseEntity.ok(Map.of("message", "Logged out successfully"));
+            }
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", "Refresh token or Bearer token required for logout"));
+        } catch (Exception e) {
+            return ResponseEntity.status(401).body(Map.of("error", e.getMessage()));
         }
     }
 

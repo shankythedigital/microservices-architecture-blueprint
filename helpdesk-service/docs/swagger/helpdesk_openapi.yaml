@@ -1,0 +1,2061 @@
+openapi: 3.0.3
+info:
+  title: Helpdesk Service API
+  description: |
+    Helpdesk Service API
+    
+    Comprehensive helpdesk and support management including:
+    - Issue and ticket management
+    - Query management
+    - FAQ management
+    - Escalation matrix and SLA configuration
+    - Issue escalation (manual and auto)
+    - SLA tracking and breach monitoring
+    - Service knowledge base
+    - AI-powered chatbot integration
+  version: 1.0.0
+  contact:
+    name: API Support
+    email: support@example.com
+
+servers:
+  - url: http://localhost:8084
+    description: Local development server
+  - url: https://api.example.com/helpdesk-service
+    description: Production server
+
+tags:
+  - name: Issue Management
+    description: APIs for managing helpdesk issues and tickets
+  - name: Issue Master
+    description: Predefined issue types linked to category/subcategory/component/spare part
+  - name: Query Management
+    description: APIs for managing user queries
+  - name: FAQ Management
+    description: APIs for managing frequently asked questions
+  - name: Escalation Matrix
+    description: APIs for managing escalation matrix and SLA configuration
+  - name: Issue Escalation
+    description: APIs for managing issue escalations
+  - name: SLA Tracking
+    description: APIs for SLA tracking and monitoring
+  - name: Service Knowledge
+    description: APIs for managing service knowledge base
+  - name: Chatbot
+    description: APIs for chatbot interactions
+
+paths:
+  # ============================================================
+  # ISSUE ENDPOINTS
+  # ============================================================
+  /api/helpdesk/issues:
+    post:
+      tags:
+        - Issue Management
+      summary: Create a new issue
+      description: Raise a new issue ticket
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IssueRequest'
+      responses:
+        '201':
+          description: Issue created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IssueResponse'
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+
+    get:
+      tags:
+        - Issue Management
+      summary: Get all issues
+      description: Retrieve all issues
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of issues
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/IssueResponse'
+        '401':
+          description: Unauthorized
+
+  /api/helpdesk/issue-master:
+    post:
+      tags:
+        - Issue Master
+      summary: Create issue master
+      description: Add new issue type when not in list. Select category, subcategory, component, or spare part from master tables. At least one ref required.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IssueMasterRequest'
+      responses:
+        '201':
+          description: Issue master created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IssueMasterResponse'
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+    get:
+      tags:
+        - Issue Master
+      summary: List all issue masters
+      description: Get all predefined issue types
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of issue masters
+          content:
+            application/json:
+              type: array
+              items:
+                $ref: '#/components/schemas/IssueMasterResponse'
+  /api/helpdesk/issue-master/category/{categoryId}:
+    get:
+      tags:
+        - Issue Master
+      summary: List by category
+      description: Get issue masters linked to a category
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: categoryId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: List of issue masters
+          content:
+            application/json:
+              type: array
+              items:
+                $ref: '#/components/schemas/IssueMasterResponse'
+  /api/helpdesk/issue-master/sub-category/{subCategoryId}:
+    get:
+      tags:
+        - Issue Master
+      summary: List by subcategory
+      description: Get issue masters linked to a subcategory
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: subCategoryId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: List of issue masters
+          content:
+            application/json:
+              type: array
+              items:
+                $ref: '#/components/schemas/IssueMasterResponse'
+  /api/helpdesk/issue-master/component/{componentId}:
+    get:
+      tags:
+        - Issue Master
+      summary: List by component
+      description: Get issue masters linked to a component
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: componentId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: List of issue masters
+          content:
+            application/json:
+              type: array
+              items:
+                $ref: '#/components/schemas/IssueMasterResponse'
+  /api/helpdesk/issue-master/{id}:
+    get:
+      tags:
+        - Issue Master
+      summary: Get issue master by ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Issue master
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IssueMasterResponse'
+    put:
+      tags:
+        - Issue Master
+      summary: Update issue master
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IssueMasterRequest'
+      responses:
+        '200':
+          description: Updated issue master
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IssueMasterResponse'
+
+  /api/helpdesk/issues/{id}:
+    get:
+      tags:
+        - Issue Management
+      summary: Get issue by ID
+      description: Retrieve a specific issue by its ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Issue found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IssueResponse'
+        '404':
+          description: Issue not found
+        '401':
+          description: Unauthorized
+
+    patch:
+      tags:
+        - Issue Management
+      summary: Update issue status
+      description: Update the status of an issue
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: status
+          in: query
+          required: true
+          schema:
+            $ref: '#/components/schemas/IssueStatus'
+      responses:
+        '200':
+          description: Issue updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IssueResponse'
+        '404':
+          description: Issue not found
+
+  /api/helpdesk/issues/{id}/assign:
+    patch:
+      tags:
+        - Issue Management
+      summary: Assign issue
+      description: Assign an issue to a support agent
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: assignedTo
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Issue assigned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IssueResponse'
+        '404':
+          description: Issue not found
+
+  /api/helpdesk/issues/{id}/resolve:
+    post:
+      tags:
+        - Issue Management
+      summary: Resolve issue
+      description: Resolve an issue with a resolution description
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IssueResolutionRequest'
+      responses:
+        '200':
+          description: Issue resolved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IssueResponse'
+        '404':
+          description: Issue not found
+
+  /api/helpdesk/issues/{id}/close:
+    patch:
+      tags:
+        - Issue Management
+      summary: Close issue
+      description: Close an issue
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Issue closed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IssueResponse'
+        '404':
+          description: Issue not found
+
+  /api/helpdesk/issues/status/{status}:
+    get:
+      tags:
+        - Issue Management
+      summary: Get issues by status
+      description: Retrieve issues filtered by status
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: status
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/IssueStatus'
+      responses:
+        '200':
+          description: List of issues
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/IssueResponse'
+
+  /api/helpdesk/issues/service/{service}:
+    get:
+      tags:
+        - Issue Management
+      summary: Get issues by service
+      description: Retrieve issues filtered by related service
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: service
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/RelatedService'
+      responses:
+        '200':
+          description: List of issues
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/IssueResponse'
+
+  /api/helpdesk/issues/my-issues:
+    get:
+      tags:
+        - Issue Management
+      summary: Get my issues
+      description: Retrieve issues reported by the current user
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of issues
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/IssueResponse'
+
+  # ============================================================
+  # QUERY ENDPOINTS
+  # ============================================================
+  /api/helpdesk/queries:
+    post:
+      tags:
+        - Query Management
+      summary: Create a new query
+      description: Submit a new query
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QueryRequest'
+      responses:
+        '201':
+          description: Query created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryResponse'
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+
+    get:
+      tags:
+        - Query Management
+      summary: Get all queries
+      description: Retrieve all queries
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of queries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/QueryResponse'
+
+  /api/helpdesk/queries/{id}:
+    get:
+      tags:
+        - Query Management
+      summary: Get query by ID
+      description: Retrieve a specific query by its ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Query found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryResponse'
+        '404':
+          description: Query not found
+
+  /api/helpdesk/queries/status/{status}:
+    get:
+      tags:
+        - Query Management
+      summary: Get queries by status
+      description: Retrieve queries filtered by status
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: status
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/QueryStatus'
+      responses:
+        '200':
+          description: List of queries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/QueryResponse'
+
+  /api/helpdesk/queries/service/{service}:
+    get:
+      tags:
+        - Query Management
+      summary: Get queries by service
+      description: Retrieve queries filtered by related service
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: service
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/RelatedService'
+      responses:
+        '200':
+          description: List of queries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/QueryResponse'
+
+  /api/helpdesk/queries/my-queries:
+    get:
+      tags:
+        - Query Management
+      summary: Get my queries
+      description: Retrieve queries asked by the current user
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of queries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/QueryResponse'
+
+  /api/helpdesk/queries/{id}/answer:
+    post:
+      tags:
+        - Query Management
+      summary: Answer a query
+      description: Provide an answer to a pending query
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QueryAnswerRequest'
+      responses:
+        '200':
+          description: Query answered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryResponse'
+        '404':
+          description: Query not found
+
+  /api/helpdesk/queries/{id}/close:
+    patch:
+      tags:
+        - Query Management
+      summary: Close query
+      description: Close a query
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Query closed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryResponse'
+        '404':
+          description: Query not found
+
+  # ============================================================
+  # FAQ ENDPOINTS
+  # ============================================================
+  /api/helpdesk/faqs:
+    post:
+      tags:
+        - FAQ Management
+      summary: Create a new FAQ
+      description: Add a new frequently asked question
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FAQRequest'
+      responses:
+        '201':
+          description: FAQ created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FAQResponse'
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+
+    get:
+      tags:
+        - FAQ Management
+      summary: Get all FAQs
+      description: Retrieve all FAQs
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of FAQs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FAQResponse'
+
+  /api/helpdesk/faqs/{id}:
+    get:
+      tags:
+        - FAQ Management
+      summary: Get FAQ by ID
+      description: Retrieve a specific FAQ by its ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: FAQ found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FAQResponse'
+        '404':
+          description: FAQ not found
+
+    put:
+      tags:
+        - FAQ Management
+      summary: Update FAQ
+      description: Update an existing FAQ
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FAQRequest'
+      responses:
+        '200':
+          description: FAQ updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FAQResponse'
+        '404':
+          description: FAQ not found
+
+    delete:
+      tags:
+        - FAQ Management
+      summary: Delete FAQ
+      description: Delete an FAQ
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: FAQ deleted
+        '404':
+          description: FAQ not found
+
+  /api/helpdesk/faqs/service/{service}:
+    get:
+      tags:
+        - FAQ Management
+      summary: Get FAQs by service
+      description: Retrieve FAQs filtered by related service
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: service
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/RelatedService'
+      responses:
+        '200':
+          description: List of FAQs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FAQResponse'
+
+  /api/helpdesk/faqs/category/{category}:
+    get:
+      tags:
+        - FAQ Management
+      summary: Get FAQs by category
+      description: Retrieve FAQs filtered by category
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: category
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of FAQs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FAQResponse'
+
+  /api/helpdesk/faqs/search:
+    get:
+      tags:
+        - FAQ Management
+      summary: Search FAQs
+      description: Search FAQs by keyword
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: keyword
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of matching FAQs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FAQResponse'
+
+  /api/helpdesk/faqs/service/{service}/search:
+    get:
+      tags:
+        - FAQ Management
+      summary: Search FAQs by service
+      description: Search FAQs by service and keyword
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: service
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/RelatedService'
+        - name: keyword
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of matching FAQs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FAQResponse'
+
+  /api/helpdesk/faqs/{id}/helpful:
+    post:
+      tags:
+        - FAQ Management
+      summary: Mark FAQ as helpful
+      description: Increment the helpful count for an FAQ
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: FAQ marked as helpful
+        '404':
+          description: FAQ not found
+
+  /api/helpdesk/faqs/{id}/favourite:
+    put:
+      tags:
+        - FAQ Management
+      summary: Update FAQ favourite status
+      description: Toggle favourite status for an FAQ
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: isFavourite
+          in: query
+          schema:
+            type: boolean
+            default: true
+      responses:
+        '200':
+          description: FAQ favourite updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseWrapper'
+        '404':
+          description: FAQ not found
+
+  /api/helpdesk/faqs/{id}/most-like:
+    put:
+      tags:
+        - FAQ Management
+      summary: Update FAQ most like status
+      description: Toggle most like status for an FAQ
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: isMostLike
+          in: query
+          schema:
+            type: boolean
+            default: true
+      responses:
+        '200':
+          description: FAQ most like updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseWrapper'
+        '404':
+          description: FAQ not found
+
+  /api/helpdesk/faqs/{id}/sequence-order:
+    put:
+      tags:
+        - FAQ Management
+      summary: Update FAQ sequence order
+      description: Update the sequence order for an FAQ (admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: sequenceOrder
+          in: query
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: FAQ sequence order updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseWrapper'
+        '404':
+          description: FAQ not found
+
+  # ============================================================
+  # ESCALATION MATRIX ENDPOINTS
+  # ============================================================
+  /api/helpdesk/escalation-matrix:
+    post:
+      tags:
+        - Escalation Matrix
+      summary: Create escalation matrix
+      description: Create a new escalation matrix entry with SLA configuration
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EscalationMatrixRequest'
+      responses:
+        '201':
+          description: Escalation matrix created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EscalationMatrixResponse'
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+
+    get:
+      tags:
+        - Escalation Matrix
+      summary: Get all escalation matrices
+      description: Retrieve all escalation matrix configurations
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of escalation matrices
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EscalationMatrixResponse'
+
+  /api/helpdesk/escalation-matrix/{id}:
+    get:
+      tags:
+        - Escalation Matrix
+      summary: Get escalation matrix by ID
+      description: Retrieve a specific escalation matrix by its ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Escalation matrix found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EscalationMatrixResponse'
+        '404':
+          description: Escalation matrix not found
+
+    put:
+      tags:
+        - Escalation Matrix
+      summary: Update escalation matrix
+      description: Update an existing escalation matrix
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EscalationMatrixRequest'
+      responses:
+        '200':
+          description: Escalation matrix updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EscalationMatrixResponse'
+        '404':
+          description: Escalation matrix not found
+
+    delete:
+      tags:
+        - Escalation Matrix
+      summary: Delete escalation matrix
+      description: Delete an escalation matrix
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '204':
+          description: Escalation matrix deleted
+        '404':
+          description: Escalation matrix not found
+
+  /api/helpdesk/escalation-matrix/service/{service}:
+    get:
+      tags:
+        - Escalation Matrix
+      summary: Get escalation matrices by service
+      description: Retrieve escalation matrices for a specific service
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: service
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/RelatedService'
+      responses:
+        '200':
+          description: List of escalation matrices
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EscalationMatrixResponse'
+
+  /api/helpdesk/escalation-matrix/service/{service}/priority/{priority}:
+    get:
+      tags:
+        - Escalation Matrix
+      summary: Get escalation matrix
+      description: Get active escalation matrix for service and priority
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: service
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/RelatedService'
+        - name: priority
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/IssuePriority'
+      responses:
+        '200':
+          description: Escalation matrix found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EscalationMatrixResponse'
+        '404':
+          description: Escalation matrix not found
+
+  # ============================================================
+  # ESCALATION ENDPOINTS
+  # ============================================================
+  /api/helpdesk/escalations/issue/{issueId}:
+    post:
+      tags:
+        - Issue Escalation
+      summary: Escalate issue
+      description: Manually escalate an issue to a higher support level
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: issueId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IssueEscalationRequest'
+      responses:
+        '200':
+          description: Issue escalated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IssueEscalationResponse'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Issue not found
+
+    get:
+      tags:
+        - Issue Escalation
+      summary: Get issue escalations
+      description: Retrieve escalation history for an issue
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: issueId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: List of escalations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/IssueEscalationResponse'
+        '404':
+          description: Issue not found
+
+  /api/helpdesk/escalations/issue/{issueId}/auto-escalate:
+    post:
+      tags:
+        - Issue Escalation
+      summary: Auto-escalate issue
+      description: Trigger auto-escalation check for an issue
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: issueId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Auto-escalation triggered
+        '404':
+          description: Issue not found
+
+  # ============================================================
+  # SLA ENDPOINTS
+  # ============================================================
+  /api/helpdesk/sla/issue/{issueId}:
+    get:
+      tags:
+        - SLA Tracking
+      summary: Get SLA tracking
+      description: Retrieve SLA tracking information for an issue
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: issueId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: SLA tracking information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SLATrackingResponse'
+        '404':
+          description: Issue not found
+
+  /api/helpdesk/sla/breaches:
+    get:
+      tags:
+        - SLA Tracking
+      summary: Get SLA breaches
+      description: Retrieve all issues with SLA breaches
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of SLA breaches
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SLATrackingResponse'
+
+  /api/helpdesk/sla/issue/{issueId}/first-response:
+    post:
+      tags:
+        - SLA Tracking
+      summary: Record first response
+      description: Record the first response time for an issue
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: issueId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: First response recorded
+        '404':
+          description: Issue not found
+
+  # ============================================================
+  # SERVICE KNOWLEDGE ENDPOINTS
+  # ============================================================
+  /api/helpdesk/knowledge:
+    post:
+      tags:
+        - Service Knowledge
+      summary: Create knowledge entry
+      description: Add new knowledge about a service
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ServiceKnowledgeRequest'
+      responses:
+        '201':
+          description: Knowledge entry created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServiceKnowledgeResponse'
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+
+    get:
+      tags:
+        - Service Knowledge
+      summary: Get all knowledge
+      description: Retrieve all knowledge entries
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of knowledge entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ServiceKnowledgeResponse'
+
+  /api/helpdesk/knowledge/{id}:
+    get:
+      tags:
+        - Service Knowledge
+      summary: Get knowledge by ID
+      description: Retrieve a specific knowledge entry by its ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Knowledge entry found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServiceKnowledgeResponse'
+        '404':
+          description: Knowledge entry not found
+
+    put:
+      tags:
+        - Service Knowledge
+      summary: Update knowledge
+      description: Update an existing knowledge entry
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ServiceKnowledgeRequest'
+      responses:
+        '200':
+          description: Knowledge entry updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServiceKnowledgeResponse'
+        '404':
+          description: Knowledge entry not found
+
+    delete:
+      tags:
+        - Service Knowledge
+      summary: Delete knowledge
+      description: Delete a knowledge entry
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '204':
+          description: Knowledge entry deleted
+        '404':
+          description: Knowledge entry not found
+
+  /api/helpdesk/knowledge/service/{service}:
+    get:
+      tags:
+        - Service Knowledge
+      summary: Get knowledge by service
+      description: Retrieve knowledge entries filtered by service
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: service
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/RelatedService'
+      responses:
+        '200':
+          description: List of knowledge entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ServiceKnowledgeResponse'
+
+  /api/helpdesk/knowledge/service/{service}/search:
+    get:
+      tags:
+        - Service Knowledge
+      summary: Search knowledge
+      description: Search knowledge entries by service and keyword
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: service
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/RelatedService'
+        - name: keyword
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of matching knowledge entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ServiceKnowledgeResponse'
+
+  # ============================================================
+  # CHATBOT ENDPOINTS
+  # ============================================================
+  /api/helpdesk/chatbot/message:
+    post:
+      tags:
+        - Chatbot
+      summary: Send message to chatbot
+      description: Send a message to the chatbot and get a response
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChatbotMessageRequest'
+      responses:
+        '200':
+          description: Chatbot response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatbotMessageResponse'
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+
+  /api/helpdesk/chatbot/session/{sessionId}:
+    get:
+      tags:
+        - Chatbot
+      summary: Get session history
+      description: Retrieve conversation history for a chatbot session
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Conversation history
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ChatbotMessageResponse'
+        '404':
+          description: Session not found
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    ResponseWrapper:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        data:
+          type: object
+
+    IssueStatus:
+      type: string
+      enum: [OPEN, IN_PROGRESS, RESOLVED, CLOSED, REOPENED]
+
+    QueryStatus:
+      type: string
+      enum: [PENDING, ANSWERED, CLOSED]
+
+    RelatedService:
+      type: string
+      enum: [AUTH_SERVICE, NOTIFICATION_SERVICE, ASSET_SERVICE, HELPDESK_SERVICE, UPCOMING_PROJECT]
+
+    IssuePriority:
+      type: string
+      enum: [LOW, MEDIUM, HIGH, CRITICAL]
+
+    SupportLevel:
+      type: string
+      enum: [L1, L2, L3]
+
+    IssueRequest:
+      type: object
+      required:
+        - priority
+        - relatedService
+      properties:
+        issueMasterId:
+          type: integer
+          format: int64
+          description: When raising ticket from issue master list - select from predefined issues
+        title:
+          type: string
+          description: Required when not using issueMasterId (custom issue)
+        description:
+          type: string
+          description: Required when not using issueMasterId. Optional override when using issueMasterId
+        priority:
+          $ref: '#/components/schemas/IssuePriority'
+        relatedService:
+          $ref: '#/components/schemas/RelatedService'
+        assetId:
+          type: integer
+          format: int64
+          description: Optional reference to asset master (asset_id)
+        componentId:
+          type: integer
+          format: int64
+          description: Optional reference to component master (component_id)
+        sparePartId:
+          type: integer
+          format: int64
+          description: Optional reference to spare parts master (spare_part_id)
+
+    IssueResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        title:
+          type: string
+        description:
+          type: string
+        status:
+          $ref: '#/components/schemas/IssueStatus'
+        priority:
+          $ref: '#/components/schemas/IssuePriority'
+        relatedService:
+          $ref: '#/components/schemas/RelatedService'
+        reportedBy:
+          type: string
+          description: PII masked (DPDPA Compliance)
+        assignedTo:
+          type: string
+          description: PII masked (DPDPA Compliance)
+        currentSupportLevel:
+          $ref: '#/components/schemas/SupportLevel'
+        initialSupportLevel:
+          $ref: '#/components/schemas/SupportLevel'
+        assignedAt:
+          type: string
+          format: date-time
+        firstResponseAt:
+          type: string
+          format: date-time
+        resolution:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        resolvedAt:
+          type: string
+          format: date-time
+        escalationCount:
+          type: integer
+        lastEscalatedAt:
+          type: string
+          format: date-time
+        assetId:
+          type: integer
+          format: int64
+          description: Reference to asset master
+        componentId:
+          type: integer
+          format: int64
+          description: Reference to component master
+        sparePartId:
+          type: integer
+          format: int64
+          description: Reference to spare parts master
+        issueMasterId:
+          type: integer
+          format: int64
+          description: Reference to issue master when raised from list
+        categoryId:
+          type: integer
+          format: int64
+          description: Reference to category (from issue master)
+        subCategoryId:
+          type: integer
+          format: int64
+          description: Reference to subcategory (from issue master)
+        slaTracking:
+          $ref: '#/components/schemas/SLATrackingResponse'
+
+    IssueMasterRequest:
+      type: object
+      required:
+        - issueTitle
+      properties:
+        issueTitle:
+          type: string
+        issueDescription:
+          type: string
+        categoryId:
+          type: integer
+          format: int64
+          description: Reference to category master (asset-service)
+        subCategoryId:
+          type: integer
+          format: int64
+          description: Reference to subcategory master (asset-service)
+        componentId:
+          type: integer
+          format: int64
+          description: Reference to component master (asset-service)
+        sparePartId:
+          type: integer
+          format: int64
+          description: Reference to spare parts master
+    IssueMasterResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        issueTitle:
+          type: string
+        issueDescription:
+          type: string
+        categoryId:
+          type: integer
+          format: int64
+        subCategoryId:
+          type: integer
+          format: int64
+        componentId:
+          type: integer
+          format: int64
+        sparePartId:
+          type: integer
+          format: int64
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    IssueResolutionRequest:
+      type: object
+      required:
+        - resolution
+      properties:
+        resolution:
+          type: string
+
+    QueryRequest:
+      type: object
+      required:
+        - question
+        - relatedService
+      properties:
+        question:
+          type: string
+        relatedService:
+          $ref: '#/components/schemas/RelatedService'
+
+    QueryResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        question:
+          type: string
+        answer:
+          type: string
+        status:
+          $ref: '#/components/schemas/QueryStatus'
+        relatedService:
+          $ref: '#/components/schemas/RelatedService'
+        askedBy:
+          type: string
+          description: PII masked (DPDPA Compliance)
+        answeredBy:
+          type: string
+          description: PII masked (DPDPA Compliance)
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        answeredAt:
+          type: string
+          format: date-time
+
+    QueryAnswerRequest:
+      type: object
+      required:
+        - answer
+      properties:
+        answer:
+          type: string
+
+    FAQRequest:
+      type: object
+      required:
+        - question
+        - answer
+        - relatedService
+        - category
+      properties:
+        question:
+          type: string
+        answer:
+          type: string
+        relatedService:
+          $ref: '#/components/schemas/RelatedService'
+        category:
+          type: string
+
+    FAQResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        question:
+          type: string
+        answer:
+          type: string
+        relatedService:
+          $ref: '#/components/schemas/RelatedService'
+        category:
+          type: string
+        viewCount:
+          type: integer
+        helpfulCount:
+          type: integer
+        sequenceOrder:
+          type: integer
+        isFavourite:
+          type: boolean
+        isMostLike:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    EscalationMatrixRequest:
+      type: object
+      required:
+        - relatedService
+        - priority
+        - supportLevel
+        - initialAssignmentLevel
+        - responseTimeMinutes
+        - resolutionTimeMinutes
+      properties:
+        relatedService:
+          $ref: '#/components/schemas/RelatedService'
+        priority:
+          $ref: '#/components/schemas/IssuePriority'
+        supportLevel:
+          $ref: '#/components/schemas/SupportLevel'
+        initialAssignmentLevel:
+          $ref: '#/components/schemas/SupportLevel'
+        escalateToLevel:
+          $ref: '#/components/schemas/SupportLevel'
+        escalationTimeMinutes:
+          type: integer
+          description: Time before auto-escalation
+        responseTimeMinutes:
+          type: integer
+          description: SLA response time
+        resolutionTimeMinutes:
+          type: integer
+          description: SLA resolution time
+        isActive:
+          type: boolean
+          default: true
+
+    EscalationMatrixResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        relatedService:
+          $ref: '#/components/schemas/RelatedService'
+        priority:
+          $ref: '#/components/schemas/IssuePriority'
+        supportLevel:
+          $ref: '#/components/schemas/SupportLevel'
+        initialAssignmentLevel:
+          $ref: '#/components/schemas/SupportLevel'
+        escalateToLevel:
+          $ref: '#/components/schemas/SupportLevel'
+        escalationTimeMinutes:
+          type: integer
+        responseTimeMinutes:
+          type: integer
+        resolutionTimeMinutes:
+          type: integer
+        isActive:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    IssueEscalationRequest:
+      type: object
+      required:
+        - toLevel
+      properties:
+        toLevel:
+          $ref: '#/components/schemas/SupportLevel'
+        escalationReason:
+          type: string
+          description: Optional reason for manual escalation
+
+    IssueEscalationResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        issueId:
+          type: integer
+          format: int64
+        fromLevel:
+          $ref: '#/components/schemas/SupportLevel'
+        toLevel:
+          $ref: '#/components/schemas/SupportLevel'
+        escalatedAt:
+          type: string
+          format: date-time
+        escalationReason:
+          type: string
+        escalatedBy:
+          type: string
+          description: PII masked (DPDPA Compliance)
+
+    SLATrackingResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        issueId:
+          type: integer
+          format: int64
+        responseTimeMinutes:
+          type: integer
+        resolutionTimeMinutes:
+          type: integer
+        firstResponseAt:
+          type: string
+          format: date-time
+        resolvedAt:
+          type: string
+          format: date-time
+        responseSLAMet:
+          type: boolean
+        resolutionSLAMet:
+          type: boolean
+        responseSLABreachAt:
+          type: string
+          format: date-time
+        resolutionSLABreachAt:
+          type: string
+          format: date-time
+        actualResponseTimeMinutes:
+          type: integer
+        actualResolutionTimeMinutes:
+          type: integer
+
+    ServiceKnowledgeRequest:
+      type: object
+      required:
+        - service
+        - topic
+        - content
+        - category
+      properties:
+        service:
+          $ref: '#/components/schemas/RelatedService'
+        topic:
+          type: string
+        content:
+          type: string
+        category:
+          type: string
+        apiEndpoints:
+          type: string
+        commonIssues:
+          type: string
+        troubleshootingSteps:
+          type: string
+
+    ServiceKnowledgeResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        service:
+          $ref: '#/components/schemas/RelatedService'
+        topic:
+          type: string
+        content:
+          type: string
+        category:
+          type: string
+        apiEndpoints:
+          type: string
+        commonIssues:
+          type: string
+        troubleshootingSteps:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    ChatbotMessageRequest:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+        sessionId:
+          type: string
+          description: Optional, for continuing conversation
+
+    ChatbotMessageResponse:
+      type: object
+      properties:
+        sessionId:
+          type: string
+        response:
+          type: string
+        conversationHistory:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChatMessage'
+        timestamp:
+          type: string
+          format: date-time
+
+    ChatMessage:
+      type: object
+      properties:
+        role:
+          type: string
+        content:
+          type: string
+        timestamp:
+          type: string
+          format: date-time

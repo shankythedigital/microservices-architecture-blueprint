@@ -3,6 +3,7 @@ package com.example.asset.service;
 
 import com.example.asset.dto.BulkModelRequest;
 import com.example.asset.dto.BulkUploadResponse;
+import com.example.asset.dto.DocumentRequest;
 import com.example.asset.dto.ModelDto;
 import com.example.asset.dto.ModelRequest;
 import com.example.asset.entity.ProductMake;
@@ -19,6 +20,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+import org.springframework.web.multipart.MultipartFile;
 
 import jakarta.persistence.EntityManager;
 import java.util.*;
@@ -40,17 +42,23 @@ public class ModelService {
     private final SafeNotificationHelper safeNotificationHelper;
     @SuppressWarnings("unused")
     private final AdminClient adminClient; // Reserved for future admin operations
+    private final DocumentService documentService;
+    private final DocumentTypeMasterService documentTypeMasterService;
 
     public ModelService(ProductModelRepository repo,
                         ProductMakeRepository makeRepo,
                         SafeNotificationHelper safeNotificationHelper,
                         AdminClient adminClient,
-                        EntityManager entityManager) {
+                        EntityManager entityManager,
+                        DocumentService documentService,
+                        DocumentTypeMasterService documentTypeMasterService) {
         this.repo = repo;
         this.makeRepo = makeRepo;
         this.safeNotificationHelper = safeNotificationHelper;
         this.adminClient = adminClient;
         this.entityManager = entityManager;
+        this.documentService = documentService;
+        this.documentTypeMasterService = documentTypeMasterService;
     }
 
     // ============================================================
@@ -58,7 +66,12 @@ public class ModelService {
     // ============================================================
     @Transactional
     public ModelDto create(HttpHeaders headers, ModelRequest request) {
-        return create(headers, request, false);
+        return create(headers, request, null, null, false);
+    }
+
+    @Transactional
+    public ModelDto create(HttpHeaders headers, ModelRequest request, boolean skipNotifications) {
+        return create(headers, request, null, null, skipNotifications);
     }
 
     /**
@@ -66,7 +79,7 @@ public class ModelService {
      * thousands of async notification tasks that can cause resource/context issues).
      */
     @Transactional
-    public ModelDto create(HttpHeaders headers, ModelRequest request, boolean skipNotifications) {
+    public ModelDto create(HttpHeaders headers, ModelRequest request, MultipartFile document, String docType, boolean skipNotifications) {
         validateAuthorization(headers);
 
         ProductModel model = request.getModel();
@@ -98,6 +111,19 @@ public class ModelService {
         model.setCreatedBy(username);
         model.setUpdatedBy(username);
         ProductModel saved = repo.save(model);
+
+        // 📎 Upload document and store in AssetDocument (required for create, skip for bulk)
+        if (document != null && !document.isEmpty() && docType != null && !docType.isBlank()) {
+            DocumentRequest docRequest = new DocumentRequest();
+            docRequest.setUserId(userId);
+            docRequest.setUsername(username);
+            docRequest.setProjectType(projectType);
+            docRequest.setEntityType("MODEL");
+            docRequest.setEntityId(saved.getModelId());
+            docRequest.setDocType(docType.trim());
+            documentService.upload(headers, document, docRequest);
+            log.info("✅ Document uploaded for model ID={} with docType={}", saved.getModelId(), docType);
+        }
 
         if (!skipNotifications) {
             sendNotification(bearer, userId, username, "INAPP", "MODEL_CREATED_INAPP", saved, projectType);
@@ -175,6 +201,24 @@ public class ModelService {
             return ModelMapper.toDto(saved);
 
         }).orElseThrow(() -> new RuntimeException("Model not found with id: " + id));
+    }
+
+    @Transactional
+    public ModelDto updateWithDocument(HttpHeaders headers, Long id, ModelRequest request, MultipartFile document, String docType) {
+        documentTypeMasterService.validate(docType);
+        if (document == null || document.isEmpty())
+            throw new IllegalArgumentException("Document is required for update");
+        ModelDto updated = update(headers, id, request);
+        DocumentRequest docRequest = new DocumentRequest();
+        docRequest.setUserId(request.getUserId());
+        docRequest.setUsername(request.getUsername());
+        docRequest.setProjectType(Optional.ofNullable(request.getProjectType()).orElse("ASSET_SERVICE"));
+        docRequest.setEntityType("MODEL");
+        docRequest.setEntityId(id);
+        docRequest.setDocType(docType.trim());
+        documentService.upload(headers, document, docRequest);
+        log.info("✅ Document uploaded for model ID={} with docType={}", id, docType);
+        return updated;
     }
 
     // ============================================================

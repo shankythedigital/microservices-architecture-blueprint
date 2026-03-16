@@ -58,5 +58,11 @@ public interface ProductSubCategoryRepository extends JpaRepository<ProductSubCa
      * @return true if exists
      */
     boolean existsBySubCategoryNameIgnoreCaseAndCategory_CategoryId(String subCategoryName, Long categoryId);
+
+    /**
+     * ✅ Find subcategory by category ID and subcategory name (case-insensitive).
+     * Used for master matching when classifying from image.
+     */
+    Optional<ProductSubCategory> findByCategory_CategoryIdAndSubCategoryNameIgnoreCase(Long categoryId, String subCategoryName);
 }
 

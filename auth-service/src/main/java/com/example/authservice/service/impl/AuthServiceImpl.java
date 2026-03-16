@@ -521,12 +521,13 @@ public class AuthServiceImpl {
     // 🔹 Standard USER Registration
     // =====================================================
     public User register(String usernamePlain, String password, String emailPlain, String mobilePlain, String projectType) {
-        return register(usernamePlain, password, emailPlain, mobilePlain, null, projectType, null, null, null, null, null, null, null, null);
+        return register(usernamePlain, password, emailPlain, mobilePlain, null, projectType, null, null, null, null, null, null, null, null, null, null);
     }
 
     public User register(String usernamePlain, String password, String emailPlain, String mobilePlain, 
                         String countryCode, String projectType, String pincode, String city, 
-                        String state, String country, String address1, String address2, String address3, Boolean acceptTc) {
+                        String state, String country, String address1, String address2, String address3, Boolean acceptTc,
+                        String firstName, String lastName) {
         if (usernamePlain == null || usernamePlain.isBlank())
             throw new IllegalArgumentException("Username is required");
 
@@ -571,6 +572,8 @@ public class AuthServiceImpl {
         detail.setAddress2(address2);
         detail.setAddress3(address3);
         detail.setAcceptTc(acceptTc != null ? acceptTc : false);
+        detail.setFirstName(firstName);
+        detail.setLastName(lastName);
         detail.setCreatedBy("system");
         detail.setActive(true);
         detail.setUser(user);
@@ -583,12 +586,13 @@ public class AuthServiceImpl {
     // 🔹 ADMIN Registration (Same duplicate rule)
     // =====================================================
     public User adminregister(String usernamePlain, String password, String emailPlain, String mobilePlain, String projectType) {
-        return adminregister(usernamePlain, password, emailPlain, mobilePlain, null, projectType, null, null, null, null, null, null, null, null);
+        return adminregister(usernamePlain, password, emailPlain, mobilePlain, null, projectType, null, null, null, null, null, null, null, null, null, null);
     }
 
     public User adminregister(String usernamePlain, String password, String emailPlain, String mobilePlain,
                              String countryCode, String projectType, String pincode, String city,
-                             String state, String country, String address1, String address2, String address3, Boolean acceptTc) {
+                             String state, String country, String address1, String address2, String address3, Boolean acceptTc,
+                             String firstName, String lastName) {
         if (usernamePlain == null || usernamePlain.isBlank())
             throw new IllegalArgumentException("Username is required");
 
@@ -632,6 +636,8 @@ public class AuthServiceImpl {
         detail.setAddress2(address2);
         detail.setAddress3(address3);
         detail.setAcceptTc(acceptTc != null ? acceptTc : false);
+        detail.setFirstName(firstName);
+        detail.setLastName(lastName);
         detail.setCreatedBy("system");
         detail.setActive(true);
         detail.setUser(user);
@@ -741,6 +747,8 @@ public class AuthServiceImpl {
      * Throws with a generic message to avoid leaking account state.
      */
     private void ensureUserAllowedToLogin(User user, UserDetailMaster udm) {
+        if (user.getDeletedAt() != null)
+            throw new RuntimeException("Account is not allowed to access the system. Contact administrator.");
         if (Boolean.FALSE.equals(user.getEnabled()))
             throw new RuntimeException("Account is not allowed to access the system. Contact administrator.");
         if (udm != null) {
@@ -1008,6 +1016,60 @@ public class AuthServiceImpl {
         List<RefreshToken> tokens = refreshRepo.findBySession_User_UserId(userId);
         if (tokens == null || tokens.isEmpty()) return;
         refreshRepo.deleteAll(tokens);
+    }
+
+    /**
+     * Revoke a single session and delete its refresh tokens. Used for logout (current session).
+     */
+    @Transactional
+    public void revokeSession(Long sessionId) {
+        if (sessionId == null) return;
+        sessionRepo.findById(sessionId).ifPresent(s -> {
+            s.setRevoked(true);
+            sessionRepo.save(s);
+        });
+        refreshRepo.deleteBySession_Id(sessionId);
+    }
+
+    /**
+     * Logout using refresh token. Revokes the session associated with the token.
+     * Works even when access token is expired.
+     */
+    @Transactional
+    public void logoutByRefreshToken(String refreshToken) {
+        if (refreshToken == null || refreshToken.isBlank())
+            throw new RuntimeException("Refresh token is required for logout");
+
+        String hash = HmacUtil.hmacHex(refreshToken);
+        RefreshToken rt = refreshRepo.findByTokenHash(hash)
+                .orElseThrow(() -> new RuntimeException("Invalid or expired refresh token"));
+
+        Session s = rt.getSession();
+        if (s != null) {
+            revokeSession(s.getId());
+        } else {
+            refreshRepo.delete(rt);
+        }
+    }
+
+    /**
+     * Logout using access token. Extracts session ID and revokes that session.
+     * Requires valid (non-expired) access token.
+     */
+    @Transactional
+    public void logoutByAccessToken(String accessToken) {
+        if (accessToken == null || accessToken.isBlank())
+            throw new RuntimeException("Access token is required for logout");
+
+        Long sid = jwtUtil.getSessionId(accessToken);
+        if (sid == null) throw new RuntimeException("Invalid token: no session ID");
+        revokeSession(sid);
+    }
+
+    /** Extract user ID from access token (for logout-all). */
+    public String getUserIdFromToken(String accessToken) {
+        if (accessToken == null || accessToken.isBlank()) return null;
+        return jwtUtil.getUserId(accessToken);
     }
 
     // =====================================================

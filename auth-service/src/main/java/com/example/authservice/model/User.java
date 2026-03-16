@@ -4,6 +4,7 @@ package com.example.authservice.model;
 import com.example.common.converter.JpaAttributeEncryptor;
 import jakarta.persistence.*;
 import com.example.common.jpa.BaseEntity;
+import java.time.LocalDateTime;
 import java.util.Set;
 
 @Entity
@@ -46,6 +47,12 @@ public class User extends BaseEntity {
 
     @Column(name = "enabled")
     private Boolean enabled = true;
+
+    /** Soft delete: when set, user has self-deleted and cannot log in. */
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
+    @Column(name = "deleted_by", length = 255)
+    private String deletedBy;
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
@@ -90,6 +97,11 @@ public class User extends BaseEntity {
 
     public Boolean getEnabled() { return enabled; }
     public void setEnabled(Boolean enabled) { this.enabled = enabled; }
+
+    public LocalDateTime getDeletedAt() { return deletedAt; }
+    public void setDeletedAt(LocalDateTime deletedAt) { this.deletedAt = deletedAt; }
+    public String getDeletedBy() { return deletedBy; }
+    public void setDeletedBy(String deletedBy) { this.deletedBy = deletedBy; }
 
     public Set<Role> getRoles() { return roles; }
     public void setRoles(Set<Role> roles) { this.roles = roles; }

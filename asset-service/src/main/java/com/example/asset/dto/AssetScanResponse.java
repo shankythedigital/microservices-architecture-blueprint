@@ -21,9 +21,10 @@ public class AssetScanResponse {
     private String modelName;
     
     // Scan Metadata
-    private String matchedBy; // "ASSET_ID", "ASSET_NAME_UDV", "SERIAL_NUMBER"
+    private String matchedBy; // "ASSET_ID", "ASSET_NAME_UDV", "SERIAL_NUMBER", "PRODUCT_BARCODE"
     private String scanValue;
     private String scanType;
+    private String source;   // "Asset Database", "OpenFoodFacts", "UPCItemDB"
     
     public AssetScanResponse() {
     }
@@ -124,7 +125,15 @@ public class AssetScanResponse {
     public void setScanType(String scanType) {
         this.scanType = scanType;
     }
-    
+
+    public String getSource() {
+        return source;
+    }
+
+    public void setSource(String source) {
+        this.source = source;
+    }
+
     @Override
     public String toString() {
         return "AssetScanResponse{" +

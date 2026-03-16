@@ -5,9 +5,12 @@ import com.example.asset.dto.BulkComponentRequest;
 import com.example.asset.dto.BulkUploadResponse;
 import com.example.asset.dto.ComponentDto;
 import com.example.asset.dto.ComponentRequest;
+import com.example.asset.dto.DocumentRequest;
 import com.example.asset.entity.AssetComponent;
+import com.example.asset.entity.AssetMaster;
 import com.example.asset.mapper.ComponentMapper;
 import com.example.asset.repository.AssetComponentRepository;
+import com.example.asset.repository.AssetMasterRepository;
 import com.example.common.service.SafeNotificationHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,6 +18,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.Instant;
 import java.util.*;
@@ -31,12 +35,21 @@ public class ComponentService {
     private static final Logger log = LoggerFactory.getLogger(ComponentService.class);
 
     private final AssetComponentRepository repo;
+    private final AssetMasterRepository assetRepo;
     private final SafeNotificationHelper safeNotificationHelper;
+    private final DocumentService documentService;
+    private final DocumentTypeMasterService documentTypeMasterService;
 
     public ComponentService(AssetComponentRepository repo,
-                            SafeNotificationHelper safeNotificationHelper) {
+                            AssetMasterRepository assetRepo,
+                            SafeNotificationHelper safeNotificationHelper,
+                            DocumentService documentService,
+                            DocumentTypeMasterService documentTypeMasterService) {
         this.repo = repo;
+        this.assetRepo = assetRepo;
         this.safeNotificationHelper = safeNotificationHelper;
+        this.documentService = documentService;
+        this.documentTypeMasterService = documentTypeMasterService;
     }
 
     // ============================================================
@@ -44,11 +57,16 @@ public class ComponentService {
     // ============================================================
     @Transactional
     public AssetComponent create(HttpHeaders headers, ComponentRequest request) {
-        return create(headers, request, false);
+        return create(headers, request, null, null, false);
     }
 
     @Transactional
     public AssetComponent create(HttpHeaders headers, ComponentRequest request, boolean skipNotifications) {
+        return create(headers, request, null, null, skipNotifications);
+    }
+
+    @Transactional
+    public AssetComponent create(HttpHeaders headers, ComponentRequest request, MultipartFile document, String docType, boolean skipNotifications) {
         if (request == null || request.getComponent() == null)
             throw new IllegalArgumentException("Request or component cannot be null");
 
@@ -70,6 +88,24 @@ public class ComponentService {
         component.setCreatedBy(username);
         component.setUpdatedBy(username);
         AssetComponent saved = repo.save(component);
+
+        // 🔗 Link component to asset when assetId is provided (optional, no impact on existing flows)
+        if (request.getAssetId() != null) {
+            linkComponentToAsset(saved, request.getAssetId());
+        }
+
+        // 📎 Upload document and store in AssetDocument (required for create, skip for bulk)
+        if (document != null && !document.isEmpty() && docType != null && !docType.isBlank()) {
+            DocumentRequest docRequest = new DocumentRequest();
+            docRequest.setUserId(userId);
+            docRequest.setUsername(username);
+            docRequest.setProjectType(projectType);
+            docRequest.setEntityType("COMPONENT");
+            docRequest.setEntityId(saved.getComponentId());
+            docRequest.setDocType(docType.trim());
+            documentService.upload(headers, document, docRequest);
+            log.info("✅ Document uploaded for component ID={} with docType={}", saved.getComponentId(), docType);
+        }
 
         if (!skipNotifications) {
             Map<String, Object> placeholders = new LinkedHashMap<>();
@@ -114,6 +150,11 @@ public class ComponentService {
             existing.setUpdatedBy(username);
             AssetComponent saved = repo.save(existing);
 
+            // 🔗 Link component to asset when assetId is provided (optional, no impact on existing flows)
+            if (request.getAssetId() != null) {
+                linkComponentToAsset(saved, request.getAssetId());
+            }
+
             Map<String, Object> placeholders = new LinkedHashMap<>();
             placeholders.put("componentId", saved.getComponentId());
             placeholders.put("oldName", oldName);
@@ -129,6 +170,24 @@ public class ComponentService {
                     id, oldName, newName, username);
             return saved;
         }).orElseThrow(() -> new RuntimeException("Component not found with id: " + id));
+    }
+
+    @Transactional
+    public AssetComponent updateWithDocument(HttpHeaders headers, Long id, ComponentRequest request, MultipartFile document, String docType) {
+        documentTypeMasterService.validate(docType);
+        if (document == null || document.isEmpty())
+            throw new IllegalArgumentException("Document is required for update");
+        AssetComponent updated = update(headers, id, request);
+        DocumentRequest docRequest = new DocumentRequest();
+        docRequest.setUserId(request.getUserId());
+        docRequest.setUsername(request.getUsername());
+        docRequest.setProjectType(Optional.ofNullable(request.getProjectType()).orElse("ASSET_SERVICE"));
+        docRequest.setEntityType("COMPONENT");
+        docRequest.setEntityId(id);
+        docRequest.setDocType(docType.trim());
+        documentService.upload(headers, document, docRequest);
+        log.info("✅ Document uploaded for component ID={} with docType={}", id, docType);
+        return updated;
     }
 
     // ============================================================
@@ -397,6 +456,20 @@ public class ComponentService {
 
             return ComponentMapper.toDto(saved);
         }).orElseThrow(() -> new IllegalArgumentException("Component not found with id: " + id));
+    }
+
+    // ============================================================
+    // 🔗 Link Component to Asset (optional, used when assetId in request)
+    // ============================================================
+    private void linkComponentToAsset(AssetComponent component, Long assetId) {
+        AssetMaster asset = assetRepo.findById(assetId)
+                .orElseThrow(() -> new RuntimeException("❌ Asset not found with id: " + assetId));
+        if (Boolean.FALSE.equals(asset.getActive())) {
+            throw new RuntimeException("❌ Cannot link to inactive asset (id: " + assetId + ")");
+        }
+        asset.getComponents().add(component);
+        assetRepo.save(asset);
+        log.info("🔗 Component id={} linked to asset id={}", component.getComponentId(), assetId);
     }
 
     // ============================================================

@@ -6,8 +6,7 @@ import com.example.authservice.service.UserService;
 import com.example.common.service.SafeNotificationHelper;
 import com.example.common.util.HmacUtil;
 import com.example.common.util.RequestContext;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -23,17 +22,17 @@ public class OtpServiceImpl {
 
     private static final int EXPIRY_MINUTES = 3;
 
-    @Autowired
-    private OtpLogRepository otpLogRepository;
+    private final OtpLogRepository otpLogRepository;
+    private final SafeNotificationHelper safeNotificationHelper;
+    private final UserService userService;
 
-    @Autowired
-    private SafeNotificationHelper safeNotificationHelper;
-
-    @Autowired
-    private UserService userService;
-
-    @Autowired
-    private PasswordEncoder passwordEncoder;
+    public OtpServiceImpl(OtpLogRepository otpLogRepository,
+                          SafeNotificationHelper safeNotificationHelper,
+                          @Lazy UserService userService) {
+        this.otpLogRepository = otpLogRepository;
+        this.safeNotificationHelper = safeNotificationHelper;
+        this.userService = userService;
+    }
 
     /**
      * ✅ Generate and send OTP securely with bearer validation.

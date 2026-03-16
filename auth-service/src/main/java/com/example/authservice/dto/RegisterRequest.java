@@ -10,6 +10,9 @@ import jakarta.validation.constraints.NotNull;
 public class RegisterRequest {
     @NotBlank(message = "Username is required")
     public String username;
+
+    public String firstName;
+    public String lastName;
     
     public String password;
     public String email;

@@ -4,6 +4,12 @@ package com.example.asset.controller;
 import com.example.asset.dto.BulkSubCategoryRequest;
 import com.example.asset.dto.BulkUploadResponse;
 import com.example.asset.dto.SubCategoryRequest;
+import com.example.asset.util.ByteArrayMultipartFile;
+import com.example.asset.service.DocumentTypeMasterService;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import java.util.Base64;
+import java.util.Map;
 import com.example.asset.entity.ProductSubCategory;
 import com.example.asset.service.ExcelParsingService;
 import com.example.asset.service.SubCategoryService;
@@ -31,27 +37,58 @@ public class SubCategoryController {
     private static final Logger log = LoggerFactory.getLogger(SubCategoryController.class);
 
     private final SubCategoryService service;
+    private final DocumentTypeMasterService documentTypeMasterService;
     private final ExcelParsingService excelParsingService;
 
-    public SubCategoryController(SubCategoryService service, ExcelParsingService excelParsingService) {
+    public SubCategoryController(SubCategoryService service, DocumentTypeMasterService documentTypeMasterService, ExcelParsingService excelParsingService) {
         this.service = service;
+        this.documentTypeMasterService = documentTypeMasterService;
         this.excelParsingService = excelParsingService;
     }
 
     // ============================================================
-    // 🟢 CREATE SUBCATEGORY
+    // 🟢 CREATE SUBCATEGORY (JSON body - document via Document API separately)
     // ============================================================
-    @PostMapping
+    @PostMapping(consumes = "application/json")
     public ResponseEntity<ResponseWrapper<ProductSubCategory>> create(
             @RequestHeader HttpHeaders headers,
             @RequestBody SubCategoryRequest request) {
         try {
-            ProductSubCategory created = service.create(headers, request);
+            ProductSubCategory created = service.create(headers, request, null, null, false);
             return ResponseEntity.ok(new ResponseWrapper<>(true, "✅ Subcategory created successfully", created));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest()
+                    .body(new ResponseWrapper<>(false, "❌ " + e.getMessage(), null));
         } catch (Exception e) {
             log.error("❌ Failed to create subcategory: {}", e.getMessage(), e);
             return ResponseEntity.internalServerError()
                     .body(new ResponseWrapper<>(false, "❌ Error: " + e.getMessage(), null));
+        }
+    }
+
+    @PostMapping(path = "/with-document", consumes = "application/json")
+    public ResponseEntity<ResponseWrapper<ProductSubCategory>> createWithDocument(
+            @RequestHeader HttpHeaders headers,
+            @RequestBody Map<String, Object> body) {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            SubCategoryRequest request = mapper.convertValue(body.get("request"), SubCategoryRequest.class);
+            String document = (String) body.get("document");
+            String docType = (String) body.get("docType");
+            if (document == null || document.isBlank())
+                return ResponseEntity.badRequest().body(new ResponseWrapper<>(false, "❌ document is required (base64)", null));
+            if (docType == null || docType.isBlank())
+                return ResponseEntity.badRequest().body(new ResponseWrapper<>(false, "❌ docType is required", null));
+            documentTypeMasterService.validate(docType);
+            byte[] bytes = Base64.getDecoder().decode(document);
+            MultipartFile multipartFile = new ByteArrayMultipartFile(bytes, "document", "document." + docType);
+            ProductSubCategory created = service.create(headers, request, multipartFile, docType.trim(), false);
+            return ResponseEntity.ok(new ResponseWrapper<>(true, "✅ Subcategory created successfully with document", created));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(new ResponseWrapper<>(false, "❌ " + e.getMessage(), null));
+        } catch (Exception e) {
+            log.error("❌ Failed to create subcategory with document: {}", e.getMessage(), e);
+            return ResponseEntity.internalServerError().body(new ResponseWrapper<>(false, "❌ Error: " + e.getMessage(), null));
         }
     }
 
@@ -70,6 +107,33 @@ public class SubCategoryController {
             log.error("❌ Failed to update subcategory: {}", e.getMessage(), e);
             return ResponseEntity.internalServerError()
                     .body(new ResponseWrapper<>(false, "❌ Error: " + e.getMessage(), null));
+        }
+    }
+
+    @PutMapping(path = "/{id}/with-document", consumes = "application/json")
+    public ResponseEntity<ResponseWrapper<ProductSubCategory>> updateWithDocument(
+            @RequestHeader HttpHeaders headers,
+            @PathVariable Long id,
+            @RequestBody Map<String, Object> body) {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            SubCategoryRequest request = mapper.convertValue(body.get("request"), SubCategoryRequest.class);
+            String document = (String) body.get("document");
+            String docType = (String) body.get("docType");
+            if (document == null || document.isBlank())
+                return ResponseEntity.badRequest().body(new ResponseWrapper<>(false, "❌ document is required (base64)", null));
+            if (docType == null || docType.isBlank())
+                return ResponseEntity.badRequest().body(new ResponseWrapper<>(false, "❌ docType is required", null));
+            documentTypeMasterService.validate(docType);
+            byte[] bytes = Base64.getDecoder().decode(document);
+            MultipartFile multipartFile = new ByteArrayMultipartFile(bytes, "document", "document." + docType);
+            ProductSubCategory updated = service.updateWithDocument(headers, id, request, multipartFile, docType.trim());
+            return ResponseEntity.ok(new ResponseWrapper<>(true, "✏️ Subcategory updated successfully with document", updated));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(new ResponseWrapper<>(false, "❌ " + e.getMessage(), null));
+        } catch (Exception e) {
+            log.error("❌ Failed to update subcategory with document: {}", e.getMessage(), e);
+            return ResponseEntity.internalServerError().body(new ResponseWrapper<>(false, "❌ Error: " + e.getMessage(), null));
         }
     }
 

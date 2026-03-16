@@ -231,7 +231,9 @@
 package com.example.asset.service;
 
 import com.example.asset.dto.AssetRequest;
+import com.example.asset.dto.DocumentRequest;
 import com.example.asset.entity.*;
+import com.example.asset.service.DocumentTypeMasterService;
 import com.example.asset.repository.*;
 import com.example.asset.dto.*;
 import com.example.common.service.SafeNotificationHelper;
@@ -270,6 +272,7 @@ public class AssetCrudService {
     private final DocumentService documentService;
     private final UserLinkService userLinkService;
     private final SafeNotificationHelper safeNotificationHelper;
+    private final DocumentTypeMasterService documentTypeMasterService;
 
     public AssetCrudService(AssetMasterRepository assetRepo,
             AssetUserLinkRepository linkRepo,
@@ -281,7 +284,8 @@ public class AssetCrudService {
             AssetWarrantyRepository warrantyRepo,
             DocumentService documentService,
             UserLinkService userLinkService,
-            SafeNotificationHelper safeNotificationHelper) {
+            SafeNotificationHelper safeNotificationHelper,
+            DocumentTypeMasterService documentTypeMasterService) {
         this.assetRepo = assetRepo;
         this.linkRepo = linkRepo;
         this.categoryRepo = categoryRepo;
@@ -293,15 +297,28 @@ public class AssetCrudService {
         this.documentService = documentService;
         this.userLinkService = userLinkService;
         this.safeNotificationHelper = safeNotificationHelper;
+        this.documentTypeMasterService = documentTypeMasterService;
     }
 
     // ============================================================
-    // 🟢 CREATE ASSET
+    // 🟢 CREATE ASSET (with optional document - for internal use when document uploaded separately)
     // ============================================================
     @Transactional
     public AssetMaster create(HttpHeaders headers, AssetRequest request) {
+        return create(headers, request, null, null);
+    }
+
+    // ============================================================
+    // 🟢 CREATE ASSET (with required document + docType stored in AssetDocument)
+    // ============================================================
+    @Transactional
+    public AssetMaster create(HttpHeaders headers, AssetRequest request, MultipartFile document, String docType) {
         if (request == null || request.getAsset() == null)
             throw new IllegalArgumentException("❌ AssetRequest or payload cannot be null");
+        if (document != null && !document.isEmpty() && (docType == null || docType.trim().isEmpty()))
+            throw new IllegalArgumentException("❌ Document type (docType) is required when document is provided");
+        if (document != null && !document.isEmpty())
+            documentTypeMasterService.validate(docType);
 
         String bearer = extractBearer(headers);
         AssetMaster asset = request.getAsset();
@@ -321,14 +338,19 @@ public class AssetCrudService {
         asset.setUpdatedBy(username);
         AssetMaster saved = assetRepo.save(asset);
 
-        // // // // // Link user to asset
-        // // // // if (userId != null && username != null) {
-        // // // // AssetUserLink link = new AssetUserLink();
-        // // // // link.setAsset(saved);
-        // // // // link.setUserId(String.valueOf(userId));
-        // // // // link.setUsername(username);
-        // // // // linkRepo.save(link);
-        // // // // }
+        // 📎 Upload document and store in AssetDocument with docType (when provided)
+        if (document != null && !document.isEmpty() && docType != null && !docType.isBlank()) {
+            DocumentRequest docRequest = new DocumentRequest();
+            docRequest.setUserId(userId);
+            docRequest.setUsername(username);
+            docRequest.setProjectType(projectType);
+            docRequest.setEntityType("ASSET");
+            docRequest.setEntityId(saved.getAssetId());
+            docRequest.setAssetId(saved.getAssetId());
+            docRequest.setDocType(docType.trim());
+            documentService.upload(headers, document, docRequest);
+            log.info("✅ Document uploaded for asset ID={} with docType={}", saved.getAssetId(), docType);
+        }
 
         Map<String, Object> placeholders = Map.of(
                 "assetId", saved.getAssetId(),
@@ -340,7 +362,7 @@ public class AssetCrudService {
         sendAssetNotification(bearer, userId, username, "INAPP", "ASSET_CREATED_INAPP", placeholders, projectType);
         sendAssetNotification(bearer, userId, username, "EMAIL", "ASSET_CREATED_EMAIL", placeholders, projectType);
 
-        log.info("✅ Asset created successfully: id={} name={} by={}", saved.getAssetId(), saved.getAssetNameUdv(),
+        log.info("✅ Asset created successfully: id={} name={} by={} with document", saved.getAssetId(), saved.getAssetNameUdv(),
                 username);
         return saved;
     }
@@ -400,6 +422,24 @@ public class AssetCrudService {
 
             return saved;
         }).orElseThrow(() -> new RuntimeException("❌ Asset not found with id: " + id));
+    }
+
+    @Transactional
+    public AssetMaster updateWithDocument(HttpHeaders headers, Long id, AssetRequest request, MultipartFile document, String docType) {
+        documentTypeMasterService.validate(docType);
+        if (document == null || document.isEmpty())
+            throw new IllegalArgumentException("Document is required for update");
+        AssetMaster updated = update(headers, id, request);
+        DocumentRequest docRequest = new DocumentRequest();
+        docRequest.setUserId(request.getUserId());
+        docRequest.setUsername(request.getUsername());
+        docRequest.setProjectType(Optional.ofNullable(request.getProjectType()).orElse("ASSET_SERVICE"));
+        docRequest.setEntityType("ASSET");
+        docRequest.setEntityId(id);
+        docRequest.setDocType(docType.trim());
+        documentService.upload(headers, document, docRequest);
+        log.info("✅ Document uploaded for asset ID={} with docType={}", id, docType);
+        return updated;
     }
 
     // ============================================================
@@ -862,7 +902,13 @@ public class AssetCrudService {
     public Map<String, Object> createCompleteAsset(
             HttpHeaders headers,
             CompleteAssetCreationRequest request,
-            MultipartFile purchaseInvoiceFile) {
+            MultipartFile document,
+            String docType) {
+
+        if (document == null || document.isEmpty())
+            throw new IllegalArgumentException("❌ Document upload is required");
+        if (docType == null || docType.trim().isEmpty())
+            throw new IllegalArgumentException("❌ Document type (docType) is required");
 
         String bearer = extractBearer(headers);
         String username = request.getUsername();
@@ -934,21 +980,18 @@ public class AssetCrudService {
         AssetWarranty savedWarranty = warrantyRepo.save(warranty);
         log.info("✅ Warranty created: id={} for assetId={}", savedWarranty.getWarrantyId(), savedAsset.getAssetId());
 
-        // 4️⃣ UPLOAD DOCUMENT (if provided)
-        AssetDocument savedDocument = null;
-        if (purchaseInvoiceFile != null && !purchaseInvoiceFile.isEmpty()) {
-            DocumentRequest docRequest = new DocumentRequest();
-            docRequest.setUserId(userId);
-            docRequest.setUsername(username);
-            docRequest.setProjectType(projectType);
-            docRequest.setEntityType("ASSET");
-            docRequest.setEntityId(savedAsset.getAssetId());
-            docRequest.setAssetId(savedAsset.getAssetId());
-            docRequest.setDocType("PURCHASE_INVOICE");
-            
-            savedDocument = documentService.upload(headers, purchaseInvoiceFile, docRequest);
-            log.info("✅ Document uploaded: id={} for assetId={}", savedDocument.getDocumentId(), savedAsset.getAssetId());
-        }
+        // 4️⃣ UPLOAD DOCUMENT (required - stored in AssetDocument with docType)
+        DocumentRequest docRequest = new DocumentRequest();
+        docRequest.setUserId(userId);
+        docRequest.setUsername(username);
+        docRequest.setProjectType(projectType);
+        docRequest.setEntityType("ASSET");
+        docRequest.setEntityId(savedAsset.getAssetId());
+        docRequest.setAssetId(savedAsset.getAssetId());
+        docRequest.setDocType(docType.trim());
+        
+        AssetDocument savedDocument = documentService.upload(headers, document, docRequest);
+        log.info("✅ Document uploaded: id={} for assetId={} with docType={}", savedDocument.getDocumentId(), savedAsset.getAssetId(), docType);
 
         // 5️⃣ LINK USER TO ASSET
         String linkMessage = userLinkService.linkEntity(

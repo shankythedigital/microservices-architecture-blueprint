@@ -23,6 +23,8 @@ class AssetBloc extends Bloc<AssetEvent, AssetState> {
     on<CreateAssetEvent>(_onCreateAsset);
     on<UpdateAssetEvent>(_onUpdateAsset);
     on<DeleteAssetEvent>(_onDeleteAsset);
+    on<ScanAssetEvent>(_onScanAsset);
+    on<ResetScanEvent>(_onResetScan);
     on<LoadCategoriesEvent>(_onLoadCategories);
     on<CreateCategoryEvent>(_onCreateCategory);
     on<BulkCreateCategoriesEvent>(_onBulkCreateCategories);
@@ -227,6 +229,58 @@ class AssetBloc extends Bloc<AssetEvent, AssetState> {
       AppLogger.error('Unexpected delete asset error: $e');
       emit(AssetError('Failed to delete asset. Please try again.'));
     }
+  }
+
+  // ============================================================
+  // SCAN ASSET (Barcode / QR Code)
+  // ============================================================
+  Future<void> _onScanAsset(ScanAssetEvent event, Emitter<AssetState> emit) async {
+    emit(AssetScanLoading());
+
+    try {
+      if (event.scanValue.trim().isEmpty) {
+        emit(AssetScanNotFound(message: 'Scan value cannot be empty'));
+        return;
+      }
+
+      final connectivityResult = await _connectivity.checkConnectivity();
+      if (connectivityResult == ConnectivityResult.none) {
+        emit(AssetScanNotFound(message: 'No internet connection. Please check your network.'));
+        return;
+      }
+
+      final result = await _assetDataSource.scanAsset(
+        event.scanValue.trim(),
+        scanType: event.scanType ?? 'AUTO',
+      );
+
+      if (result != null) {
+        emit(AssetScanLoaded(result: result));
+        AppLogger.info('Asset scan successful: ${result.assetCode}');
+      } else {
+        emit(AssetScanNotFound(
+          message: 'No asset or product found for: ${event.scanValue}',
+          scanValue: event.scanValue,
+        ));
+        AppLogger.info('Asset scan: no result for ${event.scanValue}');
+      }
+    } on ApiException catch (e) {
+      AppLogger.error('Scan asset failed: ${e.message}');
+      emit(AssetScanNotFound(message: e.userMessage, scanValue: event.scanValue));
+    } catch (e) {
+      AppLogger.error('Unexpected scan error: $e');
+      emit(AssetScanNotFound(
+        message: 'Failed to scan. Please try again.',
+        scanValue: event.scanValue,
+      ));
+    }
+  }
+
+  // ============================================================
+  // RESET SCAN
+  // ============================================================
+  void _onResetScan(ResetScanEvent event, Emitter<AssetState> emit) {
+    emit(AssetInitial());
   }
 
   // ============================================================
@@ -436,6 +490,18 @@ class DeleteAssetEvent extends AssetEvent {
   List<Object?> get props => [assetId];
 }
 
+class ScanAssetEvent extends AssetEvent {
+  final String scanValue;
+  final String? scanType;
+
+  ScanAssetEvent(this.scanValue, {this.scanType});
+
+  @override
+  List<Object?> get props => [scanValue, scanType];
+}
+
+class ResetScanEvent extends AssetEvent {}
+
 class LoadCategoriesEvent extends AssetEvent {}
 
 class CreateCategoryEvent extends AssetEvent {
@@ -531,6 +597,27 @@ class AssetError extends AssetState {
 
   @override
   List<Object?> get props => [message];
+}
+
+class AssetScanLoading extends AssetState {}
+
+class AssetScanLoaded extends AssetState {
+  final AssetScanResult result;
+
+  AssetScanLoaded({required this.result});
+
+  @override
+  List<Object?> get props => [result];
+}
+
+class AssetScanNotFound extends AssetState {
+  final String message;
+  final String? scanValue;
+
+  AssetScanNotFound({required this.message, this.scanValue});
+
+  @override
+  List<Object?> get props => [message, scanValue];
 }
 
 class CategoriesLoaded extends AssetState {
