@@ -4,7 +4,7 @@ import com.example.authservice.model.OtpLog;
 import com.example.authservice.repository.OtpLogRepository;
 import com.example.authservice.service.UserService;
 import com.example.common.service.SafeNotificationHelper;
-import com.example.common.util.HmacUtil;
+import com.example.common.util.EncryptDecryptUtil;
 import com.example.common.util.RequestContext;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -56,8 +56,8 @@ public class OtpServiceImpl {
         // 2️⃣ Persist OTP (hashed)
         // ------------------------------------------------------------------------
         OtpLog otp = new OtpLog();
-        otp.setMobileHash(HmacUtil.hmacHex(mobile == null ? username : mobile));
-        otp.setOtpHash(HmacUtil.hmacHex(otpStr));
+        otp.setMobileHash(EncryptDecryptUtil.encrypt(mobile == null ? username : mobile));
+        otp.setOtpHash(EncryptDecryptUtil.encrypt(otpStr));
         otp.setExpiresAt(LocalDateTime.now().plusMinutes(EXPIRY_MINUTES));
         otp.setUsed(false);
         otp.setCreatedBy(username != null ? username : "system");
@@ -156,7 +156,7 @@ public class OtpServiceImpl {
      * ✅ Validate OTP input against stored entry.
      */
     public boolean validateOtp(String mobile, String otpInput) {
-        String mobileHash = HmacUtil.hmacHex(mobile);
+        String mobileHash = EncryptDecryptUtil.encrypt(mobile);
 
         OtpLog otp = otpLogRepository
                 .findTopByMobileHashAndUsedFalseOrderByCreatedAtDesc(mobileHash)
@@ -167,7 +167,7 @@ public class OtpServiceImpl {
             return false;
         }
 
-        boolean valid = HmacUtil.hmacHex(otpInput).equals(otp.getOtpHash());
+        boolean valid = EncryptDecryptUtil.verify(otpInput, otp.getOtpHash());
         if (valid) {
             otp.setUsed(true);
             otpLogRepository.save(otp);

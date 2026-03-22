@@ -8,8 +8,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 /**
- * Service to decrypt AES-GCM encrypted values.
- * Uses the same key and format as JpaAttributeEncryptor (AES-256-GCM).
+ * Service to decrypt AES-256-GCM encrypted values.
+ * Uses same key/format as JpaAttributeEncryptor (common-service).
  * Admin-only use: audit, support, compliance.
  */
 @Service
@@ -19,31 +19,29 @@ public class DecryptionService {
     private final AesGcmEncryptor aes;
 
     public DecryptionService() {
-        String base64Key = EncryptionKeyProvider.getNormalizedBase64Key();
-        this.aes = new AesGcmEncryptor(base64Key);
-        log.info("🔐 [DecryptionService] Initialized with AES-256 key from EncryptionKeyProvider");
+        this.aes = new AesGcmEncryptor(EncryptionKeyProvider.getNormalizedBase64Key());
+        log.info("🔐 [DecryptionService] Initialized with AES-256-GCM (common-service)");
     }
 
     /**
      * Decrypts an AES-GCM encrypted Base64 string.
+     * Never throws — returns DecryptResponse with null plaintext on failure.
      *
-     * @param encryptedValue Base64-encoded ciphertext (IV || TAG || CIPHERTEXT)
-     * @return DecryptResponse with decrypted plaintext, or null if input is null/blank
-     * @throws IllegalArgumentException if decryption fails (invalid format, wrong key, tampered data)
+     * @param encryptedValue Base64-encoded ciphertext (IV || CIPHERTEXT || TAG)
+     * @return DecryptResponse with decrypted plaintext, or null if input is null/blank or decryption fails
      */
     public DecryptResponse decrypt(String encryptedValue) {
         if (encryptedValue == null || encryptedValue.isBlank()) {
             return new DecryptResponse(null);
         }
         String trimmed = encryptedValue.trim();
-        try {
-            String decrypted = aes.decrypt(trimmed);
+        String decrypted = aes.decrypt(trimmed);
+        if (decrypted != null) {
             log.debug("🔓 [DecryptionService] Decryption successful (input length={}, output length={})",
-                    trimmed.length(), decrypted != null ? decrypted.length() : 0);
-            return new DecryptResponse(decrypted);
-        } catch (Exception e) {
-            log.warn("⚠️ [DecryptionService] Decryption failed: {}", e.getMessage());
-            throw new IllegalArgumentException("Decryption failed: " + e.getMessage(), e);
+                    trimmed.length(), decrypted.length());
+        } else {
+            log.debug("🔓 [DecryptionService] Decryption returned null (not encrypted or invalid format)");
         }
+        return new DecryptResponse(decrypted);
     }
 }

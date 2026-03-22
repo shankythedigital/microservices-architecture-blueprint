@@ -9,7 +9,7 @@
 // // // // import com.example.authservice.model.*;
 // // // // import com.example.authservice.repository.*;
 // // // // import com.example.common.util.JwtUtil;
-// // // // import com.example.common.util.HmacUtil;
+// // // // import com.example.common.util.EncryptDecryptUtil;
 // // // // import com.example.common.util.RequestContext;
 // // // // import org.springframework.beans.factory.annotation.Autowired;
 // // // // import org.springframework.dao.DuplicateKeyException;
@@ -78,9 +78,9 @@
 // // // //             throw new IllegalArgumentException("Project type is required");
 
 // // // //         // --- Hash PII for HMAC-based identity uniqueness ---
-// // // //         String usernameHash = HmacUtil.hmacHex(usernamePlain);
-// // // //         String emailHash = (emailPlain != null && !emailPlain.isBlank()) ? HmacUtil.hmacHex(emailPlain) : null;
-// // // //         String mobileHash = (mobilePlain != null && !mobilePlain.isBlank()) ? HmacUtil.hmacHex(mobilePlain) : null;
+// // // //         String usernameHash = EncryptDecryptUtil.encrypt(usernamePlain);
+// // // //         String emailHash = (emailPlain != null && !emailPlain.isBlank()) ? EncryptDecryptUtil.encrypt(emailPlain) : null;
+// // // //         String mobileHash = (mobilePlain != null && !mobilePlain.isBlank()) ? EncryptDecryptUtil.encrypt(mobilePlain) : null;
 
 // // // //         // --- Check duplicates with projectType ---
 // // // //         validateDuplicateUser(usernameHash, emailHash, mobileHash, projectType);
@@ -124,9 +124,9 @@
 // // // //         if (projectType == null || projectType.isBlank())
 // // // //             throw new IllegalArgumentException("Project type is required");
 
-// // // //         String usernameHash = HmacUtil.hmacHex(usernamePlain);
-// // // //         String emailHash = (emailPlain != null && !emailPlain.isBlank()) ? HmacUtil.hmacHex(emailPlain) : null;
-// // // //         String mobileHash = (mobilePlain != null && !mobilePlain.isBlank()) ? HmacUtil.hmacHex(mobilePlain) : null;
+// // // //         String usernameHash = EncryptDecryptUtil.encrypt(usernamePlain);
+// // // //         String emailHash = (emailPlain != null && !emailPlain.isBlank()) ? EncryptDecryptUtil.encrypt(emailPlain) : null;
+// // // //         String mobileHash = (mobilePlain != null && !mobilePlain.isBlank()) ? EncryptDecryptUtil.encrypt(mobilePlain) : null;
 
 // // // //         // --- Check duplicates with projectType ---
 // // // //         validateDuplicateUser(usernameHash, emailHash, mobileHash, projectType);
@@ -259,7 +259,7 @@
 // // // //         if (usernamePlain == null || password == null)
 // // // //             throw new IllegalArgumentException("Username and password are required");
 
-// // // //         String usernameHash = HmacUtil.hmacHex(usernamePlain);
+// // // //         String usernameHash = EncryptDecryptUtil.encrypt(usernamePlain);
 // // // //         User user = userRepo.findByCompositeId_UsernameHash(usernameHash)
 // // // //                 .orElseThrow(() -> new RuntimeException("Invalid credentials"));
 
@@ -281,12 +281,12 @@
 // // // //     }
 
 // // // //     public AuthResponse loginWithOtp(String mobilePlain, String otp, String deviceInfo, String projectType) {
-// // // //         String mobileHash = HmacUtil.hmacHex(mobilePlain);
+// // // //         String mobileHash = EncryptDecryptUtil.encrypt(mobilePlain);
 // // // //         boolean ok = otpRepo.findAll().stream()
 // // // //                 .anyMatch(log -> mobileHash.equals(log.getMobileHash())
 // // // //                         && !Boolean.TRUE.equals(log.isUsed())
 // // // //                         && log.getExpiresAt().isAfter(LocalDateTime.now())
-// // // //                         && HmacUtil.hmacHex(otp).equals(log.getOtpHash()));
+// // // //                         && EncryptDecryptUtil.verify(otp, log.getOtpHash()));
 // // // //         if (!ok) throw new RuntimeException("Invalid OTP");
 
 // // // //         Optional<UserDetailMaster> od = udmRepo.findByMobileHash(mobileHash);
@@ -396,7 +396,7 @@
 // // // //         if (refreshToken == null)
 // // // //             throw new RuntimeException("Missing refresh token");
 
-// // // //         String hash = HmacUtil.hmacHex(refreshToken);
+// // // //         String hash = EncryptDecryptUtil.encrypt(refreshToken);
 // // // //         RefreshToken rt = refreshRepo.findByTokenHash(hash)
 // // // //                 .orElseThrow(() -> new RuntimeException("Invalid refresh token"));
 
@@ -411,7 +411,7 @@
 
 // // // //         String newRefresh = UUID.randomUUID().toString();
 // // // //         RefreshToken nrt = new RefreshToken();
-// // // //         nrt.setTokenHash(HmacUtil.hmacHex(newRefresh));
+// // // //         nrt.setTokenHash(EncryptDecryptUtil.encrypt(newRefresh));
 // // // //         nrt.setSession(s);
 // // // //         nrt.setExpiryDate(LocalDateTime.now().plusDays(14));
 // // // //         refreshRepo.save(nrt);
@@ -434,7 +434,7 @@
 // // // //         String refresh = UUID.randomUUID().toString();
 
 // // // //         RefreshToken rt = new RefreshToken();
-// // // //         rt.setTokenHash(HmacUtil.hmacHex(refresh));
+// // // //         rt.setTokenHash(EncryptDecryptUtil.encrypt(refresh));
 // // // //         rt.setAccessToken(access);
 // // // //         rt.setSession(session);
 // // // //         rt.setExpiryDate(LocalDateTime.now().plusDays(14));
@@ -457,7 +457,7 @@ import com.example.authservice.dto.AuthResponse;
 import com.example.authservice.model.*;
 import com.example.authservice.repository.*;
 import com.example.common.util.JwtUtil;
-import com.example.common.util.HmacUtil;
+import com.example.common.util.EncryptDecryptUtil;
 import com.example.common.util.RequestContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
@@ -535,9 +535,9 @@ public class AuthServiceImpl {
             throw new IllegalArgumentException("Project type is required");
 
         // --- Hash PII for HMAC-based identity uniqueness ---
-        String usernameHash = HmacUtil.hmacHex(usernamePlain);
-        String emailHash = (emailPlain != null && !emailPlain.isBlank()) ? HmacUtil.hmacHex(emailPlain) : null;
-        String mobileHash = (mobilePlain != null && !mobilePlain.isBlank()) ? HmacUtil.hmacHex(mobilePlain) : null;
+        String usernameHash = EncryptDecryptUtil.encrypt(usernamePlain);
+        String emailHash = (emailPlain != null && !emailPlain.isBlank()) ? EncryptDecryptUtil.encrypt(emailPlain) : null;
+        String mobileHash = (mobilePlain != null && !mobilePlain.isBlank()) ? EncryptDecryptUtil.encrypt(mobilePlain) : null;
 
         // --- Check duplicates with projectType ---
         validateDuplicateUser(usernameHash, emailHash, mobileHash, projectType);
@@ -578,6 +578,7 @@ public class AuthServiceImpl {
         detail.setActive(true);
         detail.setUser(user);
         user.setDetail(detail);
+        detail.computeLookupHashes();
 
         return userRepo.save(user);
     }
@@ -599,9 +600,9 @@ public class AuthServiceImpl {
         if (projectType == null || projectType.isBlank())
             throw new IllegalArgumentException("Project type is required");
 
-        String usernameHash = HmacUtil.hmacHex(usernamePlain);
-        String emailHash = (emailPlain != null && !emailPlain.isBlank()) ? HmacUtil.hmacHex(emailPlain) : null;
-        String mobileHash = (mobilePlain != null && !mobilePlain.isBlank()) ? HmacUtil.hmacHex(mobilePlain) : null;
+        String usernameHash = EncryptDecryptUtil.encrypt(usernamePlain);
+        String emailHash = (emailPlain != null && !emailPlain.isBlank()) ? EncryptDecryptUtil.encrypt(emailPlain) : null;
+        String mobileHash = (mobilePlain != null && !mobilePlain.isBlank()) ? EncryptDecryptUtil.encrypt(mobilePlain) : null;
 
         // --- Check duplicates with projectType ---
         validateDuplicateUser(usernameHash, emailHash, mobileHash, projectType);
@@ -642,6 +643,7 @@ public class AuthServiceImpl {
         detail.setActive(true);
         detail.setUser(user);
         user.setDetail(detail);
+        detail.computeLookupHashes();
 
         return userRepo.save(user);
     }
@@ -732,6 +734,7 @@ public class AuthServiceImpl {
             udm.setEmail(newValue);
         else if ("MOBILE".equalsIgnoreCase(pr.getType()))
             udm.setMobile(newValue);
+        udm.computeLookupHashes();
         udmRepo.save(udm);
         resetRepo.delete(pr);
 
@@ -768,7 +771,7 @@ public class AuthServiceImpl {
         if (usernamePlain == null || password == null)
             throw new IllegalArgumentException("Username and password are required");
 
-        String usernameHash = HmacUtil.hmacHex(usernamePlain);
+        String usernameHash = EncryptDecryptUtil.encrypt(usernamePlain);
         User user = userRepo.findByCompositeId_UsernameHash(usernameHash)
                 .orElseThrow(() -> new RuntimeException("Invalid credentials"));
 
@@ -783,6 +786,7 @@ public class AuthServiceImpl {
         udm.setLastLoginDate(udm.getLoginDate());
         udm.setLoginDate(LocalDateTime.now());
         udm.setFailedAttempts(0);
+        udm.computeLookupHashes();
         udmRepo.save(udm);
 
         AuthResponse resp = createSessionAndTokens(user, deviceInfo);
@@ -792,12 +796,12 @@ public class AuthServiceImpl {
     }
 
     public AuthResponse loginWithOtp(String mobilePlain, String otp, String deviceInfo, String projectType) {
-        String mobileHash = HmacUtil.hmacHex(mobilePlain);
+        String mobileHash = EncryptDecryptUtil.encrypt(mobilePlain);
         boolean ok = otpRepo.findAll().stream()
                 .anyMatch(log -> mobileHash.equals(log.getMobileHash())
                         && !Boolean.TRUE.equals(log.isUsed())
                         && log.getExpiresAt().isAfter(LocalDateTime.now())
-                        && HmacUtil.hmacHex(otp).equals(log.getOtpHash()));
+                        && EncryptDecryptUtil.verify(otp, log.getOtpHash()));
         if (!ok) throw new RuntimeException("Invalid OTP");
 
         Optional<UserDetailMaster> od = udmRepo.findByMobileHash(mobileHash);
@@ -917,7 +921,7 @@ public class AuthServiceImpl {
         if (refreshToken == null || refreshToken.isBlank())
             throw new RuntimeException("Missing refresh token");
 
-        String hash = HmacUtil.hmacHex(refreshToken);
+        String hash = EncryptDecryptUtil.encrypt(refreshToken);
 
         RefreshToken rt = refreshRepo.findByTokenHash(hash)
                 .orElseThrow(() -> new RuntimeException("Invalid refresh token"));
@@ -936,7 +940,7 @@ public class AuthServiceImpl {
 
         // create new refresh token and new access token
         String newRefresh = UUID.randomUUID().toString();
-        String newRefreshHash = HmacUtil.hmacHex(newRefresh);
+        String newRefreshHash = EncryptDecryptUtil.encrypt(newRefresh);
 
         // create access token using session context
         List<String> roles = s.getUser().getRoles().stream().map(Role::getName).toList();
@@ -982,7 +986,7 @@ public class AuthServiceImpl {
         // 5) Generate refresh token
         String refresh = UUID.randomUUID().toString();
         RefreshToken rt = new RefreshToken();
-        rt.setTokenHash(HmacUtil.hmacHex(refresh));
+        rt.setTokenHash(EncryptDecryptUtil.encrypt(refresh));
         rt.setAccessToken(access);
         rt.setSession(session);
         rt.setExpiryDate(LocalDateTime.now().plusDays(14));
@@ -1040,7 +1044,7 @@ public class AuthServiceImpl {
         if (refreshToken == null || refreshToken.isBlank())
             throw new RuntimeException("Refresh token is required for logout");
 
-        String hash = HmacUtil.hmacHex(refreshToken);
+        String hash = EncryptDecryptUtil.encrypt(refreshToken);
         RefreshToken rt = refreshRepo.findByTokenHash(hash)
                 .orElseThrow(() -> new RuntimeException("Invalid or expired refresh token"));
 

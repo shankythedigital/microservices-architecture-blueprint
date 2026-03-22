@@ -1,7 +1,7 @@
 package com.example.authservice.model;
 
 import com.example.common.converter.JpaAttributeEncryptor;
-import com.example.common.util.HmacUtil;
+import com.example.common.util.EncryptDecryptUtil;
 import jakarta.persistence.*;
 
 import com.example.common.jpa.BaseEntity;
@@ -220,13 +220,15 @@ public class UserDetailMaster extends BaseEntity {
     @Column(name = "opt_out_push")
     private Boolean optOutPush = false;
 
-    // ✅ Auto-compute HMAC values before insert/update
-    @PrePersist
-    @PreUpdate
-    public void computeHashes() {
-        if (this.username != null) this.usernameHash = HmacUtil.hmacHex(this.username);
-        if (this.email != null) this.emailHash = HmacUtil.hmacHex(this.email);
-        if (this.mobile != null) this.mobileHash = HmacUtil.hmacHex(this.mobile);
+    /**
+     * Computes deterministic lookup hashes for username/email/mobile.
+     * Must be called explicitly from service layer before save — no entity lifecycle callbacks.
+     * Uses EncryptDecryptUtil (AES-256-GCM deterministic) for lookup; PII storage uses JpaAttributeEncryptor.
+     */
+    public void computeLookupHashes() {
+        if (this.username != null) this.usernameHash = EncryptDecryptUtil.encrypt(this.username);
+        if (this.email != null) this.emailHash = EncryptDecryptUtil.encrypt(this.email);
+        if (this.mobile != null) this.mobileHash = EncryptDecryptUtil.encrypt(this.mobile);
     }
 
     // ----------------------

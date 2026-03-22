@@ -2,7 +2,7 @@ package com.example.authservice.init;
 
 import com.example.authservice.model.*;
 import com.example.authservice.repository.*;
-import com.example.common.util.HmacUtil;
+import com.example.common.util.EncryptDecryptUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -196,7 +196,7 @@ public class DataInitializer implements CommandLineRunner {
                 String adminUsername = "admin_" + projectType.toLowerCase();
                 
                 // Check if admin already exists
-                String usernameHash = HmacUtil.hmacHex(adminUsername);
+                String usernameHash = EncryptDecryptUtil.encrypt(adminUsername);
                 boolean exists = userRepo.existsByCompositeId_UsernameHash(usernameHash);
                 
                 if (exists) {
@@ -227,9 +227,9 @@ public class DataInitializer implements CommandLineRunner {
             String employeeId = "EMP_ADMIN_" + projectType.toUpperCase();
 
             // Compute HMACs for composite key
-            String usernameHash = HmacUtil.hmacHex(username);
-            String emailHash = HmacUtil.hmacHex(email);
-            String mobileHash = HmacUtil.hmacHex(mobile);
+            String usernameHash = EncryptDecryptUtil.encrypt(username);
+            String emailHash = EncryptDecryptUtil.encrypt(email);
+            String mobileHash = EncryptDecryptUtil.encrypt(mobile);
 
             // Create composite user ID
             UserId compositeId = new UserId(null, usernameHash, emailHash, mobileHash, projectType);
@@ -245,6 +245,7 @@ public class DataInitializer implements CommandLineRunner {
 
             // Link user and detail
             user.setDetail(detail);
+            detail.computeLookupHashes();
 
             // Persist user (cascade will save detail)
             userRepo.save(user);

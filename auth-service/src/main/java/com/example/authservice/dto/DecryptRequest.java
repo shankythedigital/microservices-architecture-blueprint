@@ -8,7 +8,7 @@ import jakarta.validation.constraints.NotBlank;
  */
 public class DecryptRequest {
 
-    /** Base64-encoded encrypted string (AES-GCM format from JpaAttributeEncryptor). */
+    /** Base64-encoded encrypted string (AES-256-GCM format from JpaAttributeEncryptor). */
     @NotBlank(message = "encryptedValue is required")
     private String encryptedValue;
 

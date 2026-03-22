@@ -41,7 +41,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     boolean existsByCompositeId_MobileHashAndCompositeId_ProjectType(String mobileHash, String projectType);
     
     boolean existsByCompositeId_UsernameHashAndCompositeId_MobileHashAndCompositeId_ProjectType(String usernameHash,String mobileHash, String projectType);
-    boolean existsByCompositeId_UsernameHashAndCompositeId_EmailHashAndCompositeId_ProjectType(String usernameHash,String mobileHash, String projectType);
+    boolean existsByCompositeId_UsernameHashAndCompositeId_EmailHashAndCompositeId_ProjectType(String usernameHash, String emailHash, String projectType);
 }
 
 

@@ -22,9 +22,9 @@ spring:
   application:
     name: asset-service
   datasource:
-    url: jdbc:mysql://194.163.173.37:3306/assetdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
-    username: assetdb
-    password: assetdb
+    url: jdbc:mysql://localhost:3306/assetdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    username: root
+    password: Snmysql@1110
     hikari:
       max-lifetime: 300000   # 5 min - recycle before server closes (avoids "connection closed" validation failures)
       connection-timeout: 20000
@@ -51,7 +51,7 @@ services:
 
 security:
   jwt:
-    public-key-path: classpath:keys/jwt-private.pem
+    public-key-path: classpath:keys/jwt-public.pem
     issuer: "auth-service"
     audience: "asset-service"
 
@@ -91,10 +91,11 @@ app:
   llm:
     enabled: true
     api-url: https://api.openai.com/v1
-    api-key: ${OPENAI_API_KEY:}
+    api-key: ${OPENAI_API_KEY:-}
     model: gpt-4o-mini
     max-tokens: 4096
     timeout-seconds: 60
+
 
 # Swagger/OpenAPI Configuration
 springdoc:

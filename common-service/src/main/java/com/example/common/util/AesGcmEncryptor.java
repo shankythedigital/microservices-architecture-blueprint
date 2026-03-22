@@ -77,8 +77,6 @@ import javax.crypto.spec.SecretKeySpec;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.example.common.security.JwtAuthFilter;
-
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
@@ -103,8 +101,7 @@ import java.util.Base64;
 
 public class AesGcmEncryptor {
 
-    
-    private static final Logger log = LoggerFactory.getLogger(JwtAuthFilter.class);
+    private static final Logger log = LoggerFactory.getLogger(AesGcmEncryptor.class);
     private static final int AES_KEY_LEN = 32;   // 256-bit key
     private static final int IV_LEN = 12;        // 96-bit recommended for GCM
     private static final int TAG_LEN = 128;      // GCM tag length (bits)
@@ -135,51 +132,52 @@ public class AesGcmEncryptor {
     }
 
     // --------------------------------------------------------------------
-    // Encrypt → Base64( IV || TAG || CIPHERTEXT )
+    // Encrypt → Base64( IV || CIPHERTEXT_WITH_TAG )
+    // Uses validated input; normalizes to ensure getBytes(UTF_8) never fails.
     // --------------------------------------------------------------------
     public String encrypt(String plaintext) {
-
         if (plaintext == null) return null;
+        String normalized = PiiDataValidator.normalizeForEncryption(plaintext);
+        if (normalized == null || normalized.isEmpty()) return null;
 
         try {
+            byte[] plainBytes = normalized.getBytes(StandardCharsets.UTF_8);
             byte[] iv = new byte[IV_LEN];
             secureRandom.nextBytes(iv);
 
             Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
             cipher.init(Cipher.ENCRYPT_MODE, secretKey, new GCMParameterSpec(TAG_LEN, iv));
 
-            byte[] encrypted = cipher.doFinal(plaintext.getBytes(StandardCharsets.UTF_8));
+            byte[] encrypted = cipher.doFinal(plainBytes);
 
-            // Combine IV + encrypted into single buffer
             ByteBuffer buffer = ByteBuffer.allocate(iv.length + encrypted.length);
             buffer.put(iv);
             buffer.put(encrypted);
 
             String output = Base64.getEncoder().encodeToString(buffer.array());
-
-            log.debug("🔒 [Encrypt] OK — plaintextLength={} cipherLength={}",
-                    plaintext.length(), output.length());
-
+            log.debug("🔒 [Encrypt] OK — plaintextLength={} cipherLength={}", normalized.length(), output.length());
             return output;
-
         } catch (Exception e) {
-            log.error("❌ [Encrypt] Failed: {}", e.getMessage(), e);
+            log.error("❌ [Encrypt] Failed: {}", e.getMessage());
             throw new RuntimeException("AES encryption failed: " + e.getMessage(), e);
         }
     }
 
     // --------------------------------------------------------------------
-    // Decrypt → plaintext
+    // Decrypt → plaintext. Returns null on failure — never throws.
+    // Uses safe UTF-8 decode so malformed bytes never cause failure.
     // --------------------------------------------------------------------
     public String decrypt(String base64Cipher) {
+        if (base64Cipher == null || base64Cipher.isBlank()) return null;
 
-        if (base64Cipher == null) return null;
+        String trimmed = base64Cipher.trim();
+        if (trimmed.isEmpty()) return null;
 
         try {
-            byte[] decoded = Base64.getDecoder().decode(base64Cipher);
+            byte[] decoded = Base64.getDecoder().decode(trimmed);
+            if (decoded.length < IV_LEN + 16) return null;
 
             ByteBuffer buffer = ByteBuffer.wrap(decoded);
-
             byte[] iv = new byte[IV_LEN];
             buffer.get(iv);
 
@@ -189,15 +187,14 @@ public class AesGcmEncryptor {
             Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
             cipher.init(Cipher.DECRYPT_MODE, secretKey, new GCMParameterSpec(TAG_LEN, iv));
 
-            String plaintext = new String(cipher.doFinal(ciphertextWithTag), StandardCharsets.UTF_8);
-
-            log.debug("🔓 [Decrypt] OK — outputLength={}", plaintext.length());
-
-            return plaintext;
-
+            byte[] plainBytes = cipher.doFinal(ciphertextWithTag);
+            String plaintext = PiiDataValidator.decodeUtf8Safe(plainBytes);
+            String validated = PiiDataValidator.validateDecrypted(plaintext);
+            log.debug("🔓 [Decrypt] OK — outputLength={}", validated != null ? validated.length() : 0);
+            return validated != null && !validated.isEmpty() ? validated : plaintext;
         } catch (Exception e) {
-            log.error("❌ [Decrypt] Failed: {}", e.getMessage());
-            throw new RuntimeException("AES decryption failed: " + e.getMessage(), e);
+            log.debug("🔓 [Decrypt] Failed (not encrypted or invalid): {}", e.getMessage());
+            return null; // Never throw — graceful degradation for plain text / corrupted data
         }
     }
 

@@ -46,20 +46,18 @@
 
 package com.example.common.converter;
 
-import com.example.common.security.JwtAuthFilter;
 import com.example.common.util.AesGcmEncryptor;
 import com.example.common.util.EncryptionKeyProvider;
+import com.example.common.util.PiiDataValidator;
 
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
 
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-
-import java.util.Base64;
 import java.security.MessageDigest;
+import java.util.Base64;
 
 /**
  * =======================================================================
@@ -77,7 +75,7 @@ import java.security.MessageDigest;
 public class JpaAttributeEncryptor implements AttributeConverter<String, String> {
 
     
-    private static final Logger log = LoggerFactory.getLogger(JwtAuthFilter.class);
+    private static final Logger log = LoggerFactory.getLogger(JpaAttributeEncryptor.class);
     private final AesGcmEncryptor aes;
 
     public JpaAttributeEncryptor() {
@@ -99,136 +97,61 @@ public class JpaAttributeEncryptor implements AttributeConverter<String, String>
 
     // ===================================================================
     //  🔒 Encrypt before storing to DB
+    // Validates PII first so encryption never fails due to invalid input.
     // ===================================================================
     @Override
     public String convertToDatabaseColumn(String plain) {
         if (plain == null) return null;
 
-        log.debug("🔒 [Encrypt] Encrypting attribute (length={})", plain.length());
+        // Validate and normalize PII — prevents getBytes(UTF_8), unpaired surrogates, control chars from failing
+        String normalized = PiiDataValidator.normalizeForEncryption(plain);
+        if (normalized == null) return null;
+
+        log.debug("🔒 [Encrypt] Encrypting attribute (length={})", normalized.length());
 
         try {
-            String encrypted = aes.encrypt(plain);
+            String encrypted = aes.encrypt(normalized);
+            if (encrypted == null) {
+                log.error("❌ [Encrypt] AesGcmEncryptor returned null (unexpected)");
+                throw new IllegalStateException("PII encryption returned null — cannot store unencrypted");
+            }
             log.debug("🔒 [Encrypt] Completed → ciphertext length={}", encrypted.length());
             return encrypted;
-
         } catch (Exception ex) {
-            log.error("❌ [Encrypt] Failed. Cause={}", ex.getMessage());
-            throw new IllegalStateException(
-                    "Encryption failed inside JpaAttributeEncryptor: " + ex.getMessage(), ex
-            );
+            log.error("❌ [Encrypt] Failed after validation. Cause={}", ex.getMessage());
+            throw new IllegalStateException("PII encryption failed — ensure AUTH_ENC_KEY is valid. " + ex.getMessage(), ex);
         }
     }
 
     // ===================================================================
     //  🔓 Decrypt after reading from DB
+    // Never throws — AesGcmEncryptor.decrypt returns null on failure; legacy plain text returned as-is.
     // ===================================================================
     @Override
     public String convertToEntityAttribute(String cipher) {
-        // Handle null or empty values immediately - these should never be decrypted
-        if (cipher == null) {
-            return null;
-        }
-        
-        // Trim and check for empty/blank strings
+        if (cipher == null) return null;
+
         String trimmed = cipher.trim();
-        if (trimmed.isEmpty() || trimmed.isBlank()) {
-            return null;
-        }
+        if (trimmed.isEmpty() || trimmed.isBlank()) return null;
 
-        // Always wrap everything in try-catch to prevent ANY exceptions from propagating
-        // This ensures backward compatibility with existing plain text data and prevents crashes
-        try {
-            // Check if the data appears to be encrypted (Base64 format with minimum length)
-            // Encrypted data should be Base64 encoded and have a minimum length
-            // Plain text data (from before encryption) will be returned as-is for backward compatibility
-            if (!isEncryptedData(trimmed)) {
-                log.debug("🔓 [Decrypt] Data appears to be plain text (not encrypted), returning as-is. Length={}", trimmed.length());
-                return trimmed;
-            }
-
-            log.debug("🔓 [Decrypt] Decrypting DB column (length={})", trimmed.length());
-
-            // Attempt decryption - if this fails, we'll catch and return original
-            String decrypted = aes.decrypt(trimmed);
-            log.debug("🔓 [Decrypt] Completed (result-length={})", decrypted != null ? decrypted.length() : 0);
-            return decrypted;
-
-        } catch (Throwable ex) {
-            // Catch ALL exceptions including RuntimeException, Error, etc.
-            // If decryption fails for ANY reason, return the original value
-            // This handles:
-            // - Plain text data from before encryption was enabled
-            // - Corrupted encrypted data
-            // - Invalid Base64 data that passed initial checks
-            // - BufferUnderflowException, IllegalArgumentException, etc.
-            // - Any other decryption errors
-            log.warn("⚠️ [Decrypt] Failed to decrypt data (length={}). It may be plain text from before encryption was enabled. " +
-                    "Returning original value. Error type: {}, Message: {}", 
-                    trimmed.length(), ex.getClass().getSimpleName(), ex.getMessage());
-            if (log.isDebugEnabled()) {
-                log.debug("⚠️ [Decrypt] Failed data sample (first 50 chars): {}", 
-                        trimmed.length() > 50 ? trimmed.substring(0, 50) + "..." : trimmed);
-                log.debug("⚠️ [Decrypt] Full exception: ", ex);
-            }
-            // Return original value to prevent application crashes
-            // This allows the system to continue working during migration period
+        log.debug("🔓 [Decrypt] Decrypting DB column (length={})", trimmed.length());
+        String decrypted = aes.decrypt(trimmed);
+        if (decrypted == null) {
+            log.debug("🔓 [Decrypt] Not encrypted or invalid — returning as-is (legacy plain text)");
             return trimmed;
         }
+        String validated = PiiDataValidator.validateDecrypted(decrypted);
+        log.debug("🔓 [Decrypt] Completed (result-length={})", validated != null ? validated.length() : 0);
+        return validated != null && !validated.isEmpty() ? validated : decrypted;
     }
 
     /**
-     * Checks if the data appears to be encrypted (Base64 format)
-     * Encrypted data should:
-     * - Be valid Base64
-     * - Have minimum length (AES-GCM encrypted data with IV and tag is typically 50+ chars)
-     * - Not contain common plain text patterns (spaces, simple readable text)
-     * 
-     * This method is conservative - it only returns true if we're very confident the data is encrypted.
-     * If in doubt, it returns false (treating as plain text) to ensure backward compatibility.
-     * 
-     * @param data The data to check
-     * @return true if data appears to be encrypted, false otherwise (defaults to false for safety)
+     * Truncates a string for safe logging (avoids dumping huge values).
      */
-    private boolean isEncryptedData(String data) {
-        // Be very conservative - only treat as encrypted if we're very sure
-        if (data == null || data.length() < 50) {
-            // Too short to be encrypted (AES-GCM encrypted data with IV+tag is typically 50+ chars)
-            // Plain text usernames/emails/mobiles are usually much shorter (5-50 chars)
-            return false;
-        }
-
-        // Check if it contains spaces - encrypted data never has spaces
-        if (data.contains(" ") || data.contains("\n") || data.contains("\t")) {
-            return false;
-        }
-
-        // Check if it's valid Base64 format (only Base64 characters)
-        String base64Pattern = "^[A-Za-z0-9+/=]+$";
-        if (!data.matches(base64Pattern)) {
-            // Contains non-Base64 characters, likely plain text
-            return false;
-        }
-
-        // Check if it's valid Base64 and has proper structure
-        try {
-            byte[] decoded = Base64.getDecoder().decode(data);
-            // Encrypted data should have minimum structure (IV + ciphertext + tag)
-            // AES-GCM requires at least 12 bytes IV + some ciphertext + 16 bytes tag
-            // For a typical username/email/mobile, encrypted size would be at least 40+ bytes
-            if (decoded.length < 40) {
-                return false;
-            }
-        } catch (IllegalArgumentException e) {
-            // Not valid Base64, definitely plain text
-            return false;
-        }
-
-        // If we get here, it's likely encrypted:
-        // - Long enough (50+ chars)
-        // - Valid Base64 format
-        // - No spaces or special characters
-        // - Decoded length is sufficient
-        return true;
+    private static String truncate(String s, int maxLen) {
+        if (s == null) return "null";
+        if (s.length() <= maxLen) return s;
+        return s.substring(0, maxLen) + "...";
     }
 
     // ===================================================================

@@ -61,22 +61,22 @@ import jakarta.annotation.PostConstruct;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import com.example.common.security.JwtAuthFilter;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 
 /**
  * ======================================================================
  * 🚀 Auth Service — Boot Application (FINAL VERSION)
  * ======================================================================
  * IMPORTANT:
- *   ✔ DO NOT call JpaAttributeEncryptor.init() anymore.
- *   ✔ JpaAttributeEncryptor autoloads its AES key in its constructor.
- *   ✔ Only warm up EncryptionKeyProvider so logs show source (cloud/local).
+ *   ✔ JpaAttributeEncryptor (common-service) handles PII encryption via JPA (AES-256-GCM).
+ *   ✔ EncryptionKeyProvider provides the AES-256 key (cloud/local/env).
+ *   ✔ No entity listeners — single JPA AttributeConverter mechanism.
  * ======================================================================
  */
  
@@ -95,8 +95,9 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
         "com.example.authservice.model",
         "com.example.common.entity"
 })
+@EnableMethodSecurity
 public class Application {
-    private static final Logger log = LoggerFactory.getLogger(JwtAuthFilter.class);
+    private static final Logger log = LoggerFactory.getLogger(Application.class);
 
 
     public static void main(String[] args) {
@@ -111,7 +112,7 @@ public class Application {
      *  ✔ Load EncryptionKeyProvider once
      *  ✔ Print key source (LOCAL/CLOUD/ENV)
      *  ✔ Print fingerprint (safe)
-     *  ❌ Do NOT initialize JpaAttributeEncryptor (handled automatically)
+     *  ❌ Do NOT initialize converters (JpaAttributeEncryptor auto-initializes)
      */
     @PostConstruct
     public void warmupEncryption() {
@@ -126,7 +127,7 @@ public class Application {
             log.info("🔑 AES-256 encryption key loaded successfully");
             log.info("🔍 Key fingerprint: {}", safeFingerprint(base64Key));
 
-            log.info("✔ JPA Encryption will auto-initialize via JpaAttributeEncryptor");
+            log.info("✔ JPA Encryption via JpaAttributeEncryptor (AES-256-GCM, common-service)");
             log.info("---------------------------------------------------------------\n");
 
         } catch (Exception ex) {

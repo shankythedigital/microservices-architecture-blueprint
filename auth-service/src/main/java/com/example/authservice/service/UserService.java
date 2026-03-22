@@ -11,7 +11,7 @@ import com.example.authservice.repository.UserRepository;
 import com.example.authservice.service.impl.AuditService;
 import com.example.authservice.service.impl.AuthServiceImpl;
 import com.example.common.util.FileStorageUtil;
-import com.example.common.util.HmacUtil;
+import com.example.common.util.EncryptDecryptUtil;
 import com.example.common.util.RequestContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -89,7 +89,7 @@ public class UserService {
 
     public Long resolveUserId(String identifier, String type) {
         if (identifier == null || identifier.isBlank()) return null;
-        String hash = HmacUtil.hmacHex(identifier);
+        String hash = EncryptDecryptUtil.encrypt(identifier);
         if (type != null) {
             switch (type.toUpperCase()) {
                 case "USERNAME":
@@ -117,7 +117,7 @@ public class UserService {
 
     public String getUsernameFromIdentifier(String identifier,String type) {
         if (identifier == null || identifier.isBlank()) return null;
-        String hash = HmacUtil.hmacHex(identifier);
+        String hash = EncryptDecryptUtil.encrypt(identifier);
 
         if (type != null) {
             switch (type.toUpperCase()) {
@@ -499,6 +499,7 @@ public class UserService {
             udm.setOptOutPush(request.getOptOutPush());
         }
 
+        udm.computeLookupHashes();
         udm = udmRepo.save(udm);
         return mapToProfileResponse(udm);
     }
@@ -600,6 +601,7 @@ public class UserService {
         udm.setBlockedAt(LocalDateTime.now());
         udm.setBlockedBy(actorForAudit(currentUserId));
         udm.setBlockedUntil(blockedUntil);
+        udm.computeLookupHashes();
         udmRepo.save(udm);
 
         auditService.log(currentUserId, "USER_BLOCK", "User", String.valueOf(targetUserId),
@@ -631,6 +633,7 @@ public class UserService {
         udm.setBlockedAt(null);
         udm.setBlockedBy(null);
         udm.setBlockedUntil(null);
+        udm.computeLookupHashes();
         udmRepo.save(udm);
 
         auditService.log(currentUserId, "USER_UNBLOCK", "User", String.valueOf(targetUserId), null,
@@ -656,6 +659,7 @@ public class UserService {
         udm.setBlockedAt(LocalDateTime.now());
         udm.setBlockedBy(actorForAudit(currentUserId));
         udm.setBlockedUntil(null);
+        udm.computeLookupHashes();
         udmRepo.save(udm);
 
         auditService.log(currentUserId, "USER_PERMANENT_BLOCK", "User", String.valueOf(targetUserId),

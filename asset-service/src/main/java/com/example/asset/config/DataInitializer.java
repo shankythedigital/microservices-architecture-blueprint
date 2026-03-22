@@ -88,7 +88,7 @@ public class DataInitializer {
             // ------------------------------------------------------------------------
             complianceRuleService.initializeDefaultRules("system");
             log.info("✅ Compliance Rules initialized");
-
+/* 
             // ------------------------------------------------------------------------
             // 1️⃣ Product Categories
             // ------------------------------------------------------------------------
@@ -231,7 +231,7 @@ public class DataInitializer {
                 compRepo.saveAll(List.of(battery, charger, remote));
                 log.info("✅ Seeded Asset Components");
             }
-
+ */
             log.info("🎉 Data initialization completed successfully.");
 
         } catch (Exception e) {

@@ -8,7 +8,7 @@
 #   - Common Service
 #   - Helpdesk Service
 #
-# Supports: local, cloud_local, cloud
+# Supports: local, cloud_local, cloud, OWN_SERVER
 # ======================================================
 
 set -euo pipefail
@@ -297,7 +297,7 @@ services:
 
 security:
   jwt:
-    public-key-path: classpath:keys/jwt-private.pem
+    public-key-path: classpath:keys/jwt-public.pem
     issuer: "auth-service"
     audience: "asset-service"
 
@@ -337,7 +337,7 @@ app:
   llm:
     enabled: true
     api-url: https://api.openai.com/v1
-    api-key: ${OPENAI_API_KEY:}
+    api-key: \${OPENAI_API_KEY:-}
     model: gpt-4o-mini
     max-tokens: 4096
     timeout-seconds: 60
@@ -552,7 +552,7 @@ services:
 
 security:
   jwt:
-    public-key-path: classpath:keys/jwt-private.pem
+    public-key-path: classpath:keys/jwt-public.pem
     issuer: "auth-service"
     audience: "helpdesk-service"
 
