@@ -56,8 +56,8 @@ public class OtpServiceImpl {
         // 2️⃣ Persist OTP (hashed)
         // ------------------------------------------------------------------------
         OtpLog otp = new OtpLog();
-        otp.setMobileHash(EncryptDecryptUtil.encrypt(mobile == null ? username : mobile));
-        otp.setOtpHash(EncryptDecryptUtil.encrypt(otpStr));
+        otp.setMobileHash(EncryptDecryptUtil.hmac(mobile == null ? username : mobile));
+        otp.setOtpHash(EncryptDecryptUtil.hmac(otpStr));
         otp.setExpiresAt(LocalDateTime.now().plusMinutes(EXPIRY_MINUTES));
         otp.setUsed(false);
         otp.setCreatedBy(username != null ? username : "system");
@@ -156,7 +156,7 @@ public class OtpServiceImpl {
      * ✅ Validate OTP input against stored entry.
      */
     public boolean validateOtp(String mobile, String otpInput) {
-        String mobileHash = EncryptDecryptUtil.encrypt(mobile);
+        String mobileHash = EncryptDecryptUtil.hmac(mobile);
 
         OtpLog otp = otpLogRepository
                 .findTopByMobileHashAndUsedFalseOrderByCreatedAtDesc(mobileHash)

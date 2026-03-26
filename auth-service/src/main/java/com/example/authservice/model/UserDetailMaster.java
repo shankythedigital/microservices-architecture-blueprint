@@ -223,12 +223,12 @@ public class UserDetailMaster extends BaseEntity {
     /**
      * Computes deterministic lookup hashes for username/email/mobile.
      * Must be called explicitly from service layer before save — no entity lifecycle callbacks.
-     * Uses EncryptDecryptUtil (AES-256-GCM deterministic) for lookup; PII storage uses JpaAttributeEncryptor.
+     * Uses EncryptDecryptUtil.hmac (HMAC-SHA256) for equality search; PII columns use JpaAttributeEncryptor.
      */
     public void computeLookupHashes() {
-        if (this.username != null) this.usernameHash = EncryptDecryptUtil.encrypt(this.username);
-        if (this.email != null) this.emailHash = EncryptDecryptUtil.encrypt(this.email);
-        if (this.mobile != null) this.mobileHash = EncryptDecryptUtil.encrypt(this.mobile);
+        if (this.username != null) this.usernameHash = EncryptDecryptUtil.hmac(this.username);
+        if (this.email != null) this.emailHash = EncryptDecryptUtil.hmac(this.email);
+        if (this.mobile != null) this.mobileHash = EncryptDecryptUtil.hmac(this.mobile);
     }
 
     // ----------------------

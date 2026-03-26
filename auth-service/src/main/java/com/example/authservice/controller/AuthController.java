@@ -131,10 +131,10 @@ public class AuthController {
                 case "PASSWORD":
                     return ResponseEntity.ok(authService.loginWithPassword(req.username, req.password, req.deviceInfo));
                 case "OTP":
-                    return ResponseEntity.ok(authService.loginWithOtp(req.username, req.otp, req.deviceInfo, "ECOM"));
+                    return ResponseEntity.ok(authService.loginWithOtp(req.mobile, req.otp, req.deviceInfo, "ECOM"));
                 case "MPIN":
                     return ResponseEntity
-                            .ok(authService.loginWithMpin(Long.parseLong(req.username), req.mpin, req.deviceInfo));
+                            .ok(authService.loginWithMpin(req.userId, req.mpin, req.deviceInfo));
                 case "RSA":
                     return ResponseEntity.ok(authService.loginWithRsa(Long.parseLong(req.username), req.rsaChallenge,
                             req.signature, req.deviceInfo));

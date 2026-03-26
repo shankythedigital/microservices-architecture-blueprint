@@ -28,9 +28,9 @@ spring:
   application:
     name: notification-service
   datasource:
-    url: jdbc:mysql://localhost:3306/notificationdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8&connectionCollation=utf8mb4_unicode_ci
-    username: root
-    password: Snmysql@1110
+    url: jdbc:mysql://194.163.173.37:3306/notificationdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8&connectionCollation=utf8mb4_unicode_ci
+    username: notificationdb
+    password: notificationdb
   jpa:
     hibernate:
       ddl-auto: update

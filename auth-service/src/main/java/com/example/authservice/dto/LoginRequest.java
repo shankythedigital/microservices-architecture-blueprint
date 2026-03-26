@@ -2,6 +2,8 @@ package com.example.authservice.dto;
 public class LoginRequest {
     public String loginType; // PASSWORD, OTP, MPIN, AUTHCODE, RSA, BIOMETRIC, PASSKEY, PASSPHRASE, OAUTH
     public String username;
+    public Long userId;
+    public String mobile;
     public String password;
     public String otp;
     public String mpin;

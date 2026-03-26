@@ -196,7 +196,7 @@ public class DataInitializer implements CommandLineRunner {
                 String adminUsername = "admin_" + projectType.toLowerCase();
                 
                 // Check if admin already exists
-                String usernameHash = EncryptDecryptUtil.encrypt(adminUsername);
+                String usernameHash = EncryptDecryptUtil.hmac(adminUsername);
                 boolean exists = userRepo.existsByCompositeId_UsernameHash(usernameHash);
                 
                 if (exists) {
@@ -227,9 +227,9 @@ public class DataInitializer implements CommandLineRunner {
             String employeeId = "EMP_ADMIN_" + projectType.toUpperCase();
 
             // Compute HMACs for composite key
-            String usernameHash = EncryptDecryptUtil.encrypt(username);
-            String emailHash = EncryptDecryptUtil.encrypt(email);
-            String mobileHash = EncryptDecryptUtil.encrypt(mobile);
+            String usernameHash = EncryptDecryptUtil.hmac(username);
+            String emailHash = EncryptDecryptUtil.hmac(email);
+            String mobileHash = EncryptDecryptUtil.hmac(mobile);
 
             // Create composite user ID
             UserId compositeId = new UserId(null, usernameHash, emailHash, mobileHash, projectType);
