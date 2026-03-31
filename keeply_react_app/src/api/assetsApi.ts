@@ -1,4 +1,5 @@
 import { url } from '../config'
+import { toApiLocalDate } from '../utils/apiDate'
 import { ApiError, parseJson } from './http'
 import type { ResponseWrapper, SpringPage } from './types'
 
@@ -37,7 +38,7 @@ function buildCreateAssetPayload(
   const asset: Record<string, unknown> = {
     assetNameUdv: input.assetNameUdv,
     serialNumber: input.serialNumber || undefined,
-    purchaseDate: input.purchaseDate || undefined,
+    purchaseDate: toApiLocalDate(input.purchaseDate ?? null),
     assetStatus: 'ACTIVE',
   }
   if (input.categoryId) asset.category = { categoryId: input.categoryId }

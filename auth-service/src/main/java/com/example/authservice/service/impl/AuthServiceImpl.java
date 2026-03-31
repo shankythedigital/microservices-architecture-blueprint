@@ -472,7 +472,6 @@ import java.security.Signature;
 import java.security.spec.X509EncodedKeySpec;
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 public class AuthServiceImpl {
@@ -495,6 +494,18 @@ public class AuthServiceImpl {
     // 🔹 Common Duplicate Check (used by register + adminregister)
     // =====================================================
     private void validateDuplicateUser(String usernameHash, String emailHash, String mobileHash, String projectType) {
+
+        // Global uniqueness (across all projectType) is enforced via user_detail_master unique indexes.
+        // Validate early to return a clean error instead of a DB constraint exception.
+        if (udmRepo.existsByUsernameHash(usernameHash)) {
+            throw new DuplicateKeyException("Username already exists");
+        }
+        if (emailHash != null && udmRepo.existsByEmailHash(emailHash)) {
+            throw new DuplicateKeyException("Email already exists");
+        }
+        if (mobileHash != null && udmRepo.existsByMobileHash(mobileHash)) {
+            throw new DuplicateKeyException("Mobile already exists");
+        }
 
         if (userRepo.existsByCompositeId_UsernameHashAndCompositeId_ProjectType(usernameHash, projectType)) {
             throw new DuplicateKeyException("Username already exists for projectType: " + projectType);
@@ -535,9 +546,9 @@ public class AuthServiceImpl {
             throw new IllegalArgumentException("Project type is required");
 
         // --- Hash PII for HMAC-based identity uniqueness ---
-        String usernameHash = EncryptDecryptUtil.encrypt(usernamePlain);
-        String emailHash = (emailPlain != null && !emailPlain.isBlank()) ? EncryptDecryptUtil.encrypt(emailPlain) : null;
-        String mobileHash = (mobilePlain != null && !mobilePlain.isBlank()) ? EncryptDecryptUtil.encrypt(mobilePlain) : null;
+        String usernameHash = EncryptDecryptUtil.hmac(usernamePlain);
+        String emailHash = (emailPlain != null && !emailPlain.isBlank()) ? EncryptDecryptUtil.hmac(emailPlain) : null;
+        String mobileHash = (mobilePlain != null && !mobilePlain.isBlank()) ? EncryptDecryptUtil.hmac(mobilePlain) : null;
 
         // --- Check duplicates with projectType ---
         validateDuplicateUser(usernameHash, emailHash, mobileHash, projectType);
@@ -600,9 +611,9 @@ public class AuthServiceImpl {
         if (projectType == null || projectType.isBlank())
             throw new IllegalArgumentException("Project type is required");
 
-        String usernameHash = EncryptDecryptUtil.encrypt(usernamePlain);
-        String emailHash = (emailPlain != null && !emailPlain.isBlank()) ? EncryptDecryptUtil.encrypt(emailPlain) : null;
-        String mobileHash = (mobilePlain != null && !mobilePlain.isBlank()) ? EncryptDecryptUtil.encrypt(mobilePlain) : null;
+        String usernameHash = EncryptDecryptUtil.hmac(usernamePlain);
+        String emailHash = (emailPlain != null && !emailPlain.isBlank()) ? EncryptDecryptUtil.hmac(emailPlain) : null;
+        String mobileHash = (mobilePlain != null && !mobilePlain.isBlank()) ? EncryptDecryptUtil.hmac(mobilePlain) : null;
 
         // --- Check duplicates with projectType ---
         validateDuplicateUser(usernameHash, emailHash, mobileHash, projectType);
@@ -771,7 +782,7 @@ public class AuthServiceImpl {
         if (usernamePlain == null || password == null)
             throw new IllegalArgumentException("Username and password are required");
 
-        String usernameHash = EncryptDecryptUtil.encrypt(usernamePlain);
+        String usernameHash = EncryptDecryptUtil.hmac(usernamePlain);
         User user = userRepo.findByCompositeId_UsernameHash(usernameHash)
                 .orElseThrow(() -> new RuntimeException("Invalid credentials"));
 
@@ -796,7 +807,7 @@ public class AuthServiceImpl {
     }
 
     public AuthResponse loginWithOtp(String mobilePlain, String otp, String deviceInfo, String projectType) {
-        String mobileHash = EncryptDecryptUtil.encrypt(mobilePlain);
+        String mobileHash = EncryptDecryptUtil.hmac(mobilePlain);
         boolean ok = otpRepo.findAll().stream()
                 .anyMatch(log -> mobileHash.equals(log.getMobileHash())
                         && !Boolean.TRUE.equals(log.isUsed())
@@ -921,7 +932,7 @@ public class AuthServiceImpl {
         if (refreshToken == null || refreshToken.isBlank())
             throw new RuntimeException("Missing refresh token");
 
-        String hash = EncryptDecryptUtil.encrypt(refreshToken);
+        String hash = EncryptDecryptUtil.hmac(refreshToken);
 
         RefreshToken rt = refreshRepo.findByTokenHash(hash)
                 .orElseThrow(() -> new RuntimeException("Invalid refresh token"));
@@ -940,7 +951,7 @@ public class AuthServiceImpl {
 
         // create new refresh token and new access token
         String newRefresh = UUID.randomUUID().toString();
-        String newRefreshHash = EncryptDecryptUtil.encrypt(newRefresh);
+        String newRefreshHash = EncryptDecryptUtil.hmac(newRefresh);
 
         // create access token using session context
         List<String> roles = s.getUser().getRoles().stream().map(Role::getName).toList();
@@ -986,7 +997,7 @@ public class AuthServiceImpl {
         // 5) Generate refresh token
         String refresh = UUID.randomUUID().toString();
         RefreshToken rt = new RefreshToken();
-        rt.setTokenHash(EncryptDecryptUtil.encrypt(refresh));
+        rt.setTokenHash(EncryptDecryptUtil.hmac(refresh));
         rt.setAccessToken(access);
         rt.setSession(session);
         rt.setExpiryDate(LocalDateTime.now().plusDays(14));
@@ -1044,7 +1055,7 @@ public class AuthServiceImpl {
         if (refreshToken == null || refreshToken.isBlank())
             throw new RuntimeException("Refresh token is required for logout");
 
-        String hash = EncryptDecryptUtil.encrypt(refreshToken);
+        String hash = EncryptDecryptUtil.hmac(refreshToken);
         RefreshToken rt = refreshRepo.findByTokenHash(hash)
                 .orElseThrow(() -> new RuntimeException("Invalid or expired refresh token"));
 

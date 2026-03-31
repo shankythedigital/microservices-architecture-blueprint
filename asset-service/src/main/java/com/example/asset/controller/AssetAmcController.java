@@ -7,6 +7,7 @@ import com.example.asset.service.AssetAmcService;
 import com.example.asset.util.ByteArrayMultipartFile;
 import com.example.asset.service.DocumentTypeMasterService;
 import org.springframework.web.multipart.MultipartFile;
+import com.example.common.jackson.JacksonObjectMappers;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.util.Base64;
@@ -70,7 +71,7 @@ public class AssetAmcController {
             @RequestHeader HttpHeaders headers,
             @RequestBody Map<String, Object> body) {
         try {
-            ObjectMapper mapper = new ObjectMapper();
+            ObjectMapper mapper = JacksonObjectMappers.standard();
             AssetAmcRequest request = mapper.convertValue(body.get("request"), AssetAmcRequest.class);
             String document = (String) body.get("document");
             String docType = (String) body.get("docType");
@@ -123,7 +124,7 @@ public class AssetAmcController {
             @PathVariable Long id,
             @RequestBody Map<String, Object> body) {
         try {
-            ObjectMapper mapper = new ObjectMapper();
+            ObjectMapper mapper = JacksonObjectMappers.standard();
             AssetAmcRequest request = mapper.convertValue(body.get("request"), AssetAmcRequest.class);
             String document = (String) body.get("document");
             String docType = (String) body.get("docType");

@@ -7,6 +7,7 @@ import com.example.asset.dto.OutletDto;
 import com.example.asset.dto.OutletRequest;
 import com.example.asset.util.ByteArrayMultipartFile;
 import com.example.asset.service.DocumentTypeMasterService;
+import com.example.common.jackson.JacksonObjectMappers;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.util.Base64;
@@ -71,7 +72,7 @@ public class OutletController {
             @RequestHeader HttpHeaders headers,
             @RequestBody Map<String, Object> body) {
         try {
-            ObjectMapper mapper = new ObjectMapper();
+            ObjectMapper mapper = JacksonObjectMappers.standard();
             OutletRequest request = mapper.convertValue(body.get("request"), OutletRequest.class);
             String document = (String) body.get("document");
             String docType = (String) body.get("docType");
@@ -116,7 +117,7 @@ public class OutletController {
             @PathVariable Long id,
             @RequestBody Map<String, Object> body) {
         try {
-            ObjectMapper mapper = new ObjectMapper();
+            ObjectMapper mapper = JacksonObjectMappers.standard();
             OutletRequest request = mapper.convertValue(body.get("request"), OutletRequest.class);
             String document = (String) body.get("document");
             String docType = (String) body.get("docType");

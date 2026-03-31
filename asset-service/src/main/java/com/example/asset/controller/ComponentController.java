@@ -7,6 +7,7 @@ import com.example.asset.dto.ComponentDto;
 import com.example.asset.dto.ComponentRequest;
 import com.example.asset.util.ByteArrayMultipartFile;
 import com.example.asset.service.DocumentTypeMasterService;
+import com.example.common.jackson.JacksonObjectMappers;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.util.Base64;
@@ -73,7 +74,7 @@ public class ComponentController {
             @RequestHeader HttpHeaders headers,
             @RequestBody Map<String, Object> body) {
         try {
-            ObjectMapper mapper = new ObjectMapper();
+            ObjectMapper mapper = JacksonObjectMappers.standard();
             ComponentRequest request = mapper.convertValue(body.get("request"), ComponentRequest.class);
             String document = (String) body.get("document");
             String docType = (String) body.get("docType");
@@ -119,7 +120,7 @@ public class ComponentController {
             @PathVariable Long id,
             @RequestBody Map<String, Object> body) {
         try {
-            ObjectMapper mapper = new ObjectMapper();
+            ObjectMapper mapper = JacksonObjectMappers.standard();
             ComponentRequest request = mapper.convertValue(body.get("request"), ComponentRequest.class);
             String document = (String) body.get("document");
             String docType = (String) body.get("docType");

@@ -24,6 +24,11 @@ helpdesk:
 spring:
   application:
     name: helpdesk-service
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+    deserialization:
+      adjust-dates-to-context-time-zone: false
   datasource:
     url: jdbc:mysql://localhost:3306/helpdeskdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
     username: root

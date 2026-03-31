@@ -7,6 +7,7 @@ import com.example.asset.service.AssetWarrantyService;
 import com.example.asset.util.ByteArrayMultipartFile;
 import com.example.asset.service.DocumentTypeMasterService;
 import org.springframework.web.multipart.MultipartFile;
+import com.example.common.jackson.JacksonObjectMappers;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.util.Base64;
@@ -64,7 +65,7 @@ public class AssetWarrantyController {
             @RequestHeader HttpHeaders headers,
             @RequestBody Map<String, Object> body) {
         try {
-            ObjectMapper mapper = new ObjectMapper();
+            ObjectMapper mapper = JacksonObjectMappers.standard();
             AssetWarrantyRequest request = mapper.convertValue(body.get("request"), AssetWarrantyRequest.class);
             String document = (String) body.get("document");
             String docType = (String) body.get("docType");
@@ -112,7 +113,7 @@ public class AssetWarrantyController {
             @PathVariable Long id,
             @RequestBody Map<String, Object> body) {
         try {
-            ObjectMapper mapper = new ObjectMapper();
+            ObjectMapper mapper = JacksonObjectMappers.standard();
             AssetWarrantyRequest request = mapper.convertValue(body.get("request"), AssetWarrantyRequest.class);
             String document = (String) body.get("document");
             String docType = (String) body.get("docType");

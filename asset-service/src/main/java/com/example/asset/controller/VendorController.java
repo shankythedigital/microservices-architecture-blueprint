@@ -7,6 +7,7 @@ import com.example.asset.dto.VendorDto;
 import com.example.asset.dto.VendorRequest;
 import com.example.asset.util.ByteArrayMultipartFile;
 import com.example.asset.service.DocumentTypeMasterService;
+import com.example.common.jackson.JacksonObjectMappers;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.util.Base64;
@@ -70,7 +71,7 @@ public class VendorController {
             @RequestHeader HttpHeaders headers,
             @RequestBody Map<String, Object> body) {
         try {
-            ObjectMapper mapper = new ObjectMapper();
+            ObjectMapper mapper = JacksonObjectMappers.standard();
             VendorRequest request = mapper.convertValue(body.get("request"), VendorRequest.class);
             String document = (String) body.get("document");
             String docType = (String) body.get("docType");
@@ -116,7 +117,7 @@ public class VendorController {
             @PathVariable Long id,
             @RequestBody Map<String, Object> body) {
         try {
-            ObjectMapper mapper = new ObjectMapper();
+            ObjectMapper mapper = JacksonObjectMappers.standard();
             VendorRequest request = mapper.convertValue(body.get("request"), VendorRequest.class);
             String document = (String) body.get("document");
             String docType = (String) body.get("docType");

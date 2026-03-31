@@ -10,6 +10,7 @@ import com.example.asset.service.AssetCrudService;
 import com.example.asset.service.ExcelParsingService;
 import com.example.asset.util.ByteArrayMultipartFile;
 import com.example.asset.service.DocumentTypeMasterService;
+import com.example.common.jackson.JacksonObjectMappers;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.util.Base64;
@@ -78,7 +79,7 @@ public class AssetController {
             @RequestHeader HttpHeaders headers,
             @RequestBody Map<String, Object> body) {
         try {
-            ObjectMapper mapper = new ObjectMapper();
+            ObjectMapper mapper = JacksonObjectMappers.standard();
             AssetRequest request = mapper.convertValue(body.get("request"), AssetRequest.class);
             String document = (String) body.get("document");
             String docType = (String) body.get("docType");
@@ -124,7 +125,7 @@ public class AssetController {
             @PathVariable Long id,
             @RequestBody Map<String, Object> body) {
         try {
-            ObjectMapper mapper = new ObjectMapper();
+            ObjectMapper mapper = JacksonObjectMappers.standard();
             AssetRequest request = mapper.convertValue(body.get("request"), AssetRequest.class);
             String document = (String) body.get("document");
             String docType = (String) body.get("docType");

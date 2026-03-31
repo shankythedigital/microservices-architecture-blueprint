@@ -189,6 +189,11 @@ asset:
 spring:
   application:
     name: auth-service
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+    deserialization:
+      adjust-dates-to-context-time-zone: false
   datasource:
     url: ${RDS_AUTH_DB}
     username: ${RDS_AUTH_USER}
@@ -267,6 +272,11 @@ asset:
 spring:
   application:
     name: asset-service
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+    deserialization:
+      adjust-dates-to-context-time-zone: false
   datasource:
     url: ${RDS_ASSET_DB}
     username: ${RDS_ASSET_USER}
@@ -396,6 +406,11 @@ fileupload:
 spring:
   application:
     name: notification-service
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+    deserialization:
+      adjust-dates-to-context-time-zone: false
   datasource:
     url: ${RDS_NOTIFY_DB}
     username: ${RDS_NOTIFY_USER}
@@ -463,7 +478,11 @@ cat > "$COMMON_DIR/src/main/resources/application.yml" <<YAML
 spring:
   application:
     name: common-service
-
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+    deserialization:
+      adjust-dates-to-context-time-zone: false
 auth:
   service:
     url: ${AUTH_URL}
@@ -516,7 +535,12 @@ helpdesk:
 
 spring:
   application:
-    name: helpdesk-service
+    name: helpdesk-service  
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+    deserialization:
+      adjust-dates-to-context-time-zone: false
   datasource:
     url: ${RDS_HELPDESK_DB}
     username: ${RDS_HELPDESK_USER}

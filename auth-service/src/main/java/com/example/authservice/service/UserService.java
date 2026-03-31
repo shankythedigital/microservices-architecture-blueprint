@@ -89,7 +89,7 @@ public class UserService {
 
     public Long resolveUserId(String identifier, String type) {
         if (identifier == null || identifier.isBlank()) return null;
-        String hash = EncryptDecryptUtil.encrypt(identifier);
+        String hash = EncryptDecryptUtil.hmac(identifier);
         if (type != null) {
             switch (type.toUpperCase()) {
                 case "USERNAME":
@@ -117,7 +117,7 @@ public class UserService {
 
     public String getUsernameFromIdentifier(String identifier,String type) {
         if (identifier == null || identifier.isBlank()) return null;
-        String hash = EncryptDecryptUtil.encrypt(identifier);
+        String hash = EncryptDecryptUtil.hmac(identifier);
 
         if (type != null) {
             switch (type.toUpperCase()) {

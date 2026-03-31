@@ -3,6 +3,7 @@ package com.example.asset.service;
 import com.example.asset.client.LlmClient;
 import com.example.asset.config.LlmProperties;
 import com.example.asset.dto.LlmAssetExtractionResult;
+import com.example.common.jackson.JacksonObjectMappers;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
@@ -21,7 +22,7 @@ import java.util.List;
 public class DocumentLlmAgentService {
 
     private static final Logger log = LoggerFactory.getLogger(DocumentLlmAgentService.class);
-    private static final ObjectMapper MAPPER = new ObjectMapper();
+    private static final ObjectMapper MAPPER = JacksonObjectMappers.standard();
     private static final int TEXT_PREVIEW_MAX_LEN = 2000;
 
     private final LlmClient llmClient;

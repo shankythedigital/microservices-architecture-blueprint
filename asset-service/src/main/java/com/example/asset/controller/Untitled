@@ -1,0 +1,5 @@
+
+
+mvn -am -pl asset-service clean install -DskipTests
+mvn -pl asset-service clean install -DskipTests
+mvn -U -am -pl asset-service clean install -DskipTests

@@ -1,6 +1,7 @@
 package com.example.asset.client;
 
 import com.example.asset.config.LlmProperties;
+import com.example.common.jackson.JacksonObjectMappers;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
@@ -21,7 +22,7 @@ import java.util.Map;
 public class OpenAiCompatibleLlmClient implements LlmClient {
 
     private static final Logger log = LoggerFactory.getLogger(OpenAiCompatibleLlmClient.class);
-    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+    private static final ObjectMapper OBJECT_MAPPER = JacksonObjectMappers.standard();
 
     private final LlmProperties properties;
     private final RestTemplate restTemplate;

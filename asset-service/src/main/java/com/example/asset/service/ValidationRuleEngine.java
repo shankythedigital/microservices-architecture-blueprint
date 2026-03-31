@@ -3,6 +3,7 @@ package com.example.asset.service;
 import com.example.asset.entity.*;
 import com.example.asset.repository.*;
 import com.example.asset.service.ComplianceMasterCacheService;
+import com.example.common.jackson.JacksonObjectMappers;
 import com.example.common.jpa.BaseEntity;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -25,7 +26,7 @@ import java.util.regex.Pattern;
 public class ValidationRuleEngine {
 
     private static final Logger log = LoggerFactory.getLogger(ValidationRuleEngine.class);
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper = JacksonObjectMappers.standard();
 
     private final AssetMasterRepository assetRepo;
     private final ProductCategoryRepository categoryRepo;

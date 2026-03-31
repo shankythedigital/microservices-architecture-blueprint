@@ -3,6 +3,7 @@ import { useAuth } from '../auth/AuthContext'
 import { markNotificationRead, notificationList } from '../api/notificationsApi'
 import { ApiError } from '../api/http'
 import type { NotificationItem } from '../api/types'
+import { formatApiDateForDisplay } from '../utils/apiDate'
 
 export function AlertsPage() {
   const { token } = useAuth()
@@ -49,7 +50,9 @@ export function AlertsPage() {
             <div>
               <strong>{n.title || 'Notice'}</strong>
               {n.message && <p className="muted small">{n.message}</p>}
-              {n.createdAt && <span className="muted small">{n.createdAt}</span>}
+              {n.createdAt && (
+                <span className="muted small">{formatApiDateForDisplay(n.createdAt)}</span>
+              )}
             </div>
             {!n.read && (
               <button type="button" className="btn secondary tight" onClick={() => onRead(n.id)}>

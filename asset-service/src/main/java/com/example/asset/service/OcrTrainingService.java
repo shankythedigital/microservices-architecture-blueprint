@@ -7,6 +7,7 @@ import com.example.asset.entity.OcrTrainingData;
 import com.example.asset.repository.OcrLearnedPatternRepository;
 import com.example.asset.repository.OcrModelMetadataRepository;
 import com.example.asset.repository.OcrTrainingDataRepository;
+import com.example.common.jackson.JacksonObjectMappers;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
@@ -32,7 +33,7 @@ import java.util.stream.Collectors;
 public class OcrTrainingService {
 
     private static final Logger log = LoggerFactory.getLogger(OcrTrainingService.class);
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper = JacksonObjectMappers.standard();
 
     private final OcrTrainingDataRepository trainingDataRepo;
     private final OcrLearnedPatternRepository patternRepo;

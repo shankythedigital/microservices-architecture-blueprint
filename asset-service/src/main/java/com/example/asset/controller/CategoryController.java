@@ -11,6 +11,7 @@ import com.example.asset.service.CategoryService;
 import com.example.asset.util.ByteArrayMultipartFile;
 import com.example.asset.service.DocumentTypeMasterService;
 import com.example.asset.service.ExcelParsingService;
+import com.example.common.jackson.JacksonObjectMappers;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.util.Base64;
@@ -79,7 +80,7 @@ public class CategoryController {
             @RequestHeader HttpHeaders headers,
             @RequestBody Map<String, Object> body) {
         try {
-            ObjectMapper mapper = new ObjectMapper();
+            ObjectMapper mapper = JacksonObjectMappers.standard();
             CategoryRequest request = mapper.convertValue(body.get("request"), CategoryRequest.class);
             String document = (String) body.get("document");
             String docType = (String) body.get("docType");
@@ -129,7 +130,7 @@ public class CategoryController {
             @PathVariable Long id,
             @RequestBody Map<String, Object> body) {
         try {
-            ObjectMapper mapper = new ObjectMapper();
+            ObjectMapper mapper = JacksonObjectMappers.standard();
             CategoryRequest request = mapper.convertValue(body.get("request"), CategoryRequest.class);
             String document = (String) body.get("document");
             String docType = (String) body.get("docType");

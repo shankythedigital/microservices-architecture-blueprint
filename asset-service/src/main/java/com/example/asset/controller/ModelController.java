@@ -7,6 +7,7 @@ import com.example.asset.dto.ModelDto;
 import com.example.asset.dto.ModelRequest;
 import com.example.asset.util.ByteArrayMultipartFile;
 import com.example.asset.service.DocumentTypeMasterService;
+import com.example.common.jackson.JacksonObjectMappers;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.util.Base64;
@@ -64,7 +65,7 @@ public class ModelController {
             @RequestHeader HttpHeaders headers,
             @RequestBody Map<String, Object> body) {
         try {
-            ObjectMapper mapper = new ObjectMapper();
+            ObjectMapper mapper = JacksonObjectMappers.standard();
             ModelRequest request = mapper.convertValue(body.get("request"), ModelRequest.class);
             String document = (String) body.get("document");
             String docType = (String) body.get("docType");
@@ -106,7 +107,7 @@ public class ModelController {
             @PathVariable Long id,
             @RequestBody Map<String, Object> body) {
         try {
-            ObjectMapper mapper = new ObjectMapper();
+            ObjectMapper mapper = JacksonObjectMappers.standard();
             ModelRequest request = mapper.convertValue(body.get("request"), ModelRequest.class);
             String document = (String) body.get("document");
             String docType = (String) body.get("docType");

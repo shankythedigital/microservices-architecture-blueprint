@@ -9,6 +9,7 @@ import com.example.asset.entity.AssetDocument;
 import com.example.asset.service.DocumentService;
 import com.example.asset.service.DocumentTypeMasterService;
 import com.example.asset.service.ExcelParsingService;
+import com.example.common.jackson.JacksonObjectMappers;
 import com.example.common.util.ResponseWrapper;
 
 import java.util.List;
@@ -180,9 +181,7 @@ public class DocumentController {
             // If requestPart is null, try to parse from JSON string
             if (request == null && requestJson != null && !requestJson.trim().isEmpty()) {
                 try {
-                    com.fasterxml.jackson.databind.ObjectMapper objectMapper = 
-                        new com.fasterxml.jackson.databind.ObjectMapper();
-                    request = objectMapper.readValue(requestJson, BulkDocumentRequest.class);
+                    request = JacksonObjectMappers.standard().readValue(requestJson, BulkDocumentRequest.class);
                 } catch (Exception e) {
                     log.error("❌ Failed to parse request JSON: {}", e.getMessage());
                     return ResponseEntity.badRequest()

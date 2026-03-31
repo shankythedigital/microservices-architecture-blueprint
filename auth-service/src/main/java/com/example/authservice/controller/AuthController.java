@@ -9,6 +9,7 @@ import com.example.authservice.util.MobileValidationUtil;
 import com.example.authservice.util.SecurityUtil;
 import com.example.common.util.FileStorageUtil;
 
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.servlet.http.HttpServletRequest;
 
 import com.example.authservice.service.UserService;
@@ -125,6 +126,11 @@ public class AuthController {
     }
 
     @PostMapping("/login")
+    @Operation(
+            summary = "User login",
+            description = "Login is a public entry point and does not require an Authorization header. Credentials are provided in the request body (PASSWORD/OTP/MPIN/RSA/PASSKEY/AUTHCODE).",
+            security = {}
+    )
     public ResponseEntity<?> login(@RequestBody LoginRequest req) {
         try {
             switch (req.loginType) {

@@ -226,9 +226,9 @@ public class UserDetailMaster extends BaseEntity {
      * Uses EncryptDecryptUtil (AES-256-GCM deterministic) for lookup; PII storage uses JpaAttributeEncryptor.
      */
     public void computeLookupHashes() {
-        if (this.username != null) this.usernameHash = EncryptDecryptUtil.encrypt(this.username);
-        if (this.email != null) this.emailHash = EncryptDecryptUtil.encrypt(this.email);
-        if (this.mobile != null) this.mobileHash = EncryptDecryptUtil.encrypt(this.mobile);
+        if (this.username != null) this.usernameHash = EncryptDecryptUtil.hmac(this.username);
+        if (this.email != null) this.emailHash = EncryptDecryptUtil.hmac(this.email);
+        if (this.mobile != null) this.mobileHash = EncryptDecryptUtil.hmac(this.mobile);
     }
 
     // ----------------------

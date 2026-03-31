@@ -1,6 +1,7 @@
 package com.example.asset.service;
 
 import com.example.asset.dto.AssetScanCreateRequest;
+import com.example.common.jackson.JacksonObjectMappers;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
@@ -29,7 +30,7 @@ import java.util.regex.Pattern;
 public class AssetScanAiAgentService {
 
     private static final Logger log = LoggerFactory.getLogger(AssetScanAiAgentService.class);
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper = JacksonObjectMappers.standard();
 
     // Date patterns for parsing
     private static final List<DateTimeFormatter> DATE_FORMATTERS = Arrays.asList(
