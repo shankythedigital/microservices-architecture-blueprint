@@ -236,6 +236,7 @@ import com.example.asset.entity.*;
 import com.example.asset.service.DocumentTypeMasterService;
 import com.example.asset.repository.*;
 import com.example.asset.dto.*;
+import com.example.asset.util.JwtUtil;
 import com.example.common.service.SafeNotificationHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -320,11 +321,15 @@ public class AssetCrudService {
         if (document != null && !document.isEmpty())
             documentTypeMasterService.validate(docType);
 
+        enrichActorFromJwtIfMissing(request);
+
         String bearer = extractBearer(headers);
         AssetMaster asset = request.getAsset();
         String username = request.getUsername();
         Long userId = request.getUserId();
         String projectType = Optional.ofNullable(request.getProjectType()).orElse("ASSET_SERVICE");
+        // Defensive: avoid nulls even if upstream omitted/failed to enrich.
+        if (!StringUtils.hasText(username)) username = "system";
 
         // --- 🔍 VALIDATIONS ---
         if (!StringUtils.hasText(asset.getAssetNameUdv()))
@@ -352,12 +357,12 @@ public class AssetCrudService {
             log.info("✅ Document uploaded for asset ID={} with docType={}", saved.getAssetId(), docType);
         }
 
-        Map<String, Object> placeholders = Map.of(
-                "assetId", saved.getAssetId(),
-                "assetName", saved.getAssetNameUdv(),
-                "assignedTo", username,
-                "username", username,
-                "timestamp", Instant.now().toString());
+        Map<String, Object> placeholders = new HashMap<>();
+        placeholders.put("assetId", saved.getAssetId());
+        placeholders.put("assetName", saved.getAssetNameUdv());
+        placeholders.put("assignedTo", username);
+        placeholders.put("username", username);
+        placeholders.put("timestamp", Instant.now().toString());
 
         sendAssetNotification(bearer, userId, username, "INAPP", "ASSET_CREATED_INAPP", placeholders, projectType);
         sendAssetNotification(bearer, userId, username, "EMAIL", "ASSET_CREATED_EMAIL", placeholders, projectType);
@@ -860,6 +865,23 @@ public class AssetCrudService {
             throw new RuntimeException("❌ Missing Model: modelId is required");
         if (!modelRepo.existsById(asset.getModel().getModelId()))
             throw new RuntimeException("❌ Invalid Model ID: " + asset.getModel().getModelId());
+    }
+
+    /**
+     * When the client omits userId/username on create, use the authenticated JWT principal.
+     */
+    private void enrichActorFromJwtIfMissing(AssetRequest request) {
+        if (request.getUserId() == null) {
+            try {
+                String uidStr = JwtUtil.getUserIdOrThrow();
+                request.setUserId(Long.parseLong(uidStr.trim()));
+            } catch (NumberFormatException e) {
+                throw new IllegalArgumentException("❌ Invalid user id in security context", e);
+            }
+        }
+        if (!StringUtils.hasText(request.getUsername())) {
+            request.setUsername(JwtUtil.getUsernameOrThrow());
+        }
     }
 
     // ============================================================
