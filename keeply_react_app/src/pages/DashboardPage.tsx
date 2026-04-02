@@ -97,6 +97,8 @@ export function DashboardPage() {
               '— · '
             )}
             <Link to="/home/alerts">Open alerts</Link>
+            {' · '}
+            <Link to="/home/account">Account</Link>
           </p>
         </div>
         <Link to="/home/issues" className="btn secondary tight">

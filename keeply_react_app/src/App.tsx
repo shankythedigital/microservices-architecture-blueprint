@@ -5,6 +5,7 @@ import { MobileShell } from './components/MobileShell'
 import { AddAssetManualPage } from './pages/AddAssetManualPage'
 import { AddAssetMethodPage } from './pages/AddAssetMethodPage'
 import { AddAssetScanPage } from './pages/AddAssetScanPage'
+import { AccountPage } from './pages/AccountPage'
 import { AlertsPage } from './pages/AlertsPage'
 import { AssetDetailPage } from './pages/AssetDetailPage'
 import { AssetsPage } from './pages/AssetsPage'
@@ -13,6 +14,9 @@ import { IssuesPage } from './pages/IssuesPage'
 import { KnowledgePage } from './pages/KnowledgePage'
 import { LoginPage } from './pages/LoginPage'
 import { NewIssuePage } from './pages/NewIssuePage'
+import { NotificationsPage } from './pages/NotificationsPage'
+import { ProfilePage } from './pages/ProfilePage'
+import { SettingsPage } from './pages/SettingsPage'
 import { WelcomePage } from './pages/WelcomePage'
 
 function RequireAuth({ children }: { children: ReactElement }) {
@@ -49,6 +53,10 @@ function AppRoutes() {
         <Route path="assets/add/scan" element={<AddAssetScanPage />} />
         <Route path="assets/add/manual" element={<AddAssetManualPage />} />
         <Route path="alerts" element={<AlertsPage />} />
+        <Route path="account" element={<AccountPage />} />
+        <Route path="account/profile" element={<ProfilePage />} />
+        <Route path="account/settings" element={<SettingsPage />} />
+        <Route path="account/notifications" element={<NotificationsPage />} />
         <Route path="tips" element={<KnowledgePage />} />
         <Route path="issues" element={<IssuesPage />} />
         <Route path="issues/new" element={<NewIssuePage />} />

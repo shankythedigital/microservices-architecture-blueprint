@@ -22,3 +22,34 @@ export function userIdFromAccessToken(token: string | null | undefined): number 
   const n = Number(uid)
   return Number.isFinite(n) ? n : null
 }
+
+export type TokenDisplayInfo = {
+  userId: number | null
+  username: string | null
+  roles: string[]
+  sessionId: number | null
+}
+
+/** Best-effort display fields from the JWT (no verification). */
+export function tokenDisplayInfo(token: string | null | undefined): TokenDisplayInfo {
+  if (!token) return { userId: null, username: null, roles: [], sessionId: null }
+  const p = parseJwtPayload(token)
+  if (!p) return { userId: null, username: null, roles: [], sessionId: null }
+
+  const uid = p.uid ?? p.sub
+  const userId =
+    uid != null && Number.isFinite(Number(uid)) ? Number(uid) : null
+
+  const username = typeof p.username === 'string' ? p.username : null
+
+  const rawRoles = p.roles
+  const roles = Array.isArray(rawRoles)
+    ? rawRoles.filter((r): r is string => typeof r === 'string')
+    : []
+
+  const sid = p.sid
+  const sessionId =
+    sid != null && Number.isFinite(Number(sid)) ? Number(sid) : null
+
+  return { userId, username, roles, sessionId }
+}
