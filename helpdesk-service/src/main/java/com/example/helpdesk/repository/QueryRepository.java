@@ -13,6 +13,7 @@ public interface QueryRepository extends JpaRepository<Query, Long> {
     List<Query> findByStatus(QueryStatus status);
     List<Query> findByRelatedService(RelatedService relatedService);
     List<Query> findByAskedBy(String askedBy);
+    List<Query> findByLoginUserIdOrderByCreatedAtDesc(Long loginUserId);
     List<Query> findByStatusAndRelatedService(QueryStatus status, RelatedService relatedService);
 }
 

@@ -1,24 +1,22 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
-import { searchAssets } from '../api/assetsApi'
+import {
+  fetchAssetsAssignedToUser,
+  getNeedYourAttention,
+  searchAssets,
+  assetListThumbnailUrl,
+  type AssetRecord,
+} from '../api/assetsApi'
 import { notificationCount } from '../api/notificationsApi'
-import { listIssues } from '../api/issuesApi'
-import { ApiError, apiJson } from '../api/http'
-import { url } from '../config'
-import type { AssetRecord } from '../api/assetsApi'
-import type { ResponseWrapper } from '../api/types'
+import { listMyIssues } from '../api/issuesApi'
+import { ApiError } from '../api/http'
+import { ResponsiveImage } from '../components/ResponsiveImage'
 
 const ROOM_FILTERS = ['All', 'Kitchen', 'Living room', 'Laundry', 'Other']
 
-type CategoryDto = {
-  categoryId?: number
-  categoryName?: string
-  description?: string
-}
-
 export function DashboardPage() {
-  const { token } = useAuth()
+  const { token, userId } = useAuth()
   const [assets, setAssets] = useState<AssetRecord[]>([])
   const [alertCount, setAlertCount] = useState<number | null>(null)
   const [issueOpen, setIssueOpen] = useState<number | null>(null)
@@ -31,20 +29,49 @@ export function DashboardPage() {
     ;(async () => {
       try {
         setErr(null)
-        const [cats, page, nc, issues] = await Promise.all([
-          apiJson<ResponseWrapper<CategoryDto[]>>(url('asset', '/api/asset/v1/categories'), {
-            token,
-          }).catch((e) => console.warn(e)),
-          searchAssets(token, { page: 0, size: 50 }),
+        const [nc, issues] = await Promise.all([
           notificationCount(token).catch(() => null),
-          listIssues(token).catch(() => []),
+          listMyIssues(token).catch(() => []),
         ])
         if (cancelled) return
-        void cats
-        setAssets(page.data?.content ?? [])
+
+        let list: AssetRecord[] = []
+        const uid = userId != null && Number.isFinite(Number(userId)) ? Number(userId) : null
+        if (uid != null) {
+          try {
+            list = await fetchAssetsAssignedToUser(token, uid)
+          } catch (e) {
+            console.warn('fetchAssetsAssignedToUser', e)
+          }
+        }
+        if (list.length === 0) {
+          const nya = await getNeedYourAttention(token).catch((e) => {
+            console.warn('need-your-attention', e)
+            return null
+          })
+          if (cancelled) return
+          const fromNya = nya?.data?.assets
+          if (Array.isArray(fromNya) && fromNya.length > 0) {
+            list = fromNya as AssetRecord[]
+          }
+        }
+        if (list.length === 0 && uid == null) {
+          try {
+            const page = await searchAssets(token, { page: 0, size: 50 })
+            if (cancelled) return
+            list = page.data?.content ?? []
+          } catch (e) {
+            console.warn('searchAssets', e)
+          }
+        }
+        if (!cancelled) setAssets(list)
+
         if (nc != null) setAlertCount(nc)
+        const active = new Set(['OPEN', 'IN_PROGRESS', 'REOPENED'])
         setIssueOpen(
-          Array.isArray(issues) ? issues.filter((i) => i.status && i.status !== 'CLOSED').length : 0,
+          Array.isArray(issues)
+            ? issues.filter((i) => i.status && active.has(String(i.status))).length
+            : 0,
         )
       } catch (e) {
         if (!cancelled) setErr(e instanceof ApiError ? e.message : 'Could not load home')
@@ -53,7 +80,7 @@ export function DashboardPage() {
     return () => {
       cancelled = true
     }
-  }, [token])
+  }, [token, userId])
 
   const filtered = useMemo(() => {
     if (room === 'All') return assets
@@ -106,6 +133,11 @@ export function DashboardPage() {
         </Link>
       </section>
 
+      <Link to="/home/helpdesk" className="list-link helpdesk-dashboard-link">
+        <strong>Help &amp; support</strong>
+        <span className="muted small">FAQs, ask a question, and ticket options in one place.</span>
+      </Link>
+
       <h2 className="section-title">Rooms</h2>
       <div className="chip-row" role="tablist" aria-label="Room filter">
         {ROOM_FILTERS.map((label) => (
@@ -127,23 +159,39 @@ export function DashboardPage() {
         </Link>
       </div>
       <div className="asset-grid">
-        {filtered.length === 0 && <p className="muted">No assets in this filter yet.</p>}
+        {filtered.length === 0 && assets.length === 0 && (
+          <p className="muted">
+            No appliances are linked to your account yet. Use <strong>Add new assets</strong>—after linking, they
+            appear here.
+          </p>
+        )}
+        {filtered.length === 0 && assets.length > 0 && (
+          <p className="muted">No assets match this room filter.</p>
+        )}
         {filtered.map((a) => (
           <Link
             key={a.assetId ?? JSON.stringify(a)}
             to={a.assetId ? `/home/assets/${a.assetId}` : '/home/assets'}
             className="asset-card"
           >
-            <span className="asset-card__icon" aria-hidden>
-              <svg width="44" height="44" viewBox="0 0 48 48">
-                <g fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="10" y="14" width="28" height="20" rx="3" />
-                  <path d="M16 26h16" />
-                  <path d="M18 18h12" />
-                  <path d="M34 18h0" />
-                </g>
-              </svg>
-            </span>
+            {assetListThumbnailUrl(a) ? (
+              <ResponsiveImage
+                src={assetListThumbnailUrl(a)!}
+                alt={a.assetNameUdv || 'Asset'}
+                className="asset-card__thumb"
+              />
+            ) : (
+              <span className="asset-card__icon" aria-hidden>
+                <svg width="44" height="44" viewBox="0 0 48 48">
+                  <g fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="10" y="14" width="28" height="20" rx="3" />
+                    <path d="M16 26h16" />
+                    <path d="M18 18h12" />
+                    <path d="M34 18h0" />
+                  </g>
+                </svg>
+              </span>
+            )}
             <span className="asset-card__divider" aria-hidden />
             <span className="asset-card__name">{a.assetNameUdv || 'Unnamed appliance'}</span>
             <span className="muted small">

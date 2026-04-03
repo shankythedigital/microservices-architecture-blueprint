@@ -343,6 +343,26 @@ public class AssetCrudService {
         asset.setUpdatedBy(username);
         AssetMaster saved = assetRepo.save(asset);
 
+        // 🔗 Owner link: persist asset_user_link so "my assets" / dashboard queries see this row for the actor.
+        if (userId != null && StringUtils.hasText(username)) {
+            try {
+                String linkStatus = userLinkService.linkEntity(
+                        bearer,
+                        "ASSET",
+                        saved.getAssetId(),
+                        userId,
+                        username,
+                        userId,
+                        username);
+                log.info("🔗 Linked new asset id={} to userId={} ({})", saved.getAssetId(), userId, linkStatus);
+            } catch (Exception e) {
+                log.error("❌ Failed to link new asset {} to user {}: {}", saved.getAssetId(), userId, e.getMessage(), e);
+                throw new RuntimeException("❌ Asset saved but could not assign it to your account: " + e.getMessage(), e);
+            }
+        } else {
+            log.warn("⚠️ Asset id={} created without user link (missing userId or username after JWT enrichment)", saved.getAssetId());
+        }
+
         // 📎 Upload document and store in AssetDocument with docType (when provided)
         if (document != null && !document.isEmpty() && docType != null && !docType.isBlank()) {
             DocumentRequest docRequest = new DocumentRequest();
@@ -479,28 +499,12 @@ public class AssetCrudService {
     // ============================================================
     // 🔍 GET BY ID
     // ============================================================
+    @Transactional(readOnly = true)
     public Optional<AssetResponseDTO> get(Long id) {
         return assetRepo.findById(id)
                 .filter(a -> a.getActive() == null || a.getActive())
                 .map(a -> {
-                    AssetResponseDTO dto = new AssetResponseDTO();
-                    dto.setAssetId(a.getAssetId());
-                    dto.setAssetNameUdv(a.getAssetNameUdv());
-                    dto.setAssetStatus(a.getAssetStatus());
-
-                    // 🔹 Safely extract lazy fields
-                    if (a.getCategory() != null)
-                        dto.setCategoryName(a.getCategory().getCategoryName());
-
-                    if (a.getSubCategory() != null)
-                        dto.setSubCategoryName(a.getSubCategory().getSubCategoryName());
-
-                    if (a.getMake() != null)
-                        dto.setMakeName(a.getMake().getMakeName());
-
-                    if (a.getModel() != null)
-                        dto.setModelName(a.getModel().getModelName());
-
+                    AssetResponseDTO dto = toAssetResponseDTO(a);
                     log.info("🔍 Fetched asset: id={} name={}", a.getAssetId(), a.getAssetNameUdv());
                     return dto;
                 });
@@ -510,6 +514,7 @@ public class AssetCrudService {
     // ============================================================
     // 🔍 SEARCH — Now returns DTO instead of entities
     // ============================================================
+    @Transactional(readOnly = true)
     public Page<AssetResponseDTO> search(Optional<Long> assetId,
                                          Optional<String> assetName,
                                          Optional<Long> categoryId,
@@ -524,17 +529,7 @@ public class AssetCrudService {
                 .filter(a -> categoryId
                         .map(cid -> a.getCategory() != null && cid.equals(a.getCategory().getCategoryId()))
                         .orElse(true))
-                .map(a -> {
-                    AssetResponseDTO dto = new AssetResponseDTO();
-                    dto.setAssetId(a.getAssetId());
-                    dto.setAssetNameUdv(a.getAssetNameUdv());
-                    dto.setAssetStatus(a.getAssetStatus());
-                    dto.setCategoryName(a.getCategory() != null ? a.getCategory().getCategoryName() : null);
-                    dto.setSubCategoryName(a.getSubCategory() != null ? a.getSubCategory().getSubCategoryName() : null); // ✅ Added subcategory
-                    dto.setMakeName(a.getMake() != null ? a.getMake().getMakeName() : null);
-                    dto.setModelName(a.getModel() != null ? a.getModel().getModelName() : null);
-                    return dto;
-                })
+                .map(this::toAssetResponseDTO)
                 .collect(Collectors.toList());
 
         int start = (int) pageable.getOffset();
@@ -545,6 +540,7 @@ public class AssetCrudService {
     // ============================================================
     // 🔍 SEARCH BY KEYWORD — Searches across multiple fields
     // ============================================================
+    @Transactional(readOnly = true)
     public Page<AssetResponseDTO> searchByKeyword(String keyword, Pageable pageable) {
         String searchTerm = (keyword != null && !keyword.trim().isEmpty()) 
                 ? keyword.toLowerCase().trim() 
@@ -583,22 +579,87 @@ public class AssetCrudService {
                     }
                     return matches;
                 })
-                .map(a -> {
-                    AssetResponseDTO dto = new AssetResponseDTO();
-                    dto.setAssetId(a.getAssetId());
-                    dto.setAssetNameUdv(a.getAssetNameUdv());
-                    dto.setAssetStatus(a.getAssetStatus());
-                    dto.setCategoryName(a.getCategory() != null ? a.getCategory().getCategoryName() : null);
-                    dto.setSubCategoryName(a.getSubCategory() != null ? a.getSubCategory().getSubCategoryName() : null);
-                    dto.setMakeName(a.getMake() != null ? a.getMake().getMakeName() : null);
-                    dto.setModelName(a.getModel() != null ? a.getModel().getModelName() : null);
-                    return dto;
-                })
+                .map(this::toAssetResponseDTO)
                 .collect(Collectors.toList());
 
         int start = (int) pageable.getOffset();
         int end = Math.min(start + pageable.getPageSize(), filtered.size());
         return new PageImpl<>(filtered.subList(start, end), pageable, filtered.size());
+    }
+
+    /**
+     * Maps an {@link AssetMaster} to API summary including image URLs and linked document ids (lazy-safe within a transaction).
+     */
+    private AssetResponseDTO toAssetResponseDTO(AssetMaster a) {
+        AssetResponseDTO dto = new AssetResponseDTO();
+        dto.setAssetId(a.getAssetId());
+        dto.setAssetNameUdv(a.getAssetNameUdv());
+        dto.setAssetStatus(a.getAssetStatus());
+        dto.setImageUrl(a.getImageUrl());
+
+        if (a.getCategory() != null) {
+            dto.setCategoryName(a.getCategory().getCategoryName());
+            dto.setCategoryImageUrl(a.getCategory().getImageUrl());
+        }
+        if (a.getSubCategory() != null) {
+            dto.setSubCategoryName(a.getSubCategory().getSubCategoryName());
+            dto.setSubCategoryImageUrl(a.getSubCategory().getImageUrl());
+        }
+        if (a.getMake() != null) {
+            dto.setMakeName(a.getMake().getMakeName());
+            dto.setMakeImageUrl(a.getMake().getImageUrl());
+        }
+        if (a.getModel() != null) {
+            dto.setModelName(a.getModel().getModelName());
+            dto.setModelImageUrl(a.getModel().getImageUrl());
+        }
+
+        if (a.getPurchaseInfo() != null) {
+            a.getPurchaseInfo().stream()
+                    .filter(p -> p.getActive() == null || p.getActive())
+                    .findFirst()
+                    .ifPresent(p -> {
+                        if (p.getVendor() != null) {
+                            dto.setVendorName(p.getVendor().getVendorName());
+                            dto.setVendorImageUrl(p.getVendor().getImageUrl());
+                        }
+                        if (p.getOutlet() != null) {
+                            dto.setOutletName(p.getOutlet().getOutletName());
+                            dto.setOutletImageUrl(p.getOutlet().getImageUrl());
+                        }
+                    });
+        }
+
+        AssetWarranty w = a.getWarranty();
+        if (w != null && w.getDocument() != null) {
+            AssetDocument wd = w.getDocument();
+            dto.setWarrantyDocumentId(wd.getDocumentId());
+            dto.setWarrantyDocumentType(wd.getDocType());
+        }
+
+        AssetAmc amc = a.getAmc();
+        if (amc != null && amc.getDocument() != null) {
+            AssetDocument ad = amc.getDocument();
+            dto.setAmcDocumentId(ad.getDocumentId());
+            dto.setAmcDocumentType(ad.getDocType());
+        }
+
+        if (a.getComponents() != null && !a.getComponents().isEmpty()) {
+            List<AssetComponentSummaryDTO> compList = a.getComponents().stream()
+                    .filter(c -> c.getActive() == null || c.getActive())
+                    .sorted(Comparator.comparing(AssetComponent::getComponentId, Comparator.nullsLast(Long::compareTo)))
+                    .map(c -> {
+                        AssetComponentSummaryDTO s = new AssetComponentSummaryDTO();
+                        s.setComponentId(c.getComponentId());
+                        s.setComponentName(c.getComponentName());
+                        s.setImageUrl(c.getImageUrl());
+                        return s;
+                    })
+                    .collect(Collectors.toList());
+            dto.setComponents(compList);
+        }
+
+        return dto;
     }
 
     // ============================================================
@@ -792,25 +853,8 @@ public class AssetCrudService {
                 }
 
                 AssetMaster created = assetRepo.save(asset);
-                
-                // Convert entity to DTO to include all optional fields in JSON response
-                AssetResponseDTO result = new AssetResponseDTO();
-                result.setAssetId(created.getAssetId());
-                result.setAssetNameUdv(created.getAssetNameUdv());
-                result.setAssetStatus(created.getAssetStatus());
-                if (created.getCategory() != null) {
-                    result.setCategoryName(created.getCategory().getCategoryName());
-                }
-                if (created.getSubCategory() != null) {
-                    result.setSubCategoryName(created.getSubCategory().getSubCategoryName());
-                }
-                if (created.getMake() != null) {
-                    result.setMakeName(created.getMake().getMakeName());
-                }
-                if (created.getModel() != null) {
-                    result.setModelName(created.getModel().getModelName());
-                }
-                
+
+                AssetResponseDTO result = toAssetResponseDTO(created);
                 response.addSuccess(i, result);
                 log.debug("✅ Created asset name={}", assetNameUdv);
 

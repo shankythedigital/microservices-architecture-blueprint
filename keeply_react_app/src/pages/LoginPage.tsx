@@ -10,7 +10,9 @@ type Mode = 'otp' | 'password'
 export function LoginPage() {
   const { token, login, loginWithOtp, error, clearError } = useAuth()
   const location = useLocation()
-  const from = (location.state as { from?: string } | null)?.from || '/home'
+  const locState = location.state as { from?: string; registered?: boolean } | null
+  const from = locState?.from || '/home'
+  const justRegistered = Boolean(locState?.registered)
 
   const [mode, setMode] = useState<Mode>('otp')
   const [mobile, setMobile] = useState('')
@@ -74,6 +76,11 @@ export function LoginPage() {
       <div className="welcome__card login">
         <h1>Sign in</h1>
         <p className="muted small">Enter your mobile number to get a one-time passcode.</p>
+        {justRegistered && (
+          <p className="ok-banner" role="status">
+            Registration successful — sign in with OTP or password.
+          </p>
+        )}
 
         <div className="segmented">
           <button
@@ -197,6 +204,8 @@ export function LoginPage() {
         </div>
 
         <p className="muted small center">
+          <Link to="/register">Create an account</Link>
+          {' · '}
           <Link to="/welcome">← Back</Link>
         </p>
       </div>

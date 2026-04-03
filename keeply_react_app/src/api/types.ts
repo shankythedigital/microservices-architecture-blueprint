@@ -39,6 +39,26 @@ export interface IssueItem {
   priority?: string
   relatedService?: string
   createdAt?: string
+  updatedAt?: string
+  resolvedAt?: string
+  resolution?: string
+  reportedBy?: string
+  assignedTo?: string
+  assetId?: number
+  issueMasterId?: number
+  /** Auth DB user id (numeric); same as JWT subject. */
+  loginUserId?: number
+}
+
+export interface HelpdeskQueryItem {
+  id: number
+  question?: string
+  answer?: string
+  status?: string
+  relatedService?: string
+  createdAt?: string
+  answeredAt?: string
+  loginUserId?: number
 }
 
 /** Matches auth-service `UserProfileResponse` (decrypted for `GET /api/auth/profile/me`). */
@@ -50,4 +70,6 @@ export interface UserProfileResponse {
   firstName?: string
   lastName?: string
   employeeId?: string
+  /** Optional avatar URL when auth-service exposes it */
+  profilePhotoUrl?: string | null
 }

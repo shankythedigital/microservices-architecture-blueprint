@@ -18,6 +18,7 @@ public class MakeDto extends BaseEntity implements Serializable {
     // ============================================================
     private Long makeId;
     private String makeName;
+    private String imageUrl;
 
     // ============================================================
     // 🔗 Foreign Key Fields (Optional)
@@ -42,6 +43,14 @@ public class MakeDto extends BaseEntity implements Serializable {
 
     public void setMakeName(String makeName) {
         this.makeName = makeName;
+    }
+
+    public String getImageUrl() {
+        return imageUrl;
+    }
+
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
     }
 
     public Long getSubCategoryId() {

@@ -1,26 +1,54 @@
-import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useEffect, useMemo, useState } from 'react'
+import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
-import { listIssues } from '../api/issuesApi'
+import { listMyIssues } from '../api/issuesApi'
 import { ApiError } from '../api/http'
 import type { IssueItem } from '../api/types'
 
+function statusLabel(status: string | undefined): string {
+  if (!status) return '—'
+  return status.replace(/_/g, ' ')
+}
+
 export function IssuesPage() {
   const { token } = useAuth()
+  const location = useLocation()
   const [items, setItems] = useState<IssueItem[]>([])
   const [err, setErr] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false)
 
   useEffect(() => {
     if (!token) return
+    let cancelled = false
     ;(async () => {
+      setLoading(true)
       try {
-        setItems(await listIssues(token))
-        setErr(null)
+        const rows = await listMyIssues(token)
+        if (!cancelled) {
+          setItems(Array.isArray(rows) ? rows : [])
+          setErr(null)
+        }
       } catch (e) {
-        setErr(e instanceof ApiError ? e.message : 'Failed to load issues')
+        if (!cancelled) {
+          setItems([])
+          setErr(e instanceof ApiError ? e.message : 'Failed to load issues')
+        }
+      } finally {
+        if (!cancelled) setLoading(false)
       }
     })()
-  }, [token])
+    return () => {
+      cancelled = true
+    }
+  }, [token, location.pathname, location.key])
+
+  const sortedItems = useMemo(() => {
+    return [...items].sort((a, b) => {
+      const ta = a.createdAt ? Date.parse(a.createdAt) : 0
+      const tb = b.createdAt ? Date.parse(b.createdAt) : 0
+      return tb - ta
+    })
+  }, [items])
 
   return (
     <div className="page-pad">
@@ -28,7 +56,10 @@ export function IssuesPage() {
         ← Home
       </Link>
       <h1>Service issues</h1>
-      <p className="muted small">Raise a ticket for an appliance and track status updates.</p>
+      <p className="muted small">
+        Tickets you raised on this account, newest first, with current status.{' '}
+        <Link to="/home/helpdesk">Help &amp; support hub</Link>
+      </p>
 
       <div className="cta-card issue-cta">
         <Link to="/home/issues/new" className="cta-card__inner" aria-label="Raise new issue">
@@ -44,21 +75,31 @@ export function IssuesPage() {
         <h2 className="section-title" style={{ marginTop: 0 }}>
           Recent tickets
         </h2>
+        {loading && <p className="muted small">Loading your tickets…</p>}
         <ul className="plain-list">
-        {items.map((i) => (
+        {sortedItems.map((i) => (
           <li key={i.id} className="issue-row">
-            <div>
+            <Link to={`/home/issues/${i.id}`} className="issue-row__link">
               <strong>{i.title || `Issue #${i.id}`}</strong>
               <div className="muted small">
-                <span className="pill">{i.status}</span>
-                {i.priority ? <span className="pill pill--muted">{i.priority}</span> : null}
+                <span className="pill" title="Status">
+                  {statusLabel(i.status)}
+                </span>
+                {i.priority ? (
+                  <span className="pill pill--muted" title="Priority">
+                    {i.priority}
+                  </span>
+                ) : null}
               </div>
               {i.description && <p className="muted small" style={{ marginTop: '.35rem' }}>{i.description}</p>}
-            </div>
+              <span className="muted small issue-row__view">View details →</span>
+            </Link>
           </li>
         ))}
         </ul>
-        {items.length === 0 && !err && <p className="muted">No issues logged.</p>}
+        {!loading && sortedItems.length === 0 && !err && (
+          <p className="muted">No issues logged yet. Raise one to see it here.</p>
+        )}
       </div>
     </div>
   )

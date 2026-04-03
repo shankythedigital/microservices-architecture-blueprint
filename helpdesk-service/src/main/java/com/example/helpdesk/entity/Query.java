@@ -45,6 +45,10 @@ public class Query extends BaseEntity {
     @Column(name = "answered_at")
     private LocalDateTime answeredAt;
 
+    /** Auth DB user id (JWT subject); used to list the current user's queries. */
+    @Column(name = "login_user_id")
+    private Long loginUserId;
+
     @PreUpdate
     protected void onUpdate() {
         if (status == QueryStatus.ANSWERED && answeredAt == null) {
@@ -69,5 +73,7 @@ public class Query extends BaseEntity {
     public void setAnsweredBy(String answeredBy) { this.answeredBy = answeredBy; }
     public LocalDateTime getAnsweredAt() { return answeredAt; }
     public void setAnsweredAt(LocalDateTime answeredAt) { this.answeredAt = answeredAt; }
+    public Long getLoginUserId() { return loginUserId; }
+    public void setLoginUserId(Long loginUserId) { this.loginUserId = loginUserId; }
 }
 

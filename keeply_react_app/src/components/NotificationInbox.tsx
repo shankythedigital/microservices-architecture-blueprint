@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
-import { markNotificationRead, notificationList } from '../api/notificationsApi'
+import { markAllNotificationsRead, markNotificationRead, notificationList } from '../api/notificationsApi'
 import { ApiError } from '../api/http'
 import type { NotificationItem } from '../api/types'
 import { formatApiDateForDisplay } from '../utils/apiDate'
@@ -13,6 +13,7 @@ export function NotificationInbox() {
   const [items, setItems] = useState<NotificationItem[]>([])
   const [err, setErr] = useState<string | null>(null)
   const [tab, setTab] = useState<Tab>('all')
+  const [markAllBusy, setMarkAllBusy] = useState(false)
 
   async function refresh() {
     if (!token) return
@@ -40,6 +41,20 @@ export function NotificationInbox() {
     }
   }
 
+  async function onMarkAllRead() {
+    if (!token || !items.some((i) => !i.read)) return
+    setMarkAllBusy(true)
+    setErr(null)
+    try {
+      await markAllNotificationsRead(token)
+      await refresh()
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : 'Could not mark all as read')
+    } finally {
+      setMarkAllBusy(false)
+    }
+  }
+
   const filtered = useMemo(() => {
     if (tab === 'unread') return items.filter((i) => !i.read)
     if (tab === 'read') return items.filter((i) => i.read)
@@ -56,6 +71,19 @@ export function NotificationInbox() {
       </p>
 
       {err && <p className="error-banner">{err}</p>}
+
+      {unreadCount > 0 && (
+        <div className="notification-inbox-toolbar">
+          <button
+            type="button"
+            className="btn ghost tight"
+            disabled={markAllBusy}
+            onClick={() => void onMarkAllRead()}
+          >
+            {markAllBusy ? 'Updating…' : 'Mark all as read'}
+          </button>
+        </div>
+      )}
 
       <div className="segmented segmented--stretch" role="tablist" aria-label="Notification filter">
         <button

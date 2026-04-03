@@ -7,12 +7,14 @@ import {
   useState,
   type ReactNode,
 } from 'react'
-import { fetchMyProfile, loginOtp, loginPassword } from '../api/authApi'
+import { fetchMyProfile, loginOtp, loginPassword, logoutOnServer } from '../api/authApi'
+import type { AuthResponse } from '../api/types'
 import { ApiError } from '../api/http'
 import type { UserProfileResponse } from '../api/types'
 import { userIdFromAccessToken } from './jwtClaims'
 
 const STORAGE_KEY = 'keeply_access_token'
+const REFRESH_KEY = 'keeply_refresh_token'
 const USER_KEY = 'keeply_user_id'
 
 type AuthState = {
@@ -24,7 +26,7 @@ type AuthState = {
   refreshProfile: () => Promise<void>
   login: (username: string, password: string) => Promise<void>
   loginWithOtp: (mobile: string, otp: string) => Promise<void>
-  logout: () => void
+  logout: () => Promise<void>
   error: string | null
   clearError: () => void
 }
@@ -66,19 +68,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await loadProfile(token)
   }, [token, loadProfile])
 
-  const persistSession = useCallback((res: { accessToken: string; userId?: number | null }) => {
+  const persistSession = useCallback((res: AuthResponse) => {
     localStorage.setItem(STORAGE_KEY, res.accessToken)
+    if (res.refreshToken) {
+      localStorage.setItem(REFRESH_KEY, res.refreshToken)
+    } else {
+      localStorage.removeItem(REFRESH_KEY)
+    }
     if (res.userId != null) {
       localStorage.setItem(USER_KEY, String(res.userId))
       setUserId(res.userId)
     } else {
+      localStorage.removeItem(USER_KEY)
       setUserId(null)
     }
     setToken(res.accessToken)
   }, [])
 
-  const logout = useCallback(() => {
+  const logout = useCallback(async () => {
+    const at = localStorage.getItem(STORAGE_KEY)
+    const rt = localStorage.getItem(REFRESH_KEY)
+    await logoutOnServer(at, rt)
     localStorage.removeItem(STORAGE_KEY)
+    localStorage.removeItem(REFRESH_KEY)
     localStorage.removeItem(USER_KEY)
     setToken(null)
     setUserId(null)

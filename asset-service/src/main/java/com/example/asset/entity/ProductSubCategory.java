@@ -50,6 +50,9 @@ public class ProductSubCategory  extends BaseEntity  implements Serializable {
     @Column(name = "is_most_like")
     private Boolean isMostLike = false;
 
+    @Column(name = "image_url", length = 512)
+    private String imageUrl;
+
     // ============================================================
     // 🔗 Relationships
     // ============================================================
@@ -122,6 +125,14 @@ public class ProductSubCategory  extends BaseEntity  implements Serializable {
 
     public void setIsMostLike(Boolean isMostLike) {
         this.isMostLike = isMostLike;
+    }
+
+    public String getImageUrl() {
+        return imageUrl;
+    }
+
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
     }
 
     public Boolean getActive() {

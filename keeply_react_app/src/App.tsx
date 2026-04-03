@@ -10,10 +10,15 @@ import { AlertsPage } from './pages/AlertsPage'
 import { AssetDetailPage } from './pages/AssetDetailPage'
 import { AssetsPage } from './pages/AssetsPage'
 import { DashboardPage } from './pages/DashboardPage'
+import { HelpdeskPage } from './pages/HelpdeskPage'
 import { IssuesPage } from './pages/IssuesPage'
+import { IssueDetailPage } from './pages/IssueDetailPage'
 import { KnowledgePage } from './pages/KnowledgePage'
 import { LoginPage } from './pages/LoginPage'
+import { RegisterPage } from './pages/RegisterPage'
 import { NewIssuePage } from './pages/NewIssuePage'
+import { NewQueryPage } from './pages/NewQueryPage'
+import { QueriesPage } from './pages/QueriesPage'
 import { NotificationsPage } from './pages/NotificationsPage'
 import { ProfilePage } from './pages/ProfilePage'
 import { SettingsPage } from './pages/SettingsPage'
@@ -38,6 +43,7 @@ function AppRoutes() {
       <Route path="/" element={<HomeGate />} />
       <Route path="/welcome" element={<WelcomePage />} />
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/register" element={<RegisterPage />} />
       <Route
         path="/home"
         element={
@@ -58,8 +64,12 @@ function AppRoutes() {
         <Route path="account/settings" element={<SettingsPage />} />
         <Route path="account/notifications" element={<NotificationsPage />} />
         <Route path="tips" element={<KnowledgePage />} />
+        <Route path="helpdesk" element={<HelpdeskPage />} />
+        <Route path="helpdesk/queries" element={<QueriesPage />} />
+        <Route path="helpdesk/queries/new" element={<NewQueryPage />} />
         <Route path="issues" element={<IssuesPage />} />
         <Route path="issues/new" element={<NewIssuePage />} />
+        <Route path="issues/:id" element={<IssueDetailPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

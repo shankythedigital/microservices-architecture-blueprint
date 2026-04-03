@@ -1,4 +1,7 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import { useAuth } from '../auth/AuthContext'
+import { logoutAllDevicesOnServer } from '../api/authApi'
 import { useKeeplyPreferences } from '../hooks/useKeeplyPreferences'
 
 function ToggleRow({
@@ -41,6 +44,8 @@ function ToggleRow({
 
 export function SettingsPage() {
   const prefs = useKeeplyPreferences()
+  const { token, logout } = useAuth()
+  const [signOutAllBusy, setSignOutAllBusy] = useState(false)
 
   return (
     <div className="page-pad">
@@ -100,6 +105,35 @@ export function SettingsPage() {
           Theme and language follow your browser for now. Data &amp; privacy policies belong in your product wiki when
           you publish Keeply broadly.
         </p>
+      </section>
+
+      <section className="settings-section sheet" aria-labelledby="settings-security-heading">
+        <h2 id="settings-security-heading" className="settings-section__title">
+          Security
+        </h2>
+        <p className="muted small">
+          Revokes every active sign-in for your account (other phones and browsers too), then returns you to the welcome
+          screen on this device.
+        </p>
+        <button
+          type="button"
+          className="btn secondary"
+          disabled={!token || signOutAllBusy}
+          onClick={() => {
+            if (!token) return
+            setSignOutAllBusy(true)
+            void (async () => {
+              try {
+                await logoutAllDevicesOnServer(token)
+              } finally {
+                setSignOutAllBusy(false)
+                await logout()
+              }
+            })()
+          }}
+        >
+          {signOutAllBusy ? 'Signing out…' : 'Sign out on all devices'}
+        </button>
       </section>
     </div>
   )

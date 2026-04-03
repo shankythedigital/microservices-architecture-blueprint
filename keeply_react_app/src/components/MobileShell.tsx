@@ -85,7 +85,7 @@ export function MobileShell() {
       <header className="app-header">
         <div className="app-header__brand">
           <span className="app-header__dot" aria-hidden />
-          <span>Keeply</span>
+          <span className="app-header__wordmark">Keeply</span>
         </div>
         <div className="app-header__meta">
           <Link

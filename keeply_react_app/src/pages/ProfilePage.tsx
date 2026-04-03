@@ -1,5 +1,7 @@
 import { Link } from 'react-router-dom'
 import { PiiReveal } from '../components/PiiReveal'
+import { MediaEntityCard } from '../components/MediaEntityCard'
+import { ResponsiveImage } from '../components/ResponsiveImage'
 import { useAuth } from '../auth/AuthContext'
 import { tokenDisplayInfo } from '../auth/jwtClaims'
 import { inferPiiVariant } from '../utils/maskPii'
@@ -17,6 +19,31 @@ export function ProfilePage() {
         ← Account
       </Link>
       <h1>Profile</h1>
+      <div className="media-entity-card-grid profile-card-hero">
+        <MediaEntityCard
+          className="media-entity-card--profile"
+          badge="Profile"
+          title={showUsername || 'Your account'}
+          subtitle={profile?.email ?? undefined}
+          media={
+            profile?.profilePhotoUrl ? (
+              <ResponsiveImage
+                src={profile.profilePhotoUrl}
+                alt={showUsername ? `Profile photo for ${showUsername}` : 'Profile photo'}
+                className="media-entity-card__img"
+                priority
+              />
+            ) : (
+              <div className="media-entity-card__placeholder" aria-hidden>
+                <svg viewBox="0 0 48 48" width="44" height="44" fill="none" stroke="currentColor" strokeWidth="2">
+                  <circle cx="24" cy="18" r="10" />
+                  <path d="M12 40c2-8 8-12 12-12s10 4 12 12" />
+                </svg>
+              </div>
+            )
+          }
+        />
+      </div>
       <p className="muted small">
         Personal fields are masked by default. Use the eye icon to reveal each value on this device.
       </p>

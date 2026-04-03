@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -23,14 +24,16 @@ public class QueryService {
 
     @Transactional
     public QueryResponse createQuery(QueryRequest request) {
-        String username = JwtUtil.getUsernameOrThrow();
+        String reporterUserId = JwtUtil.getUserIdOrThrow();
+        Optional<Long> loginUserId = JwtUtil.getLoginUserId();
 
         Query query = new Query();
         query.setQuestion(request.getQuestion());
         query.setRelatedService(request.getRelatedService());
         query.setStatus(QueryStatus.PENDING);
-        query.setAskedBy(username);
-        query.setCreatedBy(username);
+        query.setAskedBy(reporterUserId);
+        query.setCreatedBy(reporterUserId);
+        loginUserId.ifPresent(query::setLoginUserId);
 
         Query saved = queryRepository.save(query);
         return mapToResponse(saved);
@@ -60,9 +63,14 @@ public class QueryService {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Lists queries for the current user. Uses {@code login_user_id} because {@code asked_by_enc} is AES-GCM
+     * (random IV) and cannot be matched with {@code findByAskedBy} in SQL.
+     */
     public List<QueryResponse> getMyQueries() {
-        String username = JwtUtil.getUsernameOrThrow();
-        return queryRepository.findByAskedBy(username).stream()
+        Long uid = JwtUtil.getLoginUserId()
+                .orElseThrow(() -> new RuntimeException("Authenticated user id missing or not numeric in token"));
+        return queryRepository.findByLoginUserIdOrderByCreatedAtDesc(uid).stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }
@@ -105,6 +113,7 @@ public class QueryService {
         response.setCreatedAt(query.getCreatedAt());
         response.setUpdatedAt(query.getUpdatedAt());
         response.setAnsweredAt(query.getAnsweredAt());
+        response.setLoginUserId(query.getLoginUserId());
         return response;
     }
 }

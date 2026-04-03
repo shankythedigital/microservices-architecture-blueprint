@@ -40,6 +40,7 @@ public class IssueResponse {
     private Long issueMasterId;
     private Long categoryId;
     private Long subCategoryId;
+    private Long loginUserId;
 
     // Getters and Setters
     public Long getId() { return id; }
@@ -118,5 +119,7 @@ public class IssueResponse {
     public void setCategoryId(Long categoryId) { this.categoryId = categoryId; }
     public Long getSubCategoryId() { return subCategoryId; }
     public void setSubCategoryId(Long subCategoryId) { this.subCategoryId = subCategoryId; }
+    public Long getLoginUserId() { return loginUserId; }
+    public void setLoginUserId(Long loginUserId) { this.loginUserId = loginUserId; }
 }
 

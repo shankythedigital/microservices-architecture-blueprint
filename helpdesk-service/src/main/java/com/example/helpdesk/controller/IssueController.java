@@ -39,11 +39,12 @@ public class IssueController {
         return ResponseEntity.ok(issues);
     }
 
-    @GetMapping("/{id}")
-    @Operation(summary = "Get issue by ID", description = "Retrieve a specific issue by its ID")
-    public ResponseEntity<IssueResponse> getIssueById(@PathVariable Long id) {
-        IssueResponse issue = issueService.getIssueById(id);
-        return ResponseEntity.ok(issue);
+    /** Static paths must be declared before `/{id}` so they are not captured as numeric IDs. */
+    @GetMapping("/my-issues")
+    @Operation(summary = "Get my issues", description = "Retrieve issues reported by the current user")
+    public ResponseEntity<List<IssueResponse>> getMyIssues() {
+        List<IssueResponse> issues = issueService.getMyIssues();
+        return ResponseEntity.ok(issues);
     }
 
     @GetMapping("/status/{status}")
@@ -60,11 +61,11 @@ public class IssueController {
         return ResponseEntity.ok(issues);
     }
 
-    @GetMapping("/my-issues")
-    @Operation(summary = "Get my issues", description = "Retrieve issues reported by the current user")
-    public ResponseEntity<List<IssueResponse>> getMyIssues() {
-        List<IssueResponse> issues = issueService.getMyIssues();
-        return ResponseEntity.ok(issues);
+    @GetMapping("/{id}")
+    @Operation(summary = "Get issue by ID", description = "Retrieve a specific issue by its ID")
+    public ResponseEntity<IssueResponse> getIssueById(@PathVariable Long id) {
+        IssueResponse issue = issueService.getIssueById(id);
+        return ResponseEntity.ok(issue);
     }
 
     @PatchMapping("/{id}/status")

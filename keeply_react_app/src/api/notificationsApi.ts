@@ -37,3 +37,19 @@ export async function markNotificationRead(token: string, id: number): Promise<v
     throw new Error(msg)
   }
 }
+
+/** PUT /api/notifications/read-all — Postman: Notification Service → read-all (current user). */
+export async function markAllNotificationsRead(token: string): Promise<void> {
+  const r = await apiFetch(url('notification', '/api/notifications/read-all'), {
+    method: 'PUT',
+    token,
+  })
+  if (!r.ok) {
+    const j = await parseJson<{ message?: string } | { error?: string }>(r)
+    const msg =
+      (j as { error?: string } | undefined)?.error ||
+      (j as { message?: string } | undefined)?.message ||
+      r.statusText
+    throw new Error(msg)
+  }
+}

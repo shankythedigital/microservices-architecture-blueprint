@@ -4,7 +4,8 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { searchAssets } from '../api/assetsApi'
 import { ApiError } from '../api/http'
-import type { AssetRecord } from '../api/assetsApi'
+import { assetListThumbnailUrl, type AssetRecord } from '../api/assetsApi'
+import { ResponsiveImage } from '../components/ResponsiveImage'
 
 export function AssetsPage() {
   const { token } = useAuth()
@@ -99,16 +100,24 @@ export function AssetsPage() {
             to={a.assetId ? `/home/assets/${a.assetId}` : '#'}
             className="asset-card"
           >
-            <span className="asset-card__icon" aria-hidden>
-              <svg width="46" height="46" viewBox="0 0 48 48">
-                <g fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="10" y="14" width="28" height="20" rx="3" />
-                  <path d="M16 26h16" />
-                  <path d="M18 18h12" />
-                  <path d="M34 18h0" />
-                </g>
-              </svg>
-            </span>
+            {assetListThumbnailUrl(a) ? (
+              <ResponsiveImage
+                src={assetListThumbnailUrl(a)!}
+                alt={titleOf(a)}
+                className="asset-card__thumb"
+              />
+            ) : (
+              <span className="asset-card__icon" aria-hidden>
+                <svg width="46" height="46" viewBox="0 0 48 48">
+                  <g fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="10" y="14" width="28" height="20" rx="3" />
+                    <path d="M16 26h16" />
+                    <path d="M18 18h12" />
+                    <path d="M34 18h0" />
+                  </g>
+                </svg>
+              </span>
+            )}
             <span className="asset-card__divider" aria-hidden />
             <span className="asset-card__name">{titleOf(a)}</span>
             <span className="muted small">

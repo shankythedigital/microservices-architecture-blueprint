@@ -18,6 +18,9 @@ export function WelcomePage() {
         <Link to="/login" className="btn primary block">
           Get started
         </Link>
+        <Link to="/register" className="btn secondary block" style={{ marginTop: '0.65rem' }}>
+          Create an account
+        </Link>
         <p className="muted small legal">
           By continuing you’ll verify your mobile (OTP). Password login is available for admin/dev accounts.
         </p>

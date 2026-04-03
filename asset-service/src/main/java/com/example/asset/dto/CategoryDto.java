@@ -22,6 +22,8 @@ public class CategoryDto extends BaseEntity implements Serializable {
     private Boolean isFavourite;
     private Boolean isMostLike;
 
+    private String imageUrl;
+
     // ============================================================
     // 🧾 Getters and Setters
     // ============================================================
@@ -71,6 +73,14 @@ public class CategoryDto extends BaseEntity implements Serializable {
 
     public void setIsMostLike(Boolean isMostLike) {
         this.isMostLike = isMostLike;
+    }
+
+    public String getImageUrl() {
+        return imageUrl;
+    }
+
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
     }
 
     // ============================================================

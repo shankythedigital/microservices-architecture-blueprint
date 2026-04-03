@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -36,7 +37,8 @@ public class IssueService {
 
     @Transactional
     public IssueResponse createIssue(IssueRequest request) {
-        String username = JwtUtil.getUsernameOrThrow();
+        // JWT subject (principal) from JwtAuthFilter — same value used to filter /my-issues
+        String reporterUserId = JwtUtil.getUserIdOrThrow();
 
         String title;
         String description;
@@ -81,8 +83,9 @@ public class IssueService {
         issue.setIssueMasterId(issueMasterId);
         issue.setCategoryId(categoryId);
         issue.setSubCategoryId(subCategoryId);
-        issue.setReportedBy(username);
-        issue.setCreatedBy(username);
+        issue.setReportedBy(reporterUserId);
+        issue.setCreatedBy(reporterUserId);
+        JwtUtil.getLoginUserId().ifPresent(issue::setLoginUserId);
 
         // Assign initial support level based on escalation matrix
         SupportLevel initialLevel = escalationMatrixService.getInitialSupportLevel(
@@ -123,8 +126,12 @@ public class IssueService {
     }
 
     public List<IssueResponse> getMyIssues() {
-        String username = JwtUtil.getUsernameOrThrow();
-        return issueRepository.findByReportedBy(username).stream()
+        String reporterUserId = JwtUtil.getUserIdOrThrow();
+        Optional<Long> loginUserId = JwtUtil.getLoginUserId();
+        List<Issue> issues = loginUserId
+                .map(uid -> issueRepository.findMineByLoginUserIdOrLegacyReportedBy(uid, reporterUserId))
+                .orElseGet(() -> issueRepository.findByReportedByOrderByCreatedAtDesc(reporterUserId));
+        return issues.stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }
@@ -214,6 +221,7 @@ public class IssueService {
         response.setIssueMasterId(issue.getIssueMasterId());
         response.setCategoryId(issue.getCategoryId());
         response.setSubCategoryId(issue.getSubCategoryId());
+        response.setLoginUserId(issue.getLoginUserId());
 
         // Include SLA tracking if available
         if (issue.getSlaTracking() != null) {

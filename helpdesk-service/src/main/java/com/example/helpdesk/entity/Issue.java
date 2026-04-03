@@ -94,6 +94,10 @@ public class Issue extends BaseEntity {
     @Column(name = "sub_category_id")
     private Long subCategoryId;
 
+    /** Auth DB numeric user id (same as JWT subject / claim uid). */
+    @Column(name = "login_user_id")
+    private Long loginUserId;
+
     @OneToMany(mappedBy = "issue", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<IssueEscalation> escalations = new ArrayList<>();
 
@@ -152,6 +156,8 @@ public class Issue extends BaseEntity {
     public void setCategoryId(Long categoryId) { this.categoryId = categoryId; }
     public Long getSubCategoryId() { return subCategoryId; }
     public void setSubCategoryId(Long subCategoryId) { this.subCategoryId = subCategoryId; }
+    public Long getLoginUserId() { return loginUserId; }
+    public void setLoginUserId(Long loginUserId) { this.loginUserId = loginUserId; }
     public List<IssueEscalation> getEscalations() { return escalations; }
     public void setEscalations(List<IssueEscalation> escalations) { this.escalations = escalations; }
     public SLATracking getSlaTracking() { return slaTracking; }

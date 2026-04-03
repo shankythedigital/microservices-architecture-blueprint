@@ -12,6 +12,7 @@ public class ProductSubCategoryMapper {
         ProductSubCategoryDto dto = new ProductSubCategoryDto();
         dto.setSubCategoryId(entity.getSubCategoryId());
         dto.setSubCategoryName(entity.getSubCategoryName());
+        dto.setImageUrl(entity.getImageUrl());
         dto.setDescription(entity.getDescription());
         dto.setSequenceOrder(entity.getSequenceOrder());
         dto.setIsFavourite(entity.getIsFavourite());

@@ -31,6 +31,8 @@ public class ModelMapper {
             dto.setMakeName(entity.getMake().getMakeName());
         }
 
+        dto.setImageUrl(entity.getImageUrl());
+
         return dto;
     }
 }

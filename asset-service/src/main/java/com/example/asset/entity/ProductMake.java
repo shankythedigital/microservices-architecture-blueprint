@@ -25,6 +25,9 @@ public class ProductMake extends BaseEntity {
     @Column(name = "is_most_like")
     private Boolean isMostLike = false;
 
+    @Column(name = "image_url", length = 512)
+    private String imageUrl;
+
     public ProductMake(){}
     public ProductMake(String makeName, ProductSubCategory subCategory){
         this.makeName = makeName; this.subCategory = subCategory;
@@ -42,4 +45,6 @@ public class ProductMake extends BaseEntity {
     public void setIsFavourite(Boolean isFavourite){ this.isFavourite = isFavourite; }
     public Boolean getIsMostLike(){ return isMostLike; }
     public void setIsMostLike(Boolean isMostLike){ this.isMostLike = isMostLike; }
+    public String getImageUrl(){ return imageUrl; }
+    public void setImageUrl(String imageUrl){ this.imageUrl = imageUrl; }
 }

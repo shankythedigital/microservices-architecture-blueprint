@@ -23,6 +23,7 @@ public class QueryResponse {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private LocalDateTime answeredAt;
+    private Long loginUserId;
 
     // Getters and Setters
     public Long getId() { return id; }
@@ -71,5 +72,7 @@ public class QueryResponse {
     public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
     public LocalDateTime getAnsweredAt() { return answeredAt; }
     public void setAnsweredAt(LocalDateTime answeredAt) { this.answeredAt = answeredAt; }
+    public Long getLoginUserId() { return loginUserId; }
+    public void setLoginUserId(Long loginUserId) { this.loginUserId = loginUserId; }
 }
 

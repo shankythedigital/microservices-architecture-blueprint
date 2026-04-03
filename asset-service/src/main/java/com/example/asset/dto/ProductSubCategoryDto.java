@@ -29,6 +29,8 @@ public class ProductSubCategoryDto  extends BaseEntity {
     private Long categoryId;
     private String categoryName;
 
+    private String imageUrl;
+
     // ============================================================
     // 🧾 Getters and Setters
     // ============================================================
@@ -70,6 +72,14 @@ public class ProductSubCategoryDto  extends BaseEntity {
 
     public void setCategoryName(String categoryName) {
         this.categoryName = categoryName;
+    }
+
+    public String getImageUrl() {
+        return imageUrl;
+    }
+
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
     }
 
     public Integer getSequenceOrder() {

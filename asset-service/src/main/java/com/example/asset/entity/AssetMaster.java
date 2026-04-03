@@ -114,6 +114,9 @@ public class AssetMaster extends BaseEntity {
     @Column(name = "is_most_like")
     private Boolean isMostLike = false;
 
+    @Column(name = "image_url", length = 512)
+    private String imageUrl;
+
     // ------------------------
     // Getters / Setters
     // ------------------------
@@ -180,6 +183,9 @@ public class AssetMaster extends BaseEntity {
     public void setIsFavourite(Boolean isFavourite) { this.isFavourite = isFavourite; }
     public Boolean getIsMostLike() { return isMostLike; }
     public void setIsMostLike(Boolean isMostLike) { this.isMostLike = isMostLike; }
+
+    public String getImageUrl() { return imageUrl; }
+    public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
 }
 
 

@@ -6,6 +6,7 @@ export interface CategoryDto {
   categoryId?: number
   categoryName?: string
   description?: string
+  imageUrl?: string | null
 }
 
 export function listCategories(token: string): Promise<ResponseWrapper<CategoryDto[]>> {

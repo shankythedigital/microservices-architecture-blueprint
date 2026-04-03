@@ -855,21 +855,26 @@ public class UserLinkService {
                         assetMap.put("assetId", asset.getAssetId());
                         assetMap.put("assetNameUdv", asset.getAssetNameUdv());
                         assetMap.put("assetStatus", asset.getAssetStatus());
+                        assetMap.put("imageUrl", asset.getImageUrl());
                         if (asset.getCategory() != null) {
                             assetMap.put("categoryId", asset.getCategory().getCategoryId());
                             assetMap.put("categoryName", asset.getCategory().getCategoryName());
+                            assetMap.put("categoryImageUrl", asset.getCategory().getImageUrl());
                         }
                         if (asset.getSubCategory() != null) {
                             assetMap.put("subCategoryId", asset.getSubCategory().getSubCategoryId());
                             assetMap.put("subCategoryName", asset.getSubCategory().getSubCategoryName());
+                            assetMap.put("subCategoryImageUrl", asset.getSubCategory().getImageUrl());
                         }
                         if (asset.getMake() != null) {
                             assetMap.put("makeId", asset.getMake().getMakeId());
                             assetMap.put("makeName", asset.getMake().getMakeName());
+                            assetMap.put("makeImageUrl", asset.getMake().getImageUrl());
                         }
                         if (asset.getModel() != null) {
                             assetMap.put("modelId", asset.getModel().getModelId());
                             assetMap.put("modelName", asset.getModel().getModelName());
+                            assetMap.put("modelImageUrl", asset.getModel().getImageUrl());
                         }
                         assetMap.put("active", asset.getActive());
                         assetMap.put("createdBy", asset.getCreatedBy());
@@ -1020,6 +1025,7 @@ public class UserLinkService {
                         Map<String, Object> makeMap = new LinkedHashMap<>();
                         makeMap.put("makeId", make.getMakeId());
                         makeMap.put("makeName", make.getMakeName());
+                        makeMap.put("imageUrl", make.getImageUrl());
                         if (make.getSubCategory() != null) {
                             makeMap.put("subCategoryId", make.getSubCategory().getSubCategoryId());
                             makeMap.put("subCategoryName", make.getSubCategory().getSubCategoryName());
@@ -1049,6 +1055,7 @@ public class UserLinkService {
                         Map<String, Object> modelMap = new LinkedHashMap<>();
                         modelMap.put("modelId", model.getModelId());
                         modelMap.put("modelName", model.getModelName());
+                        modelMap.put("imageUrl", model.getImageUrl());
                         if (model.getMake() != null) {
                             modelMap.put("makeId", model.getMake().getMakeId());
                             modelMap.put("makeName", model.getMake().getMakeName());
@@ -1078,6 +1085,7 @@ public class UserLinkService {
                         Map<String, Object> catMap = new LinkedHashMap<>();
                         catMap.put("categoryId", category.getCategoryId());
                         catMap.put("categoryName", category.getCategoryName());
+                        catMap.put("imageUrl", category.getImageUrl());
                         catMap.put("description", category.getDescription());
                         catMap.put("active", category.getActive());
                         catMap.put("createdBy", category.getCreatedBy());
@@ -1104,6 +1112,7 @@ public class UserLinkService {
                         Map<String, Object> subCatMap = new LinkedHashMap<>();
                         subCatMap.put("subCategoryId", subCategory.getSubCategoryId());
                         subCatMap.put("subCategoryName", subCategory.getSubCategoryName());
+                        subCatMap.put("imageUrl", subCategory.getImageUrl());
                         if (subCategory.getCategory() != null) {
                             subCatMap.put("categoryId", subCategory.getCategory().getCategoryId());
                             subCatMap.put("categoryName", subCategory.getCategory().getCategoryName());

@@ -39,11 +39,12 @@ public class QueryController {
         return ResponseEntity.ok(queries);
     }
 
-    @GetMapping("/{id}")
-    @Operation(summary = "Get query by ID", description = "Retrieve a specific query by its ID")
-    public ResponseEntity<QueryResponse> getQueryById(@PathVariable Long id) {
-        QueryResponse query = queryService.getQueryById(id);
-        return ResponseEntity.ok(query);
+    /** Static paths must be declared before {@code /{id}} so {@code my-queries} is not parsed as an id. */
+    @GetMapping("/my-queries")
+    @Operation(summary = "Get my queries", description = "Retrieve queries asked by the current user")
+    public ResponseEntity<List<QueryResponse>> getMyQueries() {
+        List<QueryResponse> queries = queryService.getMyQueries();
+        return ResponseEntity.ok(queries);
     }
 
     @GetMapping("/status/{status}")
@@ -60,11 +61,11 @@ public class QueryController {
         return ResponseEntity.ok(queries);
     }
 
-    @GetMapping("/my-queries")
-    @Operation(summary = "Get my queries", description = "Retrieve queries asked by the current user")
-    public ResponseEntity<List<QueryResponse>> getMyQueries() {
-        List<QueryResponse> queries = queryService.getMyQueries();
-        return ResponseEntity.ok(queries);
+    @GetMapping("/{id}")
+    @Operation(summary = "Get query by ID", description = "Retrieve a specific query by its ID")
+    public ResponseEntity<QueryResponse> getQueryById(@PathVariable Long id) {
+        QueryResponse query = queryService.getQueryById(id);
+        return ResponseEntity.ok(query);
     }
 
     @PostMapping("/{id}/answer")

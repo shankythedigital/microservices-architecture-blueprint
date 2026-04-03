@@ -20,6 +20,8 @@ public class ModelDto extends BaseEntity {
     private Long makeId;
     private String makeName;
 
+    private String imageUrl;
+
     
     // ----- Getters & Setters -----
     public Long getModelId() {
@@ -92,6 +94,14 @@ public class ModelDto extends BaseEntity {
 
     public void setMakeName(String makeName) {
         this.makeName = makeName;
+    }
+
+    public String getImageUrl() {
+        return imageUrl;
+    }
+
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
     }
 }
 

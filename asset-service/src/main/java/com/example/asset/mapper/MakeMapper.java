@@ -31,6 +31,7 @@ public final class MakeMapper {
         MakeDto dto = new MakeDto();
         dto.setMakeId(entity.getMakeId());
         dto.setMakeName(entity.getMakeName());
+        dto.setImageUrl(entity.getImageUrl());
         dto.setActive(entity.getActive());
         dto.setCreatedBy(entity.getCreatedBy());
         dto.setUpdatedBy(entity.getUpdatedBy());
@@ -61,6 +62,7 @@ public final class MakeMapper {
         ProductMake entity = new ProductMake();
         entity.setMakeId(dto.getMakeId());
         entity.setMakeName(trim(dto.getMakeName()));
+        entity.setImageUrl(dto.getImageUrl());
         entity.setActive(dto.getActive());
         entity.setCreatedBy(dto.getCreatedBy());
         entity.setUpdatedBy(dto.getUpdatedBy());

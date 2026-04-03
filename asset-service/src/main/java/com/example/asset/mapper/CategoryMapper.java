@@ -35,6 +35,7 @@ public final class CategoryMapper {
         dto.setSequenceOrder(entity.getSequenceOrder());
         dto.setIsFavourite(entity.getIsFavourite());
         dto.setIsMostLike(entity.getIsMostLike());
+        dto.setImageUrl(entity.getImageUrl());
         dto.setActive(entity.getActive());
         dto.setCreatedBy(entity.getCreatedBy());
         dto.setUpdatedBy(entity.getUpdatedBy());
@@ -62,6 +63,7 @@ public final class CategoryMapper {
         entity.setSequenceOrder(dto.getSequenceOrder());
         entity.setIsFavourite(dto.getIsFavourite());
         entity.setIsMostLike(dto.getIsMostLike());
+        entity.setImageUrl(dto.getImageUrl());
         entity.setActive(dto.getActive());
         entity.setCreatedBy(dto.getCreatedBy());
         entity.setUpdatedBy(dto.getUpdatedBy());
@@ -93,6 +95,8 @@ public final class CategoryMapper {
             entity.setIsFavourite(dto.getIsFavourite());
         if (dto.getIsMostLike() != null)
             entity.setIsMostLike(dto.getIsMostLike());
+        if (dto.getImageUrl() != null)
+            entity.setImageUrl(dto.getImageUrl());
         if (dto.getActive() != null)
             entity.setActive(dto.getActive());
         if (dto.getUpdatedBy() != null)

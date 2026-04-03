@@ -91,13 +91,22 @@ export function AccountPage() {
           <span className="account-menu__label">Alerts inbox</span>
           <span className="account-menu__chevron" aria-hidden />
         </Link>
-        <Link to="/home/issues" className="account-menu__row">
+        <Link to="/home/helpdesk" className="account-menu__row">
           <span className="account-menu__icon" aria-hidden>
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M4 12h16M4 12l4-4m-4 4 4 4" />
             </svg>
           </span>
-          <span className="account-menu__label">Service issues</span>
+          <span className="account-menu__label">Help &amp; support</span>
+          <span className="account-menu__chevron" aria-hidden />
+        </Link>
+        <Link to="/home/issues" className="account-menu__row">
+          <span className="account-menu__icon" aria-hidden>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M4 6h16M4 12h10M4 18h16" />
+            </svg>
+          </span>
+          <span className="account-menu__label">My service tickets</span>
           <span className="account-menu__chevron" aria-hidden />
         </Link>
         <Link to="/home/tips" className="account-menu__row">
@@ -118,7 +127,7 @@ export function AccountPage() {
         </p>
       </section>
 
-      <button type="button" className="btn secondary account-signout" onClick={logout}>
+      <button type="button" className="btn secondary account-signout" onClick={() => void logout()}>
         Sign out
       </button>
     </div>

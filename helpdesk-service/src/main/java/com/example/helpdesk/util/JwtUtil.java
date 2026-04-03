@@ -5,12 +5,46 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 public final class JwtUtil {
     private JwtUtil() {}
+
+    /**
+     * Numeric auth user id from JWT (subject or {@code uid} claim), when present.
+     * Aligns with auth-service {@code User.userId}.
+     */
+    public static Optional<Long> getLoginUserId() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null) {
+            return Optional.empty();
+        }
+        if (auth instanceof JwtAuthenticationToken jwt) {
+            Object uid = jwt.getToken().getClaim("uid");
+            if (uid instanceof Number n) {
+                return Optional.of(n.longValue());
+            }
+            if (uid != null) {
+                return parseLong(uid.toString());
+            }
+            return parseLong(jwt.getToken().getSubject());
+        }
+        return getUserId().flatMap(JwtUtil::parseLong);
+    }
+
+    private static Optional<Long> parseLong(String raw) {
+        if (raw == null || raw.isBlank()) {
+            return Optional.empty();
+        }
+        try {
+            return Optional.of(Long.parseLong(raw.trim()));
+        } catch (NumberFormatException e) {
+            return Optional.empty();
+        }
+    }
 
     public static Optional<String> getUserId() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
