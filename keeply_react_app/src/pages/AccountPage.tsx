@@ -1,14 +1,18 @@
 import { Link } from 'react-router-dom'
+import { PiiReveal } from '../components/PiiReveal'
 import { useAuth } from '../auth/AuthContext'
 import { tokenDisplayInfo } from '../auth/jwtClaims'
-import { accountInitial } from '../utils/accountDisplay'
+import { accountInitialFromProfile, displayNameFromProfile } from '../utils/accountDisplay'
+import { inferPiiVariant } from '../utils/maskPii'
 
 export function AccountPage() {
-  const { token, userId, logout } = useAuth()
+  const { token, userId, profile, profileLoading, logout } = useAuth()
   const info = tokenDisplayInfo(token)
 
-  const label = info.username || (userId != null ? `Member #${userId}` : 'Your account')
-  const initial = accountInitial(info.username, userId ?? info.userId)
+  const displayId = profile?.userId ?? userId ?? info.userId
+  const primaryDisplay =
+    displayNameFromProfile(profile) || info.username || null
+  const initial = accountInitialFromProfile(profile, info.username, userId ?? info.userId)
 
   return (
     <div className="page-pad account-page">
@@ -20,10 +24,27 @@ export function AccountPage() {
           {initial}
         </div>
         <div className="account-hero__meta">
-          <p className="account-hero__title">{label}</p>
-          {userId != null && (
+          <p className="account-hero__title account-hero__title--pii">
+            {primaryDisplay ? (
+              <PiiReveal value={primaryDisplay} variant={inferPiiVariant(primaryDisplay)} />
+            ) : displayId != null ? (
+              `Member #${displayId}`
+            ) : (
+              'Your account'
+            )}
+          </p>
+          {profileLoading && !profile && (
+            <p className="muted small">Loading your account details…</p>
+          )}
+          {displayId != null && (
             <p className="muted small">
-              User ID <strong>#{userId}</strong>
+              User ID <strong>#{displayId}</strong>
+            </p>
+          )}
+          {profile?.username && (
+            <p className="muted small profile-inline-pii">
+              <span>Username </span>
+              <PiiReveal value={profile.username} variant={inferPiiVariant(profile.username)} />
             </p>
           )}
         </div>

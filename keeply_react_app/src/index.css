@@ -895,6 +895,23 @@ form.sheet {
   margin: 0 0 0.2rem;
 }
 
+.account-hero__title--pii .pii-reveal__value {
+  font-weight: 700;
+  font-size: 1.05rem;
+}
+
+.profile-inline-pii {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.profile-inline-pii .pii-reveal__value {
+  font-weight: 600;
+  color: var(--ink);
+}
+
 .account-hero__meta .small {
   margin: 0;
 }
@@ -1041,6 +1058,62 @@ form.sheet {
 .profile-username code {
   font-size: 0.82rem;
   word-break: break-all;
+}
+
+.pii-reveal {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.pii-reveal__value {
+  word-break: break-word;
+  min-width: 0;
+}
+
+.pii-reveal .pii-reveal__toggle {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  margin: -0.25rem 0;
+  padding: 0;
+  border: none;
+  border-radius: 10px;
+  background: rgba(13, 148, 136, 0.1);
+  color: #0f766e;
+  cursor: pointer;
+  transition: background 140ms ease, color 140ms ease, transform 140ms ease;
+}
+
+.pii-reveal .pii-reveal__toggle:hover {
+  background: rgba(13, 148, 136, 0.18);
+  color: var(--accent-ink);
+}
+
+.pii-reveal .pii-reveal__toggle:active {
+  transform: scale(0.96);
+}
+
+.pii-reveal .pii-reveal__toggle:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 2px var(--surface),
+    0 0 0 5px rgba(13, 148, 136, 0.45);
+}
+
+.pii-reveal .pii-reveal__toggle.is-revealed {
+  background: rgba(13, 148, 136, 0.24);
+  color: var(--accent-ink);
+  box-shadow: inset 0 0 0 2px rgba(13, 148, 136, 0.4);
+}
+
+.pii-reveal .pii-reveal__toggle.is-revealed:hover {
+  background: rgba(13, 148, 136, 0.32);
 }
 
 .faq-list {

@@ -2,12 +2,14 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
   type ReactNode,
 } from 'react'
-import { loginOtp, loginPassword } from '../api/authApi'
+import { fetchMyProfile, loginOtp, loginPassword } from '../api/authApi'
 import { ApiError } from '../api/http'
+import type { UserProfileResponse } from '../api/types'
 import { userIdFromAccessToken } from './jwtClaims'
 
 const STORAGE_KEY = 'keeply_access_token'
@@ -16,6 +18,10 @@ const USER_KEY = 'keeply_user_id'
 type AuthState = {
   token: string | null
   userId: number | null
+  /** Decrypted profile from `GET /api/auth/profile/me`; null if not loaded or unavailable */
+  profile: UserProfileResponse | null
+  profileLoading: boolean
+  refreshProfile: () => Promise<void>
   login: (username: string, password: string) => Promise<void>
   loginWithOtp: (mobile: string, otp: string) => Promise<void>
   logout: () => void
@@ -31,7 +37,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const r = localStorage.getItem(USER_KEY)
     return r ? Number(r) : null
   })
+  const [profile, setProfile] = useState<UserProfileResponse | null>(null)
+  const [profileLoading, setProfileLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  const loadProfile = useCallback(async (accessToken: string | null) => {
+    if (!accessToken) {
+      setProfile(null)
+      setProfileLoading(false)
+      return
+    }
+    setProfileLoading(true)
+    try {
+      const p = await fetchMyProfile(accessToken)
+      setProfile(p)
+    } catch {
+      setProfile(null)
+    } finally {
+      setProfileLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    loadProfile(token)
+  }, [token, loadProfile])
+
+  const refreshProfile = useCallback(async () => {
+    await loadProfile(token)
+  }, [token, loadProfile])
 
   const persistSession = useCallback((res: { accessToken: string; userId?: number | null }) => {
     localStorage.setItem(STORAGE_KEY, res.accessToken)
@@ -49,6 +82,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem(USER_KEY)
     setToken(null)
     setUserId(null)
+    setProfile(null)
   }, [])
 
   const login = useCallback(
@@ -91,13 +125,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       token,
       /** From login payload, or parsed from access token when missing */
       userId: effectiveUserId,
+      profile,
+      profileLoading,
+      refreshProfile,
       login,
       loginWithOtp,
       logout,
       error,
       clearError: () => setError(null),
     }),
-    [token, effectiveUserId, login, loginWithOtp, logout, error],
+    [
+      token,
+      effectiveUserId,
+      profile,
+      profileLoading,
+      refreshProfile,
+      login,
+      loginWithOtp,
+      logout,
+      error,
+    ],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

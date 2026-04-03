@@ -1,6 +1,11 @@
 import { url } from '../config'
 import { ApiError, apiFetch, apiJson, parseJson } from './http'
-import type { AuthResponse } from './types'
+import type { AuthResponse, UserProfileResponse } from './types'
+
+/** Current user profile with decrypted PII (auth-service `getUserProfileExtended` for self). */
+export async function fetchMyProfile(token: string): Promise<UserProfileResponse> {
+  return apiJson<UserProfileResponse>(url('auth', '/api/auth/profile/me'), { token })
+}
 
 export async function loginPassword(username: string, password: string): Promise<AuthResponse> {
   return apiJson<AuthResponse>(url('auth', '/api/auth/login'), {

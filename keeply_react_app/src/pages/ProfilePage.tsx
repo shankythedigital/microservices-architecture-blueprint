@@ -1,10 +1,15 @@
 import { Link } from 'react-router-dom'
+import { PiiReveal } from '../components/PiiReveal'
 import { useAuth } from '../auth/AuthContext'
 import { tokenDisplayInfo } from '../auth/jwtClaims'
+import { inferPiiVariant } from '../utils/maskPii'
 
 export function ProfilePage() {
-  const { token, userId } = useAuth()
+  const { token, userId, profile, profileLoading, refreshProfile } = useAuth()
   const info = tokenDisplayInfo(token)
+
+  const showId = profile?.userId ?? userId
+  const showUsername = profile?.username ?? info.username
 
   return (
     <div className="page-pad">
@@ -13,23 +18,73 @@ export function ProfilePage() {
       </Link>
       <h1>Profile</h1>
       <p className="muted small">
-        Details come from your sign-in session. Update contact information in Settings when your organization exposes
-        that API.
+        Personal fields are masked by default. Use the eye icon to reveal each value on this device.
       </p>
+
+      {profileLoading && !profile && <p className="muted small">Loading profile…</p>}
+
+      {!profileLoading && !profile && token && (
+        <p className="error-banner">
+          Could not load decrypted profile. Check that auth-service is running and you are signed in.
+          <button type="button" className="btn secondary tight" style={{ marginLeft: 8 }} onClick={refreshProfile}>
+            Retry
+          </button>
+        </p>
+      )}
 
       <div className="detail-card">
         <h2 className="section-title" style={{ marginTop: 0 }}>
-          Session
+          Account
         </h2>
         <dl className="dl-grid">
           <dt>User ID</dt>
-          <dd>{userId != null ? String(userId) : '—'}</dd>
-          <dt>Account identifier</dt>
+          <dd>{showId != null ? String(showId) : '—'}</dd>
+          <dt>Username</dt>
+          <dd className="profile-username">
+            {showUsername ? (
+              <PiiReveal value={showUsername} variant={inferPiiVariant(showUsername)} />
+            ) : (
+              <span className="muted">—</span>
+            )}
+          </dd>
+          {profile?.email && (
+            <>
+              <dt>Email</dt>
+              <dd>
+                <PiiReveal value={profile.email} variant="email" />
+              </dd>
+            </>
+          )}
+          {profile?.mobile && (
+            <>
+              <dt>Mobile</dt>
+              <dd>
+                <PiiReveal value={profile.mobile} variant="mobile" />
+              </dd>
+            </>
+          )}
+          {profile?.employeeId && (
+            <>
+              <dt>Employee ID</dt>
+              <dd>
+                <PiiReveal value={profile.employeeId} variant="text" />
+              </dd>
+            </>
+          )}
+        </dl>
+      </div>
+
+      <div className="detail-card">
+        <h2 className="section-title" style={{ marginTop: 0 }}>
+          Session (JWT)
+        </h2>
+        <dl className="dl-grid">
+          <dt>Token username claim</dt>
           <dd className="profile-username">
             {info.username ? (
-              <code>{info.username}</code>
+              <PiiReveal value={info.username} variant={inferPiiVariant(info.username)} asCode />
             ) : (
-              <span className="muted">Not present in token</span>
+              <span className="muted">—</span>
             )}
           </dd>
           <dt>Session ID</dt>
@@ -51,11 +106,6 @@ export function ProfilePage() {
           </ul>
         </div>
       )}
-
-      <p className="muted small">
-        The identifier value may be a hashed or internal username from the auth service — it is still useful for
-        support when you report an issue.
-      </p>
     </div>
   )
 }

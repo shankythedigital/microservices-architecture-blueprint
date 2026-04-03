@@ -3,7 +3,7 @@ import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { notificationCount } from '../api/notificationsApi'
 import { tokenDisplayInfo } from '../auth/jwtClaims'
-import { accountInitial } from '../utils/accountDisplay'
+import { accountInitialFromProfile } from '../utils/accountDisplay'
 
 const HOME = '/home'
 
@@ -51,11 +51,11 @@ function Icon({ name, active }: { name: 'home' | 'grid' | 'globe' | 'bell'; acti
 }
 
 export function MobileShell() {
-  const { token, userId } = useAuth()
+  const { token, userId, profile } = useAuth()
   const { pathname } = useLocation()
   const [inboxCount, setInboxCount] = useState<number | null>(null)
   const info = tokenDisplayInfo(token)
-  const avatarLetter = accountInitial(info.username, userId ?? info.userId)
+  const avatarLetter = accountInitialFromProfile(profile, info.username, userId ?? info.userId)
 
   useEffect(() => {
     if (!token) return

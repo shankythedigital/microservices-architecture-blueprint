@@ -40,3 +40,14 @@ export interface IssueItem {
   relatedService?: string
   createdAt?: string
 }
+
+/** Matches auth-service `UserProfileResponse` (decrypted for `GET /api/auth/profile/me`). */
+export interface UserProfileResponse {
+  userId?: number
+  username?: string
+  email?: string
+  mobile?: string
+  firstName?: string
+  lastName?: string
+  employeeId?: string
+}
