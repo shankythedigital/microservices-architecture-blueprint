@@ -35,6 +35,9 @@ export type AssetRecord = {
   /** User-uploaded appliance photo (use documents download API). */
   assetPhotoDocumentId?: number | null
   assetPhotoDocumentType?: string | null
+  /** Earliest linked user (registered owner); used for who may change the appliance photo. */
+  ownerUserId?: number | null
+  createdByUsername?: string | null
   components?: AssetComponentSummary[]
   [k: string]: unknown
 }
@@ -230,6 +233,9 @@ export function mapWireAssetMasterToRecord(raw: Record<string, unknown>): AssetR
     assetPhotoDocumentId: raw.assetPhotoDocumentId != null ? num(raw.assetPhotoDocumentId) : undefined,
     assetPhotoDocumentType:
       typeof raw.assetPhotoDocumentType === 'string' ? raw.assetPhotoDocumentType : undefined,
+    ownerUserId: raw.ownerUserId != null ? num(raw.ownerUserId) : undefined,
+    createdByUsername:
+      typeof raw.createdByUsername === 'string' ? raw.createdByUsername : undefined,
   }
 }
 

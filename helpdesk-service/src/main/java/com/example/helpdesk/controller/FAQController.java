@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -29,7 +30,8 @@ public class FAQController {
     }
 
     @PostMapping
-    @Operation(summary = "Create a new FAQ", description = "Add a new frequently asked question")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Create a new FAQ", description = "Add a new frequently asked question (admin only)")
     public ResponseEntity<FAQResponse> createFAQ(@Valid @RequestBody FAQRequest request) {
         FAQResponse response = faqService.createFAQ(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -81,7 +83,8 @@ public class FAQController {
     }
 
     @PutMapping("/{id}")
-    @Operation(summary = "Update FAQ", description = "Update an existing FAQ")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Update FAQ", description = "Update an existing FAQ (admin only)")
     public ResponseEntity<FAQResponse> updateFAQ(
             @PathVariable Long id,
             @Valid @RequestBody FAQRequest request) {
@@ -151,7 +154,8 @@ public class FAQController {
      * PUT /api/helpdesk/faqs/{id}/sequence-order
      */
     @PutMapping("/{id}/sequence-order")
-    @Operation(summary = "Update FAQ sequence order", description = "Update the sequence order for an FAQ")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Update FAQ sequence order", description = "Update the sequence order for an FAQ (admin only)")
     public ResponseEntity<ResponseWrapper<FAQResponse>> updateSequenceOrder(
             @RequestHeader HttpHeaders headers,
             @PathVariable Long id,
@@ -169,7 +173,8 @@ public class FAQController {
     }
 
     @DeleteMapping("/{id}")
-    @Operation(summary = "Delete FAQ", description = "Delete an FAQ")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Delete FAQ", description = "Delete an FAQ (admin only)")
     public ResponseEntity<ResponseWrapper<Void>> deleteFAQ(@PathVariable Long id) {
         try {
             faqService.deleteFAQ(id);

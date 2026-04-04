@@ -7,10 +7,12 @@ import com.example.asset.entity.AssetComponent;
 import com.example.asset.entity.AssetUserLink;
 import com.example.asset.service.AssetCrudService;
 import com.example.asset.service.UserAssetLinkAgentService;
+import com.example.asset.util.JwtUtil;
 import com.example.common.util.ResponseWrapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -128,6 +130,10 @@ public class UserAssetLinkAgentController {
             @RequestHeader HttpHeaders headers,
             @PathVariable Long userId) {
         try {
+            if (!JwtUtil.canAccessUserScopedData(userId)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(new ResponseWrapper<>(false, "Access denied: you can only view your own assignments", null));
+            }
             List<AssetMaster> assets = linkService.getAssetsAssignedToUser(userId);
             List<AssetResponseDTO> dtos = assetCrudService.toAssetResponseDtoList(assets);
             return ResponseEntity.ok(new ResponseWrapper<>(
@@ -144,6 +150,10 @@ public class UserAssetLinkAgentController {
             @RequestHeader HttpHeaders headers,
             @PathVariable Long userId) {
         try {
+            if (!JwtUtil.canAccessUserScopedData(userId)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(new ResponseWrapper<>(false, "Access denied: you can only view your own assignments", null));
+            }
             List<AssetComponent> components = linkService.getComponentsAssignedToUser(userId);
             return ResponseEntity.ok(new ResponseWrapper<>(
                     true, "Components retrieved successfully", components));
@@ -174,6 +184,10 @@ public class UserAssetLinkAgentController {
             @RequestHeader HttpHeaders headers,
             @PathVariable Long userId) {
         try {
+            if (!JwtUtil.canAccessUserScopedData(userId)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(new ResponseWrapper<>(false, "Access denied: you can only view your own assignment history", null));
+            }
             List<AssetUserLink> history = linkService.getUserAssignmentHistory(userId);
             return ResponseEntity.ok(new ResponseWrapper<>(
                     true, "User assignment history retrieved", history));
@@ -193,6 +207,10 @@ public class UserAssetLinkAgentController {
             @PathVariable Long assetId,
             @PathVariable Long userId) {
         try {
+            if (!JwtUtil.canAccessUserScopedData(userId)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(new ResponseWrapper<>(false, "Access denied: you can only verify links for your own user id", null));
+            }
             boolean linked = linkService.isAssetLinkedToUser(assetId, userId);
             return ResponseEntity.ok(new ResponseWrapper<>(
                     true, "Link check completed", linked));

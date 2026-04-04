@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -24,7 +25,8 @@ public class ServiceKnowledgeController {
     }
 
     @PostMapping
-    @Operation(summary = "Create knowledge entry", description = "Add new knowledge about a service")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Create knowledge entry", description = "Add new knowledge about a service (admin only)")
     public ResponseEntity<ServiceKnowledgeResponse> createKnowledge(@Valid @RequestBody ServiceKnowledgeRequest request) {
         ServiceKnowledgeResponse response = knowledgeService.createKnowledge(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -62,7 +64,8 @@ public class ServiceKnowledgeController {
     }
 
     @PutMapping("/{id}")
-    @Operation(summary = "Update knowledge", description = "Update an existing knowledge entry")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Update knowledge", description = "Update an existing knowledge entry (admin only)")
     public ResponseEntity<ServiceKnowledgeResponse> updateKnowledge(
             @PathVariable Long id,
             @Valid @RequestBody ServiceKnowledgeRequest request) {
@@ -71,7 +74,8 @@ public class ServiceKnowledgeController {
     }
 
     @DeleteMapping("/{id}")
-    @Operation(summary = "Delete knowledge", description = "Delete a knowledge entry")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Delete knowledge", description = "Delete a knowledge entry (admin only)")
     public ResponseEntity<Void> deleteKnowledge(@PathVariable Long id) {
         knowledgeService.deleteKnowledge(id);
         return ResponseEntity.noContent().build();

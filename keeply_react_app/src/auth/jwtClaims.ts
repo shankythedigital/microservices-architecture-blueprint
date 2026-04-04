@@ -53,3 +53,12 @@ export function tokenDisplayInfo(token: string | null | undefined): TokenDisplay
 
   return { userId, username, roles, sessionId }
 }
+
+/** True if the access token includes an admin role (matches helpdesk FAQ/knowledge admin checks). */
+export function hasAdminRole(token: string | null | undefined): boolean {
+  const { roles } = tokenDisplayInfo(token)
+  return roles.some((r) => {
+    const x = r.toUpperCase()
+    return x === 'ROLE_ADMIN' || x === 'ADMIN'
+  })
+}

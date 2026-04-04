@@ -28,6 +28,9 @@ public interface AssetUserLinkRepository extends JpaRepository<AssetUserLink, Lo
 
     Optional<AssetUserLink> findFirstByAssetId(Long assetId);
 
+    /** Earliest active assignment — used as the registered “owner” for permissions (e.g. appliance photo). */
+    Optional<AssetUserLink> findFirstByAssetIdAndActiveTrueOrderByLinkIdAsc(Long assetId);
+
     Optional<AssetUserLink> findFirstByComponentId(Long componentId);
 
     boolean existsByAssetIdAndUserIdAndActiveTrue(Long assetId, Long userId);

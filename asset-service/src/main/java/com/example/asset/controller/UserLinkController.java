@@ -8,6 +8,7 @@ import com.example.asset.dto.AssetUserMultiLinkRequest;
 import com.example.asset.dto.AssetUserMultiDelinkRequest;
 import com.example.asset.service.UserLinkService;
 import com.example.asset.service.ValidationService;
+import com.example.asset.util.JwtUtil;
 import com.example.common.security.JwtVerifier;
 import com.example.common.util.ResponseWrapper;
 import io.jsonwebtoken.Claims;
@@ -15,6 +16,7 @@ import io.jsonwebtoken.Claims;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import io.swagger.v3.oas.annotations.Operation;
@@ -232,7 +234,7 @@ public ResponseEntity<ResponseWrapper<Map<String, Object>>> delinkMultipleEntiti
             
             // Extract login user info from token for audit
             Long loginUserId = null;
-            String loginUsername = null;
+            String loginUsername = JwtUtil.getUsername().orElse(null);
             try {
                 String tokenValue = token.startsWith("Bearer ") ? token.substring(7) : token;
                 Claims claims = jwtVerifier.parseToken(tokenValue).getBody();
@@ -244,21 +246,40 @@ public ResponseEntity<ResponseWrapper<Map<String, Object>>> delinkMultipleEntiti
                         log.warn("⚠️ Could not parse userId from token: {}", userIdStr);
                     }
                 }
-                Object usernameObj = claims.get("username");
-                if (usernameObj == null) {
-                    usernameObj = claims.get("preferred_username");
-                }
-                if (usernameObj != null) {
-                    loginUsername = usernameObj.toString();
+                if (loginUsername == null || loginUsername.isBlank()) {
+                    Object usernameObj = claims.get("username");
+                    if (usernameObj == null) {
+                        usernameObj = claims.get("preferred_username");
+                    }
+                    if (usernameObj != null) {
+                        loginUsername = usernameObj.toString();
+                    }
                 }
             } catch (Exception e) {
                 log.warn("⚠️ Could not extract user info from token: {}", e.getMessage());
             }
 
-            Map<String, Object> result = linkService.getAllMasterDataInDetailByUserId(userId, loginUserId, loginUsername);
+            boolean serviceOrAdmin = JwtUtil.isAdmin()
+                    || JwtUtil.getRoles().stream().anyMatch(r -> r != null && r.equalsIgnoreCase("ROLE_SERVICE"));
+            Long effectiveUserId = userId;
+            if (!serviceOrAdmin) {
+                if (loginUserId == null) {
+                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                            .body(new ResponseWrapper<>(false, "Unable to identify logged-in user", null));
+                }
+                if (userId != null && !userId.equals(loginUserId)) {
+                    return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                            .body(new ResponseWrapper<>(false, "Access denied: you can only request master data for your own user id", null));
+                }
+                if (userId == null) {
+                    effectiveUserId = loginUserId;
+                }
+            }
 
-            String message = userId != null ? 
-                    "Master data retrieved successfully for user ID: " + userId : 
+            Map<String, Object> result = linkService.getAllMasterDataInDetailByUserId(effectiveUserId, loginUserId, loginUsername);
+
+            String message = effectiveUserId != null ?
+                    "Master data retrieved successfully for user ID: " + effectiveUserId :
                     "All master data retrieved successfully";
             
             return ResponseEntity.ok(

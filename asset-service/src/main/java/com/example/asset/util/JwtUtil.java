@@ -92,6 +92,22 @@ public final class JwtUtil {
                                  role.equalsIgnoreCase("ADMIN"));
     }
 
+    /**
+     * Whether the caller may access resources tied to {@code targetUserId}:
+     * admins, internal {@code ROLE_SERVICE} tokens, or the same user as in the JWT (e.g. {@code ROLE_USER}).
+     */
+    public static boolean canAccessUserScopedData(long targetUserId) {
+        if (isAdmin()) {
+            return true;
+        }
+        if (getRoles().stream().anyMatch(r -> r != null && r.equalsIgnoreCase("ROLE_SERVICE"))) {
+            return true;
+        }
+        return getUserId()
+                .filter(self -> self.equals(String.valueOf(targetUserId)))
+                .isPresent();
+    }
+
     public static String getUserIdOrThrow() {
         return getUserId().orElseThrow(() -> new RuntimeException("No authenticated user"));
     }

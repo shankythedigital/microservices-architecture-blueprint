@@ -6,8 +6,10 @@ import com.example.asset.dto.BulkUploadResponse;
 import com.example.asset.dto.DocumentRequest;
 import com.example.asset.entity.AssetDocument;
 import com.example.asset.entity.AssetMaster;
+import com.example.asset.entity.AssetUserLink;
 import com.example.asset.repository.AssetDocumentRepository;
 import com.example.asset.repository.AssetMasterRepository;
+import com.example.asset.repository.AssetUserLinkRepository;
 import com.example.asset.repository.ProductCategoryRepository;
 import com.example.asset.repository.ProductSubCategoryRepository;
 import com.example.asset.repository.ProductMakeRepository;
@@ -18,6 +20,7 @@ import com.example.asset.repository.VendorRepository;
 import com.example.asset.repository.AssetWarrantyRepository;
 import com.example.asset.repository.AssetAmcRepository;
 import com.example.asset.service.DocumentTypeMasterService;
+import com.example.asset.util.JwtUtil;
 import com.example.common.util.FileStorageUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,6 +43,7 @@ public class DocumentService {
 
     private final AssetDocumentRepository repo;
     private final AssetMasterRepository assetRepo;
+    private final AssetUserLinkRepository assetUserLinkRepo;
     private final FileStorageUtil fileStorageUtil;
     private final DocumentTypeMasterService documentTypeMasterService;
 
@@ -56,6 +60,7 @@ public class DocumentService {
 
     public DocumentService(AssetDocumentRepository repo,
                            AssetMasterRepository assetRepo,
+                           AssetUserLinkRepository assetUserLinkRepo,
                            FileStorageUtil fileStorageUtil,
                            DocumentTypeMasterService documentTypeMasterService,
                            ProductCategoryRepository categoryRepo,
@@ -69,6 +74,7 @@ public class DocumentService {
                            AssetAmcRepository amcRepo) {
         this.repo = repo;
         this.assetRepo = assetRepo;
+        this.assetUserLinkRepo = assetUserLinkRepo;
         this.fileStorageUtil = fileStorageUtil;
         this.documentTypeMasterService = documentTypeMasterService;
         this.categoryRepo = categoryRepo;
@@ -82,6 +88,33 @@ public class DocumentService {
         this.amcRepo = amcRepo;
     }
 
+    private void assertCallerMayUploadAssetPhoto(Long assetId) {
+        if (JwtUtil.isAdmin()) {
+            return;
+        }
+        if (JwtUtil.getRoles().stream().anyMatch(r -> r != null && r.equalsIgnoreCase("ROLE_SERVICE"))) {
+            return;
+        }
+        String jwtSubject = JwtUtil.getUserId().orElseThrow(() ->
+                new IllegalArgumentException("❌ Authentication required to upload an appliance photo"));
+        AssetMaster asset = assetRepo.findById(assetId)
+                .orElseThrow(() -> new IllegalArgumentException("❌ Asset not found for ID: " + assetId));
+        Optional<AssetUserLink> ownerOpt =
+                assetUserLinkRepo.findFirstByAssetIdAndActiveTrueOrderByLinkIdAsc(assetId);
+        if (ownerOpt.isPresent()) {
+            if (!jwtSubject.equals(String.valueOf(ownerOpt.get().getUserId()))) {
+                throw new IllegalArgumentException("❌ Only the asset owner can add or replace the appliance photo.");
+            }
+            return;
+        }
+        String createdBy = asset.getCreatedBy();
+        String jwtUsername = JwtUtil.getUsername().orElse("");
+        if (createdBy != null && jwtUsername != null && createdBy.trim().equalsIgnoreCase(jwtUsername.trim())) {
+            return;
+        }
+        throw new IllegalArgumentException("❌ Only the asset owner can add or replace the appliance photo.");
+    }
+
     // ============================================================
     // 🟢 UPLOAD DOCUMENT
     // ============================================================
@@ -92,6 +125,14 @@ public class DocumentService {
         if (request.getDocType() != null && !request.getDocType().isBlank()) {
             documentTypeMasterService.validate(request.getDocType());
             request.setDocType(documentTypeMasterService.normalize(request.getDocType()));
+        }
+
+        if (request.getEntityType() != null
+                && "ASSET".equalsIgnoreCase(request.getEntityType())
+                && request.getDocType() != null
+                && DocumentTypeMasterService.CODE_ASSET_PHOTO.equalsIgnoreCase(request.getDocType())
+                && request.getEntityId() != null) {
+            assertCallerMayUploadAssetPhoto(request.getEntityId());
         }
 
         try {

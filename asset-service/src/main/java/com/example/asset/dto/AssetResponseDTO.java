@@ -52,6 +52,12 @@ public class AssetResponseDTO {
     private Long assetPhotoDocumentId;
     private String assetPhotoDocumentType;
 
+    /** Earliest active user assignment (owner for appliance photo and similar rules). */
+    private Long ownerUserId;
+
+    /** Audit: who created the asset row (fallback when no link exists). */
+    private String createdByUsername;
+
     // ============================================================
     // 🧩 Components linked to asset (catalog)
     // ============================================================
@@ -235,6 +241,22 @@ public class AssetResponseDTO {
 
     public void setAssetPhotoDocumentType(String assetPhotoDocumentType) {
         this.assetPhotoDocumentType = assetPhotoDocumentType;
+    }
+
+    public Long getOwnerUserId() {
+        return ownerUserId;
+    }
+
+    public void setOwnerUserId(Long ownerUserId) {
+        this.ownerUserId = ownerUserId;
+    }
+
+    public String getCreatedByUsername() {
+        return createdByUsername;
+    }
+
+    public void setCreatedByUsername(String createdByUsername) {
+        this.createdByUsername = createdByUsername;
     }
 
     public List<AssetComponentSummaryDTO> getComponents() {

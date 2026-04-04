@@ -30,6 +30,20 @@ function resolveUploadUsername(
   return 'user'
 }
 
+function userCanEditAssetPhoto(
+  asset: AssetRecord,
+  uid: number | null,
+  token: string | null,
+  profileUsername: string | undefined,
+): boolean {
+  if (uid == null || !token) return false
+  if (asset.ownerUserId != null) return uid === asset.ownerUserId
+  const createdBy = asset.createdByUsername?.trim().toLowerCase()
+  if (!createdBy) return false
+  const uname = resolveUploadUsername(token, profileUsername, uid).trim().toLowerCase()
+  return uname === createdBy
+}
+
 function assetHasVisuals(a: AssetRecord, authToken: string | null): boolean {
   const hasDocSlot =
     !!authToken &&
@@ -53,6 +67,7 @@ function assetHasVisuals(a: AssetRecord, authToken: string | null): boolean {
 export function AssetDetailPage() {
   const { id } = useParams()
   const { token, userId, profile } = useAuth()
+  const effectiveUserId = userId ?? (token ? tokenDisplayInfo(token).userId : null)
   const [asset, setAsset] = useState<AssetRecord | null>(null)
   const [err, setErr] = useState<string | null>(null)
   const productPhotoInputRef = useRef<HTMLInputElement>(null)
@@ -79,6 +94,10 @@ export function AssetDetailPage() {
   async function onProductPhotoSelected(file: File | null) {
     setProductPhotoErr(null)
     if (!file || !token || !id || !asset) return
+    if (!userCanEditAssetPhoto(asset, effectiveUserId, token, profile?.username)) {
+      setProductPhotoErr('Only the owner of this appliance can add or replace its photo.')
+      return
+    }
     const assetPk = asset.assetId ?? Number(id)
     if (!Number.isFinite(assetPk)) return
     if (!file.type.toLowerCase().startsWith('image/')) {
@@ -89,8 +108,7 @@ export function AssetDetailPage() {
       setProductPhotoErr('Photo must be 10 MB or smaller.')
       return
     }
-    const info = tokenDisplayInfo(token)
-    const uid = userId ?? info.userId
+    const uid = effectiveUserId
     if (uid == null) {
       setProductPhotoErr('Could not determine your user id from the session.')
       return
@@ -117,6 +135,7 @@ export function AssetDetailPage() {
   if (!id) return null
 
   const title = asset?.assetNameUdv || 'Appliance'
+  const canEditAssetPhoto = asset ? userCanEditAssetPhoto(asset, effectiveUserId, token, profile?.username) : false
 
   return (
     <div className="page-pad">
@@ -134,34 +153,34 @@ export function AssetDetailPage() {
               Card layout scales from one column on phones to several on larger screens; images load lazily except the
               main asset photo.
             </p>
-            {token && Number.isFinite(Number(asset.assetId ?? id)) && (
-              <div className="sheet profile-photo-actions asset-detail-product-photo" style={{ marginTop: '0.5rem' }}>
-                <input
-                  ref={productPhotoInputRef}
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp,image/gif"
-                  className="visually-hidden"
-                  tabIndex={-1}
-                  onChange={(e) => void onProductPhotoSelected(e.target.files?.[0] ?? null)}
-                />
-                <div className="profile-photo-actions__row">
-                  <button
-                    type="button"
-                    className="btn secondary"
-                    disabled={productPhotoBusy}
-                    onClick={() => productPhotoInputRef.current?.click()}
-                  >
-                    {productPhotoBusy
-                      ? 'Uploading…'
-                      : asset.assetPhotoDocumentId
-                        ? 'Replace product photo'
-                        : 'Add product photo'}
-                  </button>
-                  <span className="muted small">Your picture of this appliance · JPEG, PNG, WebP, or GIF · up to 10 MB</span>
+            {token && Number.isFinite(Number(asset.assetId ?? id)) && canEditAssetPhoto && (
+                <div className="sheet profile-photo-actions asset-detail-product-photo" style={{ marginTop: '0.5rem' }}>
+                  <input
+                    ref={productPhotoInputRef}
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp,image/gif"
+                    className="visually-hidden"
+                    tabIndex={-1}
+                    onChange={(e) => void onProductPhotoSelected(e.target.files?.[0] ?? null)}
+                  />
+                  <div className="profile-photo-actions__row">
+                    <button
+                      type="button"
+                      className="btn secondary"
+                      disabled={productPhotoBusy}
+                      onClick={() => productPhotoInputRef.current?.click()}
+                    >
+                      {productPhotoBusy
+                        ? 'Uploading…'
+                        : asset.assetPhotoDocumentId
+                          ? 'Replace product photo'
+                          : 'Add product photo'}
+                    </button>
+                    <span className="muted small">Your picture of this appliance · JPEG, PNG, WebP, or GIF · up to 10 MB</span>
+                  </div>
+                  {productPhotoErr && <p className="error-banner tight">{productPhotoErr}</p>}
                 </div>
-                {productPhotoErr && <p className="error-banner tight">{productPhotoErr}</p>}
-              </div>
-            )}
+              )}
             <div className="media-entity-card-grid">
               {asset.imageUrl && (
                 <MediaEntityCard
@@ -331,8 +350,9 @@ export function AssetDetailPage() {
             </div>
             {!assetHasVisuals(asset, token) && (
               <p className="muted small" style={{ marginBottom: 0 }}>
-                No catalog or warranty thumbnails yet—add your own product photo above, or they may appear when master data
-                includes images.
+                {canEditAssetPhoto
+                  ? 'No catalog or warranty thumbnails yet—add your own product photo above, or they may appear when master data includes images.'
+                  : 'No images yet. Only the appliance owner can add a product photo; catalog thumbnails may appear when master data includes images.'}
               </p>
             )}
           </section>

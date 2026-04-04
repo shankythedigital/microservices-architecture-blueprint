@@ -262,8 +262,7 @@ public class AssetCrudService {
     private static final Logger log = LoggerFactory.getLogger(AssetCrudService.class);
 
     private final AssetMasterRepository assetRepo;
-    @SuppressWarnings("unused")
-    private final AssetUserLinkRepository linkRepo; // Reserved for future user linking operations
+    private final AssetUserLinkRepository linkRepo;
     private final ProductCategoryRepository categoryRepo;
     private final ProductSubCategoryRepository subCategoryRepo;
     private final ProductMakeRepository makeRepo;
@@ -613,6 +612,11 @@ public class AssetCrudService {
         dto.setAssetNameUdv(a.getAssetNameUdv());
         dto.setAssetStatus(a.getAssetStatus());
         dto.setImageUrl(a.getImageUrl());
+        if (a.getCreatedBy() != null && !a.getCreatedBy().isBlank()) {
+            dto.setCreatedByUsername(a.getCreatedBy());
+        }
+        linkRepo.findFirstByAssetIdAndActiveTrueOrderByLinkIdAsc(a.getAssetId())
+                .ifPresent(link -> dto.setOwnerUserId(link.getUserId()));
 
         if (a.getCategory() != null) {
             dto.setCategoryName(a.getCategory().getCategoryName());
@@ -1072,7 +1076,19 @@ public class AssetCrudService {
         AssetWarranty savedWarranty = warrantyRepo.save(warranty);
         log.info("✅ Warranty created: id={} for assetId={}", savedWarranty.getWarrantyId(), savedAsset.getAssetId());
 
-        // 4️⃣ UPLOAD DOCUMENT (required - stored in AssetDocument with docType)
+        // 4️⃣ LINK USER TO ASSET (before document uploads so appliance photo owner checks see the assignment)
+        String linkMessage = userLinkService.linkEntity(
+                bearer,
+                "ASSET",
+                savedAsset.getAssetId(),
+                request.getTargetUserId(),
+                Optional.ofNullable(request.getTargetUsername()).orElse("user_" + request.getTargetUserId()),
+                userId,
+                username
+        );
+        log.info("✅ User linked to asset: {}", linkMessage);
+
+        // 5️⃣ UPLOAD DOCUMENT (required - stored in AssetDocument with docType)
         DocumentRequest docRequest = new DocumentRequest();
         docRequest.setUserId(userId);
         docRequest.setUsername(username);
@@ -1102,18 +1118,6 @@ public class AssetCrudService {
             savedPhoto = documentService.upload(headers, assetImage, photoReq);
             log.info("✅ Appliance photo uploaded: id={} for assetId={}", savedPhoto.getDocumentId(), savedAsset.getAssetId());
         }
-
-        // 5️⃣ LINK USER TO ASSET
-        String linkMessage = userLinkService.linkEntity(
-                bearer,
-                "ASSET",
-                savedAsset.getAssetId(),
-                request.getTargetUserId(),
-                Optional.ofNullable(request.getTargetUsername()).orElse("user_" + request.getTargetUserId()),
-                userId,
-                username
-        );
-        log.info("✅ User linked to asset: {}", linkMessage);
 
         // 6️⃣ BUILD RESPONSE
         Map<String, Object> response = new LinkedHashMap<>();

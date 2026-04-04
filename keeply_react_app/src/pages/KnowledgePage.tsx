@@ -10,6 +10,7 @@ import {
 } from '../api/knowledgeApi'
 import { ApiError } from '../api/http'
 import { HELP_DESK_RELATED_SERVICES, type RelatedService } from '../constants/helpdesk'
+import { hasAdminRole } from '../auth/jwtClaims'
 
 function excerpt(text: string | undefined, max = 280): string {
   if (!text || !text.trim()) return ''
@@ -23,6 +24,7 @@ function serviceLabel(s: RelatedService): string {
 
 export function KnowledgePage() {
   const { token } = useAuth()
+  const isAdmin = Boolean(token && hasAdminRole(token))
   const [faqs, setFaqs] = useState<FaqItem[]>([])
   const [knowledge, setKnowledge] = useState<ServiceKnowledgeItem[]>([])
   const [knowledgeScope, setKnowledgeScope] = useState<RelatedService>('ASSET_SERVICE')
@@ -51,6 +53,13 @@ export function KnowledgePage() {
   const [knBusy, setKnBusy] = useState(false)
   const [knErr, setKnErr] = useState<string | null>(null)
   const [knOk, setKnOk] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!isAdmin) {
+      setShowFaqForm(false)
+      setShowKnForm(false)
+    }
+  }, [isAdmin])
 
   const refreshFaqs = useCallback(async () => {
     if (!token) return
@@ -120,6 +129,10 @@ export function KnowledgePage() {
       setFaqErr('You are not signed in.')
       return
     }
+    if (!hasAdminRole(token)) {
+      setFaqErr('Only administrators can add or edit FAQs.')
+      return
+    }
     const q = faqQuestion.trim()
     const a = faqAnswer.trim()
     const cat = faqCategory.trim()
@@ -155,6 +168,10 @@ export function KnowledgePage() {
     setKnOk(null)
     if (!token) {
       setKnErr('You are not signed in.')
+      return
+    }
+    if (!hasAdminRole(token)) {
+      setKnErr('Only administrators can add or edit knowledge articles.')
       return
     }
     const topic = knTopic.trim()
@@ -235,40 +252,50 @@ export function KnowledgePage() {
               FAQs
             </h2>
             <p className="muted small" style={{ margin: 0 }}>
-              Browse common answers or use <strong>Add FAQ</strong> to post a new entry via{' '}
-              <code style={{ fontSize: '0.85em' }}>POST /api/helpdesk/faqs</code>.
+              Browse common answers
+              {isAdmin ? (
+                <>
+                  {' '}
+                  or use <strong>Add FAQ</strong> to post a new entry via{' '}
+                  <code style={{ fontSize: '0.85em' }}>POST /api/helpdesk/faqs</code>.
+                </>
+              ) : (
+                <> — only administrators can add or edit FAQ entries.</>
+              )}
             </p>
           </div>
-          <button
-            type="button"
-            className={`catalog-add-icon-btn${showFaqForm ? ' is-active' : ''}`}
-            onClick={() => {
-              setFaqErr(null)
-              setShowFaqForm((wasOpen) => {
-                if (wasOpen) setFaqOk(null)
-                return !wasOpen
-              })
-            }}
-            aria-expanded={showFaqForm}
-            aria-label={showFaqForm ? 'Close add FAQ form' : 'Add new FAQ'}
-            title={showFaqForm ? 'Close' : 'Add FAQ'}
-          >
-            <span className="catalog-add-icon-btn__icon" aria-hidden>
-              <svg width="20" height="20" viewBox="0 0 24 24">
-                <g fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="12" cy="12" r="10" />
-                  <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
-                  <path d="M12 17h.01" />
-                </g>
-              </svg>
-            </span>
-            <span className="catalog-add-icon-btn__title">{showFaqForm ? 'Close' : 'Add FAQ'}</span>
-          </button>
+          {isAdmin && (
+            <button
+              type="button"
+              className={`catalog-add-icon-btn${showFaqForm ? ' is-active' : ''}`}
+              onClick={() => {
+                setFaqErr(null)
+                setShowFaqForm((wasOpen) => {
+                  if (wasOpen) setFaqOk(null)
+                  return !wasOpen
+                })
+              }}
+              aria-expanded={showFaqForm}
+              aria-label={showFaqForm ? 'Close add FAQ form' : 'Add new FAQ'}
+              title={showFaqForm ? 'Close' : 'Add FAQ'}
+            >
+              <span className="catalog-add-icon-btn__icon" aria-hidden>
+                <svg width="20" height="20" viewBox="0 0 24 24">
+                  <g fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10" />
+                    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+                    <path d="M12 17h.01" />
+                  </g>
+                </svg>
+              </span>
+              <span className="catalog-add-icon-btn__title">{showFaqForm ? 'Close' : 'Add FAQ'}</span>
+            </button>
+          )}
         </div>
 
         {faqOk && <p className="muted small" style={{ marginTop: '0.5rem' }}>{faqOk}</p>}
 
-        {showFaqForm && (
+        {isAdmin && showFaqForm && (
           <form
             className="catalog-form-panel sheet tips-faq-form"
             onSubmit={onAddFaq}
@@ -339,7 +366,15 @@ export function KnowledgePage() {
         </ul>
         {faqs.length === 0 && !err && (
           <p className="muted" style={{ marginTop: '0.75rem' }}>
-            No FAQs yet — add one with <strong>Add FAQ</strong> or seed them in helpdeskdb.
+            No FAQs yet
+            {isAdmin ? (
+              <>
+                {' '}
+                — add one with <strong>Add FAQ</strong> or seed them in helpdeskdb.
+              </>
+            ) : (
+              <> — content is managed by your administrator.</>
+            )}
           </p>
         )}
       </section>
@@ -351,8 +386,16 @@ export function KnowledgePage() {
               Knowledge base
             </h2>
             <p className="muted small" style={{ margin: 0 }}>
-              Articles and how-tos per service. Use <strong>Add knowledge</strong> for{' '}
-              <code style={{ fontSize: '0.85em' }}>POST /api/helpdesk/knowledge</code>.
+              Articles and how-tos per service.
+              {isAdmin ? (
+                <>
+                  {' '}
+                  Use <strong>Add knowledge</strong> for{' '}
+                  <code style={{ fontSize: '0.85em' }}>POST /api/helpdesk/knowledge</code>.
+                </>
+              ) : (
+                <> Only administrators can add or edit articles.</>
+              )}
             </p>
             <label className="field tips-knowledge-scope" style={{ marginTop: '0.65rem', marginBottom: 0 }}>
               <span className="muted small">Browse service (list &amp; search)</span>
@@ -368,37 +411,39 @@ export function KnowledgePage() {
               </select>
             </label>
           </div>
-          <button
-            type="button"
-            className={`catalog-add-icon-btn${showKnForm ? ' is-active' : ''}`}
-            onClick={() => {
-              setKnErr(null)
-              setKnService(knowledgeScope)
-              setShowKnForm((wasOpen) => {
-                if (wasOpen) setKnOk(null)
-                return !wasOpen
-              })
-            }}
-            aria-expanded={showKnForm}
-            aria-label={showKnForm ? 'Close add knowledge form' : 'Add knowledge article'}
-            title={showKnForm ? 'Close' : 'Add knowledge'}
-          >
-            <span className="catalog-add-icon-btn__icon" aria-hidden>
-              <svg width="20" height="20" viewBox="0 0 24 24">
-                <g fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-                  <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
-                  <path d="M8 7h8M8 11h8M8 15h4" />
-                </g>
-              </svg>
-            </span>
-            <span className="catalog-add-icon-btn__title">{showKnForm ? 'Close' : 'Add knowledge'}</span>
-          </button>
+          {isAdmin && (
+            <button
+              type="button"
+              className={`catalog-add-icon-btn${showKnForm ? ' is-active' : ''}`}
+              onClick={() => {
+                setKnErr(null)
+                setKnService(knowledgeScope)
+                setShowKnForm((wasOpen) => {
+                  if (wasOpen) setKnOk(null)
+                  return !wasOpen
+                })
+              }}
+              aria-expanded={showKnForm}
+              aria-label={showKnForm ? 'Close add knowledge form' : 'Add knowledge article'}
+              title={showKnForm ? 'Close' : 'Add knowledge'}
+            >
+              <span className="catalog-add-icon-btn__icon" aria-hidden>
+                <svg width="20" height="20" viewBox="0 0 24 24">
+                  <g fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+                    <path d="M8 7h8M8 11h8M8 15h4" />
+                  </g>
+                </svg>
+              </span>
+              <span className="catalog-add-icon-btn__title">{showKnForm ? 'Close' : 'Add knowledge'}</span>
+            </button>
+          )}
         </div>
 
         {knOk && <p className="muted small" style={{ marginTop: '0.5rem' }}>{knOk}</p>}
 
-        {showKnForm && (
+        {isAdmin && showKnForm && (
           <form
             className="catalog-form-panel sheet tips-knowledge-form"
             onSubmit={onAddKnowledge}
@@ -507,8 +552,15 @@ export function KnowledgePage() {
         </h3>
         {knowledgeToShow.length === 0 && !err && (
           <p className="muted">
-            No articles for <strong>{serviceLabel(knowledgeScope)}</strong> yet — use{' '}
-            <strong>Add knowledge</strong> or pick another service above.
+            No articles for <strong>{serviceLabel(knowledgeScope)}</strong> yet
+            {isAdmin ? (
+              <>
+                {' '}
+                — use <strong>Add knowledge</strong> or pick another service above.
+              </>
+            ) : (
+              <> — pick another service above, or ask an administrator to publish content.</>
+            )}
           </p>
         )}
         <ul className="plain-list knowledge-list">
