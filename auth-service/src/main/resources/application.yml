@@ -1,18 +1,26 @@
 # Auth-service
+# Override any service port: AUTH_SERVICE_PORT, NOTIFICATION_SERVICE_PORT, ASSET_SERVICE_PORT, HELPDESK_SERVICE_PORT
+microservice:
+  ports:
+    auth: ${AUTH_SERVICE_PORT:8081}
+    notification: ${NOTIFICATION_SERVICE_PORT:8082}
+    asset: ${ASSET_SERVICE_PORT:8085}
+    helpdesk: ${HELPDESK_SERVICE_PORT:8084}
+
 server:
-  port: 8081
+  port: ${microservice.ports.auth}
 
 auth:
   service:
-    url: http://localhost:8081
+    url: http://localhost:${microservice.ports.auth}
 
 notification:
   service:
-    url: http://localhost:8082/api/notifications
+    url: http://localhost:${microservice.ports.notification}/api/notifications
 
 asset:
   service:
-    url: http://localhost:8085
+    url: http://localhost:${microservice.ports.asset}
 
 spring:
   application:

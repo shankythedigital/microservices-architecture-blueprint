@@ -7,6 +7,7 @@ import io.swagger.v3.oas.models.info.License;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
 import io.swagger.v3.oas.models.servers.Server;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -20,7 +21,7 @@ import java.util.List;
 public class OpenApiConfig {
 
     @Bean
-    public OpenAPI helpdeskServiceOpenAPI() {
+    public OpenAPI helpdeskServiceOpenAPI(@Value("${server.port}") int serverPort) {
         return new OpenAPI()
                 .info(new Info()
                         .title("Helpdesk Service API")
@@ -54,7 +55,7 @@ public class OpenApiConfig {
                                 .url("https://www.apache.org/licenses/LICENSE-2.0.html")))
                 .servers(List.of(
                         new Server()
-                                .url("http://localhost:8084")
+                                .url("http://localhost:" + serverPort)
                                 .description("Local development server"),
                         new Server()
                                 .url("https://api.example.com/helpdesk-service")

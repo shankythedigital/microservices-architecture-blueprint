@@ -1,3 +1,10 @@
+microservice:
+  ports:
+    auth: ${AUTH_SERVICE_PORT:8081}
+    notification: ${NOTIFICATION_SERVICE_PORT:8082}
+    asset: ${ASSET_SERVICE_PORT:8085}
+    helpdesk: ${HELPDESK_SERVICE_PORT:8084}
+
 spring:
   application:
     name: common-service
@@ -9,15 +16,15 @@ spring:
 
 auth:
   service:
-    url: http://localhost:8081
+    url: http://localhost:${microservice.ports.auth}
 
 asset:
   service:
-    url: http://localhost:8085
+    url: http://localhost:${microservice.ports.asset}
 
 notification:
   service:
-    url: http://localhost:8082/api/notifications
+    url: http://localhost:${microservice.ports.notification}/api/notifications
 
 JWT_PRIVATE_KEY_PATH: classpath:keys/jwt-private.pem
 JWT_PUBLIC_KEY_PATH: classpath:keys/jwt-public.pem

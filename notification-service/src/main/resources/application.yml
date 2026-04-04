@@ -1,10 +1,17 @@
 # Notification-service
+microservice:
+  ports:
+    auth: ${AUTH_SERVICE_PORT:8081}
+    notification: ${NOTIFICATION_SERVICE_PORT:8082}
+    asset: ${ASSET_SERVICE_PORT:8085}
+    helpdesk: ${HELPDESK_SERVICE_PORT:8084}
+
 server:
-  port: 8082
+  port: ${microservice.ports.notification}
 
 notification:
   service:
-    url: http://localhost:8082/api/notifications
+    url: http://localhost:${microservice.ports.notification}/api/notifications
   # When true and userId + Bearer token are present, skips sending if user opted out of that channel (auth-service).
   opt-out-check:
     enabled: true
@@ -17,7 +24,7 @@ notification:
 
 asset:
   service:
-    url: http://localhost:8085
+    url: http://localhost:${microservice.ports.asset}
   upload:
     dir: /asset-uploads/amc-docs
 
@@ -46,7 +53,7 @@ spring:
 
 auth:
   service:
-    url: http://localhost:8081/api/
+    url: http://localhost:${microservice.ports.auth}/api/
   client-id: notification-service
   client-secret: notify-secret
 

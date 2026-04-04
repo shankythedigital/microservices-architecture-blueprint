@@ -1,18 +1,25 @@
 # Asset-service
+microservice:
+  ports:
+    auth: ${AUTH_SERVICE_PORT:8081}
+    notification: ${NOTIFICATION_SERVICE_PORT:8082}
+    asset: ${ASSET_SERVICE_PORT:8085}
+    helpdesk: ${HELPDESK_SERVICE_PORT:8084}
+
 server:
-  port: 8085
+  port: ${microservice.ports.asset}
 
 auth:
   service:
-    url: http://localhost:8081
+    url: http://localhost:${microservice.ports.auth}
 
 notification:
   service:
-    url: http://localhost:8082/api/notifications
+    url: http://localhost:${microservice.ports.notification}/api/notifications
 
 asset:
   service:
-    url: http://localhost:8085
+    url: http://localhost:${microservice.ports.asset}
   upload:
     # Upload directory - use relative path (project/uploads/amc-docs) or absolute path
     # If the configured path is not writable, the code will fallback to project/uploads/amc-docs
@@ -50,9 +57,9 @@ spring:
 
 services:
   auth:
-    base-url: http://localhost:8081
+    base-url: http://localhost:${microservice.ports.auth}
   notification:
-    base-url: http://localhost:8082
+    base-url: http://localhost:${microservice.ports.notification}
 
 security:
   jwt:
@@ -68,8 +75,8 @@ JWT_PUBLIC_KEY_PATH: classpath:keys/jwt-public.pem
 JWT_SECRET: yNnC7M3ZqgV4bD0lFJm9Q2w5tSe8XpR1pWc7UjK4oHs=
 AUTH_ENC_KEY: SLOqKf8lS2hidTDsXQe25ZSaoaGcczUX6gySXUxjE1M=
 AUTH_HMAC_KEY: krFcA7/MYPXQWbtSGMM87Dzxu2euOsRckVFeUyOC6dw=
-AUTH_SERVICE_URL: http://localhost:8081
-NOTIFICATION_SERVICE_URL: http://localhost:8082
+AUTH_SERVICE_URL: http://localhost:${microservice.ports.auth}
+NOTIFICATION_SERVICE_URL: http://localhost:${microservice.ports.notification}
 
 
 # Tesseract OCR Configuration
