@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { fetchActiveTerms, registerUser, type TermsPayload } from '../api/authApi'
 import { ApiError } from '../api/http'
@@ -20,8 +20,20 @@ export function RegisterPage() {
   const [country, setCountry] = useState('')
   const [address1, setAddress1] = useState('')
   const [acceptTc, setAcceptTc] = useState(false)
+  const [profilePhoto, setProfilePhoto] = useState<File | null>(null)
+  const [photoPreviewUrl, setPhotoPreviewUrl] = useState<string | null>(null)
+  const photoObjectUrlRef = useRef<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState<string | null>(null)
+
+  useEffect(() => {
+    return () => {
+      if (photoObjectUrlRef.current) {
+        URL.revokeObjectURL(photoObjectUrlRef.current)
+        photoObjectUrlRef.current = null
+      }
+    }
+  }, [])
 
   useEffect(() => {
     let c = false
@@ -40,22 +52,25 @@ export function RegisterPage() {
     setBusy(true)
     try {
       const digits = mobile.replace(/\D/g, '')
-      await registerUser({
-        username: username.trim() || digits,
-        password: password.trim() || undefined,
-        firstName: firstName.trim() || undefined,
-        lastName: lastName.trim() || undefined,
-        email: email.trim() || undefined,
-        mobile: digits,
-        countryCode: countryCode.trim() || '+91',
-        projectType: DEFAULT_PROJECT_TYPE,
-        acceptTc,
-        pincode: pincode.trim() || undefined,
-        city: city.trim() || undefined,
-        state: state.trim() || undefined,
-        country: country.trim() || undefined,
-        address1: address1.trim() || undefined,
-      })
+      await registerUser(
+        {
+          username: username.trim() || digits,
+          password: password.trim() || undefined,
+          firstName: firstName.trim() || undefined,
+          lastName: lastName.trim() || undefined,
+          email: email.trim() || undefined,
+          mobile: digits,
+          countryCode: countryCode.trim() || '+91',
+          projectType: DEFAULT_PROJECT_TYPE,
+          acceptTc,
+          pincode: pincode.trim() || undefined,
+          city: city.trim() || undefined,
+          state: state.trim() || undefined,
+          country: country.trim() || undefined,
+          address1: address1.trim() || undefined,
+        },
+        profilePhoto,
+      )
       nav('/login', { replace: true, state: { registered: true } })
     } catch (e) {
       setErr(e instanceof ApiError ? e.message : 'Registration failed')
@@ -83,6 +98,41 @@ export function RegisterPage() {
         )}
 
         <form onSubmit={onSubmit} className="stack sheet register-form">
+          <label className="field register-photo-field">
+            <span>Profile photo (optional)</span>
+            <input
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif"
+              onChange={(e) => {
+                const f = e.target.files?.[0] ?? null
+                const maxBytes = 6 * 1024 * 1024
+                if (f && f.size > maxBytes) {
+                  setErr('Photo must be 6 MB or smaller.')
+                  e.target.value = ''
+                  return
+                }
+                if (photoObjectUrlRef.current) {
+                  URL.revokeObjectURL(photoObjectUrlRef.current)
+                  photoObjectUrlRef.current = null
+                }
+                setErr(null)
+                setProfilePhoto(f)
+                if (f) {
+                  const u = URL.createObjectURL(f)
+                  photoObjectUrlRef.current = u
+                  setPhotoPreviewUrl(u)
+                } else {
+                  setPhotoPreviewUrl(null)
+                }
+              }}
+            />
+            {photoPreviewUrl && (
+              <div className="register-photo-preview" aria-hidden>
+                <img src={photoPreviewUrl} alt="" />
+              </div>
+            )}
+            <span className="muted small">JPEG, PNG, WebP, or GIF. Shown in Account after you sign in.</span>
+          </label>
           <label className="field">
             <span>Username</span>
             <input

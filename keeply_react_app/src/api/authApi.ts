@@ -46,8 +46,38 @@ export type RegisterRequestBody = {
 
 export async function registerUser(
   body: RegisterRequestBody,
+  profilePhoto?: File | null,
 ): Promise<{ message?: string; username?: string }> {
-  const r = await apiFetch(url('auth', '/api/auth/register'), {
+  const endpoint = url('auth', '/api/auth/register')
+
+  if (profilePhoto) {
+    const fd = new FormData()
+    fd.set('username', body.username)
+    if (body.password) fd.set('password', body.password)
+    if (body.firstName) fd.set('firstName', body.firstName)
+    if (body.lastName) fd.set('lastName', body.lastName)
+    if (body.email) fd.set('email', body.email)
+    fd.set('mobile', body.mobile)
+    fd.set('countryCode', body.countryCode)
+    fd.set('projectType', body.projectType)
+    fd.set('acceptTc', body.acceptTc ? 'true' : 'false')
+    if (body.pincode) fd.set('pincode', body.pincode)
+    if (body.city) fd.set('city', body.city)
+    if (body.state) fd.set('state', body.state)
+    if (body.country) fd.set('country', body.country)
+    if (body.address1) fd.set('address1', body.address1)
+    if (body.address2) fd.set('address2', body.address2)
+    if (body.address3) fd.set('address3', body.address3)
+    fd.append('profilePhoto', profilePhoto, profilePhoto.name)
+    const r = await apiFetch(endpoint, { method: 'POST', body: fd })
+    const data = await parseJson<{ error?: string; message?: string; username?: string }>(r)
+    if (!r.ok) {
+      throw new ApiError(data?.error || r.statusText, r.status)
+    }
+    return data ?? {}
+  }
+
+  const r = await apiFetch(endpoint, {
     method: 'POST',
     body: JSON.stringify(body),
   })
@@ -61,6 +91,29 @@ export async function registerUser(
 /** Current user profile with decrypted PII (auth-service `getUserProfileExtended` for self). */
 export async function fetchMyProfile(token: string): Promise<UserProfileResponse> {
   return apiJson<UserProfileResponse>(url('auth', '/api/auth/profile/me'), { token })
+}
+
+/**
+ * PUT /api/auth/profile/me — multipart with `profilePhoto` only (other fields unchanged).
+ * @see AuthController.updateMyProfile
+ */
+export async function updateMyProfilePhoto(token: string, file: File): Promise<UserProfileResponse> {
+  const fd = new FormData()
+  fd.append('profilePhoto', file, file.name)
+  const r = await apiFetch(url('auth', '/api/auth/profile/me'), {
+    method: 'PUT',
+    token,
+    body: fd,
+  })
+  const data =
+    (await parseJson<{ message?: string; profile?: UserProfileResponse; error?: string }>(r)) || {}
+  if (!r.ok) {
+    throw new ApiError(data.error || r.statusText, r.status)
+  }
+  if (!data.profile) {
+    throw new ApiError(data.error || 'Profile update did not return profile', r.status)
+  }
+  return data.profile
 }
 
 export async function loginPassword(username: string, password: string): Promise<AuthResponse> {

@@ -1,17 +1,46 @@
+import { useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { updateMyProfilePhoto } from '../api/authApi'
+import { ApiError } from '../api/http'
 import { PiiReveal } from '../components/PiiReveal'
 import { MediaEntityCard } from '../components/MediaEntityCard'
 import { ResponsiveImage } from '../components/ResponsiveImage'
 import { useAuth } from '../auth/AuthContext'
 import { tokenDisplayInfo } from '../auth/jwtClaims'
 import { inferPiiVariant } from '../utils/maskPii'
+import { resolveAuthUploadedFileUrl } from '../utils/uploadedFileUrl'
+
+const PROFILE_PHOTO_MAX_BYTES = 6 * 1024 * 1024
 
 export function ProfilePage() {
   const { token, userId, profile, profileLoading, refreshProfile } = useAuth()
   const info = tokenDisplayInfo(token)
+  const photoInputRef = useRef<HTMLInputElement>(null)
+  const [photoBusy, setPhotoBusy] = useState(false)
+  const [photoErr, setPhotoErr] = useState<string | null>(null)
 
   const showId = profile?.userId ?? userId
   const showUsername = profile?.username ?? info.username
+  const profilePhotoSrc = resolveAuthUploadedFileUrl(profile?.profilePhotoUrl ?? undefined)
+
+  async function onPhotoSelected(f: File | null) {
+    setPhotoErr(null)
+    if (!f || !token) return
+    if (f.size > PROFILE_PHOTO_MAX_BYTES) {
+      setPhotoErr('Photo must be 6 MB or smaller.')
+      return
+    }
+    setPhotoBusy(true)
+    try {
+      await updateMyProfilePhoto(token, f)
+      await refreshProfile()
+    } catch (e) {
+      setPhotoErr(e instanceof ApiError ? e.message : 'Could not update photo')
+    } finally {
+      setPhotoBusy(false)
+      if (photoInputRef.current) photoInputRef.current.value = ''
+    }
+  }
 
   return (
     <div className="page-pad">
@@ -26,9 +55,9 @@ export function ProfilePage() {
           title={showUsername || 'Your account'}
           subtitle={profile?.email ?? undefined}
           media={
-            profile?.profilePhotoUrl ? (
+            profilePhotoSrc ? (
               <ResponsiveImage
-                src={profile.profilePhotoUrl}
+                src={profilePhotoSrc}
                 alt={showUsername ? `Profile photo for ${showUsername}` : 'Profile photo'}
                 className="media-entity-card__img"
                 priority
@@ -44,6 +73,32 @@ export function ProfilePage() {
           }
         />
       </div>
+
+      {token && profile && (
+        <section className="sheet profile-photo-actions" aria-label="Profile photo">
+          <input
+            ref={photoInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp,image/gif"
+            className="visually-hidden"
+            tabIndex={-1}
+            onChange={(e) => void onPhotoSelected(e.target.files?.[0] ?? null)}
+          />
+          <div className="profile-photo-actions__row">
+            <button
+              type="button"
+              className="btn secondary"
+              disabled={photoBusy}
+              onClick={() => photoInputRef.current?.click()}
+            >
+              {photoBusy ? 'Uploading…' : profilePhotoSrc ? 'Change photo' : 'Add photo'}
+            </button>
+            <span className="muted small">JPEG, PNG, WebP, or GIF · up to 6 MB</span>
+          </div>
+          {photoErr && <p className="error-banner tight">{photoErr}</p>}
+        </section>
+      )}
+
       <p className="muted small">
         Personal fields are masked by default. Use the eye icon to reveal each value on this device.
       </p>

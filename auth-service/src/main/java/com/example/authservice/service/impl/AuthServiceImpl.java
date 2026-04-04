@@ -532,13 +532,13 @@ public class AuthServiceImpl {
     // 🔹 Standard USER Registration
     // =====================================================
     public User register(String usernamePlain, String password, String emailPlain, String mobilePlain, String projectType) {
-        return register(usernamePlain, password, emailPlain, mobilePlain, null, projectType, null, null, null, null, null, null, null, null, null, null);
+        return register(usernamePlain, password, emailPlain, mobilePlain, null, projectType, null, null, null, null, null, null, null, null, null, null, null);
     }
 
     public User register(String usernamePlain, String password, String emailPlain, String mobilePlain, 
                         String countryCode, String projectType, String pincode, String city, 
                         String state, String country, String address1, String address2, String address3, Boolean acceptTc,
-                        String firstName, String lastName) {
+                        String firstName, String lastName, String profilePhotoUrl) {
         if (usernamePlain == null || usernamePlain.isBlank())
             throw new IllegalArgumentException("Username is required");
 
@@ -585,6 +585,9 @@ public class AuthServiceImpl {
         detail.setAcceptTc(acceptTc != null ? acceptTc : false);
         detail.setFirstName(firstName);
         detail.setLastName(lastName);
+        if (profilePhotoUrl != null && !profilePhotoUrl.isBlank()) {
+            detail.setProfilePhotoUrl(profilePhotoUrl.trim());
+        }
         detail.setCreatedBy("system");
         detail.setActive(true);
         detail.setUser(user);

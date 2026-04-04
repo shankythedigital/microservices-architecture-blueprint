@@ -3,6 +3,7 @@ import { PiiReveal } from '../components/PiiReveal'
 import { useAuth } from '../auth/AuthContext'
 import { tokenDisplayInfo } from '../auth/jwtClaims'
 import { accountInitialFromProfile, displayNameFromProfile } from '../utils/accountDisplay'
+import { resolveAuthUploadedFileUrl } from '../utils/uploadedFileUrl'
 import { inferPiiVariant } from '../utils/maskPii'
 
 export function AccountPage() {
@@ -13,6 +14,7 @@ export function AccountPage() {
   const primaryDisplay =
     displayNameFromProfile(profile) || info.username || null
   const initial = accountInitialFromProfile(profile, info.username, userId ?? info.userId)
+  const heroPhotoSrc = resolveAuthUploadedFileUrl(profile?.profilePhotoUrl ?? undefined)
 
   return (
     <div className="page-pad account-page">
@@ -21,7 +23,7 @@ export function AccountPage() {
 
       <section className="account-hero sheet" aria-label="Signed-in user">
         <div className="account-hero__avatar" aria-hidden>
-          {initial}
+          {heroPhotoSrc ? <img src={heroPhotoSrc} alt="" width={56} height={56} /> : initial}
         </div>
         <div className="account-hero__meta">
           <p className="account-hero__title account-hero__title--pii">

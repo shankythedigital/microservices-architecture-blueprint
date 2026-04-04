@@ -17,6 +17,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import javax.validation.Valid;
@@ -37,7 +38,7 @@ public class AuthController {
     @Autowired
     private FileStorageUtil fileStorageUtil;
 
-    @PostMapping("/register")
+    @PostMapping(value = "/register", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest req) {
         try {
             // Validate Terms & Conditions acceptance
@@ -72,10 +73,84 @@ public class AuthController {
                     req.address3,
                     req.acceptTc,
                     req.firstName,
-                    req.lastName
+                    req.lastName,
+                    null
             );
             
             return ResponseEntity.ok(Map.of("message", "User registered successfully", "username", req.username));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    /**
+     * Same as JSON {@code /register} with optional {@code profilePhoto} file (multipart form fields mirror
+     * {@link RegisterRequest}).
+     */
+    @PostMapping(value = "/register", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<?> registerWithPhoto(
+            @RequestParam String username,
+            @RequestParam(required = false) String password,
+            @RequestParam(required = false) String firstName,
+            @RequestParam(required = false) String lastName,
+            @RequestParam(required = false) String email,
+            @RequestParam String mobile,
+            @RequestParam String countryCode,
+            @RequestParam String projectType,
+            @RequestParam(required = false) String pincode,
+            @RequestParam(required = false) String city,
+            @RequestParam(required = false) String state,
+            @RequestParam(required = false) String country,
+            @RequestParam(required = false) String address1,
+            @RequestParam(required = false) String address2,
+            @RequestParam(required = false) String address3,
+            @RequestParam String acceptTc,
+            @RequestParam(value = "profilePhoto", required = false) MultipartFile profilePhoto) {
+        try {
+            boolean accept = "true".equalsIgnoreCase(acceptTc) || "1".equals(acceptTc);
+            if (!accept) {
+                return ResponseEntity.badRequest()
+                        .body(Map.of("error", "Terms and Conditions must be accepted to register"));
+            }
+
+            String mobileValidationError = MobileValidationUtil.validateMobileWithMessage(mobile, countryCode);
+            if (mobileValidationError != null) {
+                return ResponseEntity.badRequest().body(Map.of("error", mobileValidationError));
+            }
+
+            String normalizedMobile = MobileValidationUtil.normalizeMobile(mobile);
+
+            String profilePath = null;
+            if (profilePhoto != null && !profilePhoto.isEmpty()) {
+                try {
+                    profilePath = fileStorageUtil.storeFile(profilePhoto, "USER_PROFILE");
+                } catch (Exception e) {
+                    return ResponseEntity.badRequest()
+                            .body(Map.of("error", "Failed to upload profile photo: " + e.getMessage()));
+                }
+            }
+
+            authService.register(
+                    username,
+                    password,
+                    email,
+                    normalizedMobile,
+                    countryCode,
+                    projectType,
+                    pincode,
+                    city,
+                    state,
+                    country,
+                    address1,
+                    address2,
+                    address3,
+                    accept,
+                    firstName,
+                    lastName,
+                    profilePath
+            );
+
+            return ResponseEntity.ok(Map.of("message", "User registered successfully", "username", username));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }

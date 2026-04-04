@@ -28,6 +28,7 @@ export default defineConfig(({ mode }) => {
           },
         },
         '/api/helpdesk': { target: `http://localhost:${microservicePorts.helpdesk}`, changeOrigin: true },
+        '/uploads': { target: `http://localhost:${microservicePorts.auth}`, changeOrigin: true },
       },
     },
   }

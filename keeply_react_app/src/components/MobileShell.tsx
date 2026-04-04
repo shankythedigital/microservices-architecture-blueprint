@@ -4,6 +4,7 @@ import { useAuth } from '../auth/AuthContext'
 import { notificationCount } from '../api/notificationsApi'
 import { tokenDisplayInfo } from '../auth/jwtClaims'
 import { accountInitialFromProfile } from '../utils/accountDisplay'
+import { resolveAuthUploadedFileUrl } from '../utils/uploadedFileUrl'
 
 const HOME = '/home'
 
@@ -56,6 +57,7 @@ export function MobileShell() {
   const [inboxCount, setInboxCount] = useState<number | null>(null)
   const info = tokenDisplayInfo(token)
   const avatarLetter = accountInitialFromProfile(profile, info.username, userId ?? info.userId)
+  const avatarPhotoSrc = resolveAuthUploadedFileUrl(profile?.profilePhotoUrl ?? undefined)
 
   useEffect(() => {
     if (!token) return
@@ -94,7 +96,11 @@ export function MobileShell() {
             aria-label="Account, profile, and settings"
           >
             <span className="account-chip__avatar" aria-hidden>
-              {avatarLetter}
+              {avatarPhotoSrc ? (
+                <img src={avatarPhotoSrc} alt="" width={32} height={32} />
+              ) : (
+                avatarLetter
+              )}
             </span>
             <span className="account-chip__label muted small">Account</span>
           </Link>

@@ -256,6 +256,14 @@ a:hover {
   display: grid;
   place-items: center;
   box-shadow: 0 4px 12px rgba(31, 74, 68, 0.22);
+  overflow: hidden;
+}
+
+.account-chip__avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
 .account-chip__label {
@@ -445,6 +453,27 @@ a:hover {
 
 .welcome__card.login h1 {
   text-align: left;
+}
+
+.register-photo-field input[type='file'] {
+  font-size: 0.85rem;
+}
+
+.register-photo-preview {
+  margin-top: 0.5rem;
+  width: 72px;
+  height: 72px;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid rgba(15, 118, 110, 0.2);
+  box-shadow: 0 6px 16px rgba(31, 74, 68, 0.12);
+}
+
+.register-photo-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
 .legal {
@@ -680,6 +709,18 @@ a:hover {
   font-size: 0.82rem;
 }
 
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .error-banner {
   background: linear-gradient(180deg, rgba(254, 242, 242, 0.9), var(--danger-soft));
   color: var(--danger);
@@ -688,6 +729,11 @@ a:hover {
   font-size: 0.88rem;
   border: 1px solid rgba(180, 35, 24, 0.16);
   box-shadow: 0 1px 0 rgba(255, 255, 255, 0.6) inset;
+}
+
+.error-banner.tight {
+  margin-top: 0.5rem;
+  margin-bottom: 0;
 }
 
 .ok-banner {
@@ -1290,6 +1336,14 @@ form.sheet {
   place-items: center;
   flex-shrink: 0;
   box-shadow: 0 12px 28px rgba(31, 74, 68, 0.2);
+  overflow: hidden;
+}
+
+.account-hero__avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
 .account-hero__title {
@@ -1308,6 +1362,18 @@ form.sheet {
   align-items: center;
   flex-wrap: wrap;
   gap: 0.35rem;
+}
+
+.profile-photo-actions {
+  margin: 1rem 0 0.25rem;
+  padding: 0.85rem 1rem;
+}
+
+.profile-photo-actions__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.65rem 1rem;
 }
 
 .profile-inline-pii .pii-reveal__value {
