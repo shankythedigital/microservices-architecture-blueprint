@@ -10,7 +10,8 @@ import { ResponsiveImage } from '../components/ResponsiveImage'
 
 function assetHasVisuals(a: AssetRecord, authToken: string | null): boolean {
   const hasDocSlot =
-    !!authToken && (a.warrantyDocumentId != null || a.amcDocumentId != null)
+    !!authToken &&
+    (a.warrantyDocumentId != null || a.amcDocumentId != null || a.assetPhotoDocumentId != null)
   const hasComponents = (a.components ?? []).length > 0
   return (
     Boolean(
@@ -162,6 +163,22 @@ export function AssetDetailPage() {
                     <ResponsiveImage
                       src={asset.outletImageUrl}
                       alt={`${title} — outlet`}
+                      className="media-entity-card__img"
+                    />
+                  }
+                />
+              )}
+              {asset.assetPhotoDocumentId != null && token && (
+                <MediaEntityCard
+                  badge="Your photo"
+                  title="Appliance photo"
+                  subtitle="Uploaded when you registered the appliance"
+                  media={
+                    <AuthenticatedDocImage
+                      token={token}
+                      documentId={asset.assetPhotoDocumentId}
+                      docTypeHint="asset_photo"
+                      alt={`${title} — your photo`}
                       className="media-entity-card__img"
                     />
                   }

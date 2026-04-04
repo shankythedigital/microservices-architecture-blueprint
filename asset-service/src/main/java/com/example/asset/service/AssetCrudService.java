@@ -261,6 +261,9 @@ public class AssetCrudService {
 
     private static final Logger log = LoggerFactory.getLogger(AssetCrudService.class);
 
+    /** document_type_master.code — user appliance photo stored as AssetDocument on ASSET */
+    public static final String ASSET_PHOTO_DOC_TYPE = "asset_photo";
+
     private final AssetMasterRepository assetRepo;
     @SuppressWarnings("unused")
     private final AssetUserLinkRepository linkRepo; // Reserved for future user linking operations
@@ -274,6 +277,7 @@ public class AssetCrudService {
     private final UserLinkService userLinkService;
     private final SafeNotificationHelper safeNotificationHelper;
     private final DocumentTypeMasterService documentTypeMasterService;
+    private final AssetDocumentRepository assetDocumentRepo;
 
     public AssetCrudService(AssetMasterRepository assetRepo,
             AssetUserLinkRepository linkRepo,
@@ -286,7 +290,8 @@ public class AssetCrudService {
             DocumentService documentService,
             UserLinkService userLinkService,
             SafeNotificationHelper safeNotificationHelper,
-            DocumentTypeMasterService documentTypeMasterService) {
+            DocumentTypeMasterService documentTypeMasterService,
+            AssetDocumentRepository assetDocumentRepo) {
         this.assetRepo = assetRepo;
         this.linkRepo = linkRepo;
         this.categoryRepo = categoryRepo;
@@ -299,6 +304,7 @@ public class AssetCrudService {
         this.userLinkService = userLinkService;
         this.safeNotificationHelper = safeNotificationHelper;
         this.documentTypeMasterService = documentTypeMasterService;
+        this.assetDocumentRepo = assetDocumentRepo;
     }
 
     // ============================================================
@@ -499,6 +505,17 @@ public class AssetCrudService {
     // ============================================================
     // 🔍 GET BY ID
     // ============================================================
+    /**
+     * Maps linked {@link AssetMaster} rows to API DTOs in a single read transaction (lazy-safe).
+     */
+    @Transactional(readOnly = true)
+    public List<AssetResponseDTO> toAssetResponseDtoList(List<AssetMaster> assets) {
+        if (assets == null || assets.isEmpty()) {
+            return List.of();
+        }
+        return assets.stream().map(this::toAssetResponseDTO).collect(Collectors.toList());
+    }
+
     @Transactional(readOnly = true)
     public Optional<AssetResponseDTO> get(Long id) {
         return assetRepo.findById(id)
@@ -590,7 +607,10 @@ public class AssetCrudService {
     /**
      * Maps an {@link AssetMaster} to API summary including image URLs and linked document ids (lazy-safe within a transaction).
      */
-    private AssetResponseDTO toAssetResponseDTO(AssetMaster a) {
+    /**
+     * API summary for an asset (safe to call from controllers for linked-asset lists).
+     */
+    public AssetResponseDTO toAssetResponseDTO(AssetMaster a) {
         AssetResponseDTO dto = new AssetResponseDTO();
         dto.setAssetId(a.getAssetId());
         dto.setAssetNameUdv(a.getAssetNameUdv());
@@ -643,6 +663,14 @@ public class AssetCrudService {
             dto.setAmcDocumentId(ad.getDocumentId());
             dto.setAmcDocumentType(ad.getDocType());
         }
+
+        assetDocumentRepo
+                .findByEntityTypeIgnoreCaseAndEntityIdAndDocTypeIgnoreCaseAndActiveTrue(
+                        "ASSET", a.getAssetId(), ASSET_PHOTO_DOC_TYPE)
+                .ifPresent(d -> {
+                    dto.setAssetPhotoDocumentId(d.getDocumentId());
+                    dto.setAssetPhotoDocumentType(d.getDocType());
+                });
 
         if (a.getComponents() != null && !a.getComponents().isEmpty()) {
             List<AssetComponentSummaryDTO> compList = a.getComponents().stream()
@@ -969,7 +997,8 @@ public class AssetCrudService {
             HttpHeaders headers,
             CompleteAssetCreationRequest request,
             MultipartFile document,
-            String docType) {
+            String docType,
+            MultipartFile assetImage) {
 
         if (document == null || document.isEmpty())
             throw new IllegalArgumentException("❌ Document upload is required");
@@ -1059,6 +1088,24 @@ public class AssetCrudService {
         AssetDocument savedDocument = documentService.upload(headers, document, docRequest);
         log.info("✅ Document uploaded: id={} for assetId={} with docType={}", savedDocument.getDocumentId(), savedAsset.getAssetId(), docType);
 
+        AssetDocument savedPhoto = null;
+        if (assetImage != null && !assetImage.isEmpty()) {
+            if (!isImageMultipart(assetImage)) {
+                throw new IllegalArgumentException("❌ Optional appliance photo must be an image file (e.g. JPEG, PNG, WebP).");
+            }
+            documentTypeMasterService.validate(ASSET_PHOTO_DOC_TYPE);
+            DocumentRequest photoReq = new DocumentRequest();
+            photoReq.setUserId(userId);
+            photoReq.setUsername(username);
+            photoReq.setProjectType(projectType);
+            photoReq.setEntityType("ASSET");
+            photoReq.setEntityId(savedAsset.getAssetId());
+            photoReq.setAssetId(savedAsset.getAssetId());
+            photoReq.setDocType(ASSET_PHOTO_DOC_TYPE);
+            savedPhoto = documentService.upload(headers, assetImage, photoReq);
+            log.info("✅ Appliance photo uploaded: id={} for assetId={}", savedPhoto.getDocumentId(), savedAsset.getAssetId());
+        }
+
         // 5️⃣ LINK USER TO ASSET
         String linkMessage = userLinkService.linkEntity(
                 bearer,
@@ -1101,6 +1148,10 @@ public class AssetCrudService {
             response.put("documentId", savedDocument.getDocumentId());
             response.put("documentFileName", savedDocument.getFileName());
             response.put("documentFilePath", savedDocument.getFilePath());
+        }
+        if (savedPhoto != null) {
+            response.put("assetPhotoDocumentId", savedPhoto.getDocumentId());
+            response.put("assetPhotoDocumentType", savedPhoto.getDocType());
         }
         response.put("targetUserId", request.getTargetUserId());
         response.put("targetUsername", Optional.ofNullable(request.getTargetUsername())
@@ -1221,6 +1272,19 @@ public class AssetCrudService {
 
             return saved;
         }).orElseThrow(() -> new IllegalArgumentException("Asset not found with id: " + id));
+    }
+
+    private static boolean isImageMultipart(MultipartFile file) {
+        String ct = file.getContentType();
+        if (ct != null && ct.toLowerCase(Locale.ROOT).startsWith("image/")) {
+            return true;
+        }
+        String name = file.getOriginalFilename();
+        if (name == null || !name.contains(".")) {
+            return false;
+        }
+        String ext = name.substring(name.lastIndexOf('.') + 1).toLowerCase(Locale.ROOT);
+        return Set.of("jpg", "jpeg", "png", "gif", "webp", "bmp", "heic", "avif").contains(ext);
     }
 
     // ============================================================

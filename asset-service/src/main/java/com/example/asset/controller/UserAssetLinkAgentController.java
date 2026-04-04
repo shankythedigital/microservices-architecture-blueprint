@@ -1,9 +1,11 @@
 package com.example.asset.controller;
 
+import com.example.asset.dto.AssetResponseDTO;
 import com.example.asset.dto.UserAssetLinkAgentRequest;
 import com.example.asset.entity.AssetMaster;
 import com.example.asset.entity.AssetComponent;
 import com.example.asset.entity.AssetUserLink;
+import com.example.asset.service.AssetCrudService;
 import com.example.asset.service.UserAssetLinkAgentService;
 import com.example.common.util.ResponseWrapper;
 import org.slf4j.Logger;
@@ -25,9 +27,13 @@ public class UserAssetLinkAgentController {
 
     private static final Logger log = LoggerFactory.getLogger(UserAssetLinkAgentController.class);
     private final UserAssetLinkAgentService linkService;
+    private final AssetCrudService assetCrudService;
 
-    public UserAssetLinkAgentController(UserAssetLinkAgentService linkService) {
+    public UserAssetLinkAgentController(
+            UserAssetLinkAgentService linkService,
+            AssetCrudService assetCrudService) {
         this.linkService = linkService;
+        this.assetCrudService = assetCrudService;
     }
 
     // ============================================================
@@ -118,13 +124,14 @@ public class UserAssetLinkAgentController {
     // 📋 QUERY OPERATIONS
     // ============================================================
     @GetMapping("/user/{userId}/assets")
-    public ResponseEntity<ResponseWrapper<List<AssetMaster>>> getAssetsAssignedToUser(
+    public ResponseEntity<ResponseWrapper<List<AssetResponseDTO>>> getAssetsAssignedToUser(
             @RequestHeader HttpHeaders headers,
             @PathVariable Long userId) {
         try {
             List<AssetMaster> assets = linkService.getAssetsAssignedToUser(userId);
+            List<AssetResponseDTO> dtos = assetCrudService.toAssetResponseDtoList(assets);
             return ResponseEntity.ok(new ResponseWrapper<>(
-                    true, "Assets retrieved successfully", assets));
+                    true, "Assets retrieved successfully", dtos));
         } catch (Exception e) {
             log.error("❌ Failed to get user assets: {}", e.getMessage(), e);
             return ResponseEntity.badRequest()

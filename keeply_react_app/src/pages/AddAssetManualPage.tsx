@@ -15,8 +15,23 @@ import { ResponsiveImage } from '../components/ResponsiveImage'
 type OptionCard = { id: string; label: string; imageUrl?: string; icon?: string }
 
 const MAX_INVOICE_BYTES = 10 * 1024 * 1024
+const MAX_PHOTO_BYTES = 10 * 1024 * 1024
 const ASSET_NAME_MAX = 255
 const SERIAL_MAX = 120
+/** Written by AddAssetScanPage when transferring a captured image */
+const SCAN_IMAGE_SESSION_KEY = 'keeply_scan_image'
+
+function dataUrlToFile(dataUrl: string, filename: string): File {
+  const comma = dataUrl.indexOf(',')
+  const head = comma >= 0 ? dataUrl.slice(0, comma) : ''
+  const b64 = comma >= 0 ? dataUrl.slice(comma + 1) : dataUrl
+  const mimeMatch = head.match(/:(.*?);/)
+  const mime = mimeMatch?.[1] || 'image/jpeg'
+  const bin = atob(b64)
+  const arr = new Uint8Array(bin.length)
+  for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i)
+  return new File([arr], filename, { type: mime })
+}
 
 /** docType must match document_type_master.code (asset-service), e.g. pdf, jpeg, png */
 function docTypeFromFile(file: File): string {
@@ -35,6 +50,10 @@ function allowedInvoiceMime(file: File): boolean {
   const mime = file.type.toLowerCase()
   if (mime === 'application/pdf') return true
   return mime.startsWith('image/')
+}
+
+function allowedPhotoMime(file: File): boolean {
+  return file.type.toLowerCase().startsWith('image/')
 }
 
 function appendOptional(fd: FormData, key: string, value: string | number | undefined | null) {
@@ -88,6 +107,7 @@ export function AddAssetManualPage() {
   const [assetDisplayName, setAssetDisplayName] = useState('')
   const [warrantyProvider, setWarrantyProvider] = useState('')
   const [invoiceFile, setInvoiceFile] = useState<File | null>(null)
+  const [assetPhotoFile, setAssetPhotoFile] = useState<File | null>(null)
   const [warrantyType, setWarrantyType] = useState<'MANUFACTURER' | 'EXTENDED' | 'AMC' | ''>('')
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
@@ -163,6 +183,20 @@ export function AddAssetManualPage() {
       }
     })()
   }, [token])
+
+  useEffect(() => {
+    const raw = sessionStorage.getItem(SCAN_IMAGE_SESSION_KEY)
+    if (!raw) return
+    try {
+      const parsed = JSON.parse(raw) as { dataUrl?: string; name?: string }
+      sessionStorage.removeItem(SCAN_IMAGE_SESSION_KEY)
+      if (parsed.dataUrl && parsed.name) {
+        setAssetPhotoFile(dataUrlToFile(parsed.dataUrl, parsed.name))
+      }
+    } catch {
+      sessionStorage.removeItem(SCAN_IMAGE_SESSION_KEY)
+    }
+  }, [])
 
   useEffect(() => {
     setSubCategoryId('')
@@ -268,6 +302,12 @@ export function AddAssetManualPage() {
     if (!invoiceFile) return 'Purchase invoice or proof document is required for full registration.'
     if (!allowedInvoiceMime(invoiceFile)) return 'Invoice must be a PDF or an image (JPEG, PNG, GIF, or WebP).'
     if (invoiceFile.size > MAX_INVOICE_BYTES) return 'Invoice file is too large (maximum 10 MB).'
+    if (assetPhotoFile) {
+      if (!allowedPhotoMime(assetPhotoFile)) {
+        return 'Appliance photo must be an image (JPEG, PNG, GIF, or WebP).'
+      }
+      if (assetPhotoFile.size > MAX_PHOTO_BYTES) return 'Appliance photo is too large (maximum 10 MB).'
+    }
     const uname = resolveUsername(token ?? null, profile?.username, uid)
     if (!uname) return 'Username could not be determined — update your profile or sign in again.'
     return null
@@ -310,6 +350,9 @@ export function AddAssetManualPage() {
       if (warrantyType) fd.set('warrantyStatus', warrantyType)
       fd.set('document', invoiceFile!)
       fd.set('docType', docTypeFromFile(invoiceFile!))
+      if (assetPhotoFile) {
+        fd.append('assetImage', assetPhotoFile)
+      }
 
       const res = await createAssetComplete(token, fd)
       const data = res.data as { assetNameUdv?: string } | undefined
@@ -330,7 +373,8 @@ export function AddAssetManualPage() {
       <h1>Manual entry</h1>
       <p className="muted small">
         Registers the appliance in one step (asset, warranty, proof document, and assignment to your account). You need
-        catalog category → brand → model, warranty dates, serial number, and an invoice or image of proof.
+        catalog category → brand → model, warranty dates, serial number, and an invoice or image of proof. You may add an
+        optional appliance photo (or capture one from the scan flow).
       </p>
       <div className="sheet">
         <form onSubmit={onSubmit} className="stack" noValidate>
@@ -447,6 +491,16 @@ export function AddAssetManualPage() {
               onChange={(e) => setInvoiceFile(e.target.files?.[0] ?? null)}
             />
             <span className="muted small">PDF or image, up to 10 MB.</span>
+          </label>
+
+          <label className="field">
+            <span>Appliance photo (optional)</span>
+            <input
+              type="file"
+              accept="image/jpeg,image/png,image/gif,image/webp"
+              onChange={(e) => setAssetPhotoFile(e.target.files?.[0] ?? null)}
+            />
+            <span className="muted small">Image only, up to 10 MB. Shown on your asset card when catalog art is missing.</span>
           </label>
           {err && <p className="error-banner">{err}</p>}
           {message && <p className="ok-banner">{message}</p>}

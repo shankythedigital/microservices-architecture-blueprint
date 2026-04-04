@@ -331,7 +331,9 @@ public class AssetController {
             @RequestParam(value = "targetUsername", required = false) String targetUsername,
             // Document Upload (required - stored in AssetDocument with docType)
             @RequestParam("document") MultipartFile document,
-            @RequestParam("docType") String docType) {
+            @RequestParam("docType") String docType,
+            // Optional appliance photo (stored as docType asset_photo; coexists with invoice doc)
+            @RequestParam(value = "assetImage", required = false) MultipartFile assetImage) {
         
         log.info("🚀 [POST] /assets/complete - Creating complete asset: name={}, modelId={}, targetUserId={}, docType={}",
                 assetNameUdv, modelId, targetUserId, docType);
@@ -362,7 +364,8 @@ public class AssetController {
             request.setTargetUserId(targetUserId);
             request.setTargetUsername(targetUsername);
             
-            Map<String, Object> result = assetService.createCompleteAsset(headers, request, document, docType.trim());
+            Map<String, Object> result = assetService.createCompleteAsset(
+                    headers, request, document, docType.trim(), assetImage);
             
             return ResponseEntity.ok(new ResponseWrapper<>(
                     true,

@@ -171,8 +171,15 @@ public class DocumentService {
 
         log.info("🔗 Linking document to entityType={} entityId={}", type, id);
 
-        // 1️⃣ Find active existing doc
-        Optional<AssetDocument> existingOpt = repo.findByEntityTypeIgnoreCaseAndEntityIdAndActiveTrue(type, id);
+        // 1️⃣ Deactivate prior active doc for same entity + docType (or any type if docType blank — legacy)
+        String reqDocType = request.getDocType();
+        Optional<AssetDocument> existingOpt;
+        if (reqDocType != null && !reqDocType.isBlank()) {
+            existingOpt = repo.findByEntityTypeIgnoreCaseAndEntityIdAndDocTypeIgnoreCaseAndActiveTrue(
+                    type, id, reqDocType.trim());
+        } else {
+            existingOpt = repo.findByEntityTypeIgnoreCaseAndEntityIdAndActiveTrue(type, id);
+        }
 
         if (existingOpt.isPresent()) {
             AssetDocument existing = existingOpt.get();
@@ -180,7 +187,8 @@ public class DocumentService {
             existing.setUpdatedBy(request.getUsername());
             existing.setUpdatedAt(LocalDateTime.now());
             repo.save(existing);
-            log.info("🗑️ Deactivated previous document ID={} for {} ID={}", existing.getDocumentId(), type, id);
+            log.info("🗑️ Deactivated previous document ID={} for {} ID={} docType={}",
+                    existing.getDocumentId(), type, id, reqDocType);
         }
 
         // 2️⃣ Link to actual entity (if exists)

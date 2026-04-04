@@ -5,6 +5,7 @@ import { useAuth } from '../auth/AuthContext'
 import { searchAssets } from '../api/assetsApi'
 import { ApiError } from '../api/http'
 import { assetListThumbnailUrl, type AssetRecord } from '../api/assetsApi'
+import { AuthenticatedDocImage } from '../components/AuthenticatedDocImage'
 import { ResponsiveImage } from '../components/ResponsiveImage'
 import { useKeeplyPreferences } from '../hooks/useKeeplyPreferences'
 
@@ -102,12 +103,23 @@ export function AssetsPage() {
             to={a.assetId ? `/home/assets/${a.assetId}` : '#'}
             className="asset-card"
           >
-            {showListThumbnails && assetListThumbnailUrl(a) ? (
-              <ResponsiveImage
-                src={assetListThumbnailUrl(a)!}
-                alt={titleOf(a)}
-                className="asset-card__thumb"
-              />
+            {showListThumbnails &&
+            (assetListThumbnailUrl(a) || (a.assetPhotoDocumentId != null && token)) ? (
+              assetListThumbnailUrl(a) ? (
+                <ResponsiveImage
+                  src={assetListThumbnailUrl(a)!}
+                  alt={titleOf(a)}
+                  className="asset-card__thumb"
+                />
+              ) : (
+                <AuthenticatedDocImage
+                  token={token!}
+                  documentId={a.assetPhotoDocumentId!}
+                  docTypeHint="asset_photo"
+                  alt={titleOf(a)}
+                  className="asset-card__thumb"
+                />
+              )
             ) : (
               <span className="asset-card__icon" aria-hidden>
                 <svg width="46" height="46" viewBox="0 0 48 48">

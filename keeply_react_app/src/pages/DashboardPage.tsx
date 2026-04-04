@@ -11,6 +11,7 @@ import {
 import { notificationCount } from '../api/notificationsApi'
 import { listMyIssues } from '../api/issuesApi'
 import { ApiError } from '../api/http'
+import { AuthenticatedDocImage } from '../components/AuthenticatedDocImage'
 import { ResponsiveImage } from '../components/ResponsiveImage'
 
 const ROOM_FILTERS = ['All', 'Kitchen', 'Living room', 'Laundry', 'Other']
@@ -174,12 +175,22 @@ export function DashboardPage() {
             to={a.assetId ? `/home/assets/${a.assetId}` : '/home/assets'}
             className="asset-card"
           >
-            {assetListThumbnailUrl(a) ? (
-              <ResponsiveImage
-                src={assetListThumbnailUrl(a)!}
-                alt={a.assetNameUdv || 'Asset'}
-                className="asset-card__thumb"
-              />
+            {assetListThumbnailUrl(a) || (a.assetPhotoDocumentId != null && token) ? (
+              assetListThumbnailUrl(a) ? (
+                <ResponsiveImage
+                  src={assetListThumbnailUrl(a)!}
+                  alt={a.assetNameUdv || 'Asset'}
+                  className="asset-card__thumb"
+                />
+              ) : (
+                <AuthenticatedDocImage
+                  token={token!}
+                  documentId={a.assetPhotoDocumentId!}
+                  docTypeHint="asset_photo"
+                  alt={a.assetNameUdv || 'Asset'}
+                  className="asset-card__thumb"
+                />
+              )
             ) : (
               <span className="asset-card__icon" aria-hidden>
                 <svg width="44" height="44" viewBox="0 0 48 48">

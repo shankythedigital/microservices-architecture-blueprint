@@ -48,6 +48,10 @@ public class AssetResponseDTO {
     private Long amcDocumentId;
     private String amcDocumentType;
 
+    /** User-uploaded appliance photo (download via documents API). */
+    private Long assetPhotoDocumentId;
+    private String assetPhotoDocumentType;
+
     // ============================================================
     // 🧩 Components linked to asset (catalog)
     // ============================================================
@@ -217,6 +221,22 @@ public class AssetResponseDTO {
         this.amcDocumentType = amcDocumentType;
     }
 
+    public Long getAssetPhotoDocumentId() {
+        return assetPhotoDocumentId;
+    }
+
+    public void setAssetPhotoDocumentId(Long assetPhotoDocumentId) {
+        this.assetPhotoDocumentId = assetPhotoDocumentId;
+    }
+
+    public String getAssetPhotoDocumentType() {
+        return assetPhotoDocumentType;
+    }
+
+    public void setAssetPhotoDocumentType(String assetPhotoDocumentType) {
+        this.assetPhotoDocumentType = assetPhotoDocumentType;
+    }
+
     public List<AssetComponentSummaryDTO> getComponents() {
         return components;
     }
@@ -243,5 +263,3 @@ public class AssetResponseDTO {
                 '}';
     }
 }
-
-

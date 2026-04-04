@@ -32,6 +32,9 @@ export type AssetRecord = {
   warrantyDocumentType?: string | null
   amcDocumentId?: number | null
   amcDocumentType?: string | null
+  /** User-uploaded appliance photo (use documents download API). */
+  assetPhotoDocumentId?: number | null
+  assetPhotoDocumentType?: string | null
   components?: AssetComponentSummary[]
   [k: string]: unknown
 }
@@ -44,7 +47,7 @@ export type NeedYourAttentionPayload = {
   [k: string]: unknown
 }
 
-/** Best URL for compact list thumbnails (lazy-loaded). */
+/** Best URL for compact list thumbnails (lazy-loaded). Does not include `assetPhotoDocumentId` (use AuthenticatedDocImage). */
 export function assetListThumbnailUrl(a: AssetRecord): string | undefined {
   const u =
     a.imageUrl ||
@@ -56,7 +59,7 @@ export function assetListThumbnailUrl(a: AssetRecord): string | undefined {
   return typeof u === 'string' && u.trim() !== '' ? u.trim() : undefined
 }
 
-/** Normalize asset-service `AssetMaster` JSON from GET .../user-asset-links/user/{id}/assets. */
+/** Normalize asset rows from GET .../user-asset-links/user/{id}/assets (entity or AssetResponseDTO shape). */
 export function mapWireAssetMasterToRecord(raw: Record<string, unknown>): AssetRecord {
   const num = (v: unknown): number | undefined => {
     if (typeof v === 'number' && Number.isFinite(v)) return v
@@ -76,14 +79,66 @@ export function mapWireAssetMasterToRecord(raw: Record<string, unknown>): AssetR
     assetStatus: typeof raw.assetStatus === 'string' ? raw.assetStatus : undefined,
     serialNumber: typeof raw.serialNumber === 'string' ? raw.serialNumber : undefined,
     imageUrl: typeof raw.imageUrl === 'string' ? raw.imageUrl : null,
-    categoryName: typeof category?.categoryName === 'string' ? category.categoryName : undefined,
-    categoryImageUrl: typeof category?.imageUrl === 'string' ? category.imageUrl : null,
-    subCategoryName: typeof subCategory?.subCategoryName === 'string' ? subCategory.subCategoryName : undefined,
-    subCategoryImageUrl: typeof subCategory?.imageUrl === 'string' ? subCategory.imageUrl : null,
-    makeName: typeof make?.makeName === 'string' ? make.makeName : undefined,
-    makeImageUrl: typeof make?.imageUrl === 'string' ? make.imageUrl : null,
-    modelName: typeof model?.modelName === 'string' ? model.modelName : undefined,
-    modelImageUrl: typeof model?.imageUrl === 'string' ? model.imageUrl : null,
+    categoryName:
+      typeof category?.categoryName === 'string'
+        ? category.categoryName
+        : typeof raw.categoryName === 'string'
+          ? raw.categoryName
+          : undefined,
+    categoryImageUrl:
+      typeof category?.imageUrl === 'string'
+        ? category.imageUrl
+        : typeof raw.categoryImageUrl === 'string'
+          ? raw.categoryImageUrl
+          : null,
+    subCategoryName:
+      typeof subCategory?.subCategoryName === 'string'
+        ? subCategory.subCategoryName
+        : typeof raw.subCategoryName === 'string'
+          ? raw.subCategoryName
+          : undefined,
+    subCategoryImageUrl:
+      typeof subCategory?.imageUrl === 'string'
+        ? subCategory.imageUrl
+        : typeof raw.subCategoryImageUrl === 'string'
+          ? raw.subCategoryImageUrl
+          : null,
+    makeName:
+      typeof make?.makeName === 'string'
+        ? make.makeName
+        : typeof raw.makeName === 'string'
+          ? raw.makeName
+          : undefined,
+    makeImageUrl:
+      typeof make?.imageUrl === 'string'
+        ? make.imageUrl
+        : typeof raw.makeImageUrl === 'string'
+          ? raw.makeImageUrl
+          : null,
+    modelName:
+      typeof model?.modelName === 'string'
+        ? model.modelName
+        : typeof raw.modelName === 'string'
+          ? raw.modelName
+          : undefined,
+    modelImageUrl:
+      typeof model?.imageUrl === 'string'
+        ? model.imageUrl
+        : typeof raw.modelImageUrl === 'string'
+          ? raw.modelImageUrl
+          : null,
+    vendorName: typeof raw.vendorName === 'string' ? raw.vendorName : undefined,
+    vendorImageUrl: typeof raw.vendorImageUrl === 'string' ? raw.vendorImageUrl : null,
+    outletName: typeof raw.outletName === 'string' ? raw.outletName : undefined,
+    outletImageUrl: typeof raw.outletImageUrl === 'string' ? raw.outletImageUrl : null,
+    warrantyDocumentId: raw.warrantyDocumentId != null ? num(raw.warrantyDocumentId) : undefined,
+    warrantyDocumentType:
+      typeof raw.warrantyDocumentType === 'string' ? raw.warrantyDocumentType : undefined,
+    amcDocumentId: raw.amcDocumentId != null ? num(raw.amcDocumentId) : undefined,
+    amcDocumentType: typeof raw.amcDocumentType === 'string' ? raw.amcDocumentType : undefined,
+    assetPhotoDocumentId: raw.assetPhotoDocumentId != null ? num(raw.assetPhotoDocumentId) : undefined,
+    assetPhotoDocumentType:
+      typeof raw.assetPhotoDocumentType === 'string' ? raw.assetPhotoDocumentType : undefined,
   }
 }
 

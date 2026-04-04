@@ -6,7 +6,7 @@ function looksLikeImageContentType(ct: string | null, declaredDocType?: string |
   if (ct && ct.toLowerCase().startsWith('image/')) return true
   if (!declaredDocType) return false
   const t = declaredDocType.toLowerCase()
-  return ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg', 'heic', 'image'].some(
+  return ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg', 'heic', 'image', 'asset_photo'].some(
     (x) => t === x || t.includes(x),
   )
 }

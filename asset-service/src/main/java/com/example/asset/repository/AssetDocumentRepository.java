@@ -21,6 +21,9 @@ public interface AssetDocumentRepository extends JpaRepository<AssetDocument, Lo
     Optional<AssetDocument> findByEntityTypeIgnoreCaseAndEntityIdAndActiveTrue(
             String entityType, Long entityId);
 
+    Optional<AssetDocument> findByEntityTypeIgnoreCaseAndEntityIdAndDocTypeIgnoreCaseAndActiveTrue(
+            String entityType, Long entityId, String docType);
+
     List<AssetDocument> findAllByEntityTypeIgnoreCaseAndEntityIdAndActiveTrue(
             String entityType, Long entityId);
 
