@@ -1,12 +1,34 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { getAssetById } from '../api/assetsApi'
+import { ASSET_PHOTO_DOC_TYPE, uploadAssetDocument } from '../api/documentsApi'
 import { ApiError } from '../api/http'
 import type { AssetRecord } from '../api/assetsApi'
+import { parseJwtPayload, tokenDisplayInfo } from '../auth/jwtClaims'
 import { AuthenticatedDocImage } from '../components/AuthenticatedDocImage'
 import { MediaEntityCard } from '../components/MediaEntityCard'
 import { ResponsiveImage } from '../components/ResponsiveImage'
+
+const MAX_PRODUCT_PHOTO_BYTES = 10 * 1024 * 1024
+
+function resolveUploadUsername(
+  token: string | null,
+  profileUsername: string | undefined,
+  uid: number | null,
+): string {
+  const fromProfile = profileUsername?.trim()
+  if (fromProfile) return fromProfile
+  const fromJwt = token ? tokenDisplayInfo(token).username?.trim() : ''
+  if (fromJwt) return fromJwt
+  if (token) {
+    const p = parseJwtPayload(token)
+    const pref = p?.preferred_username
+    if (typeof pref === 'string' && pref.trim()) return pref.trim()
+  }
+  if (uid != null) return `user_${uid}`
+  return 'user'
+}
 
 function assetHasVisuals(a: AssetRecord, authToken: string | null): boolean {
   const hasDocSlot =
@@ -30,28 +52,67 @@ function assetHasVisuals(a: AssetRecord, authToken: string | null): boolean {
 
 export function AssetDetailPage() {
   const { id } = useParams()
-  const { token } = useAuth()
+  const { token, userId, profile } = useAuth()
   const [asset, setAsset] = useState<AssetRecord | null>(null)
   const [err, setErr] = useState<string | null>(null)
+  const productPhotoInputRef = useRef<HTMLInputElement>(null)
+  const [productPhotoBusy, setProductPhotoBusy] = useState(false)
+  const [productPhotoErr, setProductPhotoErr] = useState<string | null>(null)
 
-  useEffect(() => {
+  const reloadAsset = useCallback(async () => {
     if (!token || !id) return
-    let cancelled = false
-    ;(async () => {
-      try {
-        const res = await getAssetById(token, Number(id))
-        if (!cancelled) {
-          setAsset(res.data ?? null)
-          setErr(null)
-        }
-      } catch (e) {
-        if (!cancelled) setErr(e instanceof ApiError ? e.message : 'Not found')
-      }
-    })()
-    return () => {
-      cancelled = true
+    const num = Number(id)
+    if (!Number.isFinite(num)) return
+    try {
+      const res = await getAssetById(token, num)
+      setAsset(res.data ?? null)
+      setErr(null)
+    } catch (e) {
+      setErr(e instanceof ApiError ? e.message : 'Not found')
     }
   }, [token, id])
+
+  useEffect(() => {
+    void reloadAsset()
+  }, [reloadAsset])
+
+  async function onProductPhotoSelected(file: File | null) {
+    setProductPhotoErr(null)
+    if (!file || !token || !id || !asset) return
+    const assetPk = asset.assetId ?? Number(id)
+    if (!Number.isFinite(assetPk)) return
+    if (!file.type.toLowerCase().startsWith('image/')) {
+      setProductPhotoErr('Please choose an image file (JPEG, PNG, WebP, or GIF).')
+      return
+    }
+    if (file.size > MAX_PRODUCT_PHOTO_BYTES) {
+      setProductPhotoErr('Photo must be 10 MB or smaller.')
+      return
+    }
+    const info = tokenDisplayInfo(token)
+    const uid = userId ?? info.userId
+    if (uid == null) {
+      setProductPhotoErr('Could not determine your user id from the session.')
+      return
+    }
+    const username = resolveUploadUsername(token, profile?.username, uid)
+    setProductPhotoBusy(true)
+    try {
+      await uploadAssetDocument(token, {
+        assetId: assetPk,
+        userId: uid,
+        username,
+        file,
+        docType: ASSET_PHOTO_DOC_TYPE,
+      })
+      await reloadAsset()
+    } catch (e) {
+      setProductPhotoErr(e instanceof ApiError ? e.message : 'Upload failed')
+    } finally {
+      setProductPhotoBusy(false)
+      if (productPhotoInputRef.current) productPhotoInputRef.current.value = ''
+    }
+  }
 
   if (!id) return null
 
@@ -67,13 +128,40 @@ export function AssetDetailPage() {
       {!asset && !err && <p className="muted">Loading…</p>}
       {asset && (
         <>
-          {assetHasVisuals(asset, token) ? (
           <section className="sheet">
             <h2>Photos &amp; references</h2>
             <p className="muted small" style={{ marginTop: 0 }}>
               Card layout scales from one column on phones to several on larger screens; images load lazily except the
               main asset photo.
             </p>
+            {token && Number.isFinite(Number(asset.assetId ?? id)) && (
+              <div className="sheet profile-photo-actions asset-detail-product-photo" style={{ marginTop: '0.5rem' }}>
+                <input
+                  ref={productPhotoInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/gif"
+                  className="visually-hidden"
+                  tabIndex={-1}
+                  onChange={(e) => void onProductPhotoSelected(e.target.files?.[0] ?? null)}
+                />
+                <div className="profile-photo-actions__row">
+                  <button
+                    type="button"
+                    className="btn secondary"
+                    disabled={productPhotoBusy}
+                    onClick={() => productPhotoInputRef.current?.click()}
+                  >
+                    {productPhotoBusy
+                      ? 'Uploading…'
+                      : asset.assetPhotoDocumentId
+                        ? 'Replace product photo'
+                        : 'Add product photo'}
+                  </button>
+                  <span className="muted small">Your picture of this appliance · JPEG, PNG, WebP, or GIF · up to 10 MB</span>
+                </div>
+                {productPhotoErr && <p className="error-banner tight">{productPhotoErr}</p>}
+              </div>
+            )}
             <div className="media-entity-card-grid">
               {asset.imageUrl && (
                 <MediaEntityCard
@@ -170,9 +258,10 @@ export function AssetDetailPage() {
               )}
               {asset.assetPhotoDocumentId != null && token && (
                 <MediaEntityCard
+                  key={`asset-photo-${asset.assetPhotoDocumentId}`}
                   badge="Your photo"
                   title="Appliance photo"
-                  subtitle="Uploaded when you registered the appliance"
+                  subtitle="Your picture of this appliance"
                   media={
                     <AuthenticatedDocImage
                       token={token}
@@ -240,8 +329,13 @@ export function AssetDetailPage() {
                 />
               ))}
             </div>
+            {!assetHasVisuals(asset, token) && (
+              <p className="muted small" style={{ marginBottom: 0 }}>
+                No catalog or warranty thumbnails yet—add your own product photo above, or they may appear when master data
+                includes images.
+              </p>
+            )}
           </section>
-          ) : null}
           <section className="sheet">
             <h2>Details</h2>
             <dl className="dl-grid">

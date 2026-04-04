@@ -114,18 +114,8 @@ public class DocumentService {
             doc.setCreatedAt(LocalDateTime.now());
             doc.setUpdatedAt(LocalDateTime.now());
 
-            // ✅ Duplicate check: only one active document per (entityType, entityId, docType)
-            String entityType = request.getEntityType();
-            Long entityId = request.getEntityId();
-            String docType = request.getDocType();
-            if (entityType != null && entityId != null && docType != null && !docType.isBlank()) {
-                if (repo.existsByEntityTypeIgnoreCaseAndEntityIdAndDocTypeIgnoreCaseAndActiveTrue(
-                        entityType.trim(), entityId, docType.trim())) {
-                    throw new RuntimeException("Duplicate: Active document with docType '" + docType + "' already exists for " + entityType + " ID " + entityId + ". Skipped.");
-                }
-            }
-
-            // 3️⃣ Handle linking and previous deactivation
+            // 3️⃣ Handle linking and deactivation of any prior active doc for same entity + docType
+            // (replaces e.g. asset_photo without blocking the upload)
             linkDocumentToEntity(doc, request);
 
             // 4️⃣ Save new document
