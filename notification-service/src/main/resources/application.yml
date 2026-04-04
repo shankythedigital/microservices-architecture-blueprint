@@ -1,17 +1,10 @@
 # Notification-service
-microservice:
-  ports:
-    auth: ${AUTH_SERVICE_PORT:8081}
-    notification: ${NOTIFICATION_SERVICE_PORT:8082}
-    asset: ${ASSET_SERVICE_PORT:8085}
-    helpdesk: ${HELPDESK_SERVICE_PORT:8084}
-
 server:
-  port: ${microservice.ports.notification}
+  port: 8082
 
 notification:
   service:
-    url: http://localhost:${microservice.ports.notification}/api/notifications
+    url: http://localhost:8082/api/notifications
   # When true and userId + Bearer token are present, skips sending if user opted out of that channel (auth-service).
   opt-out-check:
     enabled: true
@@ -24,7 +17,7 @@ notification:
 
 asset:
   service:
-    url: http://localhost:${microservice.ports.asset}
+    url: http://localhost:8085
   upload:
     dir: /asset-uploads/amc-docs
 
@@ -40,9 +33,9 @@ spring:
     deserialization:
       adjust-dates-to-context-time-zone: false
   datasource:
-    url: jdbc:mysql://localhost:3306/notificationdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8&connectionCollation=utf8mb4_unicode_ci
-    username: root
-    password: Snmysql@1110
+    url: jdbc:mysql://194.163.173.37:3306/notificationdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8&connectionCollation=utf8mb4_unicode_ci
+    username: notificationdb
+    password: notificationdb
   jpa:
     hibernate:
       ddl-auto: update
@@ -53,7 +46,7 @@ spring:
 
 auth:
   service:
-    url: http://localhost:${microservice.ports.auth}/api/
+    url: http://localhost:8081/api/
   client-id: notification-service
   client-secret: notify-secret
 

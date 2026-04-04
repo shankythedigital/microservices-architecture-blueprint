@@ -11,9 +11,8 @@ export function LoginPage() {
   const { token, login, loginWithOtp, error, clearError } = useAuth()
   const location = useLocation()
   const locState = location.state as { from?: string; registered?: boolean; sessionExpired?: boolean } | null
-  /** After login, always land in the app home shell; preserve deep links only under `/home`. */
-  const afterLogin =
-    locState?.from && locState.from.startsWith('/home') ? locState.from : '/home'
+  /** After a successful sign-in, always open the app home (dashboard at `/home`), not a deep link. */
+  const afterLogin = '/home'
   const justRegistered = Boolean(locState?.registered)
   const sessionExpired = Boolean(locState?.sessionExpired)
 

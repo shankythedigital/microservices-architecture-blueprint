@@ -1,45 +1,38 @@
 # Helpdesk-service
-microservice:
-  ports:
-    auth: ${AUTH_SERVICE_PORT:8081}
-    notification: ${NOTIFICATION_SERVICE_PORT:8082}
-    asset: ${ASSET_SERVICE_PORT:8085}
-    helpdesk: ${HELPDESK_SERVICE_PORT:8084}
-
 server:
-  port: ${microservice.ports.helpdesk}
+  port: 8084
 
 auth:
   service:
-    url: http://localhost:${microservice.ports.auth}
+    url: http://localhost:8081
 
 notification:
   service:
-    url: http://localhost:${microservice.ports.notification}/api/notifications
+    url: http://localhost:8082/api/notifications
 
 asset:
   service:
-    url: http://localhost:${microservice.ports.asset}
+    url: http://localhost:8085
 
 helpdesk:
   service:
-    url: http://localhost:${microservice.ports.helpdesk}
+    url: http://localhost:8084
   chatbot:
     enabled: true
     max-context-length: 1000
 
 spring:
   application:
-    name: helpdesk-service
+    name: helpdesk-service  
   jackson:
     serialization:
       write-dates-as-timestamps: false
     deserialization:
       adjust-dates-to-context-time-zone: false
   datasource:
-    url: jdbc:mysql://localhost:3306/helpdeskdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
-    username: root
-    password: Snmysql@1110
+    url: jdbc:mysql://194.163.173.37:3306/helpdeskdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    username: helpdeskdb
+    password: helpdeskdb
     hikari:
       minimum-idle: 5
       maximum-pool-size: 20
@@ -49,10 +42,12 @@ spring:
       leak-detection-threshold: 60000
       pool-name: HelpdeskHikariPool
   jpa:
-    open-in-view: false
     hibernate:
       ddl-auto: update
     show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
   servlet:
     multipart:
       enabled: true
@@ -61,11 +56,11 @@ spring:
 
 services:
   auth:
-    base-url: http://localhost:${microservice.ports.auth}
+    base-url: http://localhost:8081
   notification:
-    base-url: http://localhost:${microservice.ports.notification}
+    base-url: http://localhost:8082
   asset:
-    base-url: http://localhost:${microservice.ports.asset}
+    base-url: http://localhost:8085
 
 security:
   jwt:
@@ -81,9 +76,9 @@ JWT_PUBLIC_KEY_PATH: classpath:keys/jwt-public.pem
 JWT_SECRET: yNnC7M3ZqgV4bD0lFJm9Q2w5tSe8XpR1pWc7UjK4oHs=
 AUTH_ENC_KEY: SLOqKf8lS2hidTDsXQe25ZSaoaGcczUX6gySXUxjE1M=
 AUTH_HMAC_KEY: krFcA7/MYPXQWbtSGMM87Dzxu2euOsRckVFeUyOC6dw=
-AUTH_SERVICE_URL: http://localhost:${microservice.ports.auth}
-NOTIFICATION_SERVICE_URL: http://localhost:${microservice.ports.notification}
-ASSET_SERVICE_URL: http://localhost:${microservice.ports.asset}
+AUTH_SERVICE_URL: http://localhost:8081
+NOTIFICATION_SERVICE_URL: http://localhost:8082
+ASSET_SERVICE_URL: http://localhost:8085
 
 # Swagger/OpenAPI Configuration
 springdoc:
