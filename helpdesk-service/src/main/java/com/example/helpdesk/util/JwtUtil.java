@@ -136,6 +136,19 @@ public final class JwtUtil {
     public static String getUserIdOrThrow() {
         return getUserId().orElseThrow(() -> new RuntimeException("No authenticated user"));
     }
+
+    /**
+     * Numeric user id for columns such as {@code login_user_id} (auth user id / JWT subject when numeric).
+     */
+    public static Optional<Long> getNumericUserId() {
+        return getLoginUserId();
+    }
+
+    public static Long getNumericUserIdOrThrow() {
+        return getNumericUserId()
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Authenticated user id missing or not numeric in token"));
+    }
     
     public static String getUsernameOrThrow() {
         return getUsername().orElse("system");

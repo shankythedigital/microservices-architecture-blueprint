@@ -38,6 +38,52 @@
   -webkit-font-smoothing: antialiased;
 }
 
+html[data-keeply-theme='dark'] {
+  color-scheme: dark;
+  --ink: #e8edf4;
+  --muted: #94a3b8;
+  --bg: #0b1016;
+  --surface: #151c26;
+  --surface-muted: #1a2330;
+  --line: #2a3441;
+  --line-strong: #3d4a5c;
+  --accent: #2dd4bf;
+  --accent-ink: #5eead4;
+  --accent-soft: rgba(45, 212, 191, 0.14);
+  --accent-glow: rgba(45, 212, 191, 0.22);
+  --danger: #f87171;
+  --danger-soft: rgba(248, 113, 113, 0.12);
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.35), 0 4px 14px rgba(0, 0, 0, 0.28);
+  --shadow-2: 0 12px 28px rgba(0, 0, 0, 0.45);
+  --shadow-inset-top: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  --ring: 0 0 0 3px rgba(45, 212, 191, 0.25);
+  --nav-bg: #0d1f1c;
+  --nav-ink: rgba(255, 255, 255, 0.88);
+  --nav-active: #d8ff65;
+  --fab: #0a2824;
+}
+
+html[data-keeply-theme='dark'] body {
+  background: var(--bg);
+}
+
+html[data-keeply-compact='1'] .page-pad {
+  padding: 0.85rem 0.85rem calc(1rem + env(safe-area-inset-bottom, 0));
+}
+
+html[data-keeply-compact='1'] .sheet {
+  padding: 0.75rem 0.85rem;
+}
+
+html[data-keeply-reduced-motion='1'] *,
+html[data-keeply-reduced-motion='1'] *::before,
+html[data-keeply-reduced-motion='1'] *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+  scroll-behavior: auto !important;
+}
+
 *,
 *::before,
 *::after {
@@ -1406,6 +1452,80 @@ form.sheet {
   transform: translateX(20px);
 }
 
+.settings-select-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.settings-select-row__text {
+  min-width: 0;
+}
+
+.settings-select-row__control {
+  flex-shrink: 0;
+  min-width: 9.5rem;
+  max-width: 55%;
+  padding: 0.45rem 0.55rem;
+  border-radius: var(--radius-xs);
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.88rem;
+}
+
+.settings-links {
+  display: flex;
+  flex-direction: column;
+  margin-top: 0.25rem;
+}
+
+.settings-link-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--line);
+  text-decoration: none;
+  color: inherit;
+}
+
+.settings-link-row:last-child {
+  border-bottom: none;
+}
+
+.settings-link-row:hover .settings-link-row__label {
+  color: var(--accent);
+}
+
+.settings-link-row__text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.settings-link-row__label {
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: color var(--duration) var(--ease-out);
+}
+
+.settings-link-row__chevron {
+  flex-shrink: 0;
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid var(--muted);
+  border-bottom: 2px solid var(--muted);
+  transform: rotate(-45deg);
+  opacity: 0.55;
+}
+
 .role-chips {
   display: flex;
   flex-wrap: wrap;
@@ -1482,6 +1602,68 @@ form.sheet {
 .faq-item {
   padding: 0.85rem 0;
   border-bottom: 1px solid var(--line);
+}
+
+.tips-faq-list {
+  margin-top: 0.85rem;
+}
+
+.tips-knowledge-head .tips-knowledge-scope select {
+  max-width: 100%;
+}
+
+@media (max-width: 520px) {
+  .tips-knowledge-head.catalog-section-head {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .tips-knowledge-head .catalog-add-icon-btn {
+    align-self: flex-start;
+  }
+}
+
+.faq-item--card {
+  padding: 0.85rem 0.9rem;
+  border-bottom: none;
+  border-radius: 14px;
+  margin-bottom: 0.55rem;
+}
+
+.faq-item--card:last-child {
+  margin-bottom: 0;
+}
+
+.faq-item__head {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.35rem;
+}
+
+@media (min-width: 480px) {
+  .faq-item__head {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+}
+
+.faq-item__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.faq-item__meta .pill {
+  margin-left: 0;
+}
+
+.faq-item__answer {
+  margin: 0.5rem 0 0;
+  white-space: pre-wrap;
 }
 
 .pill {

@@ -6,9 +6,11 @@ import { searchAssets } from '../api/assetsApi'
 import { ApiError } from '../api/http'
 import { assetListThumbnailUrl, type AssetRecord } from '../api/assetsApi'
 import { ResponsiveImage } from '../components/ResponsiveImage'
+import { useKeeplyPreferences } from '../hooks/useKeeplyPreferences'
 
 export function AssetsPage() {
   const { token } = useAuth()
+  const { showListThumbnails } = useKeeplyPreferences()
   const [keyword, setKeyword] = useState('')
   const [items, setItems] = useState<AssetRecord[]>([])
   const [page, setPage] = useState(0)
@@ -100,7 +102,7 @@ export function AssetsPage() {
             to={a.assetId ? `/home/assets/${a.assetId}` : '#'}
             className="asset-card"
           >
-            {assetListThumbnailUrl(a) ? (
+            {showListThumbnails && assetListThumbnailUrl(a) ? (
               <ResponsiveImage
                 src={assetListThumbnailUrl(a)!}
                 alt={titleOf(a)}

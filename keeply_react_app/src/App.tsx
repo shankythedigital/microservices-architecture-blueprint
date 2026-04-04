@@ -1,6 +1,7 @@
 import type { ReactElement } from 'react'
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { AuthProvider, useAuth } from './auth/AuthContext'
+import { KeeplyRootPreferences } from './components/KeeplyRootPreferences'
 import { MobileShell } from './components/MobileShell'
 import { AddAssetManualPage } from './pages/AddAssetManualPage'
 import { AddAssetMethodPage } from './pages/AddAssetMethodPage'
@@ -80,6 +81,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
+        <KeeplyRootPreferences />
         <AppRoutes />
       </AuthProvider>
     </BrowserRouter>

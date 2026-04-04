@@ -42,12 +42,10 @@ spring:
       leak-detection-threshold: 60000
       pool-name: HelpdeskHikariPool
   jpa:
+    open-in-view: false
     hibernate:
       ddl-auto: update
     show-sql: false
-    properties:
-      hibernate:
-        dialect: org.hibernate.dialect.MySQLDialect
   servlet:
     multipart:
       enabled: true

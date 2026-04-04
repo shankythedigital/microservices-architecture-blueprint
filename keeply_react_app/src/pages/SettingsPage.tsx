@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { logoutAllDevicesOnServer } from '../api/authApi'
-import { useKeeplyPreferences } from '../hooks/useKeeplyPreferences'
+import { useKeeplyPreferences, type KeeplyTheme } from '../hooks/useKeeplyPreferences'
 
 function ToggleRow({
   id,
@@ -42,6 +42,74 @@ function ToggleRow({
   )
 }
 
+function SelectRow({
+  id,
+  label,
+  description,
+  value,
+  onChange,
+  options,
+}: {
+  id: string
+  label: string
+  description: string
+  value: string
+  onChange: (v: string) => void
+  options: { value: string; label: string }[]
+}) {
+  return (
+    <div className="settings-select-row">
+      <div className="settings-select-row__text">
+        <label htmlFor={id} className="settings-toggle-row__label">
+          {label}
+        </label>
+        <p className="muted small" id={`${id}-hint`}>
+          {description}
+        </p>
+      </div>
+      <select
+        id={id}
+        className="settings-select-row__control"
+        aria-describedby={`${id}-hint`}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+      >
+        {options.map((o) => (
+          <option key={o.value} value={o.value}>
+            {o.label}
+          </option>
+        ))}
+      </select>
+    </div>
+  )
+}
+
+function SettingsLinkRow({
+  to,
+  label,
+  description,
+}: {
+  to: string
+  label: string
+  description: string
+}) {
+  return (
+    <Link to={to} className="settings-link-row">
+      <div className="settings-link-row__text">
+        <span className="settings-link-row__label">{label}</span>
+        <span className="muted small">{description}</span>
+      </div>
+      <span className="settings-link-row__chevron" aria-hidden />
+    </Link>
+  )
+}
+
+const THEME_OPTIONS: { value: KeeplyTheme; label: string }[] = [
+  { value: 'system', label: 'Match device' },
+  { value: 'light', label: 'Light' },
+  { value: 'dark', label: 'Dark' },
+]
+
 export function SettingsPage() {
   const prefs = useKeeplyPreferences()
   const { token, logout } = useAuth()
@@ -54,9 +122,43 @@ export function SettingsPage() {
       </Link>
       <h1>Settings</h1>
       <p className="muted small">
-        These choices are stored on this device and align with what a future preferences API can sync across your
-        account.
+        Preferences are saved on this device. Connect a profile API later to sync some of these across sign-in.
       </p>
+
+      <section className="settings-section sheet" aria-labelledby="settings-display-heading">
+        <h2 id="settings-display-heading" className="settings-section__title">
+          Display &amp; accessibility
+        </h2>
+        <SelectRow
+          id="pref-theme"
+          label="Appearance"
+          description="Light, dark, or follow your phone or computer setting."
+          value={prefs.theme}
+          onChange={(v) => prefs.setTheme(v as KeeplyTheme)}
+          options={THEME_OPTIONS}
+        />
+        <ToggleRow
+          id="pref-compact"
+          label="Compact layout"
+          description="Tighter padding on lists and screens to show more at once."
+          checked={prefs.compactUi}
+          onChange={prefs.setCompactUi}
+        />
+        <ToggleRow
+          id="pref-motion"
+          label="Reduce motion"
+          description="Shorten animations and transitions for comfort or accessibility."
+          checked={prefs.reduceMotion}
+          onChange={prefs.setReduceMotion}
+        />
+        <ToggleRow
+          id="pref-thumbs"
+          label="Photos on appliance list"
+          description="Show thumbnails on My appliances when images are available."
+          checked={prefs.showListThumbnails}
+          onChange={prefs.setShowListThumbnails}
+        />
+      </section>
 
       <section className="settings-section sheet" aria-labelledby="settings-notifications-heading">
         <h2 id="settings-notifications-heading" className="settings-section__title">
@@ -84,6 +186,13 @@ export function SettingsPage() {
           onChange={prefs.setAssetWarrantyAlerts}
         />
         <ToggleRow
+          id="pref-helpdesk-activity"
+          label="Helpdesk activity hints"
+          description="Prefer showing tickets and questions you care about in lists and summaries (UI hints until messaging is wired)."
+          checked={prefs.helpdeskActivityAlerts}
+          onChange={prefs.setHelpdeskActivityAlerts}
+        />
+        <ToggleRow
           id="pref-digest"
           label="Weekly digest"
           description="Summary of assets and open issues (when messaging is connected)."
@@ -97,13 +206,36 @@ export function SettingsPage() {
         </p>
       </section>
 
+      <section className="settings-section sheet" aria-labelledby="settings-shortcuts-heading">
+        <h2 id="settings-shortcuts-heading" className="settings-section__title">
+          Help &amp; account shortcuts
+        </h2>
+        <p className="muted small" style={{ margin: '0 0 0.5rem' }}>
+          Quick links to support and profile areas.
+        </p>
+        <nav className="settings-links" aria-label="Shortcuts">
+          <SettingsLinkRow to="/home/account/profile" label="Profile" description="Name, contact, and avatar" />
+          <SettingsLinkRow to="/home/account/notifications" label="Notification center" description="In-app messages" />
+          <SettingsLinkRow to="/home/helpdesk" label="Help &amp; support" description="Support hub" />
+          <SettingsLinkRow to="/home/issues" label="My service tickets" description="Issues you raised" />
+          <SettingsLinkRow to="/home/helpdesk/queries" label="My questions" description="Helpdesk queries" />
+          <SettingsLinkRow to="/home/tips" label="Tips &amp; knowledge" description="FAQs and articles" />
+          <SettingsLinkRow to="/home/alerts" label="Alerts inbox" description="Warnings and reminders" />
+        </nav>
+      </section>
+
       <section className="settings-section sheet" aria-labelledby="settings-app-heading">
         <h2 id="settings-app-heading" className="settings-section__title">
-          App
+          About this app
         </h2>
         <p className="muted small" style={{ margin: 0 }}>
-          Theme and language follow your browser for now. Data &amp; privacy policies belong in your product wiki when
-          you publish Keeply broadly.
+          Keeply connects to your asset and helpdesk services. Version and legal copy can be added here for store
+          releases.
+        </p>
+        <p className="muted small settings-footnote" style={{ marginBottom: 0 }}>
+          <Link to="/welcome">Welcome &amp; sign-in</Link>
+          {' · '}
+          <Link to="/home">Home dashboard</Link>
         </p>
       </section>
 

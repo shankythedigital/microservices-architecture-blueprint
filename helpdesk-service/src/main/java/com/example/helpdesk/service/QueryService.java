@@ -11,7 +11,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -25,15 +24,13 @@ public class QueryService {
     @Transactional
     public QueryResponse createQuery(QueryRequest request) {
         String reporterUserId = JwtUtil.getUserIdOrThrow();
-        Optional<Long> loginUserId = JwtUtil.getLoginUserId();
-
         Query query = new Query();
         query.setQuestion(request.getQuestion());
         query.setRelatedService(request.getRelatedService());
         query.setStatus(QueryStatus.PENDING);
         query.setAskedBy(reporterUserId);
         query.setCreatedBy(reporterUserId);
-        loginUserId.ifPresent(query::setLoginUserId);
+        JwtUtil.getNumericUserId().ifPresent(query::setLoginUserId);
 
         Query saved = queryRepository.save(query);
         return mapToResponse(saved);
@@ -68,8 +65,7 @@ public class QueryService {
      * (random IV) and cannot be matched with {@code findByAskedBy} in SQL.
      */
     public List<QueryResponse> getMyQueries() {
-        Long uid = JwtUtil.getLoginUserId()
-                .orElseThrow(() -> new RuntimeException("Authenticated user id missing or not numeric in token"));
+        Long uid = JwtUtil.getNumericUserIdOrThrow();
         return queryRepository.findByLoginUserIdOrderByCreatedAtDesc(uid).stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());

@@ -1,7 +1,6 @@
 package com.example.helpdesk.dto;
 
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 
 /**
  * Request to create/update Issue Master.

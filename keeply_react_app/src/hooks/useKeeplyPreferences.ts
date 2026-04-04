@@ -2,11 +2,18 @@ import { useCallback, useMemo, useSyncExternalStore } from 'react'
 
 const PREFIX = 'keeply_pref_'
 
+export type KeeplyTheme = 'system' | 'light' | 'dark'
+
 export type KeeplyPreferences = {
   pushNotifications: boolean
   emailReminders: boolean
   assetWarrantyAlerts: boolean
   weeklyDigest: boolean
+  helpdeskActivityAlerts: boolean
+  compactUi: boolean
+  reduceMotion: boolean
+  showListThumbnails: boolean
+  theme: KeeplyTheme
 }
 
 const DEFAULTS: KeeplyPreferences = {
@@ -14,6 +21,11 @@ const DEFAULTS: KeeplyPreferences = {
   emailReminders: true,
   assetWarrantyAlerts: true,
   weeklyDigest: false,
+  helpdeskActivityAlerts: true,
+  compactUi: false,
+  reduceMotion: false,
+  showListThumbnails: true,
+  theme: 'system',
 }
 
 const KEYS = {
@@ -21,6 +33,11 @@ const KEYS = {
   emailReminders: `${PREFIX}email`,
   assetWarrantyAlerts: `${PREFIX}warranty`,
   weeklyDigest: `${PREFIX}digest`,
+  helpdeskActivityAlerts: `${PREFIX}helpdesk_activity`,
+  compactUi: `${PREFIX}compact`,
+  reduceMotion: `${PREFIX}reduce_motion`,
+  showListThumbnails: `${PREFIX}thumbnails`,
+  theme: `${PREFIX}theme`,
 } as const
 
 function readBool(key: string, fallback: boolean): boolean {
@@ -36,6 +53,24 @@ function readBool(key: string, fallback: boolean): boolean {
 function writeBool(key: string, value: boolean) {
   try {
     localStorage.setItem(key, value ? '1' : '0')
+  } catch {
+    /* ignore */
+  }
+}
+
+function readTheme(key: string, fallback: KeeplyTheme): KeeplyTheme {
+  try {
+    const v = localStorage.getItem(key)
+    if (v === 'light' || v === 'dark' || v === 'system') return v
+    return fallback
+  } catch {
+    return fallback
+  }
+}
+
+function writeTheme(key: string, value: KeeplyTheme) {
+  try {
+    localStorage.setItem(key, value)
   } catch {
     /* ignore */
   }
@@ -60,6 +95,11 @@ function snapshot(): KeeplyPreferences {
     emailReminders: readBool(KEYS.emailReminders, DEFAULTS.emailReminders),
     assetWarrantyAlerts: readBool(KEYS.assetWarrantyAlerts, DEFAULTS.assetWarrantyAlerts),
     weeklyDigest: readBool(KEYS.weeklyDigest, DEFAULTS.weeklyDigest),
+    helpdeskActivityAlerts: readBool(KEYS.helpdeskActivityAlerts, DEFAULTS.helpdeskActivityAlerts),
+    compactUi: readBool(KEYS.compactUi, DEFAULTS.compactUi),
+    reduceMotion: readBool(KEYS.reduceMotion, DEFAULTS.reduceMotion),
+    showListThumbnails: readBool(KEYS.showListThumbnails, DEFAULTS.showListThumbnails),
+    theme: readTheme(KEYS.theme, DEFAULTS.theme),
   }
 }
 
@@ -82,6 +122,26 @@ export function useKeeplyPreferences() {
     writeBool(KEYS.weeklyDigest, v)
     emitPrefChange()
   }, [])
+  const setHelpdeskActivityAlerts = useCallback((v: boolean) => {
+    writeBool(KEYS.helpdeskActivityAlerts, v)
+    emitPrefChange()
+  }, [])
+  const setCompactUi = useCallback((v: boolean) => {
+    writeBool(KEYS.compactUi, v)
+    emitPrefChange()
+  }, [])
+  const setReduceMotion = useCallback((v: boolean) => {
+    writeBool(KEYS.reduceMotion, v)
+    emitPrefChange()
+  }, [])
+  const setShowListThumbnails = useCallback((v: boolean) => {
+    writeBool(KEYS.showListThumbnails, v)
+    emitPrefChange()
+  }, [])
+  const setTheme = useCallback((v: KeeplyTheme) => {
+    writeTheme(KEYS.theme, v)
+    emitPrefChange()
+  }, [])
 
   return useMemo(
     () => ({
@@ -90,6 +150,11 @@ export function useKeeplyPreferences() {
       setEmailReminders,
       setAssetWarrantyAlerts,
       setWeeklyDigest,
+      setHelpdeskActivityAlerts,
+      setCompactUi,
+      setReduceMotion,
+      setShowListThumbnails,
+      setTheme,
     }),
     [
       prefs,
@@ -97,6 +162,11 @@ export function useKeeplyPreferences() {
       setEmailReminders,
       setAssetWarrantyAlerts,
       setWeeklyDigest,
+      setHelpdeskActivityAlerts,
+      setCompactUi,
+      setReduceMotion,
+      setShowListThumbnails,
+      setTheme,
     ],
   )
 }

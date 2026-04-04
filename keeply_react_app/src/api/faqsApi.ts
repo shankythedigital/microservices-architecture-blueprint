@@ -17,6 +17,21 @@ export function listFaqs(token: string): Promise<FaqItem[]> {
   return apiJson<FaqItem[]>(url('helpdesk', '/api/helpdesk/faqs'), { token })
 }
 
+export type CreateFaqBody = {
+  question: string
+  answer: string
+  relatedService: RelatedService
+  category: string
+}
+
+export function createFaq(token: string, body: CreateFaqBody): Promise<FaqItem> {
+  return apiJson<FaqItem>(url('helpdesk', '/api/helpdesk/faqs'), {
+    method: 'POST',
+    token,
+    body: JSON.stringify(body),
+  })
+}
+
 export function searchFaqs(token: string, keyword: string): Promise<FaqItem[]> {
   const q = new URLSearchParams({ keyword })
   return apiJson<FaqItem[]>(url('helpdesk', `/api/helpdesk/faqs/search?${q.toString()}`), { token })

@@ -42,11 +42,21 @@ public class FAQController {
         return ResponseEntity.ok(faqs);
     }
 
-    @GetMapping("/{id}")
-    @Operation(summary = "Get FAQ by ID", description = "Retrieve a specific FAQ by its ID")
-    public ResponseEntity<FAQResponse> getFAQById(@PathVariable Long id) {
-        FAQResponse faq = faqService.getFAQById(id);
-        return ResponseEntity.ok(faq);
+    /** Literal paths before {@code /{id}} so e.g. {@code /search} is not parsed as an id. */
+    @GetMapping("/search")
+    @Operation(summary = "Search FAQs", description = "Search FAQs by keyword")
+    public ResponseEntity<List<FAQResponse>> searchFAQs(@RequestParam String keyword) {
+        List<FAQResponse> faqs = faqService.searchFAQs(keyword);
+        return ResponseEntity.ok(faqs);
+    }
+
+    @GetMapping("/service/{service}/search")
+    @Operation(summary = "Search FAQs by service", description = "Search FAQs by service and keyword")
+    public ResponseEntity<List<FAQResponse>> searchFAQsByService(
+            @PathVariable RelatedService service,
+            @RequestParam String keyword) {
+        List<FAQResponse> faqs = faqService.searchFAQsByService(service, keyword);
+        return ResponseEntity.ok(faqs);
     }
 
     @GetMapping("/service/{service}")
@@ -63,20 +73,11 @@ public class FAQController {
         return ResponseEntity.ok(faqs);
     }
 
-    @GetMapping("/search")
-    @Operation(summary = "Search FAQs", description = "Search FAQs by keyword")
-    public ResponseEntity<List<FAQResponse>> searchFAQs(@RequestParam String keyword) {
-        List<FAQResponse> faqs = faqService.searchFAQs(keyword);
-        return ResponseEntity.ok(faqs);
-    }
-
-    @GetMapping("/service/{service}/search")
-    @Operation(summary = "Search FAQs by service", description = "Search FAQs by service and keyword")
-    public ResponseEntity<List<FAQResponse>> searchFAQsByService(
-            @PathVariable RelatedService service,
-            @RequestParam String keyword) {
-        List<FAQResponse> faqs = faqService.searchFAQsByService(service, keyword);
-        return ResponseEntity.ok(faqs);
+    @GetMapping("/{id}")
+    @Operation(summary = "Get FAQ by ID", description = "Retrieve a specific FAQ by its ID")
+    public ResponseEntity<FAQResponse> getFAQById(@PathVariable Long id) {
+        FAQResponse faq = faqService.getFAQById(id);
+        return ResponseEntity.ok(faq);
     }
 
     @PutMapping("/{id}")

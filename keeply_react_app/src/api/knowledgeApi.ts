@@ -33,3 +33,21 @@ export function searchKnowledge(
     { token },
   )
 }
+
+export type CreateKnowledgeBody = {
+  service: RelatedService
+  topic: string
+  content: string
+  category: string
+  apiEndpoints?: string
+  commonIssues?: string
+  troubleshootingSteps?: string
+}
+
+export function createKnowledge(token: string, body: CreateKnowledgeBody): Promise<ServiceKnowledgeItem> {
+  return apiJson<ServiceKnowledgeItem>(url('helpdesk', '/api/helpdesk/knowledge'), {
+    method: 'POST',
+    token,
+    body: JSON.stringify(body),
+  })
+}

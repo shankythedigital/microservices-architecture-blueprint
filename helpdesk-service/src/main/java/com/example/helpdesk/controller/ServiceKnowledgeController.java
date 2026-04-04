@@ -37,10 +37,13 @@ public class ServiceKnowledgeController {
         return ResponseEntity.ok(knowledge);
     }
 
-    @GetMapping("/{id}")
-    @Operation(summary = "Get knowledge by ID", description = "Retrieve a specific knowledge entry by its ID")
-    public ResponseEntity<ServiceKnowledgeResponse> getKnowledgeById(@PathVariable Long id) {
-        ServiceKnowledgeResponse knowledge = knowledgeService.getKnowledgeById(id);
+    /** Multi-segment paths before {@code /{id}} so literals like {@code service} are not bound as ids. */
+    @GetMapping("/service/{service}/search")
+    @Operation(summary = "Search knowledge", description = "Search knowledge entries by service and keyword")
+    public ResponseEntity<List<ServiceKnowledgeResponse>> searchKnowledge(
+            @PathVariable RelatedService service,
+            @RequestParam String keyword) {
+        List<ServiceKnowledgeResponse> knowledge = knowledgeService.searchKnowledge(service, keyword);
         return ResponseEntity.ok(knowledge);
     }
 
@@ -51,12 +54,10 @@ public class ServiceKnowledgeController {
         return ResponseEntity.ok(knowledge);
     }
 
-    @GetMapping("/service/{service}/search")
-    @Operation(summary = "Search knowledge", description = "Search knowledge entries by service and keyword")
-    public ResponseEntity<List<ServiceKnowledgeResponse>> searchKnowledge(
-            @PathVariable RelatedService service,
-            @RequestParam String keyword) {
-        List<ServiceKnowledgeResponse> knowledge = knowledgeService.searchKnowledge(service, keyword);
+    @GetMapping("/{id}")
+    @Operation(summary = "Get knowledge by ID", description = "Retrieve a specific knowledge entry by its ID")
+    public ResponseEntity<ServiceKnowledgeResponse> getKnowledgeById(@PathVariable Long id) {
+        ServiceKnowledgeResponse knowledge = knowledgeService.getKnowledgeById(id);
         return ResponseEntity.ok(knowledge);
     }
 
