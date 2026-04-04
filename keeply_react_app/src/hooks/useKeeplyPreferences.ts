@@ -79,6 +79,8 @@ function writeTheme(key: string, value: KeeplyTheme) {
 let prefListeners = new Set<() => void>()
 
 function emitPrefChange() {
+  cachedSnapshot = undefined
+  cachedSnapshotKey = undefined
   prefListeners.forEach((fn) => fn())
 }
 
@@ -89,8 +91,12 @@ function subscribe(fn: () => void) {
   }
 }
 
+/** useSyncExternalStore requires a stable snapshot reference when data is unchanged (React #185). */
+let cachedSnapshot: KeeplyPreferences | undefined
+let cachedSnapshotKey: string | undefined
+
 function snapshot(): KeeplyPreferences {
-  return {
+  const next: KeeplyPreferences = {
     pushNotifications: readBool(KEYS.pushNotifications, DEFAULTS.pushNotifications),
     emailReminders: readBool(KEYS.emailReminders, DEFAULTS.emailReminders),
     assetWarrantyAlerts: readBool(KEYS.assetWarrantyAlerts, DEFAULTS.assetWarrantyAlerts),
@@ -101,6 +107,11 @@ function snapshot(): KeeplyPreferences {
     showListThumbnails: readBool(KEYS.showListThumbnails, DEFAULTS.showListThumbnails),
     theme: readTheme(KEYS.theme, DEFAULTS.theme),
   }
+  const key = JSON.stringify(next)
+  if (cachedSnapshotKey === key && cachedSnapshot) return cachedSnapshot
+  cachedSnapshotKey = key
+  cachedSnapshot = next
+  return next
 }
 
 export function useKeeplyPreferences() {
