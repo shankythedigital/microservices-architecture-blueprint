@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 /**
@@ -20,6 +21,14 @@ import java.util.stream.Collectors;
 public class DocumentTypeMasterService {
 
     private static final Logger log = LoggerFactory.getLogger(DocumentTypeMasterService.class);
+
+    /**
+     * Logical doc type for user appliance photos (distinct from file-format codes like jpeg/png).
+     * Valid even before {@code document_type_master} row exists; migration V9/V10 still adds the row.
+     */
+    public static final String CODE_ASSET_PHOTO = "asset_photo";
+
+    private static final Set<String> BUILTIN_ACTIVE_CODES = Set.of(CODE_ASSET_PHOTO);
 
     private final DocumentTypeMasterRepository repository;
 
@@ -38,7 +47,11 @@ public class DocumentTypeMasterService {
         if (docType == null || docType.isBlank()) {
             return false;
         }
-        return repository.findByCodeIgnoreCaseAndActiveTrue(normalize(docType)).isPresent();
+        String n = normalize(docType);
+        if (BUILTIN_ACTIVE_CODES.contains(n)) {
+            return true;
+        }
+        return repository.findByCodeIgnoreCaseAndActiveTrue(n).isPresent();
     }
 
     /**
@@ -66,9 +79,11 @@ public class DocumentTypeMasterService {
      * Returns the set of allowed document type codes (active only).
      */
     public Set<String> getAllowedTypes() {
-        return repository.findAllByActiveTrue().stream()
+        Set<String> codes = repository.findAllByActiveTrue().stream()
                 .map(DocumentTypeMaster::getCode)
-                .collect(Collectors.toSet());
+                .collect(Collectors.toCollection(TreeSet::new));
+        codes.addAll(BUILTIN_ACTIVE_CODES);
+        return codes;
     }
 
     // ============================================================

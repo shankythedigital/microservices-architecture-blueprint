@@ -7,9 +7,10 @@ import {
   useState,
   type ReactNode,
 } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { fetchMyProfile, loginOtp, loginPassword, logoutOnServer } from '../api/authApi'
 import type { AuthResponse } from '../api/types'
-import { ApiError } from '../api/http'
+import { ApiError, resetSessionExpiredLatch, SESSION_EXPIRED_EVENT } from '../api/http'
 import type { UserProfileResponse } from '../api/types'
 import { userIdFromAccessToken } from './jwtClaims'
 
@@ -29,9 +30,30 @@ type AuthState = {
   logout: () => Promise<void>
   error: string | null
   clearError: () => void
+  /** Clear tokens locally without calling the server (e.g. session expired). */
+  logoutLocal: () => void
 }
 
 const AuthContext = createContext<AuthState | null>(null)
+
+function SessionExpiryListener({ onExpired }: { onExpired: () => void }) {
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    const handler = () => {
+      onExpired()
+      const path = `${window.location.pathname}${window.location.search}`
+      navigate('/login', {
+        replace: true,
+        state: { from: path === '/login' ? '/home' : path, sessionExpired: true },
+      })
+    }
+    window.addEventListener(SESSION_EXPIRED_EVENT, handler)
+    return () => window.removeEventListener(SESSION_EXPIRED_EVENT, handler)
+  }, [navigate, onExpired])
+
+  return null
+}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<string | null>(() => localStorage.getItem(STORAGE_KEY))
@@ -69,6 +91,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [token, loadProfile])
 
   const persistSession = useCallback((res: AuthResponse) => {
+    resetSessionExpiredLatch()
     localStorage.setItem(STORAGE_KEY, res.accessToken)
     if (res.refreshToken) {
       localStorage.setItem(REFRESH_KEY, res.refreshToken)
@@ -85,17 +108,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setToken(res.accessToken)
   }, [])
 
-  const logout = useCallback(async () => {
-    const at = localStorage.getItem(STORAGE_KEY)
-    const rt = localStorage.getItem(REFRESH_KEY)
-    await logoutOnServer(at, rt)
+  const logoutLocal = useCallback(() => {
     localStorage.removeItem(STORAGE_KEY)
     localStorage.removeItem(REFRESH_KEY)
     localStorage.removeItem(USER_KEY)
     setToken(null)
     setUserId(null)
     setProfile(null)
+    setError(null)
+    resetSessionExpiredLatch()
   }, [])
+
+  const logout = useCallback(async () => {
+    const at = localStorage.getItem(STORAGE_KEY)
+    const rt = localStorage.getItem(REFRESH_KEY)
+    await logoutOnServer(at, rt)
+    logoutLocal()
+  }, [logoutLocal])
+
+  useEffect(() => {
+    if (token) resetSessionExpiredLatch()
+  }, [token])
 
   const login = useCallback(
     async (username: string, password: string) => {
@@ -143,6 +176,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       login,
       loginWithOtp,
       logout,
+      logoutLocal,
       error,
       clearError: () => setError(null),
     }),
@@ -155,11 +189,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       login,
       loginWithOtp,
       logout,
+      logoutLocal,
       error,
     ],
   )
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
+  return (
+    <AuthContext.Provider value={value}>
+      <SessionExpiryListener onExpired={logoutLocal} />
+      {children}
+    </AuthContext.Provider>
+  )
 }
 
 export function useAuth(): AuthState {

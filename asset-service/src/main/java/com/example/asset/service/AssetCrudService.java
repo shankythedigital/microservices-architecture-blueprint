@@ -261,9 +261,6 @@ public class AssetCrudService {
 
     private static final Logger log = LoggerFactory.getLogger(AssetCrudService.class);
 
-    /** document_type_master.code — user appliance photo stored as AssetDocument on ASSET */
-    public static final String ASSET_PHOTO_DOC_TYPE = "asset_photo";
-
     private final AssetMasterRepository assetRepo;
     @SuppressWarnings("unused")
     private final AssetUserLinkRepository linkRepo; // Reserved for future user linking operations
@@ -666,7 +663,7 @@ public class AssetCrudService {
 
         assetDocumentRepo
                 .findByEntityTypeIgnoreCaseAndEntityIdAndDocTypeIgnoreCaseAndActiveTrue(
-                        "ASSET", a.getAssetId(), ASSET_PHOTO_DOC_TYPE)
+                        "ASSET", a.getAssetId(), DocumentTypeMasterService.CODE_ASSET_PHOTO)
                 .ifPresent(d -> {
                     dto.setAssetPhotoDocumentId(d.getDocumentId());
                     dto.setAssetPhotoDocumentType(d.getDocType());
@@ -1093,7 +1090,7 @@ public class AssetCrudService {
             if (!isImageMultipart(assetImage)) {
                 throw new IllegalArgumentException("❌ Optional appliance photo must be an image file (e.g. JPEG, PNG, WebP).");
             }
-            documentTypeMasterService.validate(ASSET_PHOTO_DOC_TYPE);
+            documentTypeMasterService.validate(DocumentTypeMasterService.CODE_ASSET_PHOTO);
             DocumentRequest photoReq = new DocumentRequest();
             photoReq.setUserId(userId);
             photoReq.setUsername(username);
@@ -1101,7 +1098,7 @@ public class AssetCrudService {
             photoReq.setEntityType("ASSET");
             photoReq.setEntityId(savedAsset.getAssetId());
             photoReq.setAssetId(savedAsset.getAssetId());
-            photoReq.setDocType(ASSET_PHOTO_DOC_TYPE);
+            photoReq.setDocType(DocumentTypeMasterService.CODE_ASSET_PHOTO);
             savedPhoto = documentService.upload(headers, assetImage, photoReq);
             log.info("✅ Appliance photo uploaded: id={} for assetId={}", savedPhoto.getDocumentId(), savedAsset.getAssetId());
         }

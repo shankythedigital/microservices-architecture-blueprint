@@ -1,6 +1,6 @@
 import { url } from '../config'
 import { toApiLocalDate } from '../utils/apiDate'
-import { ApiError, parseJson } from './http'
+import { ApiError, apiFetch, considerUnauthorizedResponse, parseJson } from './http'
 import type { ResponseWrapper, SpringPage } from './types'
 
 export type AssetComponentSummary = {
@@ -45,6 +45,97 @@ export type NeedYourAttentionPayload = {
   categories?: Array<Record<string, unknown>>
   attention?: Record<string, unknown>
   [k: string]: unknown
+}
+
+/** Warranty / AMC rows ending within this many calendar days (server pre-filters to 30; we narrow for “few days”). */
+export const EXPIRING_COVERAGE_REMINDER_MAX_DAYS = 14
+
+export type CoverageExpiryReminder = {
+  kind: 'warranty' | 'amc'
+  assetId: number
+  assetName: string
+  /** ISO date string (YYYY-MM-DD) when available */
+  endDate: string
+  daysLeft: number
+}
+
+function attentionNum(v: unknown): number | null {
+  if (typeof v === 'number' && Number.isFinite(v)) return v
+  if (typeof v === 'string' && v !== '') {
+    const x = Number(v)
+    return Number.isFinite(x) ? x : null
+  }
+  return null
+}
+
+function parseAttentionEndDate(raw: unknown): Date | null {
+  if (raw == null) return null
+  if (typeof raw === 'string' && raw !== '') {
+    const d = new Date(raw.length <= 10 ? `${raw}T12:00:00` : raw)
+    return Number.isNaN(d.getTime()) ? null : d
+  }
+  return null
+}
+
+function startOfLocalDay(d: Date): number {
+  return Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())
+}
+
+function calendarDaysBetween(from: Date, to: Date): number {
+  const a = startOfLocalDay(from)
+  const b = startOfLocalDay(to)
+  return Math.round((b - a) / 86400000)
+}
+
+/**
+ * Uses `attention.expiringWarranties` / `attention.expiringAmcs` from need-your-attention (server: within 30 days).
+ * Optionally narrows to `maxDaysLeft` for UI (“few days”).
+ */
+export function extractExpiringCoverageReminders(
+  payload: NeedYourAttentionPayload | null | undefined,
+  maxDaysLeft: number = EXPIRING_COVERAGE_REMINDER_MAX_DAYS,
+): CoverageExpiryReminder[] {
+  const att = payload?.attention
+  if (!att || typeof att !== 'object') return []
+
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const rows: CoverageExpiryReminder[] = []
+
+  const pushRows = (list: unknown, kind: 'warranty' | 'amc', endKey: string) => {
+    if (!Array.isArray(list)) return
+    for (const item of list) {
+      if (!item || typeof item !== 'object') continue
+      const r = item as Record<string, unknown>
+      const assetId = attentionNum(r.assetId)
+      if (assetId == null) continue
+      const end = parseAttentionEndDate(r[endKey])
+      if (!end) continue
+      const daysLeft = calendarDaysBetween(today, end)
+      if (daysLeft < 0 || daysLeft > maxDaysLeft) continue
+      const name =
+        typeof r.assetName === 'string' && r.assetName.trim()
+          ? r.assetName.trim()
+          : 'Appliance'
+      const endIso =
+        typeof r[endKey] === 'string' && (r[endKey] as string).length <= 10
+          ? (r[endKey] as string)
+          : end.toISOString().slice(0, 10)
+      rows.push({ kind, assetId, assetName: name, endDate: endIso, daysLeft })
+    }
+  }
+
+  pushRows(att.expiringWarranties, 'warranty', 'warrantyEndDate')
+  pushRows(att.expiringAmcs, 'amc', 'amcEndDate')
+
+  rows.sort((a, b) => a.daysLeft - b.daysLeft || a.assetName.localeCompare(b.assetName))
+  return rows
+}
+
+export function formatCoverageDaysLeft(daysLeft: number): string {
+  if (daysLeft <= 0) return 'today'
+  if (daysLeft === 1) return 'tomorrow'
+  return `in ${daysLeft} days`
 }
 
 /** Best URL for compact list thumbnails (lazy-loaded). Does not include `assetPhotoDocumentId` (use AuthenticatedDocImage). */
@@ -197,6 +288,7 @@ function buildCreateAssetPayload(
 }
 
 async function unwrap<T>(r: Response): Promise<ResponseWrapper<T>> {
+  considerUnauthorizedResponse(r, true)
   const data = await parseJson<ResponseWrapper<T>>(r)
   if (!r.ok || !data) {
     throw new ApiError((data as { message?: string })?.message || r.statusText, r.status)
@@ -214,9 +306,7 @@ async function unwrap<T>(r: Response): Promise<ResponseWrapper<T>> {
 export async function getNeedYourAttention(
   token: string,
 ): Promise<ResponseWrapper<NeedYourAttentionPayload>> {
-  const r = await fetch(url('asset', '/api/asset/v1/userlinks/need-your-attention'), {
-    headers: { Accept: 'application/json', Authorization: `Bearer ${token}` },
-  })
+  const r = await apiFetch(url('asset', '/api/asset/v1/userlinks/need-your-attention'), { token })
   return unwrap<NeedYourAttentionPayload>(r)
 }
 
@@ -294,13 +384,11 @@ export async function createAssetComplete(
   token: string,
   formData: FormData,
 ): Promise<ResponseWrapper<Record<string, unknown>>> {
-  const r = await fetch(url('asset', '/api/asset/v1/assets/complete'), {
+  const r = await apiFetch(url('asset', '/api/asset/v1/assets/complete'), {
     method: 'POST',
-    headers: {
-      Accept: 'application/json',
-      Authorization: `Bearer ${token}`,
-    },
+    headers: { Accept: 'application/json' },
     body: formData,
+    token,
   })
   return unwrap<Record<string, unknown>>(r)
 }

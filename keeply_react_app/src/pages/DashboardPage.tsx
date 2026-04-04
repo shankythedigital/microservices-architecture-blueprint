@@ -2,11 +2,14 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import {
+  extractExpiringCoverageReminders,
   fetchAssetsAssignedToUser,
+  formatCoverageDaysLeft,
   getNeedYourAttention,
   searchAssets,
   assetListThumbnailUrl,
   type AssetRecord,
+  type CoverageExpiryReminder,
 } from '../api/assetsApi'
 import { notificationCount } from '../api/notificationsApi'
 import { listMyIssues } from '../api/issuesApi'
@@ -16,6 +19,12 @@ import { ResponsiveImage } from '../components/ResponsiveImage'
 
 const ROOM_FILTERS = ['All', 'Kitchen', 'Living room', 'Laundry', 'Other']
 
+function formatReminderDate(iso: string): string {
+  const d = new Date(iso.length <= 10 ? `${iso}T12:00:00` : iso)
+  if (Number.isNaN(d.getTime())) return iso
+  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
+}
+
 export function DashboardPage() {
   const { token, userId } = useAuth()
   const [assets, setAssets] = useState<AssetRecord[]>([])
@@ -23,6 +32,7 @@ export function DashboardPage() {
   const [issueOpen, setIssueOpen] = useState<number | null>(null)
   const [room, setRoom] = useState('All')
   const [err, setErr] = useState<string | null>(null)
+  const [coverageReminders, setCoverageReminders] = useState<CoverageExpiryReminder[]>([])
 
   useEffect(() => {
     if (!token) return
@@ -30,14 +40,20 @@ export function DashboardPage() {
     ;(async () => {
       try {
         setErr(null)
-        const [nc, issues] = await Promise.all([
+        const uid = userId != null && Number.isFinite(Number(userId)) ? Number(userId) : null
+        const [nc, issues, nya] = await Promise.all([
           notificationCount(token).catch(() => null),
           listMyIssues(token).catch(() => []),
+          getNeedYourAttention(token).catch((e) => {
+            console.warn('need-your-attention', e)
+            return null
+          }),
         ])
         if (cancelled) return
 
+        setCoverageReminders(extractExpiringCoverageReminders(nya?.data ?? undefined))
+
         let list: AssetRecord[] = []
-        const uid = userId != null && Number.isFinite(Number(userId)) ? Number(userId) : null
         if (uid != null) {
           try {
             list = await fetchAssetsAssignedToUser(token, uid)
@@ -46,11 +62,6 @@ export function DashboardPage() {
           }
         }
         if (list.length === 0) {
-          const nya = await getNeedYourAttention(token).catch((e) => {
-            console.warn('need-your-attention', e)
-            return null
-          })
-          if (cancelled) return
           const fromNya = nya?.data?.assets
           if (Array.isArray(fromNya) && fromNya.length > 0) {
             list = fromNya as AssetRecord[]
@@ -128,6 +139,30 @@ export function DashboardPage() {
             {' · '}
             <Link to="/home/account">Account</Link>
           </p>
+          {coverageReminders.length > 0 && (
+            <ul
+              className="dashboard-coverage-reminders"
+              aria-label="Warranty and AMC expiring soon"
+              style={{ margin: '0.65rem 0 0', paddingLeft: '1.15rem' }}
+            >
+              {coverageReminders.slice(0, 8).map((r) => (
+                <li key={`${r.kind}-${r.assetId}-${r.endDate}`} className="small" style={{ marginBottom: '0.35rem' }}>
+                  <Link to={`/home/assets/${r.assetId}`}>
+                    <strong>{r.assetName}</strong>
+                  </Link>
+                  {' — '}
+                  {r.kind === 'warranty' ? 'Warranty' : 'AMC'} ends{' '}
+                  <time dateTime={r.endDate}>{formatReminderDate(r.endDate)}</time> (
+                  {formatCoverageDaysLeft(r.daysLeft)}).
+                </li>
+              ))}
+            </ul>
+          )}
+          {coverageReminders.length > 8 && (
+            <p className="muted small" style={{ margin: '0.35rem 0 0' }}>
+              + more — open <Link to="/home/assets">My appliances</Link> to review coverage dates.
+            </p>
+          )}
         </div>
         <Link to="/home/issues" className="btn secondary tight">
           Service issues {issueOpen != null ? `(${issueOpen})` : ''}

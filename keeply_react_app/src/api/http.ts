@@ -1,3 +1,23 @@
+/** Dispatched when an authenticated API call returns 401 — AuthProvider listens and clears session + /login. */
+export const SESSION_EXPIRED_EVENT = 'keeply:session-expired'
+
+let sessionExpiredLatch = false
+
+/** Clears one-shot latch (call after login or local logout). */
+export function resetSessionExpiredLatch(): void {
+  sessionExpiredLatch = false
+}
+
+/**
+ * If the app sent an access token and the server rejected it (401), notify once so we can redirect to login.
+ */
+export function considerUnauthorizedResponse(response: Response, accessTokenWasSent: boolean): void {
+  if (!accessTokenWasSent || response.status !== 401) return
+  if (sessionExpiredLatch) return
+  sessionExpiredLatch = true
+  window.dispatchEvent(new CustomEvent(SESSION_EXPIRED_EVENT))
+}
+
 export class ApiError extends Error {
   status: number
   body?: string
@@ -28,7 +48,9 @@ export async function apiFetch(
   }
   if (token) headers.set('Authorization', `Bearer ${token}`)
 
-  return fetch(input, { ...rest, headers })
+  const response = await fetch(input, { ...rest, headers })
+  considerUnauthorizedResponse(response, Boolean(token))
+  return response
 }
 
 export async function apiJson<T>(

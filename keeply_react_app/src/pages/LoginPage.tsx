@@ -10,9 +10,12 @@ type Mode = 'otp' | 'password'
 export function LoginPage() {
   const { token, login, loginWithOtp, error, clearError } = useAuth()
   const location = useLocation()
-  const locState = location.state as { from?: string; registered?: boolean } | null
-  const from = locState?.from || '/home'
+  const locState = location.state as { from?: string; registered?: boolean; sessionExpired?: boolean } | null
+  /** After login, always land in the app home shell; preserve deep links only under `/home`. */
+  const afterLogin =
+    locState?.from && locState.from.startsWith('/home') ? locState.from : '/home'
   const justRegistered = Boolean(locState?.registered)
+  const sessionExpired = Boolean(locState?.sessionExpired)
 
   const [mode, setMode] = useState<Mode>('otp')
   const [mobile, setMobile] = useState('')
@@ -24,7 +27,7 @@ export function LoginPage() {
   const [busy, setBusy] = useState(false)
   const [sendErr, setSendErr] = useState<string | null>(null)
 
-  if (token) return <Navigate to={from} replace />
+  if (token) return <Navigate to={afterLogin} replace />
 
   async function onSendOtp(e: FormEvent) {
     e.preventDefault()
@@ -76,6 +79,11 @@ export function LoginPage() {
       <div className="welcome__card login">
         <h1>Sign in</h1>
         <p className="muted small">Enter your mobile number to get a one-time passcode.</p>
+        {sessionExpired && (
+          <p className="error-banner" role="status">
+            Your session expired. Please sign in again to continue.
+          </p>
+        )}
         {justRegistered && (
           <p className="ok-banner" role="status">
             Registration successful — sign in with OTP or password.

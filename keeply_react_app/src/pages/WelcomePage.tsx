@@ -9,20 +9,24 @@ export function WelcomePage() {
         <p className="muted">
           Keep track of appliances, invoices, warranties, and service reminders—so you never miss an expiry.
         </p>
+        <p className="muted small">
+          New here? Create a free account first. Already registered? Sign in to open your home dashboard.
+        </p>
         <ul className="muted small welcome__bullets" aria-label="Highlights">
           <li>Add appliances by scan or manual entry</li>
           <li>Store invoice documents</li>
           <li>Get alerts before warranty or service due</li>
           <li>Raise service issues and track status</li>
         </ul>
-        <Link to="/login" className="btn primary block">
-          Get started
-        </Link>
-        <Link to="/register" className="btn secondary block" style={{ marginTop: '0.65rem' }}>
+        <Link to="/register" className="btn primary block">
           Create an account
         </Link>
+        <Link to="/login" className="btn secondary block" style={{ marginTop: '0.65rem' }}>
+          Sign in
+        </Link>
         <p className="muted small legal">
-          By continuing you’ll verify your mobile (OTP). Password login is available for admin/dev accounts.
+          Registration verifies your mobile (OTP). Password login is available for admin/dev accounts after you
+          register.
         </p>
       </div>
     </div>
