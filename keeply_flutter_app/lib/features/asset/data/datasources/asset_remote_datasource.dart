@@ -385,6 +385,166 @@ class AssetRemoteDataSource {
     }
   }
 
+  Map<String, dynamic> _asMap(dynamic responseData) {
+    if (responseData is Map<String, dynamic>) return responseData;
+    if (responseData is Map) return Map<String, dynamic>.from(responseData);
+    return {};
+  }
+
+  /// `GET /api/asset/v1/assets/search` — same contract as React `searchAssets`.
+  Future<AssetSearchPage> searchAssets({
+    String? keyword,
+    int page = 0,
+    int size = 12,
+  }) async {
+    try {
+      final response = await _apiClient.dio.get(
+        '${AppConfig.assetServiceBaseUrl}${AppConfig.assetBasePath}/assets/search',
+        queryParameters: {
+          if (keyword != null && keyword.trim().isNotEmpty) 'keyword': keyword.trim(),
+          'page': page,
+          'size': size,
+        },
+      );
+
+      if (response.statusCode == 200 && response.data != null) {
+        final root = _asMap(response.data);
+        if (root['success'] == false) {
+          final msg = root['message'] as String? ?? 'Request failed';
+          throw ApiException(message: msg, type: ApiExceptionType.badRequest);
+        }
+        final data = root['data'];
+        if (data is! Map) {
+          return AssetSearchPage(content: [], totalElements: 0);
+        }
+        final dataMap = Map<String, dynamic>.from(data);
+        final content = dataMap['content'];
+        final total = (dataMap['totalElements'] as num?)?.toInt() ?? 0;
+        if (content is! List) {
+          return AssetSearchPage(content: [], totalElements: total);
+        }
+        final list = content
+            .whereType<Map>()
+            .map((e) => AssetMaster.fromJson(Map<String, dynamic>.from(e)))
+            .toList();
+        return AssetSearchPage(content: list, totalElements: total);
+      }
+
+      throw ApiException(message: 'Asset search failed', type: ApiExceptionType.server);
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  /// `GET /api/asset/v1/user-asset-links/user/{userId}/assets` — React `fetchAssetsAssignedToUser`.
+  Future<List<AssetMaster>> fetchAssetsAssignedToUser(int userId) async {
+    try {
+      final response = await _apiClient.dio.get(
+        '${AppConfig.assetServiceBaseUrl}${AppConfig.assetBasePath}/user-asset-links/user/$userId/assets',
+      );
+
+      if (response.statusCode == 200 && response.data != null) {
+        final root = _asMap(response.data);
+        if (root['success'] == false) {
+          final msg = root['message'] as String? ?? 'Request failed';
+          throw ApiException(message: msg, type: ApiExceptionType.badRequest);
+        }
+        final raw = root['data'];
+        if (raw is! List) return [];
+        return raw
+            .whereType<Map>()
+            .map((e) => AssetMaster.fromJson(Map<String, dynamic>.from(e)))
+            .toList();
+      }
+
+      return [];
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  /// `GET /api/asset/v1/userlinks/need-your-attention` — raw `data` map for dashboard.
+  Future<Map<String, dynamic>?> getNeedYourAttention() async {
+    try {
+      final response = await _apiClient.dio.get(
+        '${AppConfig.assetServiceBaseUrl}${AppConfig.assetBasePath}/userlinks/need-your-attention',
+      );
+
+      if (response.statusCode == 200 && response.data != null) {
+        final root = _asMap(response.data);
+        if (root['success'] == false) return null;
+        final d = root['data'];
+        if (d is Map<String, dynamic>) return d;
+        if (d is Map) return Map<String, dynamic>.from(d);
+      }
+      return null;
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  /// React `createAssetWithDocument` — `POST /api/asset/v1/assets/with-document`.
+  Future<AssetMaster> createAssetWithDocument({
+    required Map<String, dynamic> requestPayload,
+    required String documentBase64,
+    required String docType,
+  }) async {
+    try {
+      final response = await _apiClient.dio.post(
+        '${AppConfig.assetServiceBaseUrl}${AppConfig.assetBasePath}/assets/with-document',
+        data: {
+          'request': requestPayload,
+          'document': documentBase64,
+          'docType': docType.trim(),
+        },
+      );
+
+      if (response.statusCode == 200 && response.data != null) {
+        final wrapper = ResponseWrapper.fromJson(
+          response.data as Map<String, dynamic>,
+          (json) => AssetMaster.fromJson(json),
+        );
+        if (wrapper.success && wrapper.data != null) {
+          return wrapper.data!;
+        }
+        throw ApiException(message: wrapper.message, type: ApiExceptionType.badRequest);
+      }
+
+      throw ApiException(message: 'Create asset with document failed', type: ApiExceptionType.server);
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  /// React `createAssetComplete` — `POST /api/asset/v1/assets/complete` (multipart `FormData`).
+  Future<Map<String, dynamic>> createAssetComplete(FormData formData) async {
+    try {
+      final response = await _apiClient.dio.post(
+        '${AppConfig.assetServiceBaseUrl}${AppConfig.assetBasePath}/assets/complete',
+        data: formData,
+        options: Options(headers: const {'Accept': 'application/json'}),
+      );
+
+      if (response.statusCode == 200 && response.data != null) {
+        final root = _asMap(response.data);
+        if (root['success'] == false) {
+          throw ApiException(
+            message: root['message'] as String? ?? 'Request failed',
+            type: ApiExceptionType.badRequest,
+          );
+        }
+        final d = root['data'];
+        if (d is Map<String, dynamic>) return d;
+        if (d is Map) return Map<String, dynamic>.from(d);
+        return {};
+      }
+
+      throw ApiException(message: 'Complete asset create failed', type: ApiExceptionType.server);
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
   // ============================================================
   // ERROR HANDLING
   // ============================================================

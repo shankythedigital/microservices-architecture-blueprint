@@ -6,6 +6,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import java.util.List;
 import java.util.Optional;
@@ -19,6 +20,93 @@ public final class JwtUtil {
     // Set JwtVerifier via static method (called from configuration)
     public static void setJwtVerifier(JwtVerifier verifier) {
         jwtVerifier = verifier;
+    }
+
+    /**
+     * Numeric user id from JWT: {@code sub} when it parses as a long, else {@code uid} claim
+     * (matches auth-service access tokens where {@code sub} is the user id string).
+     */
+    public static Long parseUserIdLong(Claims claims) {
+        if (claims == null) {
+            return null;
+        }
+        String sub = claims.getSubject();
+        if (sub != null && !sub.isBlank()) {
+            try {
+                return Long.parseLong(sub.trim());
+            } catch (NumberFormatException ignored) {
+                // opaque subject — try uid
+            }
+        }
+        Object uid = claims.get("uid");
+        if (uid instanceof Number n) {
+            return n.longValue();
+        }
+        if (uid != null) {
+            try {
+                return Long.parseLong(uid.toString().trim());
+            } catch (NumberFormatException ignored) {
+                // fall through
+            }
+        }
+        return null;
+    }
+
+    private static Long userIdFromSpringSecurityJwt(Jwt jwt) {
+        if (jwt == null) {
+            return null;
+        }
+        Object uid = jwt.getClaim("uid");
+        if (uid instanceof Number n) {
+            return n.longValue();
+        }
+        if (uid != null) {
+            try {
+                return Long.parseLong(uid.toString().trim());
+            } catch (NumberFormatException ignored) {
+                // fall through
+            }
+        }
+        String sub = jwt.getSubject();
+        if (sub != null && !sub.isBlank()) {
+            try {
+                return Long.parseLong(sub.trim());
+            } catch (NumberFormatException ignored) {
+                return null;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Same numeric identity as {@link #parseUserIdLong(Claims)} but resolved from the current
+     * Spring Security context (including bearer on {@link UsernamePasswordAuthenticationToken}).
+     */
+    public static Long getAuthenticatedUserIdLong() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth instanceof JwtAuthenticationToken jwtAuth) {
+            return userIdFromSpringSecurityJwt(jwtAuth.getToken());
+        }
+        if (auth instanceof UsernamePasswordAuthenticationToken upat) {
+            Object creds = upat.getCredentials();
+            if (creds instanceof String raw && jwtVerifier != null && !raw.isBlank()) {
+                try {
+                    Claims claims = jwtVerifier.validate(raw);
+                    return parseUserIdLong(claims);
+                } catch (Exception ignored) {
+                    // fall through to principal
+                }
+            }
+            Object principal = upat.getPrincipal();
+            if (principal instanceof String s && !s.isBlank()) {
+                try {
+                    return Long.parseLong(s.trim());
+                } catch (NumberFormatException ignored) {
+                    return null;
+                }
+            }
+        }
+        return null;
     }
 
     public static Optional<String> getUserId() {
@@ -103,9 +191,8 @@ public final class JwtUtil {
         if (getRoles().stream().anyMatch(r -> r != null && r.equalsIgnoreCase("ROLE_SERVICE"))) {
             return true;
         }
-        return getUserId()
-                .filter(self -> self.equals(String.valueOf(targetUserId)))
-                .isPresent();
+        Long self = getAuthenticatedUserIdLong();
+        return self != null && self == targetUserId;
     }
 
     public static String getUserIdOrThrow() {

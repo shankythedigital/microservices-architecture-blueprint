@@ -18,11 +18,13 @@ class AuthRemoteDataSource {
 
       if (response.statusCode == 200) {
         // Registration successful, now login
-        return await login(LoginRequest(
-          loginType: 'PASSWORD',
-          username: request.username,
-          password: request.password,
-        ));
+        return await login(
+          LoginRequest(
+            loginType: 'PASSWORD',
+            username: request.username,
+            password: request.password,
+          ),
+        );
       }
 
       throw Exception('Registration failed');
@@ -31,12 +33,35 @@ class AuthRemoteDataSource {
     }
   }
 
+  /// SMS OTP for login (React `sendLoginOtp`).
+  Future<Map<String, dynamic>> sendLoginOtp(String mobileDigits) async {
+    try {
+      final response = await _apiClient.dio.post(
+        '${AppConfig.authServiceBaseUrl}${AppConfig.authBasePath}/otp/send',
+        data: {
+          'type': 'SMS',
+          'mobile': mobileDigits,
+          'purpose': 'LOGIN',
+        },
+      );
+      if (response.statusCode == 200 && response.data is Map<String, dynamic>) {
+        return response.data as Map<String, dynamic>;
+      }
+      throw Exception('Send OTP failed');
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
   /// Login with various methods
   Future<AuthResponse> login(LoginRequest request) async {
     try {
+      final body = Map<String, dynamic>.from(request.toJson());
+      body.putIfAbsent('deviceInfo', () => 'Keeply Flutter');
+
       final response = await _apiClient.dio.post(
         '${AppConfig.authServiceBaseUrl}${AppConfig.authBasePath}/login',
-        data: request.toJson(),
+        data: body,
       );
 
       if (response.statusCode == 200 && response.data != null) {
@@ -83,11 +108,11 @@ class AuthRemoteDataSource {
     }
   }
 
-  /// Get current user profile
+  /// Current user profile (React `fetchMyProfile` — `GET /api/auth/profile/me`).
   Future<UserDto> getCurrentUser() async {
     try {
       final response = await _apiClient.dio.get(
-        '${AppConfig.authServiceBaseUrl}/api/users/me',
+        '${AppConfig.authServiceBaseUrl}${AppConfig.authBasePath}/profile/me',
       );
 
       if (response.statusCode == 200 && response.data != null) {
@@ -181,8 +206,24 @@ class AuthRemoteDataSource {
     }
   }
 
-  /// Logout (clear tokens locally)
+  /// Revoke session on server when possible, then clear local tokens (React `logoutOnServer`).
   Future<void> logout() async {
+    try {
+      final access = await _apiClient.getAccessToken();
+      if (access != null && access.trim().isNotEmpty) {
+        await _apiClient.dio.post('${AppConfig.authServiceBaseUrl}${AppConfig.authBasePath}/logout');
+      } else {
+        final rt = await _apiClient.getRefreshToken();
+        if (rt != null && rt.trim().isNotEmpty) {
+          await _apiClient.dio.post(
+            '${AppConfig.authServiceBaseUrl}${AppConfig.authBasePath}/logout',
+            data: {'refreshToken': rt.trim()},
+          );
+        }
+      }
+    } catch (_) {
+      /* best-effort */
+    }
     await _apiClient.clearTokens();
   }
 

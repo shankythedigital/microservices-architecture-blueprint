@@ -35,13 +35,20 @@ class AppConfig {
   static String get assetServiceBaseUrl {
     const envUrl = String.fromEnvironment('ASSET_SERVICE_URL');
     if (envUrl.isNotEmpty) return envUrl;
-    return 'http://$_defaultHost:8083';
+    return 'http://$_defaultHost:8085';
+  }
+
+  static String get helpdeskServiceBaseUrl {
+    const envUrl = String.fromEnvironment('HELPDESK_SERVICE_URL');
+    if (envUrl.isNotEmpty) return envUrl;
+    return 'http://$_defaultHost:8084';
   }
 
   // API Endpoints
   static const String authBasePath = '/api/auth';
   static const String notificationBasePath = '/api/notifications';
   static const String assetBasePath = '/api/asset/v1';
+  static const String helpdeskBasePath = '/api/helpdesk';
 
   // Timeouts
   static const Duration connectTimeout = Duration(seconds: 30);

@@ -59,8 +59,8 @@ class AssetMaster {
 
   factory AssetMaster.fromJson(Map<String, dynamic> json) {
     return AssetMaster(
-      assetId: json['assetId'] as int?,
-      assetNameUdv: json['assetNameUdv'] as String,
+      assetId: (json['assetId'] as num?)?.toInt(),
+      assetNameUdv: json['assetNameUdv'] as String? ?? '',
       category: json['category'] as Map<String, dynamic>?,
       subCategory: json['subCategory'] as Map<String, dynamic>?,
       make: json['make'] as Map<String, dynamic>?,
@@ -145,6 +145,17 @@ class BulkUploadResponse<T> {
           : null,
     );
   }
+}
+
+/// Spring-style page payload from `GET .../assets/search` (matches React `SpringPage`).
+class AssetSearchPage {
+  final List<AssetMaster> content;
+  final int totalElements;
+
+  AssetSearchPage({
+    required this.content,
+    required this.totalElements,
+  });
 }
 
 class ResponseWrapper<T> {

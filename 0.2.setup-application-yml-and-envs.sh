@@ -123,10 +123,18 @@ elif [ "$MODE" = "OWN_SERVER" ]; then
   ASSET_PORT="8085"
   HELPDESK_PORT="8084"
 
-  AUTH_URL="http://localhost:${AUTH_PORT}"
-  ASSET_URL="http://localhost:${ASSET_PORT}"
-  NOTIF_URL="http://localhost:${NOTIF_PORT}"
-  HELPDESK_URL="http://localhost:${HELPDESK_PORT}"
+
+  COMMON_AUTH_IP="194.163.173.37"
+  AUTH_IP="194.163.173.37"
+  ASSET_IP="194.163.173.37"
+  NOTIF_IP="194.163.173.37"
+  HELPDESK_IP="194.163.173.37"
+
+
+  AUTH_URL="http://${AUTH_IP}:${AUTH_PORT}"
+  ASSET_URL="http://${ASSET_IP}:${ASSET_PORT}"
+  NOTIF_URL="http://${NOTIF_IP}:${NOTIF_PORT}"
+  HELPDESK_URL="http://${HELPDESK_IP}:${HELPDESK_PORT}"
 
 else
   echo "💻 Generating Local YAML..."

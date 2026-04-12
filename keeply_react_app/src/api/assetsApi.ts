@@ -71,11 +71,28 @@ function attentionNum(v: unknown): number | null {
   return null
 }
 
+/** YYYY-MM-DD in local calendar (avoids UTC shift from toISOString). */
+function localDateToYmd(d: Date): string {
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+
 function parseAttentionEndDate(raw: unknown): Date | null {
   if (raw == null) return null
   if (typeof raw === 'string' && raw !== '') {
     const d = new Date(raw.length <= 10 ? `${raw}T12:00:00` : raw)
     return Number.isNaN(d.getTime()) ? null : d
+  }
+  if (Array.isArray(raw) && raw.length >= 3) {
+    const y = Number(raw[0])
+    const mo = Number(raw[1])
+    const day = Number(raw[2])
+    if ([y, mo, day].every((n) => Number.isFinite(n))) {
+      const d = new Date(y, mo - 1, day)
+      return Number.isNaN(d.getTime()) ? null : d
+    }
   }
   return null
 }
@@ -120,10 +137,11 @@ export function extractExpiringCoverageReminders(
         typeof r.assetName === 'string' && r.assetName.trim()
           ? r.assetName.trim()
           : 'Appliance'
+      const rawEnd = r[endKey]
       const endIso =
-        typeof r[endKey] === 'string' && (r[endKey] as string).length <= 10
-          ? (r[endKey] as string)
-          : end.toISOString().slice(0, 10)
+        typeof rawEnd === 'string' && rawEnd.length <= 10 && rawEnd !== ''
+          ? rawEnd.slice(0, 10)
+          : localDateToYmd(end)
       rows.push({ kind, assetId, assetName: name, endDate: endIso, daysLeft })
     }
   }

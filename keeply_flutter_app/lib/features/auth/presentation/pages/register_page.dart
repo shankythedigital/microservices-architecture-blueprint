@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:keeply_app/core/config/app_config.dart';
 import 'package:keeply_app/core/utils/validation_helper.dart';
 import 'package:keeply_app/features/auth/presentation/bloc/auth_bloc.dart';
-import 'package:keeply_app/features/asset/presentation/pages/home_page.dart';
+import 'package:keeply_app/features/shell/presentation/keeply_mobile_shell.dart';
 
 /// Register Page
 /// User registration with comprehensive validation
@@ -76,8 +76,9 @@ class _RegisterPageState extends State<RegisterPage> {
       listener: (context, state) {
         if (state is AuthAuthenticated) {
           setState(() => _isLoading = false);
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (_) => const HomePage()),
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute<void>(builder: (_) => const KeeplyMobileShell()),
+            (_) => false,
           );
         } else if (state is AuthError) {
           setState(() => _isLoading = false);

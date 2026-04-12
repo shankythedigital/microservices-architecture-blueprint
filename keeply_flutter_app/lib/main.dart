@@ -6,6 +6,7 @@ import 'package:keeply_app/features/auth/data/datasources/auth_remote_datasource
 import 'package:keeply_app/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:keeply_app/features/asset/data/datasources/asset_remote_datasource.dart';
 import 'package:keeply_app/features/asset/presentation/bloc/asset_bloc.dart';
+import 'package:keeply_app/core/theme/keeply_theme.dart';
 import 'package:keeply_app/features/auth/presentation/pages/login_page.dart';
 import 'package:keeply_app/features/auth/presentation/pages/register_page.dart';
 import 'package:keeply_app/features/auth/presentation/pages/splash_page.dart';
@@ -48,11 +49,7 @@ class KeeplyApp extends StatelessWidget {
       child: MaterialApp(
         title: 'Keeply - Asset Management',
         debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-          primarySwatch: Colors.blue,
-          useMaterial3: true,
-          colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
-        ),
+        theme: KeeplyTheme.light(),
         home: const SplashPage(),
         routes: {
           '/login': (context) => const LoginPage(),

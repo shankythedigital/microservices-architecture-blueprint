@@ -130,6 +130,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (token) resetSessionExpiredLatch()
   }, [token])
 
+  /**
+   * Keep `keeply_user_id` aligned with the access token. Stale storage (wrong tab, old refresh,
+   * manual edits) caused `/user-asset-links/user/{id}/assets` to 403 while the JWT was valid.
+   */
+  useEffect(() => {
+    if (!token) return
+    const fromToken = userIdFromAccessToken(token)
+    if (fromToken == null) return
+    const storedRaw = localStorage.getItem(USER_KEY)
+    let storedNum: number | null = null
+    if (storedRaw != null && storedRaw !== '') {
+      const n = Number(storedRaw)
+      if (Number.isFinite(n)) storedNum = n
+    }
+    if (storedNum == null || storedNum !== fromToken) {
+      localStorage.setItem(USER_KEY, String(fromToken))
+      setUserId(fromToken)
+    }
+  }, [token])
+
   const login = useCallback(
     async (username: string, password: string) => {
       setError(null)
@@ -137,7 +157,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const res = await loginPassword(username, password)
         persistSession(res)
       } catch (e) {
-        const msg = e instanceof ApiError ? e.message : 'Login failed'
+        const msg =
+          e instanceof ApiError
+            ? e.message
+            : e instanceof Error
+              ? e.message
+              : 'Login failed'
         setError(msg)
         throw e
       }
@@ -152,7 +177,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const res = await loginOtp(mobile, otp)
         persistSession(res)
       } catch (e) {
-        const msg = e instanceof ApiError ? e.message : 'OTP login failed'
+        const msg =
+          e instanceof ApiError
+            ? e.message
+            : e instanceof Error
+              ? e.message
+              : 'OTP login failed'
         setError(msg)
         throw e
       }
@@ -160,10 +190,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [persistSession],
   )
 
+  /** Prefer JWT `uid` / numeric `sub` so API paths always match the bearer token. */
   const effectiveUserId = useMemo(() => {
-    if (userId != null) return userId
-    return userIdFromAccessToken(token)
-  }, [userId, token])
+    if (!token) return null
+    const fromToken = userIdFromAccessToken(token)
+    if (fromToken != null) return fromToken
+    return userId != null && Number.isFinite(userId) ? userId : null
+  }, [token, userId])
 
   const value = useMemo(
     () => ({

@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:keeply_app/core/config/app_config.dart';
 import 'package:keeply_app/core/utils/logger.dart';
 
 /// Authentication Interceptor
@@ -42,7 +43,7 @@ class AuthInterceptor extends Interceptor {
           // Attempt to refresh token
           final dio = Dio();
           final response = await dio.post(
-            '${err.requestOptions.baseUrl}/api/auth/refresh',
+            '${AppConfig.authServiceBaseUrl}${AppConfig.authBasePath}/refresh',
             queryParameters: {'refreshToken': refreshToken},
           );
 
@@ -59,7 +60,7 @@ class AuthInterceptor extends Interceptor {
             opts.headers['Authorization'] = 'Bearer $newAccessToken';
             
             final cloneReq = await dio.request(
-              opts.path,
+              opts.uri.toString(),
               options: Options(
                 method: opts.method,
                 headers: opts.headers,

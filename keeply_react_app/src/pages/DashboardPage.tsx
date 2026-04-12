@@ -33,24 +33,35 @@ export function DashboardPage() {
   const [room, setRoom] = useState('All')
   const [err, setErr] = useState<string | null>(null)
   const [coverageReminders, setCoverageReminders] = useState<CoverageExpiryReminder[]>([])
+  /** null = not loaded yet; true/false after need-your-attention resolves (drives empty vs error copy). */
+  const [coverageNyaOk, setCoverageNyaOk] = useState<boolean | null>(null)
 
   useEffect(() => {
-    if (!token) return
+    if (!token) {
+      setCoverageReminders([])
+      setCoverageNyaOk(null)
+      return
+    }
     let cancelled = false
     ;(async () => {
       try {
         setErr(null)
+        setCoverageNyaOk(null)
         const uid = userId != null && Number.isFinite(Number(userId)) ? Number(userId) : null
-        const [nc, issues, nya] = await Promise.all([
+        const [nc, issues, nyaResult] = await Promise.all([
           notificationCount(token).catch(() => null),
           listMyIssues(token).catch(() => []),
-          getNeedYourAttention(token).catch((e) => {
-            console.warn('need-your-attention', e)
-            return null
-          }),
+          getNeedYourAttention(token)
+            .then((d) => ({ ok: true as const, data: d }))
+            .catch((e) => {
+              console.warn('need-your-attention', e)
+              return { ok: false as const, data: null }
+            }),
         ])
         if (cancelled) return
 
+        const nya = nyaResult.ok ? nyaResult.data : null
+        setCoverageNyaOk(nyaResult.ok)
         setCoverageReminders(extractExpiringCoverageReminders(nya?.data ?? undefined))
 
         let list: AssetRecord[] = []
@@ -125,13 +136,17 @@ export function DashboardPage() {
         </Link>
       </section>
 
-      <section className="banner alert-banner" aria-label="Highlights">
-        <div>
-          <strong>Upcoming reminders</strong>
-          <p className="muted small">
+      <section className="dashboard-upcoming-reminders" aria-labelledby="dashboard-upcoming-reminders-heading">
+        <div className="dashboard-upcoming-reminders__main">
+          <h2 id="dashboard-upcoming-reminders-heading" className="dashboard-upcoming-reminders__title">
+            Upcoming reminders
+          </h2>
+          <p className="dashboard-upcoming-reminders__meta muted small">
             Alerts in the current window{' '}
             {alertCount != null ? (
-              <><strong>{alertCount}</strong> in-app items · </>
+              <>
+                <strong>{alertCount}</strong> in-app items ·{' '}
+              </>
             ) : (
               '— · '
             )}
@@ -140,14 +155,10 @@ export function DashboardPage() {
             <Link to="/home/account">Account</Link>
           </p>
           {coverageReminders.length > 0 && (
-            <ul
-              className="dashboard-coverage-reminders"
-              aria-label="Warranty and AMC expiring soon"
-              style={{ margin: '0.65rem 0 0', paddingLeft: '1.15rem' }}
-            >
+            <ul className="dashboard-coverage-reminders" aria-label="Warranty and AMC expiring soon">
               {coverageReminders.slice(0, 8).map((r) => (
-                <li key={`${r.kind}-${r.assetId}-${r.endDate}`} className="small" style={{ marginBottom: '0.35rem' }}>
-                  <Link to={`/home/assets/${r.assetId}`}>
+                <li key={`${r.kind}-${r.assetId}-${r.endDate}`} className="dashboard-coverage-reminders__item small">
+                  <Link to={`/home/assets/${r.assetId}`} className="dashboard-coverage-reminders__asset-link">
                     <strong>{r.assetName}</strong>
                   </Link>
                   {' — '}
@@ -158,15 +169,31 @@ export function DashboardPage() {
               ))}
             </ul>
           )}
+          {coverageReminders.length === 0 && coverageNyaOk === null && (
+            <p className="dashboard-upcoming-reminders__empty muted small">Loading reminders…</p>
+          )}
+          {coverageReminders.length === 0 && coverageNyaOk === false && (
+            <p className="dashboard-upcoming-reminders__empty muted small">
+              Could not load coverage reminders. Open <Link to="/home/assets">My appliances</Link> to check
+              warranty and AMC dates, or try refreshing the page.
+            </p>
+          )}
+          {coverageReminders.length === 0 && coverageNyaOk === true && (
+            <p className="dashboard-upcoming-reminders__empty muted small">
+              No warranty or AMC expiry in the next 14 days.
+            </p>
+          )}
           {coverageReminders.length > 8 && (
-            <p className="muted small" style={{ margin: '0.35rem 0 0' }}>
+            <p className="dashboard-upcoming-reminders__more muted small">
               + more — open <Link to="/home/assets">My appliances</Link> to review coverage dates.
             </p>
           )}
         </div>
-        <Link to="/home/issues" className="btn secondary tight">
-          Service issues {issueOpen != null ? `(${issueOpen})` : ''}
-        </Link>
+        <div className="dashboard-upcoming-reminders__actions">
+          <Link to="/home/issues" className="btn secondary tight">
+            Service issues {issueOpen != null ? `(${issueOpen})` : ''}
+          </Link>
+        </div>
       </section>
 
       <Link to="/home/helpdesk" className="list-link helpdesk-dashboard-link">

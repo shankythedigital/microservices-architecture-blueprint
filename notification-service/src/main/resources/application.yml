@@ -4,7 +4,7 @@ server:
 
 notification:
   service:
-    url: http://localhost:8082/api/notifications
+    url: http://194.163.173.37:8082/api/notifications
   # When true and userId + Bearer token are present, skips sending if user opted out of that channel (auth-service).
   opt-out-check:
     enabled: true
@@ -17,7 +17,7 @@ notification:
 
 asset:
   service:
-    url: http://localhost:8085
+    url: http://194.163.173.37:8085
   upload:
     dir: /asset-uploads/amc-docs
 
@@ -46,7 +46,7 @@ spring:
 
 auth:
   service:
-    url: http://localhost:8081/api/
+    url: http://194.163.173.37:8081/api/
   client-id: notification-service
   client-secret: notify-secret
 

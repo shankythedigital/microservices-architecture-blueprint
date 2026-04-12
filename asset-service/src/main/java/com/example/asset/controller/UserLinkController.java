@@ -238,13 +238,9 @@ public ResponseEntity<ResponseWrapper<Map<String, Object>>> delinkMultipleEntiti
             try {
                 String tokenValue = token.startsWith("Bearer ") ? token.substring(7) : token;
                 Claims claims = jwtVerifier.parseToken(tokenValue).getBody();
-                String userIdStr = claims.getSubject();
-                if (userIdStr != null) {
-                    try {
-                        loginUserId = Long.parseLong(userIdStr);
-                    } catch (NumberFormatException e) {
-                        log.warn("⚠️ Could not parse userId from token: {}", userIdStr);
-                    }
+                loginUserId = JwtUtil.parseUserIdLong(claims);
+                if (loginUserId == null) {
+                    log.warn("⚠️ Could not parse user id from token (sub/uid)");
                 }
                 if (loginUsername == null || loginUsername.isBlank()) {
                     Object usernameObj = claims.get("username");
@@ -324,13 +320,9 @@ public ResponseEntity<ResponseWrapper<Map<String, Object>>> delinkMultipleEntiti
             try {
                 String tokenValue = token.startsWith("Bearer ") ? token.substring(7) : token;
                 Claims claims = jwtVerifier.parseToken(tokenValue).getBody();
-                String userIdStr = claims.getSubject();
-                if (userIdStr != null) {
-                    try {
-                        loginUserId = Long.parseLong(userIdStr);
-                    } catch (NumberFormatException e) {
-                        log.warn("⚠️ Could not parse userId from token: {}", userIdStr);
-                    }
+                loginUserId = JwtUtil.parseUserIdLong(claims);
+                if (loginUserId == null) {
+                    log.warn("⚠️ Could not parse user id from token (sub/uid) for Need Your Attention");
                 }
                 Object usernameObj = claims.get("username");
                 if (usernameObj == null) {

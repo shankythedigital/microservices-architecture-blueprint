@@ -1162,6 +1162,10 @@ html[data-keeply-theme='dark'] .dashboard-upcoming-reminders::before {
   margin: 0.45rem 0 0;
 }
 
+.dashboard-upcoming-reminders__empty {
+  margin: 0.55rem 0 0;
+}
+
 .dashboard-upcoming-reminders__actions {
   flex-shrink: 0;
   align-self: center;

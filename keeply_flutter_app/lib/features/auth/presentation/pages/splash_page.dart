@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:keeply_app/features/auth/presentation/bloc/auth_bloc.dart';
-import 'package:keeply_app/features/auth/presentation/pages/login_page.dart';
-import 'package:keeply_app/features/asset/presentation/pages/home_page.dart';
+import 'package:keeply_app/features/auth/presentation/pages/welcome_page.dart';
+import 'package:keeply_app/features/shell/presentation/keeply_mobile_shell.dart';
 
 /// Splash Page
 /// Shows loading screen and checks authentication status
@@ -25,14 +25,12 @@ class _SplashPageState extends State<SplashPage> {
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
         if (state is AuthAuthenticated) {
-          // Navigate to home
           Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (_) => const HomePage()),
+            MaterialPageRoute<void>(builder: (_) => const KeeplyMobileShell()),
           );
         } else if (state is AuthUnauthenticated) {
-          // Navigate to login
           Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (_) => const LoginPage()),
+            MaterialPageRoute<void>(builder: (_) => const WelcomePage()),
           );
         }
       },

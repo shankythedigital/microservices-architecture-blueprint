@@ -108,6 +108,8 @@ class UserDto {
   final bool? enabled;
   final List<String>? roles;
   final DateTime? lastLoginDate;
+  /// From `GET /api/auth/profile/me` when auth-service exposes it.
+  final String? profilePhotoUrl;
 
   UserDto({
     required this.userId,
@@ -118,11 +120,21 @@ class UserDto {
     this.enabled,
     this.roles,
     this.lastLoginDate,
+    this.profilePhotoUrl,
   });
 
+  static int? _parseUserId(Map<String, dynamic> json) {
+    final raw = json['userId'] ?? json['id'];
+    if (raw == null) return null;
+    if (raw is int) return raw;
+    if (raw is num) return raw.toInt();
+    return int.tryParse('$raw');
+  }
+
   factory UserDto.fromJson(Map<String, dynamic> json) {
+    final uid = _parseUserId(json) ?? 0;
     return UserDto(
-      userId: json['userId'] as int,
+      userId: uid,
       username: json['username'] as String?,
       email: json['email'] as String?,
       mobile: json['mobile'] as String?,
@@ -134,6 +146,7 @@ class UserDto {
       lastLoginDate: json['lastLoginDate'] != null
           ? DateTime.parse(json['lastLoginDate'] as String)
           : null,
+      profilePhotoUrl: json['profilePhotoUrl'] as String?,
     );
   }
 }

@@ -48,6 +48,11 @@ export async function apiFetch(
   }
   if (token) headers.set('Authorization', `Bearer ${token}`)
 
+  if (import.meta.env.VITE_DEBUG_API === 'true') {
+    // Visible in Chrome → Inspect WebView (see .env.example). No secrets logged.
+    console.info('[Keeply API]', rest.method ?? 'GET', input)
+  }
+
   const response = await fetch(input, { ...rest, headers })
   considerUnauthorizedResponse(response, Boolean(token))
   return response

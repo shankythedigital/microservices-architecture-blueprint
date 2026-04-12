@@ -31,9 +31,18 @@ function readRuntimeBases(): RuntimeBases {
   }
 }
 
+/** Keep `http://` API bases when the page is HTTPS (avoids wrong scheme on remote HTTP-only servers). */
+function allowInsecureHttpApiBases(): boolean {
+  return (
+    import.meta.env.MODE === 'capacitor' ||
+    import.meta.env.VITE_ALLOW_INSECURE_HTTP_API === 'true'
+  )
+}
+
 function httpsSafeBase(prefix: string): string {
   if (!prefix) return ''
   if (!isBrowser()) return prefix
+  if (allowInsecureHttpApiBases()) return prefix
   if (window.location.protocol === 'https:' && prefix.startsWith('http://')) {
     return `https://${prefix.slice('http://'.length)}`
   }
@@ -52,6 +61,7 @@ export function getServiceBase(service: ServiceName): string {
  * - In dev: leave bases empty to use Vite proxy on same-origin `/api/*`
  * - In prod: set `VITE_*_BASE` OR store runtime bases in localStorage under `keeply_service_bases`
  * - When app is on HTTPS, bases are auto-upgraded to HTTPS to avoid mixed-content blocks
+ *   unless `VITE_ALLOW_INSECURE_HTTP_API=true` or mode is `capacitor` (temporary HTTP backends).
  */
 export function url(service: ServiceName, path: string): string {
   const prefix = getServiceBase(service)
