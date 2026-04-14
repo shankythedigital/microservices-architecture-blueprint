@@ -7,7 +7,7 @@ class AppConfig {
   static String get _defaultHost {
     if (kIsWeb) {
       // Flutter Web: localhost works when backend is on same machine
-      // CORS must be configured on auth-service (see CorsConfig.java)
+      // CORS: backends use shared KeeplyCorsConfiguration (common-service) via each *-service CorsConfig.
       return 'localhost';
     }
     if (defaultTargetPlatform == TargetPlatform.android) {
@@ -19,7 +19,9 @@ class AppConfig {
     return 'localhost';
   }
 
-  // API Base URLs - Can be overridden via environment variables
+  // API Base URLs - Can be overridden via environment variables.
+  // Flutter web from another machine / LAN: use full URLs, e.g.
+  // `--dart-define=AUTH_SERVICE_URL=http://192.168.1.5:8081` (must match CORS allowed patterns on services).
   static String get authServiceBaseUrl {
     const envUrl = String.fromEnvironment('AUTH_SERVICE_URL');
     if (envUrl.isNotEmpty) return envUrl;
@@ -71,7 +73,7 @@ class AppConfig {
     'application/msword',
     'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
     'application/vnd.ms-excel',
-    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
   ];
 
   // Cache Configuration

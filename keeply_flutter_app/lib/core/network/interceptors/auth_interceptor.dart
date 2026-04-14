@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:keeply_app/core/config/app_config.dart';
+import 'package:keeply_app/core/network/dio_error_util.dart';
 import 'package:keeply_app/core/utils/logger.dart';
 
 /// Authentication Interceptor
@@ -11,27 +12,49 @@ class AuthInterceptor extends Interceptor {
   AuthInterceptor(this._secureStorage);
 
   @override
-  void onRequest(RequestOptions options, RequestInterceptorHandler handler) async {
+  void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
     // Skip auth for public endpoints
     if (_isPublicEndpoint(options.path)) {
-      return handler.next(options);
+      handler.next(options);
+      return;
     }
 
-    // Get access token
-    final token = await _secureStorage.read(key: 'access_token');
-    
-    if (token != null && token.isNotEmpty) {
-      options.headers['Authorization'] = 'Bearer $token';
-      AppLogger.debug('Added Bearer token to request: ${options.path}');
-    } else {
-      AppLogger.warning('No token available for request: ${options.path}');
-    }
-
-    handler.next(options);
+    // Do not use `async void` here: Dio awaits [handler.future] and must not
+    // proceed until the token read completes (especially on web right after login).
+    _secureStorage.read(key: 'access_token').then((token) {
+      if (token != null && token.isNotEmpty) {
+        options.headers['Authorization'] = 'Bearer $token';
+        AppLogger.debug('Added Bearer token to request: ${options.path}');
+      } else {
+        AppLogger.warning('No token available for request: ${options.path}');
+      }
+      handler.next(options);
+    }).catchError((Object e, StackTrace st) {
+      final err = DioException(
+        requestOptions: options,
+        error: e,
+        stackTrace: st,
+        type: DioExceptionType.unknown,
+      );
+      handler.reject(
+        DioException(
+          requestOptions: err.requestOptions,
+          error: err.error,
+          stackTrace: err.stackTrace,
+          type: err.type,
+          message: describeDioException(err),
+        ),
+      );
+    });
   }
 
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) async {
+    final path = err.requestOptions.path;
+    if (_isPublicEndpoint(path) || path.contains('/api/auth/refresh')) {
+      return handler.next(err);
+    }
+
     // Handle 401 Unauthorized - Token expired or invalid
     if (err.response?.statusCode == 401) {
       AppLogger.warning('Received 401, attempting token refresh');
@@ -88,6 +111,7 @@ class AuthInterceptor extends Interceptor {
       '/api/auth/register',
       '/api/auth/login',
       '/api/auth/otp/send',
+      '/api/auth/refresh',
       '/swagger-ui',
       '/v3/api-docs',
     ];

@@ -1,5 +1,6 @@
 /// App Constants
 /// Centralized constants used across the app
+library;
 
 class AppConstants {
   // Storage Keys

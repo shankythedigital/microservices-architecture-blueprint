@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:keeply_app/core/config/app_config.dart';
 import 'package:keeply_app/core/theme/keeply_tokens.dart';
+import 'package:keeply_app/core/view_layout/view_layout_scope.dart';
 import 'package:keeply_app/features/asset/presentation/pages/create_asset_page.dart';
 import 'package:keeply_app/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:keeply_app/features/home/presentation/dashboard_page.dart';
@@ -179,6 +180,8 @@ class _Header extends StatelessWidget {
               ],
             ),
             const Spacer(),
+            const ViewLayoutToggle(compact: true),
+            const SizedBox(width: 8),
             InkWell(
               onTap: onAccount,
               borderRadius: BorderRadius.circular(999),

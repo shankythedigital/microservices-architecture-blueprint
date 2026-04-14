@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:keeply_app/core/theme/keeply_tokens.dart';
+import 'package:keeply_app/core/view_layout/view_layout_scope.dart';
+import 'package:keeply_app/core/widgets/keeply_asset_views.dart';
 import 'package:keeply_app/features/asset/data/datasources/asset_remote_datasource.dart';
 import 'package:keeply_app/features/asset/data/models/asset_models.dart';
 import 'package:keeply_app/features/auth/presentation/bloc/auth_bloc.dart';
@@ -270,7 +272,31 @@ class _DashboardPageState extends State<DashboardPage> {
               ),
             )
           else
-            ..._filtered.take(12).map((a) => _AssetRow(asset: a, t: t)),
+            ListenableBuilder(
+              listenable: ViewLayoutScope.notifierOf(context),
+              builder: (context, _) {
+                final preview = _filtered.take(12).toList();
+                if (ViewLayoutScope.modeOf(context) == ViewLayoutMode.list) {
+                  return Column(
+                    children: [
+                      for (final a in preview) KeeplyAssetListRow(asset: a, onTap: () {}),
+                    ],
+                  );
+                }
+                return GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    mainAxisSpacing: 12,
+                    crossAxisSpacing: 12,
+                    childAspectRatio: 0.78,
+                  ),
+                  itemCount: preview.length,
+                  itemBuilder: (_, i) => KeeplyAssetGridCard(asset: preview[i], onTap: () {}),
+                );
+              },
+            ),
         ],
       ),
     );
@@ -546,32 +572,3 @@ class _HelpCard extends StatelessWidget {
   }
 }
 
-class _AssetRow extends StatelessWidget {
-  const _AssetRow({required this.asset, required this.t});
-
-  final AssetMaster asset;
-  final TextTheme t;
-
-  @override
-  Widget build(BuildContext context) {
-    final title = asset.assetNameUdv.isNotEmpty ? asset.assetNameUdv : 'Appliance ${asset.assetId ?? ''}';
-    final cat = asset.category?['categoryName'] as String? ?? '';
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: Material(
-        color: KeeplyTokens.surface,
-        borderRadius: BorderRadius.circular(KeeplyTokens.radiusXs),
-        child: ListTile(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(KeeplyTokens.radiusXs),
-            side: const BorderSide(color: KeeplyTokens.line),
-          ),
-          title: Text(title, style: t.titleSmall?.copyWith(fontWeight: FontWeight.w600)),
-          subtitle: cat.isNotEmpty ? Text(cat, style: t.bodySmall?.copyWith(color: KeeplyTokens.muted)) : null,
-          trailing: const Icon(Icons.chevron_right_rounded, color: KeeplyTokens.muted),
-          onTap: () {},
-        ),
-      ),
-    );
-  }
-}

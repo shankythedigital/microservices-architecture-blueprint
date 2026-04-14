@@ -1,5 +1,6 @@
 /// Edge Case Handler
 /// Utility class for handling common edge cases across the app
+library;
 
 class EdgeCaseHandler {
   /// Validate and sanitize input string
@@ -174,7 +175,7 @@ class EdgeCaseHandler {
 
   /// Debounce function calls
   static void debounce(
-    VoidCallback callback, {
+    void Function() callback, {
     Duration delay = const Duration(milliseconds: 500),
   }) {
     // This is a simplified version - in production, use a proper debounce utility

@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:keeply_app/core/config/app_config.dart';
 import 'package:keeply_app/core/network/api_client.dart';
+import 'package:keeply_app/core/network/dio_error_util.dart';
 import 'package:keeply_app/core/exceptions/api_exception.dart';
 import 'package:keeply_app/features/notification/data/models/notification_models.dart';
 
@@ -42,12 +43,14 @@ class NotificationRemoteDataSource {
     required String templateCode,
     Map<String, String>? variables,
   }) async {
-    return sendNotification(NotificationRequest(
-      channel: 'SMS',
-      templateCode: templateCode,
-      recipient: mobile,
-      variables: variables,
-    ));
+    return sendNotification(
+      NotificationRequest(
+        channel: 'SMS',
+        templateCode: templateCode,
+        recipient: mobile,
+        variables: variables,
+      ),
+    );
   }
 
   /// Send Email notification
@@ -56,12 +59,14 @@ class NotificationRemoteDataSource {
     required String templateCode,
     Map<String, String>? variables,
   }) async {
-    return sendNotification(NotificationRequest(
-      channel: 'EMAIL',
-      templateCode: templateCode,
-      recipient: email,
-      variables: variables,
-    ));
+    return sendNotification(
+      NotificationRequest(
+        channel: 'EMAIL',
+        templateCode: templateCode,
+        recipient: email,
+        variables: variables,
+      ),
+    );
   }
 
   /// Send WhatsApp notification
@@ -70,12 +75,14 @@ class NotificationRemoteDataSource {
     required String templateCode,
     Map<String, String>? variables,
   }) async {
-    return sendNotification(NotificationRequest(
-      channel: 'WHATSAPP',
-      templateCode: templateCode,
-      recipient: mobile,
-      variables: variables,
-    ));
+    return sendNotification(
+      NotificationRequest(
+        channel: 'WHATSAPP',
+        templateCode: templateCode,
+        recipient: mobile,
+        variables: variables,
+      ),
+    );
   }
 
   /// Send In-App notification
@@ -84,12 +91,14 @@ class NotificationRemoteDataSource {
     required String templateCode,
     Map<String, String>? variables,
   }) async {
-    return sendNotification(NotificationRequest(
-      channel: 'INAPP',
-      templateCode: templateCode,
-      recipient: userId,
-      variables: variables,
-    ));
+    return sendNotification(
+      NotificationRequest(
+        channel: 'INAPP',
+        templateCode: templateCode,
+        recipient: userId,
+        variables: variables,
+      ),
+    );
   }
 
   ApiException _handleError(DioException e) {
@@ -97,10 +106,8 @@ class NotificationRemoteDataSource {
       final statusCode = e.response!.statusCode;
       final data = e.response!.data;
 
-      String message = 'Failed to send notification';
-      if (data is Map<String, dynamic>) {
-        message = data['message'] ?? message;
-      }
+      String message = pickMessageFromResponseData(data) ??
+          'Failed to send notification';
 
       ApiExceptionType type;
       switch (statusCode) {
@@ -125,7 +132,7 @@ class NotificationRemoteDataSource {
     }
 
     return ApiException(
-      message: e.message ?? 'Network error',
+      message: describeDioException(e),
       type: ApiExceptionType.network,
     );
   }

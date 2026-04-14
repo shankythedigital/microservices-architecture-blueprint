@@ -1,4 +1,4 @@
-package com.example.notification.config;
+package com.example.helpdesk.config;
 
 import com.example.common.config.KeeplyCorsConfiguration;
 import org.springframework.context.annotation.Bean;
@@ -8,6 +8,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 /**
  * CORS for Flutter web / local dev; policy is defined in {@link KeeplyCorsConfiguration}.
+ * Replaces {@code allowedOrigins("*")} which is invalid for credentialed requests (e.g. JWT).
  */
 @Configuration
 public class CorsConfig {

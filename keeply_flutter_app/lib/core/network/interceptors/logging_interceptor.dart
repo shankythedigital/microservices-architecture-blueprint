@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:keeply_app/core/config/app_config.dart';
+import 'package:keeply_app/core/network/dio_error_util.dart';
 import 'package:keeply_app/core/utils/logger.dart';
 
 /// Logging Interceptor
@@ -38,7 +39,7 @@ class LoggingInterceptor extends Interceptor {
   void onError(DioException err, ErrorInterceptorHandler handler) {
     if (AppConfig.isDebugMode) {
       AppLogger.error(
-        'ERROR[${err.response?.statusCode}] => PATH: ${err.requestOptions.path}',
+        'ERROR[${err.response?.statusCode}] => PATH: ${err.requestOptions.path} — ${describeDioException(err)}',
         error: err,
       );
       if (err.response?.data != null) {

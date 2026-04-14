@@ -5,7 +5,7 @@ import 'package:keeply_app/core/theme/keeply_tokens.dart';
 /// Material 3 theme mirroring Keeply React (`index.css` — Plus Jakarta Sans, teal accent).
 abstract final class KeeplyTheme {
   static ThemeData light() {
-    final base = ColorScheme.light(
+    const base = ColorScheme.light(
       primary: KeeplyTokens.accent,
       onPrimary: Colors.white,
       secondary: KeeplyTokens.accentInk,

@@ -303,8 +303,11 @@ class SubCategoryDto {
     final cat = json['category'];
     int? cid;
     if (cat is Map) {
-      cid = (cat['categoryId'] as num?)?.toInt();
+      final cm = Map<String, dynamic>.from(cat);
+      cid = (cm['categoryId'] as num?)?.toInt();
+      cid ??= (cm['id'] as num?)?.toInt();
     }
+    cid ??= (json['categoryId'] as num?)?.toInt();
     return SubCategoryDto(
       subCategoryId: (json['subCategoryId'] as num?)?.toInt(),
       subCategoryName: json['subCategoryName'] as String?,
@@ -325,7 +328,12 @@ class MakeDto {
   factory MakeDto.fromJson(Map<String, dynamic> json) {
     final sc = json['subCategory'];
     int? sid;
-    if (sc is Map) sid = (sc['subCategoryId'] as num?)?.toInt();
+    if (sc is Map) {
+      final sm = Map<String, dynamic>.from(sc);
+      sid = (sm['subCategoryId'] as num?)?.toInt();
+      sid ??= (sm['id'] as num?)?.toInt();
+    }
+    sid ??= (json['subCategoryId'] as num?)?.toInt();
     return MakeDto(
       makeId: (json['makeId'] as num?)?.toInt(),
       makeName: json['makeName'] as String?,
@@ -346,7 +354,11 @@ class ModelDto {
   factory ModelDto.fromJson(Map<String, dynamic> json) {
     final mk = json['make'];
     int? mid;
-    if (mk is Map) mid = (mk['makeId'] as num?)?.toInt();
+    if (mk is Map) {
+      final mm = Map<String, dynamic>.from(mk);
+      mid = (mm['makeId'] as num?)?.toInt();
+      mid ??= (mm['id'] as num?)?.toInt();
+    }
     return ModelDto(
       modelId: (json['modelId'] as num?)?.toInt(),
       modelName: json['modelName'] as String?,

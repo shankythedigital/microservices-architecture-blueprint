@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:keeply_app/core/theme/keeply_tokens.dart';
+import 'package:keeply_app/core/view_layout/view_layout_scope.dart';
+import 'package:keeply_app/core/widgets/keeply_asset_views.dart';
 import 'package:keeply_app/features/asset/data/datasources/asset_remote_datasource.dart';
 import 'package:keeply_app/features/asset/data/models/asset_models.dart';
 
@@ -96,6 +98,8 @@ class _AppliancesPageState extends State<AppliancesPage> {
               ),
             ),
             Text('$_total', style: t.bodySmall?.copyWith(color: KeeplyTokens.muted)),
+            const SizedBox(width: 8),
+            const ViewLayoutToggle(compact: true),
           ],
         ),
         const SizedBox(height: 14),
@@ -151,59 +155,27 @@ class _AppliancesPageState extends State<AppliancesPage> {
             ),
           )
         else
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              mainAxisSpacing: 12,
-              crossAxisSpacing: 12,
-              childAspectRatio: 0.78,
-            ),
-            itemCount: _visible.length,
-            itemBuilder: (_, i) {
-              final a = _visible[i];
-              final title = a.assetNameUdv.isNotEmpty ? a.assetNameUdv : 'Asset ${a.assetId ?? ''}';
-              final cat = a.category?['categoryName'] as String? ?? '';
-              return Material(
-                color: KeeplyTokens.surface,
-                borderRadius: BorderRadius.circular(KeeplyTokens.radiusSm),
-                child: InkWell(
-                  onTap: () {},
-                  borderRadius: BorderRadius.circular(KeeplyTokens.radiusSm),
-                  child: Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(KeeplyTokens.radiusSm),
-                      border: Border.all(color: KeeplyTokens.line),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: KeeplyTokens.surfaceMuted,
-                              borderRadius: BorderRadius.circular(KeeplyTokens.radiusXs),
-                            ),
-                            child: const Center(
-                              child: Icon(Icons.kitchen_outlined, size: 40, color: KeeplyTokens.muted),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          title,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: t.labelLarge?.copyWith(fontWeight: FontWeight.w600),
-                        ),
-                        if (cat.isNotEmpty)
-                          Text(cat, style: t.labelSmall?.copyWith(color: KeeplyTokens.muted)),
-                      ],
-                    ),
-                  ),
+          ListenableBuilder(
+            listenable: ViewLayoutScope.notifierOf(context),
+            builder: (context, _) {
+              if (ViewLayoutScope.modeOf(context) == ViewLayoutMode.list) {
+                return Column(
+                  children: [
+                    for (final a in _visible) KeeplyAssetListRow(asset: a, onTap: () {}),
+                  ],
+                );
+              }
+              return GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  mainAxisSpacing: 12,
+                  crossAxisSpacing: 12,
+                  childAspectRatio: 0.78,
                 ),
+                itemCount: _visible.length,
+                itemBuilder: (_, i) => KeeplyAssetGridCard(asset: _visible[i], onTap: () {}),
               );
             },
           ),

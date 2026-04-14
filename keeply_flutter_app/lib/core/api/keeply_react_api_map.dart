@@ -14,6 +14,7 @@
 /// | `api/categoriesApi.ts` | `core/api/keeply_categories_api.dart` |
 /// | `constants/helpdesk.ts` | `core/constants/helpdesk_related_service.dart` |
 /// | `constants/project.ts` | `core/constants/project_constants.dart` |
+library;
 
 export 'keeply_api_models.dart';
 export 'keeply_auth_api.dart';

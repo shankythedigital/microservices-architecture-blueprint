@@ -4,15 +4,15 @@ server:
 
 auth:
   service:
-    url: http://194.163.173.37:8081
+    url: http://localhost:8081
 
 notification:
   service:
-    url: http://194.163.173.37:8082/api/notifications
+    url: http://localhost:8082/api/notifications
 
 asset:
   service:
-    url: http://194.163.173.37:8085
+    url: http://localhost:8085
 
 spring:
   application:
@@ -23,9 +23,9 @@ spring:
     deserialization:
       adjust-dates-to-context-time-zone: false
   datasource:
-    url: jdbc:mysql://194.163.173.37:3306/authdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
-    username: authdb
-    password: authdb
+    url: jdbc:mysql://localhost:3306/authdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    username: root
+    password: Snmysql@1110
   jpa:
     hibernate:
       ddl-auto: update

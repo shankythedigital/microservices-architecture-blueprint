@@ -1,6 +1,32 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:keeply_app/core/utils/logger.dart';
 
+/// Collapse [ConnectivityResult] list from `connectivity_plus` 6+ to one value
+/// for UI that still expects a single [ConnectivityResult].
+ConnectivityResult collapseConnectivityResults(List<ConnectivityResult> results) {
+  if (results.isEmpty) {
+    return ConnectivityResult.none;
+  }
+  if (results.every((r) => r == ConnectivityResult.none)) {
+    return ConnectivityResult.none;
+  }
+  const priority = <ConnectivityResult>[
+    ConnectivityResult.wifi,
+    ConnectivityResult.ethernet,
+    ConnectivityResult.mobile,
+    ConnectivityResult.vpn,
+    ConnectivityResult.other,
+    ConnectivityResult.bluetooth,
+  ];
+  for (final p in priority) {
+    if (results.contains(p)) return p;
+  }
+  return results.firstWhere(
+    (r) => r != ConnectivityResult.none,
+    orElse: () => ConnectivityResult.none,
+  );
+}
+
 /// Connectivity Helper
 /// Monitors network connectivity and provides status
 class ConnectivityHelper {
@@ -9,8 +35,8 @@ class ConnectivityHelper {
   /// Check if device is connected to internet
   Future<bool> isConnected() async {
     try {
-      final result = await _connectivity.checkConnectivity();
-      return result != ConnectivityResult.none;
+      final results = await _connectivity.checkConnectivity();
+      return !results.every((r) => r == ConnectivityResult.none);
     } catch (e) {
       AppLogger.error('Connectivity check failed: $e');
       return false;
@@ -20,7 +46,8 @@ class ConnectivityHelper {
   /// Get current connectivity status
   Future<ConnectivityResult> getConnectivityStatus() async {
     try {
-      return await _connectivity.checkConnectivity();
+      final results = await _connectivity.checkConnectivity();
+      return collapseConnectivityResults(results);
     } catch (e) {
       AppLogger.error('Get connectivity status failed: $e');
       return ConnectivityResult.none;
@@ -29,7 +56,7 @@ class ConnectivityHelper {
 
   /// Stream of connectivity changes
   Stream<ConnectivityResult> get connectivityStream {
-    return _connectivity.onConnectivityChanged;
+    return _connectivity.onConnectivityChanged.map(collapseConnectivityResults);
   }
 
   /// Check if connected via WiFi

@@ -1,4 +1,5 @@
 /// Notification Models
+library;
 
 class NotificationRequest {
   final String channel; // SMS, EMAIL, WHATSAPP, INAPP

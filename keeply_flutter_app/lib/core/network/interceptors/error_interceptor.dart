@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:keeply_app/core/exceptions/api_exception.dart';
+import 'package:keeply_app/core/network/dio_error_util.dart';
 import 'package:keeply_app/core/utils/logger.dart';
 
 /// Error Interceptor
@@ -7,7 +8,7 @@ import 'package:keeply_app/core/utils/logger.dart';
 class ErrorInterceptor extends Interceptor {
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) {
-    AppLogger.error('API Error: ${err.message}', error: err);
+    AppLogger.error('API Error: ${describeDioException(err)}', error: err);
 
     ApiException apiException;
 
@@ -37,11 +38,11 @@ class ErrorInterceptor extends Interceptor {
         // Enhanced connection error handling
         String errorMessage = 'Connection failed. ';
         final error = err.error;
-        
+
         if (error != null) {
           final errorString = error.toString().toLowerCase();
-          
-          if (errorString.contains('xmlhttprequest') || 
+
+          if (errorString.contains('xmlhttprequest') ||
               errorString.contains('cors') ||
               errorString.contains('network')) {
             errorMessage += 'Please ensure:\n'
@@ -49,17 +50,17 @@ class ErrorInterceptor extends Interceptor {
                 '2. CORS is enabled on the server\n'
                 '3. Using correct API endpoint (not localhost for web)\n'
                 '4. Network connectivity is available';
-          } else if (errorString.contains('localhost') || 
-                     errorString.contains('127.0.0.1')) {
+          } else if (errorString.contains('localhost') ||
+              errorString.contains('127.0.0.1')) {
             errorMessage += 'Cannot connect to localhost. '
                 'For web platform, use your machine\'s IP address or hostname instead of localhost.';
           } else {
-            errorMessage += 'Network error: ${err.message ?? 'Unknown error'}';
+            errorMessage += 'Network error: ${describeDioException(err)}';
           }
         } else {
           errorMessage += 'Please check your network connection and ensure backend services are running.';
         }
-        
+
         apiException = ApiException(
           message: errorMessage,
           type: ApiExceptionType.network,
@@ -67,12 +68,25 @@ class ErrorInterceptor extends Interceptor {
         );
         break;
 
-      default:
+      case DioExceptionType.badCertificate:
         apiException = ApiException(
-          message: 'An unexpected error occurred. Please try again.',
+          message: describeDioException(err),
+          type: ApiExceptionType.network,
           statusCode: err.response?.statusCode,
-          type: ApiExceptionType.unknown,
         );
+        break;
+
+      case DioExceptionType.unknown:
+        if (err.response != null && err.response!.statusCode != null) {
+          apiException = _handleResponseError(err);
+        } else {
+          apiException = ApiException(
+            message: describeDioException(err),
+            type: ApiExceptionType.unknown,
+            statusCode: err.response?.statusCode,
+          );
+        }
+        break;
     }
 
     handler.reject(
@@ -81,6 +95,7 @@ class ErrorInterceptor extends Interceptor {
         response: err.response,
         type: err.type,
         error: apiException,
+        message: apiException.message,
       ),
     );
   }
@@ -89,17 +104,8 @@ class ErrorInterceptor extends Interceptor {
     final statusCode = err.response?.statusCode;
     final data = err.response?.data;
 
-    String message = 'An error occurred';
-    
-    // Try to extract error message from response
-    if (data is Map<String, dynamic>) {
-      message = data['message'] ?? 
-                data['error'] ?? 
-                data['errorMessage'] ?? 
-                message;
-    } else if (data is String) {
-      message = data;
-    }
+    String message =
+        pickMessageFromResponseData(data) ?? 'An error occurred';
 
     ApiExceptionType type;
     switch (statusCode) {

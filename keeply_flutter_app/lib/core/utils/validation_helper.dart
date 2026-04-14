@@ -79,6 +79,42 @@ class ValidationHelper {
     return null;
   }
 
+  /// National mobile (no country prefix), aligned with auth-service `MobileValidationUtil`.
+  static String? validateNationalMobile(String? value, String countryCode) {
+    if (value == null || value.trim().isEmpty) {
+      return 'Mobile number is required';
+    }
+    final cc = countryCode.trim();
+    if (cc.isEmpty) {
+      return 'Country code is required';
+    }
+    final cleaned = value.replaceAll(RegExp(r'[\s\-()]'), '');
+    if (!RegExp(r'^\d+$').hasMatch(cleaned)) {
+      return 'Mobile must contain only digits';
+    }
+    final key = cc.toUpperCase();
+    final pattern = _nationalMobilePatterns[key] ?? _nationalMobilePatterns['DEFAULT']!;
+    if (!pattern.hasMatch(cleaned)) {
+      return 'Invalid mobile number format for $cc';
+    }
+    return null;
+  }
+
+  static final Map<String, RegExp> _nationalMobilePatterns = <String, RegExp>{
+    '+91': RegExp(r'^[6-9]\d{9}$'),
+    '+1': RegExp(r'^\d{10}$'),
+    '+44': RegExp(r'^[1-9]\d{9,10}$'),
+    '+61': RegExp(r'^[1-9]\d{8}$'),
+    '+49': RegExp(r'^[1-9]\d{9,10}$'),
+    '+33': RegExp(r'^[1-9]\d{8}$'),
+    '+86': RegExp(r'^1\d{10}$'),
+    '+81': RegExp(r'^[1-9]\d{9,10}$'),
+    '+55': RegExp(r'^[1-9]\d{9,10}$'),
+    '+971': RegExp(r'^[1-9]\d{8}$'),
+    '+65': RegExp(r'^\d{8}$'),
+    'DEFAULT': RegExp(r'^\d{7,15}$'),
+  };
+
   /// Validate OTP
   static String? validateOtp(String? value) {
     if (value == null || value.isEmpty) {

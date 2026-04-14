@@ -3,12 +3,14 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:keeply_app/core/theme/keeply_tokens.dart';
 import 'package:keeply_app/features/auth/data/datasources/auth_remote_datasource.dart';
 import 'package:keeply_app/features/auth/presentation/bloc/auth_bloc.dart';
-import 'package:keeply_app/features/auth/presentation/pages/register_page.dart';
 import 'package:keeply_app/features/shell/presentation/keeply_mobile_shell.dart';
 
 /// Matches React `LoginPage` — welcome gradient, card, segmented Mobile OTP / Password, two-step OTP.
 class LoginPage extends StatefulWidget {
-  const LoginPage({super.key});
+  const LoginPage({super.key, this.prefilledUsername});
+
+  /// After registration, password tab can open with this username filled in.
+  final String? prefilledUsername;
 
   @override
   State<LoginPage> createState() => _LoginPageState();
@@ -18,7 +20,7 @@ class _LoginPageState extends State<LoginPage> {
   final _authDs = AuthRemoteDataSource();
   final _mobileController = TextEditingController();
   final _otpController = TextEditingController();
-  final _usernameController = TextEditingController();
+  late final TextEditingController _usernameController;
   final _passwordController = TextEditingController();
 
   bool _otpMode = true;
@@ -27,6 +29,16 @@ class _LoginPageState extends State<LoginPage> {
   String? _sendErr;
   String? _devOtpHint;
   bool _obscurePassword = true;
+
+  @override
+  void initState() {
+    super.initState();
+    final u = widget.prefilledUsername?.trim();
+    _usernameController = TextEditingController(text: u != null && u.isNotEmpty ? u : '');
+    if (u != null && u.isNotEmpty) {
+      _otpMode = false;
+    }
+  }
 
   @override
   void dispose() {
@@ -257,9 +269,7 @@ class _LoginPageState extends State<LoginPage> {
                           const SizedBox(height: 14),
                           TextButton(
                             onPressed: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute<void>(builder: (_) => const RegisterPage()),
-                              );
+                              Navigator.of(context).pushNamed('/register');
                             },
                             child: const Text('Need an account? Register'),
                           ),

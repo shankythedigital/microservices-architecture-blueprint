@@ -1,7 +1,5 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:keeply_app/core/exceptions/api_exception.dart';
-import 'package:keeply_app/core/utils/logger.dart';
 import 'package:keeply_app/features/auth/data/datasources/auth_remote_datasource.dart';
 import 'package:keeply_app/features/auth/data/models/auth_models.dart';
 import 'package:keeply_app/core/network/api_client.dart';
@@ -39,6 +37,30 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<BiometricLoginEvent>(_onBiometricLogin);
   }
 
+  Future<UserDto> _resolveUserAfterLogin({
+    required AuthResponse authResponse,
+    String? fallbackUsername,
+  }) async {
+    try {
+      return await _authDataSource.getCurrentUser(
+        accessTokenOverride: authResponse.accessToken,
+      );
+    } catch (_) {
+      if (authResponse.userId != null) {
+        try {
+          return await _authDataSource.getUserById(authResponse.userId!);
+        } catch (_) {
+          // fall through to lightweight fallback user
+        }
+      }
+      return UserDto(
+        userId: authResponse.userId ?? 0,
+        username: authResponse.username ?? fallbackUsername,
+        roles: authResponse.roles,
+      );
+    }
+  }
+
   // ============================================================
   // LOGIN
   // ============================================================
@@ -46,8 +68,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     emit(AuthLoading());
 
     try {
-      final connectivityResult = await _connectivity.checkConnectivity();
-      if (connectivityResult == ConnectivityResult.none) {
+      final connectivityResults = await _connectivity.checkConnectivity();
+      final isOffline = connectivityResults.every((r) => r == ConnectivityResult.none);
+      if (isOffline) {
         emit(AuthError('No internet connection.'));
         return;
       }
@@ -106,7 +129,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         return;
       }
 
-      final user = await _authDataSource.getCurrentUser();
+      final user = await _resolveUserAfterLogin(
+        authResponse: authResponse,
+        fallbackUsername: event.username,
+      );
 
       emit(AuthAuthenticated(user: user, authResponse: authResponse));
     } catch (e) {
@@ -128,19 +154,41 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         emit(AuthError('Password must be at least 8 characters'));
         return;
       }
+      if (event.mobile.trim().isEmpty) {
+        emit(AuthError('Mobile number is required'));
+        return;
+      }
+      if (event.countryCode.trim().isEmpty) {
+        emit(AuthError('Country code is required'));
+        return;
+      }
+      if (!event.acceptTc) {
+        emit(AuthError('You must accept the Terms & Conditions'));
+        return;
+      }
 
-      final authResponse = await _authDataSource.register(
+      await _authDataSource.register(
         RegisterRequest(
           username: event.username,
           password: event.password,
           email: event.email,
-          mobile: event.mobile,
+          mobile: event.mobile.trim(),
+          countryCode: event.countryCode.trim(),
           projectType: event.projectType,
+          acceptTc: event.acceptTc,
+          firstName: event.firstName,
+          lastName: event.lastName,
+          pincode: event.pincode,
+          city: event.city,
+          state: event.state,
+          country: event.country,
+          address1: event.address1,
+          address2: event.address2,
+          address3: event.address3,
         ),
       );
 
-      final user = await _authDataSource.getCurrentUser();
-      emit(AuthAuthenticated(user: user, authResponse: authResponse));
+      emit(RegistrationSuccess(username: event.username));
     } catch (e) {
       emit(AuthError('Registration failed'));
     }
@@ -184,7 +232,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       }
 
       final auth = await _authDataSource.refreshToken(refreshToken);
-      final user = await _authDataSource.getCurrentUser();
+      final user = await _resolveUserAfterLogin(authResponse: auth);
       emit(AuthAuthenticated(user: user, authResponse: auth));
     } catch (_) {
       emit(AuthUnauthenticated());
@@ -230,7 +278,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         ),
       );
 
-      final user = await _authDataSource.getCurrentUser();
+      final user = await _resolveUserAfterLogin(
+        authResponse: authResponse,
+        fallbackUsername: event.username,
+      );
       emit(AuthAuthenticated(user: user, authResponse: authResponse));
     } catch (_) {
       emit(AuthError('OTP login failed'));
@@ -368,19 +419,58 @@ class RegisterEvent extends AuthEvent {
   final String username;
   final String password;
   final String? email;
-  final String? mobile;
+  final String mobile;
+  final String countryCode;
   final String projectType;
+  final bool acceptTc;
+  final String? firstName;
+  final String? lastName;
+  final String? pincode;
+  final String? city;
+  final String? state;
+  final String? country;
+  final String? address1;
+  final String? address2;
+  final String? address3;
 
   RegisterEvent({
     required this.username,
     required this.password,
     this.email,
-    this.mobile,
+    required this.mobile,
+    required this.countryCode,
     required this.projectType,
+    required this.acceptTc,
+    this.firstName,
+    this.lastName,
+    this.pincode,
+    this.city,
+    this.state,
+    this.country,
+    this.address1,
+    this.address2,
+    this.address3,
   });
 
   @override
-  List<Object?> get props => [username, password, email, mobile, projectType];
+  List<Object?> get props => [
+        username,
+        password,
+        email,
+        mobile,
+        countryCode,
+        projectType,
+        acceptTc,
+        firstName,
+        lastName,
+        pincode,
+        city,
+        state,
+        country,
+        address1,
+        address2,
+        address3,
+      ];
 }
 
 class LogoutEvent extends AuthEvent {}
@@ -483,6 +573,16 @@ class AuthError extends AuthState {
 
   @override
   List<Object?> get props => [message];
+}
+
+/// Registration API succeeded; user should sign in (no session yet).
+class RegistrationSuccess extends AuthState {
+  final String username;
+
+  const RegistrationSuccess({required this.username});
+
+  @override
+  List<Object?> get props => [username];
 }
 
 class OtpSent extends AuthState {

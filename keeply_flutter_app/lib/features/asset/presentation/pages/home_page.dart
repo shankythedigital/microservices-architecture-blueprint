@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:keeply_app/core/view_layout/view_layout_scope.dart';
 import 'package:keeply_app/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:keeply_app/features/asset/presentation/pages/assets_list_page.dart';
 import 'package:keeply_app/features/asset/presentation/pages/asset_scan_page.dart';
@@ -16,6 +17,10 @@ class HomePage extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Keeply'),
         actions: [
+          const Padding(
+            padding: EdgeInsets.only(right: 4),
+            child: ViewLayoutToggle(compact: true),
+          ),
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () {
@@ -73,70 +78,91 @@ class HomePage extends StatelessWidget {
                 ),
           ),
           const SizedBox(height: 16),
-          GridView.count(
-            crossAxisCount: 2,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            crossAxisSpacing: 16,
-            mainAxisSpacing: 16,
-            childAspectRatio: 1.5,
-            children: [
-              _buildActionCard(
-                context,
-                icon: Icons.inventory_2,
-                title: 'Assets',
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const AssetsListPage(),
+          ListenableBuilder(
+            listenable: ViewLayoutScope.notifierOf(context),
+            builder: (context, _) {
+              final actions = <({IconData icon, String title, VoidCallback onTap})>[
+                (
+                  icon: Icons.inventory_2,
+                  title: 'Assets',
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const AssetsListPage(),
+                      ),
+                    );
+                  },
+                ),
+                (
+                  icon: Icons.category,
+                  title: 'Categories',
+                  onTap: () {},
+                ),
+                (
+                  icon: Icons.qr_code_scanner,
+                  title: 'Scan Asset',
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const AssetScanPage(),
+                      ),
+                    );
+                  },
+                ),
+                (
+                  icon: Icons.add_circle,
+                  title: 'Add Asset',
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const CreateAssetPage(),
+                      ),
+                    );
+                  },
+                ),
+                (
+                  icon: Icons.assignment,
+                  title: 'Compliance',
+                  onTap: () {},
+                ),
+              ];
+              if (ViewLayoutScope.modeOf(context) == ViewLayoutMode.list) {
+                return Column(
+                  children: [
+                    for (final a in actions)
+                      Card(
+                        margin: const EdgeInsets.only(bottom: 8),
+                        child: ListTile(
+                          leading: Icon(a.icon, color: Theme.of(context).primaryColor),
+                          title: Text(a.title),
+                          trailing: const Icon(Icons.chevron_right),
+                          onTap: a.onTap,
+                        ),
+                      ),
+                  ],
+                );
+              }
+              return GridView.count(
+                crossAxisCount: 2,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                crossAxisSpacing: 16,
+                mainAxisSpacing: 16,
+                childAspectRatio: 1.5,
+                children: [
+                  for (final a in actions)
+                    _buildActionCard(
+                      context,
+                      icon: a.icon,
+                      title: a.title,
+                      onTap: a.onTap,
                     ),
-                  );
-                },
-              ),
-              _buildActionCard(
-                context,
-                icon: Icons.category,
-                title: 'Categories',
-                onTap: () {
-                  // Navigate to categories
-                },
-              ),
-              _buildActionCard(
-                context,
-                icon: Icons.qr_code_scanner,
-                title: 'Scan Asset',
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const AssetScanPage(),
-                    ),
-                  );
-                },
-              ),
-              _buildActionCard(
-                context,
-                icon: Icons.add_circle,
-                title: 'Add Asset',
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const CreateAssetPage(),
-                    ),
-                  );
-                },
-              ),
-              _buildActionCard(
-                context,
-                icon: Icons.assignment,
-                title: 'Compliance',
-                onTap: () {
-                  // Navigate to compliance
-                },
-              ),
-            ],
+                ],
+              );
+            },
           ),
         ],
       ),

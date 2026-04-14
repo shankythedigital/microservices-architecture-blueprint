@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
+
 /// Throttler
 /// Throttles function calls to limit execution frequency
 class Throttler {

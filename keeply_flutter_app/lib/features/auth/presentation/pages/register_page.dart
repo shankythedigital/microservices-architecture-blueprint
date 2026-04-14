@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:keeply_app/core/config/app_config.dart';
 import 'package:keeply_app/core/utils/validation_helper.dart';
+import 'package:keeply_app/core/view_layout/view_layout_scope.dart';
+import 'package:keeply_app/core/widgets/selectable_option_picker.dart';
 import 'package:keeply_app/features/auth/presentation/bloc/auth_bloc.dart';
-import 'package:keeply_app/features/shell/presentation/keeply_mobile_shell.dart';
+import 'package:keeply_app/features/auth/presentation/pages/login_page.dart';
 
-/// Register Page
-/// User registration with comprehensive validation
+/// Register page — collects fields for `POST /api/auth/register` (JSON),
+/// then on success navigates to [LoginPage] so the user can sign in.
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
 
@@ -16,16 +18,47 @@ class RegisterPage extends StatefulWidget {
 
 class _RegisterPageState extends State<RegisterPage> {
   final _formKey = GlobalKey<FormState>();
+
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   final _emailController = TextEditingController();
   final _mobileController = TextEditingController();
+  final _firstNameController = TextEditingController();
+  final _lastNameController = TextEditingController();
+  final _pincodeController = TextEditingController();
+  final _cityController = TextEditingController();
+  final _stateController = TextEditingController();
+  final _countryController = TextEditingController();
+  final _address1Controller = TextEditingController();
+  final _address2Controller = TextEditingController();
+  final _address3Controller = TextEditingController();
 
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
-  String _projectType = AppConfig.defaultProjectType;
+  bool _acceptTc = false;
   bool _isLoading = false;
+
+  String _projectType = AppConfig.defaultProjectType;
+  String _countryCode = '+91';
+
+  static const List<SelectableOption<String>> _countryCodeOptions = [
+    SelectableOption(value: '+91', title: 'India (+91)'),
+    SelectableOption(value: '+1', title: 'USA / Canada (+1)'),
+    SelectableOption(value: '+44', title: 'United Kingdom (+44)'),
+    SelectableOption(value: '+61', title: 'Australia (+61)'),
+    SelectableOption(value: '+971', title: 'UAE (+971)'),
+    SelectableOption(value: '+65', title: 'Singapore (+65)'),
+    SelectableOption(value: '+86', title: 'China (+86)'),
+    SelectableOption(value: '+49', title: 'Germany (+49)'),
+    SelectableOption(value: '+33', title: 'France (+33)'),
+  ];
+
+  static const List<SelectableOption<String>> _projectTypeOptions = [
+    SelectableOption(value: 'ASSET', title: 'Asset Management'),
+    SelectableOption(value: 'ECOM', title: 'E-Commerce'),
+    SelectableOption(value: 'PORTAL', title: 'Portal'),
+  ];
 
   @override
   void dispose() {
@@ -34,6 +67,15 @@ class _RegisterPageState extends State<RegisterPage> {
     _confirmPasswordController.dispose();
     _emailController.dispose();
     _mobileController.dispose();
+    _firstNameController.dispose();
+    _lastNameController.dispose();
+    _pincodeController.dispose();
+    _cityController.dispose();
+    _stateController.dispose();
+    _countryController.dispose();
+    _address1Controller.dispose();
+    _address2Controller.dispose();
+    _address3Controller.dispose();
     super.dispose();
   }
 
@@ -42,11 +84,20 @@ class _RegisterPageState extends State<RegisterPage> {
       return;
     }
 
-    // Edge case: Password confirmation match
     if (_passwordController.text != _confirmPasswordController.text) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Passwords do not match'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    if (!_acceptTc) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please accept the Terms & Conditions'),
           backgroundColor: Colors.red,
         ),
       );
@@ -59,25 +110,42 @@ class _RegisterPageState extends State<RegisterPage> {
           RegisterEvent(
             username: _usernameController.text.trim(),
             password: _passwordController.text,
-            email: _emailController.text.trim().isEmpty
-                ? null
-                : _emailController.text.trim(),
-            mobile: _mobileController.text.trim().isEmpty
-                ? null
-                : _mobileController.text.trim(),
+            email: _emailController.text.trim().isEmpty ? null : _emailController.text.trim(),
+            mobile: _mobileController.text.trim(),
+            countryCode: _countryCode,
             projectType: _projectType,
+            acceptTc: true,
+            firstName: _firstNameController.text.trim().isEmpty ? null : _firstNameController.text.trim(),
+            lastName: _lastNameController.text.trim().isEmpty ? null : _lastNameController.text.trim(),
+            pincode: _pincodeController.text.trim().isEmpty ? null : _pincodeController.text.trim(),
+            city: _cityController.text.trim().isEmpty ? null : _cityController.text.trim(),
+            state: _stateController.text.trim().isEmpty ? null : _stateController.text.trim(),
+            country: _countryController.text.trim().isEmpty ? null : _countryController.text.trim(),
+            address1: _address1Controller.text.trim().isEmpty ? null : _address1Controller.text.trim(),
+            address2: _address2Controller.text.trim().isEmpty ? null : _address2Controller.text.trim(),
+            address3: _address3Controller.text.trim().isEmpty ? null : _address3Controller.text.trim(),
           ),
         );
   }
 
   @override
   Widget build(BuildContext context) {
+    final t = Theme.of(context).textTheme;
+
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
-        if (state is AuthAuthenticated) {
+        if (state is RegistrationSuccess) {
           setState(() => _isLoading = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Account created. Please sign in.'),
+              backgroundColor: Colors.green,
+            ),
+          );
           Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute<void>(builder: (_) => const KeeplyMobileShell()),
+            MaterialPageRoute<void>(
+              builder: (_) => LoginPage(prefilledUsername: state.username),
+            ),
             (_) => false,
           );
         } else if (state is AuthError) {
@@ -95,6 +163,12 @@ class _RegisterPageState extends State<RegisterPage> {
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Register'),
+          actions: const [
+            Padding(
+              padding: EdgeInsets.only(right: 8),
+              child: ViewLayoutToggle(compact: true),
+            ),
+          ],
         ),
         body: SafeArea(
           child: SingleChildScrollView(
@@ -104,17 +178,15 @@ class _RegisterPageState extends State<RegisterPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const SizedBox(height: 20),
-                  // Title
+                  const SizedBox(height: 8),
                   Text(
                     'Create Account',
-                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                    style: t.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
                     textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: 40),
-                  // Username
+                  const SizedBox(height: 24),
+                  Text('Account', style: t.titleSmall?.copyWith(fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 12),
                   TextFormField(
                     controller: _usernameController,
                     decoration: const InputDecoration(
@@ -126,35 +198,18 @@ class _RegisterPageState extends State<RegisterPage> {
                     textInputAction: TextInputAction.next,
                   ),
                   const SizedBox(height: 16),
-                  // Email
                   TextFormField(
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
                     decoration: const InputDecoration(
-                      labelText: 'Email',
+                      labelText: 'Email (optional)',
                       prefixIcon: Icon(Icons.email),
                       border: OutlineInputBorder(),
                     ),
-                    validator: (value) =>
-                        ValidationHelper.validateEmail(value, required: false),
+                    validator: (value) => ValidationHelper.validateEmail(value, required: false),
                     textInputAction: TextInputAction.next,
                   ),
                   const SizedBox(height: 16),
-                  // Mobile
-                  TextFormField(
-                    controller: _mobileController,
-                    keyboardType: TextInputType.phone,
-                    decoration: const InputDecoration(
-                      labelText: 'Mobile',
-                      prefixIcon: Icon(Icons.phone),
-                      border: OutlineInputBorder(),
-                    ),
-                    validator: (value) =>
-                        ValidationHelper.validateMobile(value, required: false),
-                    textInputAction: TextInputAction.next,
-                  ),
-                  const SizedBox(height: 16),
-                  // Password
                   TextFormField(
                     controller: _passwordController,
                     obscureText: _obscurePassword,
@@ -162,14 +217,8 @@ class _RegisterPageState extends State<RegisterPage> {
                       labelText: 'Password *',
                       prefixIcon: const Icon(Icons.lock),
                       suffixIcon: IconButton(
-                        icon: Icon(
-                          _obscurePassword
-                              ? Icons.visibility
-                              : Icons.visibility_off,
-                        ),
-                        onPressed: () {
-                          setState(() => _obscurePassword = !_obscurePassword);
-                        },
+                        icon: Icon(_obscurePassword ? Icons.visibility : Icons.visibility_off),
+                        onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                       ),
                       border: const OutlineInputBorder(),
                     ),
@@ -177,7 +226,6 @@ class _RegisterPageState extends State<RegisterPage> {
                     textInputAction: TextInputAction.next,
                   ),
                   const SizedBox(height: 16),
-                  // Confirm Password
                   TextFormField(
                     controller: _confirmPasswordController,
                     obscureText: _obscureConfirmPassword,
@@ -185,15 +233,8 @@ class _RegisterPageState extends State<RegisterPage> {
                       labelText: 'Confirm Password *',
                       prefixIcon: const Icon(Icons.lock_outline),
                       suffixIcon: IconButton(
-                        icon: Icon(
-                          _obscureConfirmPassword
-                              ? Icons.visibility
-                              : Icons.visibility_off,
-                        ),
-                        onPressed: () {
-                          setState(() =>
-                              _obscureConfirmPassword = !_obscureConfirmPassword);
-                        },
+                        icon: Icon(_obscureConfirmPassword ? Icons.visibility : Icons.visibility_off),
+                        onPressed: () => setState(() => _obscureConfirmPassword = !_obscureConfirmPassword),
                       ),
                       border: const OutlineInputBorder(),
                     ),
@@ -206,31 +247,153 @@ class _RegisterPageState extends State<RegisterPage> {
                       }
                       return null;
                     },
-                    textInputAction: TextInputAction.done,
-                    onFieldSubmitted: (_) => _handleRegister(),
-                  ),
-                  const SizedBox(height: 16),
-                  // Project Type
-                  DropdownButtonFormField<String>(
-                    value: _projectType,
-                    decoration: const InputDecoration(
-                      labelText: 'Project Type *',
-                      prefixIcon: Icon(Icons.category),
-                      border: OutlineInputBorder(),
-                    ),
-                    items: const [
-                      DropdownMenuItem(value: 'ASSET', child: Text('Asset Management')),
-                      DropdownMenuItem(value: 'ECOM', child: Text('E-Commerce')),
-                      DropdownMenuItem(value: 'PORTAL', child: Text('Portal')),
-                    ],
-                    onChanged: (value) {
-                      if (value != null) {
-                        setState(() => _projectType = value);
-                      }
-                    },
+                    textInputAction: TextInputAction.next,
                   ),
                   const SizedBox(height: 24),
-                  // Register Button
+                  Text('Mobile', style: t.titleSmall?.copyWith(fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 12),
+                  SelectableOptionPicker<String>(
+                    label: 'Country code *',
+                    prefixIcon: Icons.flag,
+                    value: _countryCode,
+                    options: _countryCodeOptions,
+                    onChanged: (v) {
+                      if (v != null) setState(() => _countryCode = v);
+                    },
+                    validator: (v) => (v == null || v.isEmpty) ? 'Country code is required' : null,
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _mobileController,
+                    keyboardType: TextInputType.phone,
+                    decoration: const InputDecoration(
+                      labelText: 'Mobile * (without country code)',
+                      prefixIcon: Icon(Icons.phone),
+                      border: OutlineInputBorder(),
+                      helperText: 'Example for +91: 10 digits starting with 6–9',
+                    ),
+                    validator: (value) => ValidationHelper.validateNationalMobile(value, _countryCode),
+                    textInputAction: TextInputAction.next,
+                  ),
+                  const SizedBox(height: 24),
+                  Text('Project', style: t.titleSmall?.copyWith(fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 12),
+                  SelectableOptionPicker<String>(
+                    label: 'Project type *',
+                    prefixIcon: Icons.category,
+                    value: _projectType,
+                    options: _projectTypeOptions,
+                    onChanged: (v) {
+                      if (v != null) setState(() => _projectType = v);
+                    },
+                    validator: (v) => (v == null || v.isEmpty) ? 'Project type is required' : null,
+                  ),
+                  const SizedBox(height: 16),
+                  CheckboxListTile(
+                    value: _acceptTc,
+                    onChanged: (v) => setState(() => _acceptTc = v ?? false),
+                    controlAffinity: ListTileControlAffinity.leading,
+                    contentPadding: EdgeInsets.zero,
+                    title: Text('I accept the Terms & Conditions *', style: t.bodyMedium),
+                  ),
+                  const SizedBox(height: 8),
+                  ExpansionTile(
+                    tilePadding: EdgeInsets.zero,
+                    title: Text('Profile (optional)', style: t.titleSmall?.copyWith(fontWeight: FontWeight.w600)),
+                    children: [
+                      const SizedBox(height: 8),
+                      TextFormField(
+                        controller: _firstNameController,
+                        decoration: const InputDecoration(
+                          labelText: 'First name',
+                          border: OutlineInputBorder(),
+                        ),
+                        textInputAction: TextInputAction.next,
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: _lastNameController,
+                        decoration: const InputDecoration(
+                          labelText: 'Last name',
+                          border: OutlineInputBorder(),
+                        ),
+                        textInputAction: TextInputAction.next,
+                      ),
+                      const SizedBox(height: 8),
+                    ],
+                  ),
+                  ExpansionTile(
+                    tilePadding: EdgeInsets.zero,
+                    title: Text('Address (optional)', style: t.titleSmall?.copyWith(fontWeight: FontWeight.w600)),
+                    children: [
+                      const SizedBox(height: 8),
+                      TextFormField(
+                        controller: _address1Controller,
+                        decoration: const InputDecoration(
+                          labelText: 'Address line 1',
+                          border: OutlineInputBorder(),
+                        ),
+                        textInputAction: TextInputAction.next,
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: _address2Controller,
+                        decoration: const InputDecoration(
+                          labelText: 'Address line 2',
+                          border: OutlineInputBorder(),
+                        ),
+                        textInputAction: TextInputAction.next,
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: _address3Controller,
+                        decoration: const InputDecoration(
+                          labelText: 'Address line 3',
+                          border: OutlineInputBorder(),
+                        ),
+                        textInputAction: TextInputAction.next,
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: _pincodeController,
+                        decoration: const InputDecoration(
+                          labelText: 'Pincode',
+                          border: OutlineInputBorder(),
+                        ),
+                        textInputAction: TextInputAction.next,
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: _cityController,
+                        decoration: const InputDecoration(
+                          labelText: 'City',
+                          border: OutlineInputBorder(),
+                        ),
+                        textInputAction: TextInputAction.next,
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: _stateController,
+                        decoration: const InputDecoration(
+                          labelText: 'State',
+                          border: OutlineInputBorder(),
+                        ),
+                        textInputAction: TextInputAction.next,
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: _countryController,
+                        decoration: const InputDecoration(
+                          labelText: 'Country',
+                          border: OutlineInputBorder(),
+                        ),
+                        textInputAction: TextInputAction.done,
+                        onFieldSubmitted: (_) => _handleRegister(),
+                      ),
+                      const SizedBox(height: 8),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
                   ElevatedButton(
                     onPressed: _isLoading ? null : _handleRegister,
                     style: ElevatedButton.styleFrom(
@@ -245,7 +408,6 @@ class _RegisterPageState extends State<RegisterPage> {
                         : const Text('Register'),
                   ),
                   const SizedBox(height: 16),
-                  // Login Link
                   TextButton(
                     onPressed: () => Navigator.of(context).pop(),
                     child: const Text('Already have an account? Login'),
@@ -259,4 +421,3 @@ class _RegisterPageState extends State<RegisterPage> {
     );
   }
 }
-

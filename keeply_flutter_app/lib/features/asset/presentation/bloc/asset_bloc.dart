@@ -39,8 +39,8 @@ class AssetBloc extends Bloc<AssetEvent, AssetState> {
 
     try {
       // Edge case: Check internet connection
-      final connectivityResult = await _connectivity.checkConnectivity();
-      if (connectivityResult == ConnectivityResult.none) {
+      final connectivityResults = await _connectivity.checkConnectivity();
+      if (connectivityResults.every((r) => r == ConnectivityResult.none)) {
         emit(AssetError('No internet connection. Please check your network.'));
         return;
       }
@@ -89,8 +89,8 @@ class AssetBloc extends Bloc<AssetEvent, AssetState> {
       }
 
       // Edge case: Check internet connection
-      final connectivityResult = await _connectivity.checkConnectivity();
-      if (connectivityResult == ConnectivityResult.none) {
+      final connectivityResults = await _connectivity.checkConnectivity();
+      if (connectivityResults.every((r) => r == ConnectivityResult.none)) {
         emit(AssetError('No internet connection. Please check your network.'));
         return;
       }
@@ -115,8 +115,8 @@ class AssetBloc extends Bloc<AssetEvent, AssetState> {
 
     try {
       // Edge case: Check internet connection
-      final connectivityResult = await _connectivity.checkConnectivity();
-      if (connectivityResult == ConnectivityResult.none) {
+      final connectivityResults = await _connectivity.checkConnectivity();
+      if (connectivityResults.every((r) => r == ConnectivityResult.none)) {
         emit(AssetError('No internet connection. Please check your network.'));
         return;
       }
@@ -175,8 +175,8 @@ class AssetBloc extends Bloc<AssetEvent, AssetState> {
       }
 
       // Edge case: Check internet connection
-      final connectivityResult = await _connectivity.checkConnectivity();
-      if (connectivityResult == ConnectivityResult.none) {
+      final connectivityResults = await _connectivity.checkConnectivity();
+      if (connectivityResults.every((r) => r == ConnectivityResult.none)) {
         emit(AssetError('No internet connection. Please check your network.'));
         return;
       }
@@ -213,8 +213,8 @@ class AssetBloc extends Bloc<AssetEvent, AssetState> {
       }
 
       // Edge case: Check internet connection
-      final connectivityResult = await _connectivity.checkConnectivity();
-      if (connectivityResult == ConnectivityResult.none) {
+      final connectivityResults = await _connectivity.checkConnectivity();
+      if (connectivityResults.every((r) => r == ConnectivityResult.none)) {
         emit(AssetError('No internet connection. Please check your network.'));
         return;
       }
@@ -243,8 +243,8 @@ class AssetBloc extends Bloc<AssetEvent, AssetState> {
         return;
       }
 
-      final connectivityResult = await _connectivity.checkConnectivity();
-      if (connectivityResult == ConnectivityResult.none) {
+      final connectivityResults = await _connectivity.checkConnectivity();
+      if (connectivityResults.every((r) => r == ConnectivityResult.none)) {
         emit(AssetScanNotFound(message: 'No internet connection. Please check your network.'));
         return;
       }
@@ -258,10 +258,12 @@ class AssetBloc extends Bloc<AssetEvent, AssetState> {
         emit(AssetScanLoaded(result: result));
         AppLogger.info('Asset scan successful: ${result.assetCode}');
       } else {
-        emit(AssetScanNotFound(
-          message: 'No asset or product found for: ${event.scanValue}',
-          scanValue: event.scanValue,
-        ));
+        emit(
+          AssetScanNotFound(
+            message: 'No asset or product found for: ${event.scanValue}',
+            scanValue: event.scanValue,
+          ),
+        );
         AppLogger.info('Asset scan: no result for ${event.scanValue}');
       }
     } on ApiException catch (e) {
@@ -269,10 +271,12 @@ class AssetBloc extends Bloc<AssetEvent, AssetState> {
       emit(AssetScanNotFound(message: e.userMessage, scanValue: event.scanValue));
     } catch (e) {
       AppLogger.error('Unexpected scan error: $e');
-      emit(AssetScanNotFound(
-        message: 'Failed to scan. Please try again.',
-        scanValue: event.scanValue,
-      ));
+      emit(
+        AssetScanNotFound(
+          message: 'Failed to scan. Please try again.',
+          scanValue: event.scanValue,
+        ),
+      );
     }
   }
 
@@ -291,8 +295,8 @@ class AssetBloc extends Bloc<AssetEvent, AssetState> {
 
     try {
       // Edge case: Check internet connection
-      final connectivityResult = await _connectivity.checkConnectivity();
-      if (connectivityResult == ConnectivityResult.none) {
+      final connectivityResults = await _connectivity.checkConnectivity();
+      if (connectivityResults.every((r) => r == ConnectivityResult.none)) {
         emit(AssetError('No internet connection. Please check your network.'));
         return;
       }
@@ -327,8 +331,8 @@ class AssetBloc extends Bloc<AssetEvent, AssetState> {
       }
 
       // Edge case: Check internet connection
-      final connectivityResult = await _connectivity.checkConnectivity();
-      if (connectivityResult == ConnectivityResult.none) {
+      final connectivityResults = await _connectivity.checkConnectivity();
+      if (connectivityResults.every((r) => r == ConnectivityResult.none)) {
         emit(AssetError('No internet connection. Please check your network.'));
         return;
       }
@@ -375,8 +379,8 @@ class AssetBloc extends Bloc<AssetEvent, AssetState> {
       }
 
       // Edge case: Check internet connection
-      final connectivityResult = await _connectivity.checkConnectivity();
-      if (connectivityResult == ConnectivityResult.none) {
+      final connectivityResults = await _connectivity.checkConnectivity();
+      if (connectivityResults.every((r) => r == ConnectivityResult.none)) {
         emit(AssetError('No internet connection. Please check your network.'));
         return;
       }
@@ -410,8 +414,8 @@ class AssetBloc extends Bloc<AssetEvent, AssetState> {
       }
 
       // Edge case: Check internet connection
-      final connectivityResult = await _connectivity.checkConnectivity();
-      if (connectivityResult == ConnectivityResult.none) {
+      final connectivityResults = await _connectivity.checkConnectivity();
+      if (connectivityResults.every((r) => r == ConnectivityResult.none)) {
         emit(AssetError('No internet connection. Please check your network.'));
         return;
       }

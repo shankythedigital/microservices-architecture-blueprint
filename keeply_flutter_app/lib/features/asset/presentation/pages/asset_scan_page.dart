@@ -394,7 +394,9 @@ class _AssetScanPageState extends State<AssetScanPage> {
       buffer.writeln('  "$key": "$value",');
     });
     final str = buffer.toString();
-    return str.endsWith(',\n') ? str.substring(0, str.length - 2) + '\n}' : str + '}';
+    return str.endsWith(',\n')
+        ? '${str.substring(0, str.length - 2)}\n}'
+        : '$str}';
   }
 }
 

@@ -1,10 +1,12 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:keeply_app/core/config/app_config.dart';
 import 'package:keeply_app/core/network/interceptors/auth_interceptor.dart';
 import 'package:keeply_app/core/network/interceptors/error_interceptor.dart';
 import 'package:keeply_app/core/network/interceptors/logging_interceptor.dart';
 import 'package:keeply_app/core/network/interceptors/retry_interceptor.dart';
+import 'package:keeply_app/core/network/dio_error_util.dart';
 import 'package:keeply_app/core/utils/logger.dart';
 
 /// Centralized API Client
@@ -21,13 +23,17 @@ class ApiClient {
 
   /// Initialize API Client with interceptors
   Future<void> initialize() async {
+    installKeeplyDioExceptionReadableString();
+
     _dio = Dio(
       BaseOptions(
         connectTimeout: AppConfig.connectTimeout,
         receiveTimeout: AppConfig.receiveTimeout,
         sendTimeout: AppConfig.sendTimeout,
+        // Web: avoid default Content-Type on every request (reduces unnecessary CORS preflights on GET).
+        // Dio still sets Content-Type for JSON bodies on POST/PUT/PATCH.
         headers: {
-          'Content-Type': 'application/json',
+          if (!kIsWeb) 'Content-Type': 'application/json',
           'Accept': 'application/json',
         },
       ),

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:keeply_app/core/view_layout/view_layout_scope.dart';
+import 'package:keeply_app/core/widgets/keeply_asset_views.dart';
 import 'package:keeply_app/features/asset/presentation/bloc/asset_bloc.dart';
 
 /// Assets List Page
@@ -49,6 +51,10 @@ class _AssetsListPageState extends State<AssetsListPage> {
       appBar: AppBar(
         title: const Text('Assets'),
         actions: [
+          const Padding(
+            padding: EdgeInsets.only(right: 4),
+            child: ViewLayoutToggle(compact: true),
+          ),
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: () {
@@ -111,34 +117,54 @@ class _AssetsListPageState extends State<AssetsListPage> {
                       LoadAssetsEvent(page: 0, size: _pageSize),
                     );
               },
-              child: ListView.builder(
-                controller: _scrollController,
-                itemCount: state.assets.length + 1,
-                itemBuilder: (context, index) {
-                  if (index == state.assets.length) {
-                    return const Padding(
-                      padding: EdgeInsets.all(16.0),
-                      child: Center(child: CircularProgressIndicator()),
+              child: ListenableBuilder(
+                listenable: ViewLayoutScope.notifierOf(context),
+                builder: (context, _) {
+                  final assets = state.assets;
+                  final listMode = ViewLayoutScope.modeOf(context) == ViewLayoutMode.list;
+                  if (listMode) {
+                    return ListView.builder(
+                      controller: _scrollController,
+                      itemCount: assets.length + 1,
+                      itemBuilder: (context, index) {
+                        if (index == assets.length) {
+                          return const Padding(
+                            padding: EdgeInsets.all(16.0),
+                            child: Center(child: CircularProgressIndicator()),
+                          );
+                        }
+                        final asset = assets[index];
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          child: KeeplyAssetListRow(
+                            asset: asset,
+                            onTap: () {},
+                          ),
+                        );
+                      },
                     );
                   }
-
-                  final asset = state.assets[index];
-                  return Card(
-                    margin: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 8,
+                  return GridView.builder(
+                    controller: _scrollController,
+                    padding: const EdgeInsets.fromLTRB(12, 8, 12, 24),
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      mainAxisSpacing: 12,
+                      crossAxisSpacing: 12,
+                      childAspectRatio: 0.78,
                     ),
-                    child: ListTile(
-                      leading: const Icon(Icons.inventory_2),
-                      title: Text(asset.assetNameUdv),
-                      subtitle: Text(
-                        'ID: ${asset.assetId ?? 'N/A'}',
-                      ),
-                      trailing: const Icon(Icons.chevron_right),
-                      onTap: () {
-                        // Navigate to asset details
-                      },
-                    ),
+                    itemCount: assets.length + 1,
+                    itemBuilder: (context, index) {
+                      if (index == assets.length) {
+                        return const Center(
+                          child: Padding(
+                            padding: EdgeInsets.all(16),
+                            child: CircularProgressIndicator(),
+                          ),
+                        );
+                      }
+                      return KeeplyAssetGridCard(asset: assets[index], onTap: () {});
+                    },
                   );
                 },
               ),

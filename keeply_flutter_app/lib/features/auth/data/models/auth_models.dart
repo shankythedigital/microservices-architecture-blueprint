@@ -1,5 +1,6 @@
 /// Authentication Models
 /// Data models for authentication requests and responses
+library;
 
 class LoginRequest {
   final String loginType;
@@ -41,28 +42,82 @@ class LoginRequest {
   }
 }
 
+/// Body for `POST /api/auth/register` (JSON) — parity with auth-service `RegisterRequest`.
 class RegisterRequest {
   final String username;
   final String password;
   final String? email;
-  final String? mobile;
+  /// National significant number only (no country prefix); validated with [countryCode].
+  final String mobile;
+  final String countryCode;
   final String projectType;
+  final bool acceptTc;
+  final String? firstName;
+  final String? lastName;
+  final String? pincode;
+  final String? city;
+  final String? state;
+  final String? country;
+  final String? address1;
+  final String? address2;
+  final String? address3;
 
   RegisterRequest({
     required this.username,
     required this.password,
     this.email,
-    this.mobile,
+    required this.mobile,
+    required this.countryCode,
     required this.projectType,
+    required this.acceptTc,
+    this.firstName,
+    this.lastName,
+    this.pincode,
+    this.city,
+    this.state,
+    this.country,
+    this.address1,
+    this.address2,
+    this.address3,
   });
 
-  Map<String, dynamic> toJson() => {
-        'username': username,
-        'password': password,
-        if (email != null) 'email': email,
-        if (mobile != null) 'mobile': mobile,
-        'projectType': projectType,
-      };
+  Map<String, dynamic> toJson() {
+    String? nz(String? s) {
+      final t = s?.trim();
+      if (t == null || t.isEmpty) return null;
+      return t;
+    }
+
+    final map = <String, dynamic>{
+      'username': username.trim(),
+      'password': password,
+      'mobile': mobile.trim(),
+      'countryCode': countryCode.trim(),
+      'projectType': projectType.trim(),
+      'acceptTc': acceptTc,
+    };
+    final e = nz(email);
+    if (e != null) map['email'] = e;
+    final fn = nz(firstName);
+    if (fn != null) map['firstName'] = fn;
+    final ln = nz(lastName);
+    if (ln != null) map['lastName'] = ln;
+    final pc = nz(pincode);
+    if (pc != null) map['pincode'] = pc;
+    final cty = nz(city);
+    if (cty != null) map['city'] = cty;
+    final st = nz(state);
+    if (st != null) map['state'] = st;
+    final ctry = nz(country);
+    if (ctry != null) map['country'] = ctry;
+    final a1 = nz(address1);
+    if (a1 != null) map['address1'] = a1;
+    final a2 = nz(address2);
+    if (a2 != null) map['address2'] = a2;
+    final a3 = nz(address3);
+    if (a3 != null) map['address3'] = a3;
+    return map;
+  }
 }
 
 class AuthResponse {

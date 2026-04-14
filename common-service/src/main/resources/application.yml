@@ -8,15 +8,15 @@ spring:
       adjust-dates-to-context-time-zone: false
 auth:
   service:
-    url: http://194.163.173.37:8081
+    url: http://localhost:8081
 
 asset:
   service:
-    url: http://194.163.173.37:8085
+    url: http://localhost:8085
 
 notification:
   service:
-    url: http://194.163.173.37:8082/api/notifications
+    url: http://localhost:8082/api/notifications
 
 JWT_PRIVATE_KEY_PATH: classpath:keys/jwt-private.pem
 JWT_PUBLIC_KEY_PATH: classpath:keys/jwt-public.pem

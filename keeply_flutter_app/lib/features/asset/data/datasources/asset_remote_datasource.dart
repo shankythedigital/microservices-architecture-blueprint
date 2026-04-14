@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:keeply_app/core/config/app_config.dart';
 import 'package:keeply_app/core/network/api_client.dart';
+import 'package:keeply_app/core/network/dio_error_util.dart';
 import 'package:keeply_app/core/exceptions/api_exception.dart';
 import 'package:keeply_app/features/asset/data/models/asset_models.dart';
 
@@ -554,14 +555,8 @@ class AssetRemoteDataSource {
       final statusCode = e.response!.statusCode;
       final data = e.response!.data;
 
-      String message = 'An error occurred';
-      if (data is Map<String, dynamic>) {
-        message = data['message'] ?? 
-                 data['error'] ?? 
-                 message;
-      } else if (data is String) {
-        message = data;
-      }
+      String message =
+          pickMessageFromResponseData(data) ?? 'An error occurred';
 
       ApiExceptionType type;
       switch (statusCode) {
@@ -601,7 +596,7 @@ class AssetRemoteDataSource {
     }
 
     return ApiException(
-      message: e.message ?? 'Network error',
+      message: describeDioException(e),
       type: ApiExceptionType.network,
     );
   }

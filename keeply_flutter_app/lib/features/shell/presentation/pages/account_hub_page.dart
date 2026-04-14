@@ -5,6 +5,7 @@ import 'package:keeply_app/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:keeply_app/features/auth/presentation/pages/welcome_page.dart';
 import 'package:keeply_app/features/auth/presentation/pages/register_page.dart';
 import 'package:keeply_app/features/helpdesk/presentation/pages/helpdesk_hub_page.dart';
+import 'package:keeply_app/features/master_data/presentation/pages/master_data_catalog_page.dart';
 
 /// React `/home/account` hub — profile, settings, notifications links + sign out.
 class AccountHubPage extends StatelessWidget {
@@ -56,6 +57,17 @@ class AccountHubPage extends StatelessWidget {
             onTap: () {
               Navigator.of(context).push<void>(
                 MaterialPageRoute(builder: (_) => const HelpdeskHubPage()),
+              );
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.dataset_linked_outlined),
+            title: const Text('Master data'),
+            subtitle: const Text('Categories, subcategories, makes, models'),
+            trailing: const Icon(Icons.chevron_right_rounded),
+            onTap: () {
+              Navigator.of(context).push<void>(
+                MaterialPageRoute<void>(builder: (_) => const MasterDataCatalogPage()),
               );
             },
           ),

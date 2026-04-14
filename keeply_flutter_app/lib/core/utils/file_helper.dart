@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:keeply_app/core/config/app_config.dart';
 import 'package:keeply_app/core/utils/logger.dart';
 import 'package:keeply_app/core/utils/edge_case_handler.dart';
 

@@ -1,6 +1,5 @@
 import 'package:keeply_app/core/utils/logger.dart';
 import 'package:keeply_app/features/notification/data/datasources/notification_remote_datasource.dart';
-import 'package:keeply_app/features/notification/data/models/notification_models.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 /// Notification Helper

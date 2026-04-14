@@ -9,7 +9,7 @@ class DeviceInfoHelper {
   factory DeviceInfoHelper() => _instance;
   DeviceInfoHelper._internal();
 
-  DeviceInfoPlugin _deviceInfo = DeviceInfoPlugin();
+  final DeviceInfoPlugin _deviceInfo = DeviceInfoPlugin();
   PackageInfo? _packageInfo;
 
   /// Initialize device info
@@ -47,7 +47,7 @@ class DeviceInfoHelper {
         return '${androidInfo.manufacturer} ${androidInfo.model}';
       } else if (await _isIOS()) {
         final iosInfo = await _deviceInfo.iosInfo;
-        return '${iosInfo.utsname.machine}';
+        return iosInfo.utsname.machine;
       }
       return 'Unknown';
     } catch (e) {

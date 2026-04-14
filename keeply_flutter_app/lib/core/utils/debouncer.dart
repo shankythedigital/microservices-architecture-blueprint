@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
+
 /// Debouncer
 /// Debounces function calls to prevent excessive executions
 class Debouncer {

@@ -36,7 +36,10 @@ class HelpdeskHubPage extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 10),
       child: ListTile(
         title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
-        subtitle: Text(subtitle, style: TextStyle(color: KeeplyTokens.muted, fontSize: 13)),
+        subtitle: Text(
+          subtitle,
+          style: const TextStyle(color: KeeplyTokens.muted, fontSize: 13),
+        ),
         trailing: const Icon(Icons.chevron_right_rounded),
         onTap: onTap,
       ),

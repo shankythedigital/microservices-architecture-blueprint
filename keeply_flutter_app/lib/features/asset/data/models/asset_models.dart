@@ -1,5 +1,6 @@
 /// Asset Models
 /// Data models for asset management
+library;
 
 class AssetRequest {
   final int categoryId;

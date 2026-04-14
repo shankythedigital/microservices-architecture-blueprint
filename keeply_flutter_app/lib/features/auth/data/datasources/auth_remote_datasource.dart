@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:keeply_app/core/config/app_config.dart';
 import 'package:keeply_app/core/network/api_client.dart';
+import 'package:keeply_app/core/network/dio_error_util.dart';
 import 'package:keeply_app/features/auth/data/models/auth_models.dart';
 
 /// Authentication Remote Data Source
@@ -8,8 +9,8 @@ import 'package:keeply_app/features/auth/data/models/auth_models.dart';
 class AuthRemoteDataSource {
   final ApiClient _apiClient = ApiClient();
 
-  /// Register a new user
-  Future<AuthResponse> register(RegisterRequest request) async {
+  /// Register a new user (`POST .../register` only). Does not obtain tokens; caller should navigate to login.
+  Future<void> register(RegisterRequest request) async {
     try {
       final response = await _apiClient.dio.post(
         '${AppConfig.authServiceBaseUrl}${AppConfig.authBasePath}/register',
@@ -17,14 +18,8 @@ class AuthRemoteDataSource {
       );
 
       if (response.statusCode == 200) {
-        // Registration successful, now login
-        return await login(
-          LoginRequest(
-            loginType: 'PASSWORD',
-            username: request.username,
-            password: request.password,
-          ),
-        );
+        await _apiClient.clearTokens();
+        return;
       }
 
       throw Exception('Registration failed');
@@ -109,10 +104,21 @@ class AuthRemoteDataSource {
   }
 
   /// Current user profile (React `fetchMyProfile` — `GET /api/auth/profile/me`).
-  Future<UserDto> getCurrentUser() async {
+  ///
+  /// [accessTokenOverride] — use right after login/refresh on web so this call
+  /// does not rely on secure storage being readable in the same turn as [saveTokens].
+  Future<UserDto> getCurrentUser({String? accessTokenOverride}) async {
+    final url =
+        '${AppConfig.authServiceBaseUrl}${AppConfig.authBasePath}/profile/me';
     try {
       final response = await _apiClient.dio.get(
-        '${AppConfig.authServiceBaseUrl}${AppConfig.authBasePath}/profile/me',
+        url,
+        options: (accessTokenOverride != null &&
+                accessTokenOverride.trim().isNotEmpty)
+            ? Options(
+                headers: {'Authorization': 'Bearer $accessTokenOverride'},
+              )
+            : null,
       );
 
       if (response.statusCode == 200 && response.data != null) {
@@ -122,6 +128,8 @@ class AuthRemoteDataSource {
       throw Exception('Failed to get user profile');
     } on DioException catch (e) {
       throw _handleError(e);
+    } catch (e) {
+      throw Exception(e.toString());
     }
   }
 
@@ -230,12 +238,11 @@ class AuthRemoteDataSource {
   /// Handle API errors
   Exception _handleError(DioException e) {
     if (e.response != null) {
-      final message = e.response?.data?['message'] ?? 
-                     e.response?.data?['error'] ?? 
-                     'An error occurred';
+      final message =
+          pickMessageFromResponseData(e.response?.data) ?? 'An error occurred';
       return Exception(message);
     }
-    return Exception(e.message ?? 'Network error');
+    return Exception(describeDioException(e));
   }
 }
 
