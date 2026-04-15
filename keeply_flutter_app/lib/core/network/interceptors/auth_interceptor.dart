@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:keeply_app/core/config/app_config.dart';
+import 'package:keeply_app/core/api/keeply_service_url.dart';
 import 'package:keeply_app/core/network/dio_error_util.dart';
 import 'package:keeply_app/core/utils/logger.dart';
 
@@ -66,7 +66,7 @@ class AuthInterceptor extends Interceptor {
           // Attempt to refresh token
           final dio = Dio();
           final response = await dio.post(
-            '${AppConfig.authServiceBaseUrl}${AppConfig.authBasePath}/refresh',
+            keeplyApiUrl(KeeplyApiService.auth, '/api/auth/refresh'),
             queryParameters: {'refreshToken': refreshToken},
           );
 

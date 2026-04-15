@@ -1,5 +1,5 @@
 import 'package:dio/dio.dart';
-import 'package:keeply_app/core/config/app_config.dart';
+import 'package:keeply_app/core/api/keeply_service_url.dart';
 import 'package:keeply_app/core/network/api_client.dart';
 import 'package:keeply_app/core/network/dio_error_util.dart';
 import 'package:keeply_app/core/exceptions/api_exception.dart';
@@ -18,7 +18,7 @@ class AssetRemoteDataSource {
   Future<AssetMaster> createAsset(AssetRequest request) async {
     try {
       final response = await _apiClient.dio.post(
-        '${AppConfig.assetServiceBaseUrl}${AppConfig.assetBasePath}/assets',
+        keeplyApiUrl(KeeplyApiService.asset, '/api/asset/v1/assets'),
         data: request.toJson(),
       );
 
@@ -49,7 +49,7 @@ class AssetRemoteDataSource {
   Future<AssetMaster> getAssetById(int assetId) async {
     try {
       final response = await _apiClient.dio.get(
-        '${AppConfig.assetServiceBaseUrl}${AppConfig.assetBasePath}/assets/$assetId',
+        keeplyApiUrl(KeeplyApiService.asset, '/api/asset/v1/assets/$assetId'),
       );
 
       if (response.statusCode == 200 && response.data != null) {
@@ -89,7 +89,7 @@ class AssetRemoteDataSource {
       if (sort != null) queryParams['sort'] = sort;
 
       final response = await _apiClient.dio.get(
-        '${AppConfig.assetServiceBaseUrl}${AppConfig.assetBasePath}/assets',
+        keeplyApiUrl(KeeplyApiService.asset, '/api/asset/v1/assets'),
         queryParameters: queryParams,
       );
 
@@ -119,7 +119,7 @@ class AssetRemoteDataSource {
   Future<AssetMaster> updateAsset(int assetId, AssetRequest request) async {
     try {
       final response = await _apiClient.dio.put(
-        '${AppConfig.assetServiceBaseUrl}${AppConfig.assetBasePath}/assets/$assetId',
+        keeplyApiUrl(KeeplyApiService.asset, '/api/asset/v1/assets/$assetId'),
         data: request.toJson(),
       );
 
@@ -150,7 +150,7 @@ class AssetRemoteDataSource {
   Future<void> deleteAsset(int assetId) async {
     try {
       final response = await _apiClient.dio.delete(
-        '${AppConfig.assetServiceBaseUrl}${AppConfig.assetBasePath}/assets/$assetId',
+        keeplyApiUrl(KeeplyApiService.asset, '/api/asset/v1/assets/$assetId'),
       );
 
       if (response.statusCode != 200) {
@@ -174,7 +174,7 @@ class AssetRemoteDataSource {
     try {
       // 1. Try internal asset database first
       final response = await _apiClient.dio.post(
-        '${AppConfig.assetServiceBaseUrl}${AppConfig.assetBasePath}/scan',
+        keeplyApiUrl(KeeplyApiService.asset, '/api/asset/v1/scan'),
         data: {'scanValue': scanValue, 'scanType': scanType},
       );
 
@@ -260,7 +260,7 @@ class AssetRemoteDataSource {
   Future<List<Category>> getCategories() async {
     try {
       final response = await _apiClient.dio.get(
-        '${AppConfig.assetServiceBaseUrl}${AppConfig.assetBasePath}/categories',
+        keeplyApiUrl(KeeplyApiService.asset, '/api/asset/v1/categories'),
       );
 
       if (response.statusCode == 200 && response.data != null) {
@@ -286,7 +286,7 @@ class AssetRemoteDataSource {
   Future<Category> createCategory(CategoryRequest request) async {
     try {
       final response = await _apiClient.dio.post(
-        '${AppConfig.assetServiceBaseUrl}${AppConfig.assetBasePath}/categories',
+        keeplyApiUrl(KeeplyApiService.asset, '/api/asset/v1/categories'),
         data: request.toJson(),
       );
 
@@ -319,7 +319,7 @@ class AssetRemoteDataSource {
   ) async {
     try {
       final response = await _apiClient.dio.post(
-        '${AppConfig.assetServiceBaseUrl}${AppConfig.assetBasePath}/categories/bulk',
+        keeplyApiUrl(KeeplyApiService.asset, '/api/asset/v1/categories/bulk'),
         data: requests.map((r) => r.toJson()).toList(),
       );
 
@@ -356,7 +356,7 @@ class AssetRemoteDataSource {
       });
 
       final response = await _apiClient.dio.post(
-        '${AppConfig.assetServiceBaseUrl}${AppConfig.assetBasePath}/categories/upload-excel',
+        keeplyApiUrl(KeeplyApiService.asset, '/api/asset/v1/categories/upload-excel'),
         data: formData,
         options: Options(
           headers: {'Content-Type': 'multipart/form-data'},
@@ -400,7 +400,7 @@ class AssetRemoteDataSource {
   }) async {
     try {
       final response = await _apiClient.dio.get(
-        '${AppConfig.assetServiceBaseUrl}${AppConfig.assetBasePath}/assets/search',
+        keeplyApiUrl(KeeplyApiService.asset, '/api/asset/v1/assets/search'),
         queryParameters: {
           if (keyword != null && keyword.trim().isNotEmpty) 'keyword': keyword.trim(),
           'page': page,
@@ -441,7 +441,7 @@ class AssetRemoteDataSource {
   Future<List<AssetMaster>> fetchAssetsAssignedToUser(int userId) async {
     try {
       final response = await _apiClient.dio.get(
-        '${AppConfig.assetServiceBaseUrl}${AppConfig.assetBasePath}/user-asset-links/user/$userId/assets',
+        keeplyApiUrl(KeeplyApiService.asset, '/api/asset/v1/user-asset-links/user/$userId/assets'),
       );
 
       if (response.statusCode == 200 && response.data != null) {
@@ -468,7 +468,7 @@ class AssetRemoteDataSource {
   Future<Map<String, dynamic>?> getNeedYourAttention() async {
     try {
       final response = await _apiClient.dio.get(
-        '${AppConfig.assetServiceBaseUrl}${AppConfig.assetBasePath}/userlinks/need-your-attention',
+        keeplyApiUrl(KeeplyApiService.asset, '/api/asset/v1/userlinks/need-your-attention'),
       );
 
       if (response.statusCode == 200 && response.data != null) {
@@ -492,7 +492,7 @@ class AssetRemoteDataSource {
   }) async {
     try {
       final response = await _apiClient.dio.post(
-        '${AppConfig.assetServiceBaseUrl}${AppConfig.assetBasePath}/assets/with-document',
+        keeplyApiUrl(KeeplyApiService.asset, '/api/asset/v1/assets/with-document'),
         data: {
           'request': requestPayload,
           'document': documentBase64,
@@ -521,7 +521,7 @@ class AssetRemoteDataSource {
   Future<Map<String, dynamic>> createAssetComplete(FormData formData) async {
     try {
       final response = await _apiClient.dio.post(
-        '${AppConfig.assetServiceBaseUrl}${AppConfig.assetBasePath}/assets/complete',
+        keeplyApiUrl(KeeplyApiService.asset, '/api/asset/v1/assets/complete'),
         data: formData,
         options: Options(headers: const {'Accept': 'application/json'}),
       );

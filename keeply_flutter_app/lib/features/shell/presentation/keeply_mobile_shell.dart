@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:keeply_app/core/config/app_config.dart';
+import 'package:keeply_app/core/api/keeply_service_url.dart';
 import 'package:keeply_app/core/theme/keeply_tokens.dart';
 import 'package:keeply_app/core/view_layout/view_layout_scope.dart';
 import 'package:keeply_app/features/asset/presentation/pages/create_asset_page.dart';
@@ -40,7 +40,7 @@ class _KeeplyMobileShellState extends State<KeeplyMobileShell> {
     if (profilePhotoUrl.startsWith('http://') || profilePhotoUrl.startsWith('https://')) {
       return profilePhotoUrl;
     }
-    final base = AppConfig.authServiceBaseUrl.replaceAll(RegExp(r'/$'), '');
+    final base = keeplyServiceBase(KeeplyApiService.auth);
     final path = profilePhotoUrl.startsWith('/') ? profilePhotoUrl : '/$profilePhotoUrl';
     return '$base$path';
   }

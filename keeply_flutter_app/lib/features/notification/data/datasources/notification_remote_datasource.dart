@@ -1,5 +1,5 @@
 import 'package:dio/dio.dart';
-import 'package:keeply_app/core/config/app_config.dart';
+import 'package:keeply_app/core/api/keeply_service_url.dart';
 import 'package:keeply_app/core/network/api_client.dart';
 import 'package:keeply_app/core/network/dio_error_util.dart';
 import 'package:keeply_app/core/exceptions/api_exception.dart';
@@ -13,7 +13,7 @@ class NotificationRemoteDataSource {
   Future<NotificationResponse> sendNotification(NotificationRequest request) async {
     try {
       final response = await _apiClient.dio.post(
-        '${AppConfig.notificationServiceBaseUrl}${AppConfig.notificationBasePath}',
+        keeplyApiUrl(KeeplyApiService.notification, '/api/notifications'),
         data: request.toJson(),
       );
 

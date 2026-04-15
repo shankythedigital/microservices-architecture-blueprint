@@ -1,7 +1,12 @@
 import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform, TargetPlatform;
 
 /// App Configuration
-/// Centralized configuration for API endpoints and app settings
+/// Centralized configuration for API endpoints and app settings.
+///
+/// Parity with React `keeply_react_app/src/config.ts`: per-service base URLs.
+/// Map `VITE_AUTH_BASE` → `AUTH_SERVICE_URL`, `VITE_ASSET_BASE` → `ASSET_SERVICE_URL`,
+/// `VITE_NOTIFICATION_BASE` → `NOTIFICATION_SERVICE_URL`, `VITE_HELPDESK_BASE` → `HELPDESK_SERVICE_URL`.
+/// Prefer `keeplyApiUrl` / `keeplyServiceBase` from `core/api/keeply_service_url.dart` (React `url()` / `getServiceBase()`).
 class AppConfig {
   // Detect platform and set appropriate base URLs
   static String get _defaultHost {

@@ -1,5 +1,5 @@
 import 'package:dio/dio.dart';
-import 'package:keeply_app/core/config/app_config.dart';
+import 'package:keeply_app/core/api/keeply_service_url.dart';
 import 'package:keeply_app/core/network/api_client.dart';
 import 'package:keeply_app/core/network/dio_error_util.dart';
 import 'package:keeply_app/features/auth/data/models/auth_models.dart';
@@ -13,7 +13,7 @@ class AuthRemoteDataSource {
   Future<void> register(RegisterRequest request) async {
     try {
       final response = await _apiClient.dio.post(
-        '${AppConfig.authServiceBaseUrl}${AppConfig.authBasePath}/register',
+        keeplyApiUrl(KeeplyApiService.auth, '/api/auth/register'),
         data: request.toJson(),
       );
 
@@ -32,7 +32,7 @@ class AuthRemoteDataSource {
   Future<Map<String, dynamic>> sendLoginOtp(String mobileDigits) async {
     try {
       final response = await _apiClient.dio.post(
-        '${AppConfig.authServiceBaseUrl}${AppConfig.authBasePath}/otp/send',
+        keeplyApiUrl(KeeplyApiService.auth, '/api/auth/otp/send'),
         data: {
           'type': 'SMS',
           'mobile': mobileDigits,
@@ -55,7 +55,7 @@ class AuthRemoteDataSource {
       body.putIfAbsent('deviceInfo', () => 'Keeply Flutter');
 
       final response = await _apiClient.dio.post(
-        '${AppConfig.authServiceBaseUrl}${AppConfig.authBasePath}/login',
+        keeplyApiUrl(KeeplyApiService.auth, '/api/auth/login'),
         data: body,
       );
 
@@ -81,7 +81,7 @@ class AuthRemoteDataSource {
   Future<AuthResponse> refreshToken(String refreshToken) async {
     try {
       final response = await _apiClient.dio.post(
-        '${AppConfig.authServiceBaseUrl}${AppConfig.authBasePath}/refresh',
+        keeplyApiUrl(KeeplyApiService.auth, '/api/auth/refresh'),
         queryParameters: {'refreshToken': refreshToken},
       );
 
@@ -108,8 +108,7 @@ class AuthRemoteDataSource {
   /// [accessTokenOverride] — use right after login/refresh on web so this call
   /// does not rely on secure storage being readable in the same turn as [saveTokens].
   Future<UserDto> getCurrentUser({String? accessTokenOverride}) async {
-    final url =
-        '${AppConfig.authServiceBaseUrl}${AppConfig.authBasePath}/profile/me';
+    final url = keeplyApiUrl(KeeplyApiService.auth, '/api/auth/profile/me');
     try {
       final response = await _apiClient.dio.get(
         url,
@@ -137,7 +136,7 @@ class AuthRemoteDataSource {
   Future<UserDto> getUserById(int userId) async {
     try {
       final response = await _apiClient.dio.get(
-        '${AppConfig.authServiceBaseUrl}/api/users/$userId',
+        keeplyApiUrl(KeeplyApiService.auth, '/api/users/$userId'),
       );
 
       if (response.statusCode == 200 && response.data != null) {
@@ -154,7 +153,7 @@ class AuthRemoteDataSource {
   Future<OtpResponse> sendOtp(OtpRequest request) async {
     try {
       final response = await _apiClient.dio.post(
-        '${AppConfig.authServiceBaseUrl}${AppConfig.authBasePath}/otp/send',
+        keeplyApiUrl(KeeplyApiService.auth, '/api/auth/otp/send'),
         data: request.toJson(),
       );
 
@@ -176,7 +175,7 @@ class AuthRemoteDataSource {
   }) async {
     try {
       final response = await _apiClient.dio.post(
-        '${AppConfig.authServiceBaseUrl}${AppConfig.authBasePath}/password/change',
+        keeplyApiUrl(KeeplyApiService.auth, '/api/auth/password/change'),
         data: {
           'userId': userId,
           'currentPassword': currentPassword,
@@ -199,7 +198,7 @@ class AuthRemoteDataSource {
   }) async {
     try {
       final response = await _apiClient.dio.post(
-        '${AppConfig.authServiceBaseUrl}${AppConfig.authBasePath}/password/forgot',
+        keeplyApiUrl(KeeplyApiService.auth, '/api/auth/password/forgot'),
         data: {
           'username': username,
           'projectType': projectType,
@@ -219,12 +218,12 @@ class AuthRemoteDataSource {
     try {
       final access = await _apiClient.getAccessToken();
       if (access != null && access.trim().isNotEmpty) {
-        await _apiClient.dio.post('${AppConfig.authServiceBaseUrl}${AppConfig.authBasePath}/logout');
+        await _apiClient.dio.post(keeplyApiUrl(KeeplyApiService.auth, '/api/auth/logout'));
       } else {
         final rt = await _apiClient.getRefreshToken();
         if (rt != null && rt.trim().isNotEmpty) {
           await _apiClient.dio.post(
-            '${AppConfig.authServiceBaseUrl}${AppConfig.authBasePath}/logout',
+            keeplyApiUrl(KeeplyApiService.auth, '/api/auth/logout'),
             data: {'refreshToken': rt.trim()},
           );
         }
