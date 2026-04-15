@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:keeply_app/core/theme/keeply_tokens.dart';
 import 'package:keeply_app/core/view_layout/view_layout_scope.dart';
+import 'package:keeply_app/core/widgets/keeply_asset_views.dart';
+import 'package:keeply_app/features/asset/data/datasources/asset_remote_datasource.dart';
+import 'package:keeply_app/features/asset/data/models/asset_models.dart';
 import 'package:keeply_app/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:keeply_app/features/asset/presentation/pages/assets_list_page.dart';
 import 'package:keeply_app/features/asset/presentation/pages/asset_scan_page.dart';
@@ -8,8 +12,81 @@ import 'package:keeply_app/features/asset/presentation/pages/create_asset_page.d
 
 /// Home Page
 /// Main dashboard after authentication
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   const HomePage({super.key});
+
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  final AssetRemoteDataSource _assetDs = AssetRemoteDataSource();
+
+  List<AssetMaster> _assets = [];
+  bool _assetsLoading = true;
+  String _room = 'All';
+
+  static const _rooms = ['All', 'Kitchen', 'Living room', 'Laundry', 'Other'];
+  static const int _browsePreviewMax = 24;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _loadAssets());
+  }
+
+  Future<void> _loadAssets() async {
+    final auth = context.read<AuthBloc>().state;
+    if (auth is! AuthAuthenticated) return;
+    final tokenUserId = auth.user.userId;
+
+    setState(() => _assetsLoading = true);
+    try {
+      var list = <AssetMaster>[];
+      if (tokenUserId > 0) {
+        try {
+          list = await _assetDs.fetchAssetsAssignedToUser(tokenUserId);
+        } catch (_) {}
+      }
+      if (list.isEmpty) {
+        Map<String, dynamic>? nya;
+        try {
+          nya = await _assetDs.getNeedYourAttention();
+        } catch (_) {}
+        if (nya != null) {
+          final raw = nya['assets'];
+          if (raw is List) {
+            list = raw
+                .whereType<Map>()
+                .map((e) => AssetMaster.fromJson(Map<String, dynamic>.from(e)))
+                .toList();
+          }
+        }
+      }
+      if (list.isEmpty && tokenUserId <= 0) {
+        try {
+          final page = await _assetDs.searchAssets(page: 0, size: 50);
+          list = page.content;
+        } catch (_) {}
+      }
+      if (!mounted) return;
+      setState(() {
+        _assets = list;
+        _assetsLoading = false;
+      });
+    } catch (_) {
+      if (mounted) setState(() => _assetsLoading = false);
+    }
+  }
+
+  List<AssetMaster> get _filtered {
+    if (_room == 'All') return _assets;
+    final r = _room.toLowerCase();
+    return _assets.where((a) {
+      final cat = (a.category?['categoryName'] as String?) ?? '';
+      return cat.toLowerCase().contains(r.substring(0, r.length.clamp(0, 4)));
+    }).toList();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -33,7 +110,147 @@ class HomePage extends StatelessWidget {
       body: BlocBuilder<AuthBloc, AuthState>(
         builder: (context, state) {
           if (state is AuthAuthenticated) {
-            return _buildDashboard(context, state.user);
+            return RefreshIndicator(
+              onRefresh: _loadAssets,
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Welcome, ${state.user.username ?? 'User'}!',
+                              style: Theme.of(context).textTheme.headlineSmall,
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Manage your assets efficiently',
+                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    color: Colors.grey[600],
+                                  ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    Text(
+                      'Quick Actions',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                    ),
+                    const SizedBox(height: 16),
+                    _buildQuickActions(context),
+                    if (_assetsLoading) ...[
+                      const SizedBox(height: 24),
+                      const Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(24),
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                      ),
+                    ],
+                    if (!_assetsLoading && _assets.isNotEmpty) ...[
+                      const SizedBox(height: 24),
+                      Text(
+                        'Browse by room',
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'List view or detail cards — switch with the layout toggle in the app bar.',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(color: KeeplyTokens.muted),
+                      ),
+                      const SizedBox(height: 12),
+                      SizedBox(
+                        height: 40,
+                        child: ListView.separated(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: _rooms.length,
+                          separatorBuilder: (_, __) => const SizedBox(width: 8),
+                          itemBuilder: (_, i) {
+                            final label = _rooms[i];
+                            final on = _room == label;
+                            return FilterChip(
+                              label: Text(label),
+                              selected: on,
+                              onSelected: (_) => setState(() => _room = label),
+                            );
+                          },
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                      if (_filtered.isEmpty)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 24),
+                          child: Center(
+                            child: Text(
+                              _room == 'All'
+                                  ? 'No appliances to show yet.'
+                                  : 'No appliances in this room.',
+                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: KeeplyTokens.muted),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        )
+                      else
+                        ListenableBuilder(
+                          listenable: ViewLayoutScope.notifierOf(context),
+                          builder: (context, _) {
+                            final preview = _filtered.take(_browsePreviewMax).toList();
+                            final mode = ViewLayoutScope.modeOf(context);
+                            if (mode == ViewLayoutMode.list) {
+                              return Column(
+                                children: [
+                                  for (final a in preview)
+                                    KeeplyAssetDetailListRow(
+                                      asset: a,
+                                      onTap: () {},
+                                    ),
+                                ],
+                              );
+                            }
+                            return Column(
+                              children: [
+                                for (final a in preview)
+                                  Padding(
+                                    padding: const EdgeInsets.only(bottom: 12),
+                                    child: KeeplyAssetDetailCard(asset: a, onTap: () {}),
+                                  ),
+                              ],
+                            );
+                          },
+                        ),
+                      if (_filtered.isNotEmpty && _filtered.length > _browsePreviewMax)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8),
+                          child: Align(
+                            alignment: Alignment.center,
+                            child: TextButton(
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(builder: (_) => const AssetsListPage()),
+                                );
+                              },
+                              child: const Text('View all assets'),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ],
+                ),
+              ),
+            );
           }
           return const Center(child: CircularProgressIndicator());
         },
@@ -41,131 +258,86 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  Widget _buildDashboard(BuildContext context, user) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Welcome Card
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Welcome, ${user.username ?? 'User'}!',
-                    style: Theme.of(context).textTheme.headlineSmall,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Manage your assets efficiently',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Colors.grey[600],
-                        ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 24),
-          // Quick Actions
-          Text(
-            'Quick Actions',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-          ),
-          const SizedBox(height: 16),
-          ListenableBuilder(
-            listenable: ViewLayoutScope.notifierOf(context),
-            builder: (context, _) {
-              final actions = <({IconData icon, String title, VoidCallback onTap})>[
-                (
-                  icon: Icons.inventory_2,
-                  title: 'Assets',
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const AssetsListPage(),
-                      ),
-                    );
-                  },
-                ),
-                (
-                  icon: Icons.category,
-                  title: 'Categories',
-                  onTap: () {},
-                ),
-                (
-                  icon: Icons.qr_code_scanner,
-                  title: 'Scan Asset',
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const AssetScanPage(),
-                      ),
-                    );
-                  },
-                ),
-                (
-                  icon: Icons.add_circle,
-                  title: 'Add Asset',
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const CreateAssetPage(),
-                      ),
-                    );
-                  },
-                ),
-                (
-                  icon: Icons.assignment,
-                  title: 'Compliance',
-                  onTap: () {},
-                ),
-              ];
-              if (ViewLayoutScope.modeOf(context) == ViewLayoutMode.list) {
-                return Column(
-                  children: [
-                    for (final a in actions)
-                      Card(
-                        margin: const EdgeInsets.only(bottom: 8),
-                        child: ListTile(
-                          leading: Icon(a.icon, color: Theme.of(context).primaryColor),
-                          title: Text(a.title),
-                          trailing: const Icon(Icons.chevron_right),
-                          onTap: a.onTap,
-                        ),
-                      ),
-                  ],
-                );
-              }
-              return GridView.count(
-                crossAxisCount: 2,
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                crossAxisSpacing: 16,
-                mainAxisSpacing: 16,
-                childAspectRatio: 1.5,
-                children: [
-                  for (final a in actions)
-                    _buildActionCard(
-                      context,
-                      icon: a.icon,
-                      title: a.title,
-                      onTap: a.onTap,
-                    ),
-                ],
+  Widget _buildQuickActions(BuildContext context) {
+    return ListenableBuilder(
+      listenable: ViewLayoutScope.notifierOf(context),
+      builder: (context, _) {
+        final actions = <({IconData icon, String title, VoidCallback onTap})>[
+          (
+            icon: Icons.inventory_2,
+            title: 'Assets',
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const AssetsListPage()),
               );
             },
           ),
-        ],
-      ),
+          (
+            icon: Icons.category,
+            title: 'Categories',
+            onTap: () {},
+          ),
+          (
+            icon: Icons.qr_code_scanner,
+            title: 'Scan Asset',
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const AssetScanPage()),
+              );
+            },
+          ),
+          (
+            icon: Icons.add_circle,
+            title: 'Add Asset',
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const CreateAssetPage()),
+              );
+            },
+          ),
+          (
+            icon: Icons.assignment,
+            title: 'Compliance',
+            onTap: () {},
+          ),
+        ];
+        if (ViewLayoutScope.modeOf(context) == ViewLayoutMode.list) {
+          return Column(
+            children: [
+              for (final a in actions)
+                Card(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  child: ListTile(
+                    leading: Icon(a.icon, color: Theme.of(context).primaryColor),
+                    title: Text(a.title),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: a.onTap,
+                  ),
+                ),
+            ],
+          );
+        }
+        return GridView.count(
+          crossAxisCount: 2,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          crossAxisSpacing: 16,
+          mainAxisSpacing: 16,
+          childAspectRatio: 1.5,
+          children: [
+            for (final a in actions)
+              _buildActionCard(
+                context,
+                icon: a.icon,
+                title: a.title,
+                onTap: a.onTap,
+              ),
+          ],
+        );
+      },
     );
   }
 
@@ -199,4 +371,3 @@ class HomePage extends StatelessWidget {
     );
   }
 }
-
