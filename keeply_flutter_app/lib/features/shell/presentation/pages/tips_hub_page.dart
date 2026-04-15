@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:keeply_app/core/theme/keeply_tokens.dart';
-import 'package:keeply_app/features/helpdesk/presentation/pages/helpdesk_hub_page.dart';
 
-/// React route `/home/tips` (`KnowledgePage` placeholder — same entry point pattern).
+/// React route `/home/tips` — tips and knowledge entry (no helpdesk import to avoid circular routes).
 class TipsHubPage extends StatelessWidget {
   const TipsHubPage({super.key});
 
@@ -18,14 +17,10 @@ class TipsHubPage extends StatelessWidget {
           'Browse guidance for using asset, auth, notification, and helpdesk services.',
           style: t.bodyMedium?.copyWith(color: KeeplyTokens.muted, height: 1.45),
         ),
-        const SizedBox(height: 20),
-        FilledButton.tonal(
-          onPressed: () {
-            Navigator.of(context).push<void>(
-              MaterialPageRoute(builder: (_) => const HelpdeskHubPage()),
-            );
-          },
-          child: const Text('Open help & support'),
+        const SizedBox(height: 16),
+        Text(
+          'Open Help & support from the home screen summary, the dashboard, or your account hub to search FAQs and contact the helpdesk.',
+          style: t.bodySmall?.copyWith(color: KeeplyTokens.muted, height: 1.4),
         ),
       ],
     );

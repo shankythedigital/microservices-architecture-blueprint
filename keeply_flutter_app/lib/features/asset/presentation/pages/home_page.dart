@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:keeply_app/core/api/keeply_helpdesk_api.dart';
 import 'package:keeply_app/core/theme/keeply_tokens.dart';
 import 'package:keeply_app/core/view_layout/view_layout_scope.dart';
 import 'package:keeply_app/core/widgets/keeply_asset_views.dart';
@@ -9,6 +10,7 @@ import 'package:keeply_app/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:keeply_app/features/asset/presentation/pages/assets_list_page.dart';
 import 'package:keeply_app/features/asset/presentation/pages/asset_scan_page.dart';
 import 'package:keeply_app/features/asset/presentation/pages/create_asset_page.dart';
+import 'package:keeply_app/features/helpdesk/presentation/pages/helpdesk_hub_page.dart';
 
 /// Home Page
 /// Main dashboard after authentication
@@ -25,6 +27,8 @@ class _HomePageState extends State<HomePage> {
   List<AssetMaster> _assets = [];
   bool _assetsLoading = true;
   String _room = 'All';
+  int? _helpdeskIssueCount;
+  int? _helpdeskQueryCount;
 
   static const _rooms = ['All', 'Kitchen', 'Living room', 'Laundry', 'Other'];
   static const int _browsePreviewMax = 24;
@@ -35,6 +39,48 @@ class _HomePageState extends State<HomePage> {
     WidgetsBinding.instance.addPostFrameCallback((_) => _loadAssets());
   }
 
+  Future<List<AssetMaster>> _fetchAssetList(int tokenUserId) async {
+    var list = <AssetMaster>[];
+    if (tokenUserId > 0) {
+      try {
+        list = await _assetDs.fetchAssetsAssignedToUser(tokenUserId);
+      } catch (_) {}
+    }
+    if (list.isEmpty) {
+      Map<String, dynamic>? nya;
+      try {
+        nya = await _assetDs.getNeedYourAttention();
+      } catch (_) {}
+      if (nya != null) {
+        final raw = nya['assets'];
+        if (raw is List) {
+          list = raw
+              .whereType<Map>()
+              .map((e) => AssetMaster.fromJson(Map<String, dynamic>.from(e)))
+              .toList();
+        }
+      }
+    }
+    if (list.isEmpty && tokenUserId <= 0) {
+      try {
+        final page = await _assetDs.searchAssets(page: 0, size: 50);
+        list = page.content;
+      } catch (_) {}
+    }
+    return list;
+  }
+
+  Future<(int?, int?)> _fetchHelpdeskSummary() async {
+    try {
+      final api = KeeplyHelpdeskApi();
+      final issues = await api.listMyIssues();
+      final queries = await api.listMyQueries();
+      return (issues.length, queries.length);
+    } catch (_) {
+      return (null, null);
+    }
+  }
+
   Future<void> _loadAssets() async {
     final auth = context.read<AuthBloc>().state;
     if (auth is! AuthAuthenticated) return;
@@ -42,36 +88,17 @@ class _HomePageState extends State<HomePage> {
 
     setState(() => _assetsLoading = true);
     try {
-      var list = <AssetMaster>[];
-      if (tokenUserId > 0) {
-        try {
-          list = await _assetDs.fetchAssetsAssignedToUser(tokenUserId);
-        } catch (_) {}
-      }
-      if (list.isEmpty) {
-        Map<String, dynamic>? nya;
-        try {
-          nya = await _assetDs.getNeedYourAttention();
-        } catch (_) {}
-        if (nya != null) {
-          final raw = nya['assets'];
-          if (raw is List) {
-            list = raw
-                .whereType<Map>()
-                .map((e) => AssetMaster.fromJson(Map<String, dynamic>.from(e)))
-                .toList();
-          }
-        }
-      }
-      if (list.isEmpty && tokenUserId <= 0) {
-        try {
-          final page = await _assetDs.searchAssets(page: 0, size: 50);
-          list = page.content;
-        } catch (_) {}
-      }
+      final results = await Future.wait([
+        _fetchAssetList(tokenUserId),
+        _fetchHelpdeskSummary(),
+      ]);
       if (!mounted) return;
+      final list = results[0] as List<AssetMaster>;
+      final hd = results[1] as (int?, int?);
       setState(() {
         _assets = list;
+        _helpdeskIssueCount = hd.$1;
+        _helpdeskQueryCount = hd.$2;
         _assetsLoading = false;
       });
     } catch (_) {
@@ -139,6 +166,8 @@ class _HomePageState extends State<HomePage> {
                         ),
                       ),
                     ),
+                    const SizedBox(height: 16),
+                    _buildHelpdeskSummaryCard(context),
                     const SizedBox(height: 24),
                     Text(
                       'Quick Actions',
@@ -258,11 +287,78 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  Widget _buildHelpdeskSummaryCard(BuildContext context) {
+    final t = Theme.of(context).textTheme;
+    return Card(
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: () {
+          Navigator.push<void>(
+            context,
+            MaterialPageRoute<void>(builder: (_) => const HelpdeskHubPage()),
+          );
+        },
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Icon(Icons.support_agent, color: Theme.of(context).colorScheme.primary, size: 28),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Help & support', style: t.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+                    Text(
+                      'Tickets, questions, and FAQs from helpdesk-service.',
+                      style: t.bodySmall?.copyWith(color: KeeplyTokens.muted, height: 1.35),
+                    ),
+                  ],
+                ),
+              ),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _helpdeskMiniStat(context, 'Tickets', _helpdeskIssueCount),
+                  const SizedBox(width: 14),
+                  _helpdeskMiniStat(context, 'Questions', _helpdeskQueryCount),
+                ],
+              ),
+              const Icon(Icons.chevron_right, color: KeeplyTokens.muted),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _helpdeskMiniStat(BuildContext context, String label, int? value) {
+    final t = Theme.of(context).textTheme;
+    final v = value != null ? '$value' : (_assetsLoading ? '…' : '—');
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        Text(v, style: t.titleSmall?.copyWith(fontWeight: FontWeight.w800)),
+        Text(label, style: t.labelSmall?.copyWith(color: KeeplyTokens.muted)),
+      ],
+    );
+  }
+
   Widget _buildQuickActions(BuildContext context) {
     return ListenableBuilder(
       listenable: ViewLayoutScope.notifierOf(context),
       builder: (context, _) {
         final actions = <({IconData icon, String title, VoidCallback onTap})>[
+          (
+            icon: Icons.support_agent,
+            title: 'Help & support',
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute<void>(builder: (_) => const HelpdeskHubPage()),
+              );
+            },
+          ),
           (
             icon: Icons.inventory_2,
             title: 'Assets',
