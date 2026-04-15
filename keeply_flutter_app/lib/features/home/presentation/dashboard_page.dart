@@ -241,62 +241,66 @@ class _DashboardPageState extends State<DashboardPage> {
           ),
           const SizedBox(height: 12),
           _HelpCard(t: t),
-          const SizedBox(height: 20),
-          Text('Browse by room', style: t.titleSmall?.copyWith(fontWeight: FontWeight.w600)),
-          const SizedBox(height: 10),
-          SizedBox(
-            height: 40,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              itemCount: _rooms.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 8),
-              itemBuilder: (_, i) {
-                final label = _rooms[i];
-                final on = _room == label;
-                return FilterChip(
-                  label: Text(label),
-                  selected: on,
-                  onSelected: (_) => setState(() => _room = label),
-                );
-              },
-            ),
-          ),
-          const SizedBox(height: 14),
-          if (_filtered.isEmpty)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 24),
-              child: Text(
-                'No appliances to show yet.',
-                style: t.bodyMedium?.copyWith(color: KeeplyTokens.muted),
-                textAlign: TextAlign.center,
-              ),
-            )
-          else
-            ListenableBuilder(
-              listenable: ViewLayoutScope.notifierOf(context),
-              builder: (context, _) {
-                final preview = _filtered.take(12).toList();
-                if (ViewLayoutScope.modeOf(context) == ViewLayoutMode.list) {
-                  return Column(
-                    children: [
-                      for (final a in preview) KeeplyAssetListRow(asset: a, onTap: () {}),
-                    ],
+          if (_assets.isNotEmpty) ...[
+            const SizedBox(height: 20),
+            Text('Browse by room', style: t.titleSmall?.copyWith(fontWeight: FontWeight.w600)),
+            const SizedBox(height: 10),
+            SizedBox(
+              height: 40,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: _rooms.length,
+                separatorBuilder: (_, __) => const SizedBox(width: 8),
+                itemBuilder: (_, i) {
+                  final label = _rooms[i];
+                  final on = _room == label;
+                  return FilterChip(
+                    label: Text(label),
+                    selected: on,
+                    onSelected: (_) => setState(() => _room = label),
                   );
-                }
-                return GridView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    mainAxisSpacing: 12,
-                    crossAxisSpacing: 12,
-                    childAspectRatio: 0.78,
-                  ),
-                  itemCount: preview.length,
-                  itemBuilder: (_, i) => KeeplyAssetGridCard(asset: preview[i], onTap: () {}),
-                );
-              },
+                },
+              ),
             ),
+            const SizedBox(height: 14),
+            if (_filtered.isEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 24),
+                child: Text(
+                  _room == 'All'
+                      ? 'No appliances to show yet.'
+                      : 'No appliances in this room.',
+                  style: t.bodyMedium?.copyWith(color: KeeplyTokens.muted),
+                  textAlign: TextAlign.center,
+                ),
+              )
+            else
+              ListenableBuilder(
+                listenable: ViewLayoutScope.notifierOf(context),
+                builder: (context, _) {
+                  final preview = _filtered.take(12).toList();
+                  if (ViewLayoutScope.modeOf(context) == ViewLayoutMode.list) {
+                    return Column(
+                      children: [
+                        for (final a in preview) KeeplyAssetListRow(asset: a, onTap: () {}),
+                      ],
+                    );
+                  }
+                  return GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      mainAxisSpacing: 12,
+                      crossAxisSpacing: 12,
+                      childAspectRatio: 0.78,
+                    ),
+                    itemCount: preview.length,
+                    itemBuilder: (_, i) => KeeplyAssetGridCard(asset: preview[i], onTap: () {}),
+                  );
+                },
+              ),
+          ],
         ],
       ),
     );
