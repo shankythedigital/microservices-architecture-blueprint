@@ -43,6 +43,13 @@ class SelectableOptionPicker<T> extends StatefulWidget {
 
 class _SelectableOptionPickerState<T> extends State<SelectableOptionPicker<T>> {
   final GlobalKey<FormFieldState<T?>> _fieldKey = GlobalKey<FormFieldState<T?>>();
+  final ScrollController _optionsScrollController = ScrollController();
+
+  @override
+  void dispose() {
+    _optionsScrollController.dispose();
+    super.dispose();
+  }
 
   @override
   void didUpdateWidget(SelectableOptionPicker<T> oldWidget) {
@@ -105,92 +112,106 @@ class _SelectableOptionPickerState<T> extends State<SelectableOptionPicker<T>> {
                     ),
                     clipBehavior: Clip.antiAlias,
                     child: mode == ViewLayoutMode.list
-                        ? ListView.separated(
-                            shrinkWrap: true,
-                            padding: const EdgeInsets.symmetric(vertical: 4),
-                            itemCount: widget.options.length,
-                            separatorBuilder: (_, __) => const Divider(height: 1),
-                            itemBuilder: (context, i) {
-                              final o = widget.options[i];
-                              final selected = _equals(field.value, o.value);
-                              return ListTile(
-                                dense: true,
-                                selected: selected,
-                                selectedTileColor: KeeplyTokens.accentSoft,
-                                title: Text(o.title, maxLines: 2, overflow: TextOverflow.ellipsis),
-                                subtitle: o.subtitle != null
-                                    ? Text(
-                                        o.subtitle!,
-                                        style: const TextStyle(color: KeeplyTokens.muted, fontSize: 12),
-                                      )
-                                    : null,
-                                trailing: selected ? const Icon(Icons.check_circle, color: KeeplyTokens.accent, size: 20) : null,
-                                onTap: () {
-                                  field.didChange(o.value);
-                                  widget.onChanged(o.value);
-                                },
-                              );
-                            },
-                          )
-                        : GridView.builder(
-                            shrinkWrap: true,
-                            padding: const EdgeInsets.all(8),
-                            physics: const ClampingScrollPhysics(),
-                            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 2,
-                              mainAxisSpacing: 8,
-                              crossAxisSpacing: 8,
-                              childAspectRatio: 2.4,
-                            ),
-                            itemCount: widget.options.length,
-                            itemBuilder: (context, i) {
-                              final o = widget.options[i];
-                              final selected = _equals(field.value, o.value);
-                              return Material(
-                                color: selected ? KeeplyTokens.accentSoft : KeeplyTokens.surfaceMuted,
-                                borderRadius: BorderRadius.circular(KeeplyTokens.radiusXs),
-                                child: InkWell(
+                        ? Scrollbar(
+                            controller: _optionsScrollController,
+                            thumbVisibility: true,
+                            thickness: 6,
+                            radius: const Radius.circular(3),
+                            child: ListView.separated(
+                              controller: _optionsScrollController,
+                              shrinkWrap: true,
+                              padding: const EdgeInsets.symmetric(vertical: 4),
+                              itemCount: widget.options.length,
+                              separatorBuilder: (_, __) => const Divider(height: 1),
+                              itemBuilder: (context, i) {
+                                final o = widget.options[i];
+                                final selected = _equals(field.value, o.value);
+                                return ListTile(
+                                  dense: true,
+                                  selected: selected,
+                                  selectedTileColor: KeeplyTokens.accentSoft,
+                                  title: Text(o.title, maxLines: 2, overflow: TextOverflow.ellipsis),
+                                  subtitle: o.subtitle != null
+                                      ? Text(
+                                          o.subtitle!,
+                                          style: const TextStyle(color: KeeplyTokens.muted, fontSize: 12),
+                                        )
+                                      : null,
+                                  trailing: selected ? const Icon(Icons.check_circle, color: KeeplyTokens.accent, size: 20) : null,
                                   onTap: () {
                                     field.didChange(o.value);
                                     widget.onChanged(o.value);
                                   },
+                                );
+                              },
+                            ),
+                          )
+                        : Scrollbar(
+                            controller: _optionsScrollController,
+                            thumbVisibility: true,
+                            thickness: 6,
+                            radius: const Radius.circular(3),
+                            child: GridView.builder(
+                              controller: _optionsScrollController,
+                              shrinkWrap: true,
+                              padding: const EdgeInsets.all(8),
+                              physics: const ClampingScrollPhysics(),
+                              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 2,
+                                mainAxisSpacing: 8,
+                                crossAxisSpacing: 8,
+                                childAspectRatio: 2.4,
+                              ),
+                              itemCount: widget.options.length,
+                              itemBuilder: (context, i) {
+                                final o = widget.options[i];
+                                final selected = _equals(field.value, o.value);
+                                return Material(
+                                  color: selected ? KeeplyTokens.accentSoft : KeeplyTokens.surfaceMuted,
                                   borderRadius: BorderRadius.circular(KeeplyTokens.radiusXs),
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(KeeplyTokens.radiusXs),
-                                      border: Border.all(
-                                        color: selected ? KeeplyTokens.accent : KeeplyTokens.line,
-                                        width: selected ? 1.5 : 1,
-                                      ),
-                                    ),
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        Text(
-                                          o.title,
-                                          maxLines: 2,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                                                fontWeight: FontWeight.w600,
-                                              ),
+                                  child: InkWell(
+                                    onTap: () {
+                                      field.didChange(o.value);
+                                      widget.onChanged(o.value);
+                                    },
+                                    borderRadius: BorderRadius.circular(KeeplyTokens.radiusXs),
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(KeeplyTokens.radiusXs),
+                                        border: Border.all(
+                                          color: selected ? KeeplyTokens.accent : KeeplyTokens.line,
+                                          width: selected ? 1.5 : 1,
                                         ),
-                                        if (o.subtitle != null)
+                                      ),
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
                                           Text(
-                                            o.subtitle!,
-                                            maxLines: 1,
+                                            o.title,
+                                            maxLines: 2,
                                             overflow: TextOverflow.ellipsis,
-                                            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                                  color: KeeplyTokens.muted,
+                                            style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                                                  fontWeight: FontWeight.w600,
                                                 ),
                                           ),
-                                      ],
+                                          if (o.subtitle != null)
+                                            Text(
+                                              o.subtitle!,
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                                    color: KeeplyTokens.muted,
+                                                  ),
+                                            ),
+                                        ],
+                                      ),
                                     ),
                                   ),
-                                ),
-                              );
-                            },
+                                );
+                              },
+                            ),
                           ),
                   ),
                 if (field.hasError)

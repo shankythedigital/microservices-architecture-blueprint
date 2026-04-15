@@ -30,12 +30,16 @@ class ApiClient {
         connectTimeout: AppConfig.connectTimeout,
         receiveTimeout: AppConfig.receiveTimeout,
         sendTimeout: AppConfig.sendTimeout,
-        // Web: avoid default Content-Type on every request (reduces unnecessary CORS preflights on GET).
-        // Dio still sets Content-Type for JSON bodies on POST/PUT/PATCH.
-        headers: {
-          if (!kIsWeb) 'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
+        // Web: do not set default Content-Type / Accept here.
+        // - `Accept: application/json` is not CORS-safelisted → forces a preflight on every cross-origin GET.
+        // - Dio still adds Content-Type (and Accept where needed) for JSON request bodies on POST/PUT/PATCH.
+        // Native: keep JSON defaults for consistent behavior with OkHttp / CFNetwork.
+        headers: kIsWeb
+            ? <String, dynamic>{}
+            : <String, dynamic>{
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+              },
       ),
     );
 

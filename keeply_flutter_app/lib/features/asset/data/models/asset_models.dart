@@ -23,15 +23,20 @@ class AssetRequest {
     this.projectType,
   });
 
+  /// Matches asset-service `AssetRequest` + Jackson binding to [AssetMaster] relations
+  /// (same shape as `buildCreateAssetPayload` in `keeply_react_app/src/api/assetsApi.ts`).
   Map<String, dynamic> toJson() => {
-        'categoryId': categoryId,
-        'subCategoryId': subCategoryId,
-        'makeId': makeId,
-        'modelId': modelId,
-        'assetNameUdv': assetNameUdv,
         if (userId != null) 'userId': userId,
         if (username != null) 'username': username,
         if (projectType != null) 'projectType': projectType,
+        'asset': {
+          'assetNameUdv': assetNameUdv,
+          'assetStatus': 'ACTIVE',
+          'category': {'categoryId': categoryId},
+          'subCategory': {'subCategoryId': subCategoryId},
+          'make': {'makeId': makeId},
+          'model': {'modelId': modelId},
+        },
       };
 }
 

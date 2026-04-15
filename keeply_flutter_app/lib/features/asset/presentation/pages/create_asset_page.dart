@@ -41,20 +41,6 @@ class _CreateAssetPageState extends State<CreateAssetPage> {
   bool _masterLoading = true;
   String? _masterError;
 
-  /// Prefer master-catalog category named "Master"; otherwise first by [categoryName].
-  int? _pickDefaultCategoryId(List<Category> categories) {
-    final withIds = categories.where((c) => c.categoryId != null).toList();
-    if (withIds.isEmpty) return null;
-    const master = 'master';
-    for (final c in withIds) {
-      if (c.categoryName.trim().toLowerCase() == master) {
-        return c.categoryId;
-      }
-    }
-    withIds.sort((a, b) => a.categoryName.compareTo(b.categoryName));
-    return withIds.first.categoryId;
-  }
-
   Future<void> _loadCategories() async {
     setState(() {
       _categoriesLoading = true;
@@ -80,16 +66,9 @@ class _CreateAssetPageState extends State<CreateAssetPage> {
           )
           .toList();
       list.sort((a, b) => a.categoryName.compareTo(b.categoryName));
-      int? defaultId;
-      if (_selectedCategoryId == null && list.isNotEmpty) {
-        defaultId = _pickDefaultCategoryId(list);
-      }
       setState(() {
         _categories = list;
         _categoriesLoading = false;
-        if (defaultId != null) {
-          _selectedCategoryId = defaultId;
-        }
         if (!_masterLoading && _masterError == null) {
           _fillCascadeDefaults();
         }
@@ -382,9 +361,10 @@ class _CreateAssetPageState extends State<CreateAssetPage> {
                           ValidationHelper.validateRequired(value, 'Asset name'),
                     ),
                     const SizedBox(height: 16),
-                    SelectableOptionPicker<int>(
+                    _CategoryBottomSheetField(
                       label: 'Category *',
                       prefixIcon: Icons.category,
+                      categories: _categories,
                       value: _selectedCategoryId,
                       enabled: !_categoriesLoading && _categoriesError == null && _categories.isNotEmpty,
                       emptyHint: _categoriesLoading
@@ -394,15 +374,6 @@ class _CreateAssetPageState extends State<CreateAssetPage> {
                               : _categories.isEmpty
                                   ? 'No categories available'
                                   : 'Select a category',
-                      options: _categories
-                          .where((c) => c.categoryId != null)
-                          .map(
-                            (c) => SelectableOption<int>(
-                              value: c.categoryId!,
-                              title: c.categoryName,
-                            ),
-                          )
-                          .toList(),
                       onChanged: (value) {
                         setState(() {
                           _selectedCategoryId = value;
@@ -415,10 +386,11 @@ class _CreateAssetPageState extends State<CreateAssetPage> {
                       validator: (value) => value == null ? 'Category is required' : null,
                     ),
                     const SizedBox(height: 16),
-                    SelectableOptionPicker<int>(
+                    _SubcategoryCardListField(
                       key: ValueKey<String>('sub_${_selectedCategoryId ?? 'none'}'),
                       label: 'SubCategory *',
                       prefixIcon: Icons.subdirectory_arrow_right,
+                      subcategories: _subcategoriesForCategory,
                       value: _selectedSubCategoryId,
                       enabled: !_masterLoading &&
                           _masterError == null &&
@@ -431,14 +403,6 @@ class _CreateAssetPageState extends State<CreateAssetPage> {
                               : _selectedCategoryId == null
                                   ? 'Select a category first'
                                   : 'No subcategories for this category',
-                      options: _subcategoriesForCategory
-                          .map(
-                            (sub) => SelectableOption<int>(
-                              value: sub.subCategoryId!,
-                              title: sub.subCategoryName ?? 'Subcategory ${sub.subCategoryId}',
-                            ),
-                          )
-                          .toList(),
                       onChanged: (value) {
                         setState(() {
                           _selectedSubCategoryId = value;
@@ -538,6 +502,402 @@ class _CreateAssetPageState extends State<CreateAssetPage> {
           },
         ),
       ),
+    );
+  }
+}
+
+/// Scrollable category rows for the modal bottom sheet with a visible scrollbar when content overflows.
+class _CategoryModalList extends StatefulWidget {
+  const _CategoryModalList({
+    required this.categories,
+    required this.selectedId,
+    required this.onSelected,
+  });
+
+  final List<Category> categories;
+  final int? selectedId;
+  final ValueChanged<int> onSelected;
+
+  @override
+  State<_CategoryModalList> createState() => _CategoryModalListState();
+}
+
+class _CategoryModalListState extends State<_CategoryModalList> {
+  late final ScrollController _scrollController;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController = ScrollController();
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scrollbar(
+      controller: _scrollController,
+      thumbVisibility: true,
+      thickness: 6,
+      radius: const Radius.circular(3),
+      child: ListView.builder(
+        controller: _scrollController,
+        itemCount: widget.categories.length,
+        itemBuilder: (context, index) {
+          final c = widget.categories[index];
+          final id = c.categoryId!;
+          final selected = widget.selectedId == id;
+          return ListTile(
+            title: Text(c.categoryName, maxLines: 2, overflow: TextOverflow.ellipsis),
+            trailing: selected
+                ? const Icon(Icons.check_circle, color: KeeplyTokens.accent, size: 22)
+                : null,
+            onTap: () => widget.onSelected(id),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _CategoryBottomSheetField extends StatefulWidget {
+  const _CategoryBottomSheetField({
+    required this.label,
+    required this.categories,
+    required this.value,
+    required this.onChanged,
+    this.validator,
+    required this.enabled,
+    required this.emptyHint,
+    this.prefixIcon,
+  });
+
+  final String label;
+  final List<Category> categories;
+  final int? value;
+  final ValueChanged<int?> onChanged;
+  final FormFieldValidator<int?>? validator;
+  final bool enabled;
+  final String emptyHint;
+  final IconData? prefixIcon;
+
+  @override
+  State<_CategoryBottomSheetField> createState() => _CategoryBottomSheetFieldState();
+}
+
+class _CategoryBottomSheetFieldState extends State<_CategoryBottomSheetField> {
+  final GlobalKey<FormFieldState<int?>> _fieldKey = GlobalKey<FormFieldState<int?>>();
+
+  @override
+  void didUpdateWidget(_CategoryBottomSheetField oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.value != widget.value) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _fieldKey.currentState?.didChange(widget.value);
+      });
+    }
+  }
+
+  String? _labelForId(int? id) {
+    if (id == null) return null;
+    for (final c in widget.categories) {
+      if (c.categoryId == id) return c.categoryName;
+    }
+    return null;
+  }
+
+  Future<void> _openSheet(FormFieldState<int?> field) async {
+    final list = widget.categories.where((c) => c.categoryId != null).toList();
+    final picked = await showModalBottomSheet<int>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (sheetCtx) {
+        final maxH = MediaQuery.sizeOf(sheetCtx).height * 0.55;
+        return SafeArea(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxHeight: maxH),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 4, 20, 12),
+                  child: Text(
+                    'Select category',
+                    style: Theme.of(sheetCtx).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+                  ),
+                ),
+                const Divider(height: 1),
+                Expanded(
+                  child: _CategoryModalList(
+                    categories: list,
+                    selectedId: field.value,
+                    onSelected: (id) => Navigator.pop(sheetCtx, id),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+    if (picked == null || !mounted) return;
+    field.didChange(picked);
+    widget.onChanged(picked);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FormField<int?>(
+      key: _fieldKey,
+      initialValue: widget.value,
+      validator: (v) => widget.enabled ? widget.validator?.call(v) : null,
+      builder: (field) {
+        final borderColor = field.hasError ? Theme.of(context).colorScheme.error : KeeplyTokens.line;
+        final display = _labelForId(field.value);
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                if (widget.prefixIcon != null) ...[
+                  Icon(widget.prefixIcon, size: 22, color: KeeplyTokens.muted),
+                  const SizedBox(width: 10),
+                ],
+                Expanded(
+                  child: Text(
+                    widget.label,
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            if (!widget.enabled)
+              Text(
+                widget.emptyHint,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(color: KeeplyTokens.muted),
+              )
+            else if (widget.categories.isEmpty)
+              Text(
+                widget.emptyHint,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(color: KeeplyTokens.muted),
+              )
+            else
+              Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () => _openSheet(field),
+                  borderRadius: BorderRadius.circular(KeeplyTokens.radiusXs),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(KeeplyTokens.radiusXs),
+                      border: Border.all(color: borderColor),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            display ?? widget.emptyHint,
+                            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                  color: display == null ? KeeplyTokens.muted : null,
+                                ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const Icon(Icons.keyboard_arrow_down, color: KeeplyTokens.muted),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            if (field.hasError)
+              Padding(
+                padding: const EdgeInsets.only(top: 6, left: 12),
+                child: Text(
+                  field.errorText!,
+                  style: TextStyle(color: Theme.of(context).colorScheme.error, fontSize: 12),
+                ),
+              ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _SubcategoryCardListField extends StatefulWidget {
+  const _SubcategoryCardListField({
+    super.key,
+    required this.label,
+    required this.subcategories,
+    required this.value,
+    required this.onChanged,
+    this.validator,
+    required this.enabled,
+    required this.emptyHint,
+    this.prefixIcon,
+  });
+
+  final String label;
+  final List<SubCategoryDto> subcategories;
+  final int? value;
+  final ValueChanged<int?> onChanged;
+  final FormFieldValidator<int?>? validator;
+  final bool enabled;
+  final String emptyHint;
+  final IconData? prefixIcon;
+
+  @override
+  State<_SubcategoryCardListField> createState() => _SubcategoryCardListFieldState();
+}
+
+class _SubcategoryCardListFieldState extends State<_SubcategoryCardListField> {
+  final GlobalKey<FormFieldState<int?>> _fieldKey = GlobalKey<FormFieldState<int?>>();
+  final ScrollController _subcategoryScrollController = ScrollController();
+
+  @override
+  void dispose() {
+    _subcategoryScrollController.dispose();
+    super.dispose();
+  }
+
+  @override
+  void didUpdateWidget(_SubcategoryCardListField oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.value != widget.value) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _fieldKey.currentState?.didChange(widget.value);
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FormField<int?>(
+      key: _fieldKey,
+      initialValue: widget.value,
+      validator: (v) => widget.enabled ? widget.validator?.call(v) : null,
+      builder: (field) {
+        final borderColor = field.hasError ? Theme.of(context).colorScheme.error : KeeplyTokens.line;
+        final list = widget.subcategories.where((s) => s.subCategoryId != null).toList();
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                if (widget.prefixIcon != null) ...[
+                  Icon(widget.prefixIcon, size: 22, color: KeeplyTokens.muted),
+                  const SizedBox(width: 10),
+                ],
+                Expanded(
+                  child: Text(
+                    widget.label,
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            if (!widget.enabled)
+              Text(
+                widget.emptyHint,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(color: KeeplyTokens.muted),
+              )
+            else if (list.isEmpty)
+              Text(
+                widget.emptyHint,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(color: KeeplyTokens.muted),
+              )
+            else
+              Container(
+                constraints: const BoxConstraints(maxHeight: 220),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(KeeplyTokens.radiusXs),
+                  border: Border.all(color: borderColor),
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: Scrollbar(
+                  controller: _subcategoryScrollController,
+                  thumbVisibility: true,
+                  thickness: 6,
+                  radius: const Radius.circular(3),
+                  child: ListView.builder(
+                    controller: _subcategoryScrollController,
+                    padding: const EdgeInsets.all(8),
+                    itemCount: list.length,
+                    itemBuilder: (context, i) {
+                      final sub = list[i];
+                      final id = sub.subCategoryId!;
+                      final title = sub.subCategoryName ?? 'Subcategory $id';
+                      final selected = field.value == id;
+                      return Padding(
+                        padding: EdgeInsets.only(bottom: i < list.length - 1 ? 8 : 0),
+                        child: Card(
+                          margin: EdgeInsets.zero,
+                          elevation: selected ? 1 : 0,
+                          color: selected ? KeeplyTokens.accentSoft : Theme.of(context).colorScheme.surface,
+                          surfaceTintColor: Colors.transparent,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(KeeplyTokens.radiusXs),
+                            side: BorderSide(
+                              color: selected ? KeeplyTokens.accent : KeeplyTokens.line,
+                              width: selected ? 2 : 1,
+                            ),
+                          ),
+                          clipBehavior: Clip.antiAlias,
+                          child: InkWell(
+                            onTap: () {
+                              field.didChange(id);
+                              widget.onChanged(id);
+                            },
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      title,
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                            fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
+                                          ),
+                                    ),
+                                  ),
+                                  if (selected)
+                                    const Icon(Icons.check_circle, color: KeeplyTokens.accent, size: 22),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
+            if (field.hasError)
+              Padding(
+                padding: const EdgeInsets.only(top: 6, left: 12),
+                child: Text(
+                  field.errorText!,
+                  style: TextStyle(color: Theme.of(context).colorScheme.error, fontSize: 12),
+                ),
+              ),
+          ],
+        );
+      },
     );
   }
 }
