@@ -61,7 +61,7 @@ class AccountHubPage extends StatelessWidget {
             trailing: const Icon(Icons.chevron_right_rounded),
             onTap: () {
               Navigator.of(context).push<void>(
-                MaterialPageRoute<void>(builder: (_) => const AlertsHubPage()),
+                MaterialPageRoute<void>(builder: (_) => const AlertsHubPage(wrapWithScaffold: true)),
               );
             },
           ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:keeply_app/core/api/keeply_helpdesk_api.dart';
 import 'package:keeply_app/core/theme/keeply_tokens.dart';
+import 'package:keeply_app/features/home/presentation/dashboard_engagement.dart';
 import 'package:keeply_app/core/view_layout/view_layout_scope.dart';
 import 'package:keeply_app/core/widgets/keeply_asset_views.dart';
 import 'package:keeply_app/features/asset/data/datasources/asset_remote_datasource.dart';
@@ -162,13 +163,19 @@ class _HomePageState extends State<HomePage> {
                             Text(
                               'Manage your assets efficiently',
                               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                    color: Colors.grey[600],
+                                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                                   ),
                             ),
                           ],
                         ),
                       ),
                     ),
+                    const SizedBox(height: 12),
+                    const DashboardGamificationPanel(),
+                    const SizedBox(height: 12),
+                    const DashboardOllamaVoiceCard(),
+                    const SizedBox(height: 10),
+                    const DashboardSupportStrip(),
                     const SizedBox(height: 16),
                     _buildHelpdeskSummaryCard(context),
                     const SizedBox(height: 24),
@@ -362,16 +369,6 @@ class _HomePageState extends State<HomePage> {
               Navigator.push(
                 context,
                 MaterialPageRoute<void>(builder: (_) => const HelpdeskHubPage()),
-              );
-            },
-          ),
-          (
-            icon: Icons.inventory_2,
-            title: 'Assets',
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const AssetsListPage()),
               );
             },
           ),

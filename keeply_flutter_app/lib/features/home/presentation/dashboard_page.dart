@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:keeply_app/core/preferences/keeply_app_preferences.dart';
 import 'package:keeply_app/core/sync/app_data_refresh_cubit.dart';
 import 'package:keeply_app/core/theme/keeply_tokens.dart';
 import 'package:keeply_app/core/view_layout/view_layout_scope.dart';
@@ -13,6 +14,8 @@ import 'package:keeply_app/core/api/keeply_helpdesk_api.dart';
 import 'package:keeply_app/features/asset/presentation/pages/asset_detail_page.dart';
 import 'package:keeply_app/features/asset/presentation/pages/create_asset_page.dart';
 import 'package:keeply_app/features/helpdesk/presentation/pages/helpdesk_hub_page.dart';
+import 'package:keeply_app/features/home/presentation/dashboard_engagement.dart';
+import 'package:keeply_app/features/home/presentation/keeply_dashboard_tour.dart';
 import 'package:keeply_app/features/shell/presentation/pages/alerts_hub_page.dart';
 
 /// Mirrors React `DashboardPage` layout (hero, CTA, reminders, appliance strip).
@@ -43,6 +46,9 @@ class _DashboardPageState extends State<DashboardPage> {
   final _assetDs = AssetRemoteDataSource();
   final _notifyDs = NotificationInboxRemoteDataSource();
   final _helpDs = HelpdeskRemoteDataSource();
+  final GlobalKey _tourHeroKey = GlobalKey();
+  final GlobalKey _tourCtaKey = GlobalKey();
+  final GlobalKey _tourRemindersKey = GlobalKey();
 
   String? _err;
   int? _alertCount;
@@ -51,13 +57,63 @@ class _DashboardPageState extends State<DashboardPage> {
   bool? _nyaOk;
   List<AssetMaster> _assets = [];
   String _room = 'All';
+  bool _tourBusy = false;
 
   static const _rooms = ['All', 'Kitchen', 'Living room', 'Laundry', 'Other'];
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _load());
+    keeplyDashboardTourReplayBus.addListener(_onTourReplaySignal);
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await _load();
+      if (!mounted) return;
+      try {
+        await KeeplyAppPrefsScope.of(context).recordDashboardVisit();
+      } catch (_) {}
+      await _queueHandsonTour();
+    });
+  }
+
+  @override
+  void dispose() {
+    keeplyDashboardTourReplayBus.removeListener(_onTourReplaySignal);
+    super.dispose();
+  }
+
+  void _onTourReplaySignal() {
+    _queueHandsonTour();
+  }
+
+  Future<void> _queueHandsonTour() async {
+    if (_tourBusy || !mounted) return;
+    final prefs = KeeplyAppPrefsScope.of(context);
+    if (prefs.handsonTourDone || prefs.reduceMotion) return;
+    _tourBusy = true;
+    await Future<void>.delayed(const Duration(milliseconds: 520));
+    if (!mounted) {
+      _tourBusy = false;
+      return;
+    }
+    final p = KeeplyAppPrefsScope.of(context);
+    if (p.handsonTourDone || p.reduceMotion) {
+      _tourBusy = false;
+      return;
+    }
+    if (!context.mounted) {
+      _tourBusy = false;
+      return;
+    }
+    startDashboardHandsonTour(
+      context,
+      heroKey: _tourHeroKey,
+      ctaKey: _tourCtaKey,
+      remindersKey: _tourRemindersKey,
+      onFinished: () {
+        p.setHandsonTourDone(true);
+        _tourBusy = false;
+      },
+    );
   }
 
   Future<void> _load() async {
@@ -219,7 +275,10 @@ class _DashboardPageState extends State<DashboardPage> {
         padding: const EdgeInsets.fromLTRB(18, 18, 18, 28),
         physics: const AlwaysScrollableScrollPhysics(),
         children: [
-          _Hero(t: t),
+          KeyedSubtree(
+            key: _tourHeroKey,
+            child: _Hero(t: t),
+          ),
           if (_err != null) ...[
             const SizedBox(height: 10),
             Container(
@@ -233,22 +292,34 @@ class _DashboardPageState extends State<DashboardPage> {
             ),
           ],
           const SizedBox(height: 16),
-          _CtaCard(
-            onTap: () {
-              Navigator.of(context).push<void>(
-                MaterialPageRoute(builder: (_) => const CreateAssetPage()),
-              );
-            },
+          KeyedSubtree(
+            key: _tourCtaKey,
+            child: _CtaCard(
+              onTap: () {
+                Navigator.of(context).push<void>(
+                  MaterialPageRoute(builder: (_) => const CreateAssetPage()),
+                );
+              },
+            ),
           ),
+          const SizedBox(height: 14),
+          const DashboardGamificationPanel(),
+          const SizedBox(height: 14),
+          const DashboardOllamaVoiceCard(),
+          const SizedBox(height: 10),
+          const DashboardSupportStrip(),
           const SizedBox(height: 20),
-          _RemindersSection(
-            t: t,
-            reminders: _reminders,
-            nyaOk: _nyaOk,
-            alertCount: _alertCount,
-            issueOpen: _issueOpen,
-            daysLeftLabel: _daysLeftLabel,
-            onOpenAsset: (assetId) => AssetDetailPage.pushIfValid(context, assetId),
+          KeyedSubtree(
+            key: _tourRemindersKey,
+            child: _RemindersSection(
+              t: t,
+              reminders: _reminders,
+              nyaOk: _nyaOk,
+              alertCount: _alertCount,
+              issueOpen: _issueOpen,
+              daysLeftLabel: _daysLeftLabel,
+              onOpenAsset: (assetId) => AssetDetailPage.pushIfValid(context, assetId),
+            ),
           ),
           const SizedBox(height: 12),
           _HelpCard(t: t),
@@ -281,7 +352,7 @@ class _DashboardPageState extends State<DashboardPage> {
                   _room == 'All'
                       ? 'No appliances to show yet.'
                       : 'No appliances in this room.',
-                  style: t.bodyMedium?.copyWith(color: KeeplyTokens.muted),
+                  style: t.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
                   textAlign: TextAlign.center,
                 ),
               )
@@ -336,6 +407,7 @@ class _Hero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -343,10 +415,10 @@ class _Hero extends StatelessWidget {
         gradient: LinearGradient(
           colors: [
             KeeplyTokens.accent.withValues(alpha: 0.12),
-            Colors.white,
+            scheme.surface,
           ],
         ),
-        border: Border.all(color: KeeplyTokens.line),
+        border: Border.all(color: scheme.outline.withValues(alpha: 0.28)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -375,7 +447,7 @@ class _Hero extends StatelessWidget {
                 const SizedBox(height: 6),
                 Text(
                   'Keep your appliances organized with reminders for service and warranties.',
-                  style: t.bodySmall?.copyWith(color: KeeplyTokens.muted, height: 1.45),
+                  style: t.bodySmall?.copyWith(color: scheme.onSurfaceVariant, height: 1.45),
                 ),
               ],
             ),
@@ -407,8 +479,9 @@ class _CtaCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     return Material(
-      color: KeeplyTokens.accentSoft,
+      color: scheme.primary.withValues(alpha: 0.12),
       borderRadius: BorderRadius.circular(KeeplyTokens.radiusSm),
       child: InkWell(
         onTap: onTap,
@@ -417,7 +490,7 @@ class _CtaCard extends StatelessWidget {
           padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 18),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(KeeplyTokens.radiusSm),
-            border: Border.all(color: const Color(0x380D9488)),
+            border: Border.all(color: scheme.primary.withValues(alpha: 0.35)),
           ),
           child: Row(
             children: [
@@ -425,19 +498,19 @@ class _CtaCard extends StatelessWidget {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: KeeplyTokens.accent.withValues(alpha: 0.18),
+                  color: scheme.primary.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(14),
                 ),
-                child: const Icon(Icons.add, color: KeeplyTokens.accentInk),
+                child: Icon(Icons.add, color: scheme.primary),
               ),
               const SizedBox(width: 14),
-              const Expanded(
+              Expanded(
                 child: Text(
                   'Add new assets',
-                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16, color: scheme.onSurface),
                 ),
               ),
-              const Icon(Icons.chevron_right_rounded, color: KeeplyTokens.muted),
+              Icon(Icons.chevron_right_rounded, color: scheme.onSurfaceVariant),
             ],
           ),
         ),
@@ -467,13 +540,16 @@ class _RemindersSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: KeeplyTokens.surface,
+        color: scheme.surface,
         borderRadius: BorderRadius.circular(KeeplyTokens.radiusSm),
-        border: Border.all(color: KeeplyTokens.line),
-        boxShadow: const [BoxShadow(color: Color(0x080F172A), blurRadius: 14, offset: Offset(0, 4))],
+        border: Border.all(color: scheme.outline.withValues(alpha: 0.28)),
+        boxShadow: [
+          BoxShadow(color: scheme.shadow.withValues(alpha: 0.08), blurRadius: 14, offset: const Offset(0, 4)),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -486,26 +562,26 @@ class _RemindersSection extends StatelessWidget {
             children: [
               Text(
                 'Alerts in the current window ',
-                style: t.bodySmall?.copyWith(color: KeeplyTokens.muted, height: 1.4),
+                style: t.bodySmall?.copyWith(color: scheme.onSurfaceVariant, height: 1.4),
               ),
               if (alertCount != null)
                 Text(
                   '$alertCount',
-                  style: t.bodySmall?.copyWith(fontWeight: FontWeight.w700, color: KeeplyTokens.ink),
+                  style: t.bodySmall?.copyWith(fontWeight: FontWeight.w700, color: scheme.onSurface),
                 ),
               if (alertCount != null)
-                Text(' in-app items · ', style: t.bodySmall?.copyWith(color: KeeplyTokens.muted)),
+                Text(' in-app items · ', style: t.bodySmall?.copyWith(color: scheme.onSurfaceVariant)),
               if (alertCount == null)
-                Text('— · ', style: t.bodySmall?.copyWith(color: KeeplyTokens.muted)),
+                Text('— · ', style: t.bodySmall?.copyWith(color: scheme.onSurfaceVariant)),
               InkWell(
                 onTap: () {
                   Navigator.of(context).push<void>(
-                    MaterialPageRoute<void>(builder: (_) => const AlertsHubPage()),
+                    MaterialPageRoute<void>(builder: (_) => const AlertsHubPage(wrapWithScaffold: true)),
                   );
                 },
                 child: Text(
                   'Open alerts',
-                  style: t.bodySmall?.copyWith(color: KeeplyTokens.accent, fontWeight: FontWeight.w600),
+                  style: t.bodySmall?.copyWith(color: scheme.primary, fontWeight: FontWeight.w600),
                 ),
               ),
             ],
@@ -533,16 +609,16 @@ class _RemindersSection extends StatelessWidget {
                   ),
                 ),
           if (reminders.isEmpty && nyaOk == null)
-            Text('Loading reminders…', style: t.bodySmall?.copyWith(color: KeeplyTokens.muted)),
+            Text('Loading reminders…', style: t.bodySmall?.copyWith(color: scheme.onSurfaceVariant)),
           if (reminders.isEmpty && nyaOk == false)
             Text(
               'Could not load coverage reminders. Open My appliances to check warranty and AMC dates.',
-              style: t.bodySmall?.copyWith(color: KeeplyTokens.muted, height: 1.4),
+              style: t.bodySmall?.copyWith(color: scheme.onSurfaceVariant, height: 1.4),
             ),
           if (reminders.isEmpty && nyaOk == true)
             Text(
               'No warranty or AMC expiry in the next 14 days.',
-              style: t.bodySmall?.copyWith(color: KeeplyTokens.muted),
+              style: t.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
             ),
           const SizedBox(height: 12),
           OutlinedButton(
@@ -568,8 +644,9 @@ class _HelpCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     return Material(
-      color: KeeplyTokens.surface,
+      color: scheme.surface,
       borderRadius: BorderRadius.circular(KeeplyTokens.radiusSm),
       child: InkWell(
         onTap: () {
@@ -583,7 +660,7 @@ class _HelpCard extends StatelessWidget {
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(KeeplyTokens.radiusSm),
-            border: Border.all(color: KeeplyTokens.line),
+            border: Border.all(color: scheme.outline.withValues(alpha: 0.28)),
           ),
           child: Row(
             children: [
@@ -595,12 +672,12 @@ class _HelpCard extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       'FAQs, queries, and knowledge articles.',
-                      style: t.bodySmall?.copyWith(color: KeeplyTokens.muted),
+                      style: t.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
                     ),
                   ],
                 ),
               ),
-              const Icon(Icons.chevron_right_rounded, color: KeeplyTokens.muted),
+              Icon(Icons.chevron_right_rounded, color: scheme.onSurfaceVariant),
             ],
           ),
         ),

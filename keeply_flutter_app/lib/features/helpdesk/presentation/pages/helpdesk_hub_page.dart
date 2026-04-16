@@ -1,11 +1,53 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:keeply_app/core/ai/keeply_ai_knowledge_base.dart';
+import 'package:keeply_app/core/ai/ollama_chat_client.dart';
 import 'package:keeply_app/core/api/keeply_api_models.dart';
 import 'package:keeply_app/core/api/keeply_helpdesk_api.dart';
 import 'package:keeply_app/core/exceptions/api_exception.dart';
 import 'package:keeply_app/core/sync/app_data_refresh_cubit.dart';
 import 'package:keeply_app/core/theme/keeply_tokens.dart';
 import 'package:keeply_app/features/shell/presentation/pages/tips_hub_page.dart';
+
+Future<String?> _instantTicketAnswer({
+  required String question,
+  required String relatedService,
+}) async {
+  final q = question.trim();
+  if (q.isEmpty) return null;
+  final kb = KeeplyAiKnowledgeBase.instance;
+  final cached = await kb.findBestAnswer(q, relatedService: relatedService);
+  if (cached != null && cached.trim().isNotEmpty) {
+    await kb.recordEntry(
+      type: 'ticket',
+      question: q,
+      answer: cached,
+      relatedService: relatedService,
+      incrementFrequencyBy: 1,
+    );
+    return '$cached\n\n(Instant answer from local Keeply knowledge base)';
+  }
+
+  final client = OllamaChatClient();
+  final answer = await client.chat(
+    messages: [
+      {
+        'role': 'system',
+        'content':
+            'You are Keeply helpdesk copilot. Give quick troubleshooting guidance for a support ticket in 5-8 bullet points. '
+                'Mention what user can do immediately and when they should wait for human support.',
+      },
+      {'role': 'user', 'content': q},
+    ],
+  );
+  await kb.recordEntry(
+    type: 'ticket',
+    question: q,
+    answer: answer,
+    relatedService: relatedService,
+  );
+  return answer;
+}
 
 /// Help & support hub — helpdesk-service integration aligned with React `HelpdeskPage.tsx`.
 class HelpdeskHubPage extends StatefulWidget {
@@ -49,6 +91,18 @@ class _HelpdeskHubPageState extends State<HelpdeskHubPage> {
       final issues = await _safeList(() => _api.listMyIssues());
       final queries = await _safeList(() => _api.listMyQueries());
       final faqs = await _safeList(() => _api.listFaqs());
+      final kb = KeeplyAiKnowledgeBase.instance;
+      for (final f in faqs) {
+        final q = (f.question ?? '').trim();
+        final a = (f.answer ?? '').trim();
+        if (q.isEmpty || a.isEmpty) continue;
+        await kb.recordEntry(
+          type: 'faq',
+          question: q,
+          answer: a,
+          relatedService: 'HELPDESK_SERVICE',
+        );
+      }
       if (!mounted) return;
       setState(() {
         _issueCount = issues.length;
@@ -544,7 +598,9 @@ class _HelpdeskCreateCustomIssuePageState extends State<HelpdeskCreateCustomIssu
   String _priority = 'MEDIUM';
   String _related = 'ASSET_SERVICE';
   bool _submitting = false;
+  bool _aiBusy = false;
   String? _err;
+  String? _aiSuggestion;
 
   static const _priorities = <String, String>{
     'LOW': 'Low',
@@ -581,6 +637,10 @@ class _HelpdeskCreateCustomIssuePageState extends State<HelpdeskCreateCustomIssu
       _err = null;
     });
     try {
+      final ai = await _instantTicketAnswer(question: '$title\n$desc', relatedService: _related);
+      if (mounted && ai != null && ai.isNotEmpty) {
+        setState(() => _aiSuggestion = ai);
+      }
       final body = <String, dynamic>{
         'title': title,
         'description': desc,
@@ -611,6 +671,30 @@ class _HelpdeskCreateCustomIssuePageState extends State<HelpdeskCreateCustomIssu
         _submitting = false;
         _err = e is ApiException ? e.message : 'Could not create ticket';
       });
+    }
+  }
+
+  Future<void> _getInstantAnswer() async {
+    final title = _titleCtrl.text.trim();
+    final desc = _descCtrl.text.trim();
+    final merged = '$title\n$desc'.trim();
+    if (merged.isEmpty) {
+      setState(() => _err = 'Enter title/description first to get instant answer.');
+      return;
+    }
+    setState(() {
+      _aiBusy = true;
+      _err = null;
+    });
+    try {
+      final ai = await _instantTicketAnswer(question: merged, relatedService: _related);
+      if (!mounted) return;
+      setState(() => _aiSuggestion = ai);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _err = e.toString());
+    } finally {
+      if (mounted) setState(() => _aiBusy = false);
     }
   }
 
@@ -658,6 +742,19 @@ class _HelpdeskCreateCustomIssuePageState extends State<HelpdeskCreateCustomIssu
               border: OutlineInputBorder(),
             ),
           ),
+          const SizedBox(height: 16),
+          OutlinedButton.icon(
+            onPressed: (_submitting || _aiBusy) ? null : _getInstantAnswer,
+            icon: _aiBusy
+                ? const SizedBox(height: 16, width: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                : const Icon(Icons.auto_awesome_outlined),
+            label: const Text('Instant AI answer'),
+          ),
+          if (_aiSuggestion != null && _aiSuggestion!.trim().isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 10),
+              child: Text(_aiSuggestion!, style: t.bodySmall?.copyWith(height: 1.4)),
+            ),
           const SizedBox(height: 16),
           InputDecorator(
             decoration: const InputDecoration(
@@ -724,7 +821,9 @@ class _HelpdeskCatalogIssuePageState extends State<HelpdeskCatalogIssuePage> {
   String _priority = 'MEDIUM';
   String _related = 'ASSET_SERVICE';
   bool _submitting = false;
+  bool _aiBusy = false;
   String? _submitErr;
+  String? _aiSuggestion;
 
   static const _priorities = <String, String>{
     'LOW': 'Low',
@@ -793,6 +892,15 @@ class _HelpdeskCatalogIssuePageState extends State<HelpdeskCatalogIssuePage> {
       _submitErr = null;
     });
     try {
+      final aiPrompt = [
+        if (sel?.issueTitle != null) sel!.issueTitle!,
+        if (sel?.issueDescription != null) sel!.issueDescription!,
+        _extraDescCtrl.text.trim(),
+      ].where((e) => e.trim().isNotEmpty).join('\n');
+      final ai = await _instantTicketAnswer(question: aiPrompt, relatedService: _related);
+      if (mounted && ai != null && ai.isNotEmpty) {
+        setState(() => _aiSuggestion = ai);
+      }
       final body = <String, dynamic>{
         'issueMasterId': id,
         'priority': _priority,
@@ -814,6 +922,31 @@ class _HelpdeskCatalogIssuePageState extends State<HelpdeskCatalogIssuePage> {
         _submitting = false;
         _submitErr = e is ApiException ? e.message : 'Could not create ticket';
       });
+    }
+  }
+
+  Future<void> _getInstantAnswerFromMaster() async {
+    final sel = _selected;
+    if (sel == null) return;
+    final prompt = [
+      if (sel.issueTitle != null) sel.issueTitle!,
+      if (sel.issueDescription != null) sel.issueDescription!,
+      _extraDescCtrl.text.trim(),
+    ].where((e) => e.trim().isNotEmpty).join('\n');
+    if (prompt.trim().isEmpty) return;
+    setState(() {
+      _aiBusy = true;
+      _submitErr = null;
+    });
+    try {
+      final ai = await _instantTicketAnswer(question: prompt, relatedService: _related);
+      if (!mounted) return;
+      setState(() => _aiSuggestion = ai);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _submitErr = e.toString());
+    } finally {
+      if (mounted) setState(() => _aiBusy = false);
     }
   }
 
@@ -866,6 +999,19 @@ class _HelpdeskCatalogIssuePageState extends State<HelpdeskCatalogIssuePage> {
                           alignLabelWithHint: true,
                         ),
                       ),
+                      const SizedBox(height: 12),
+                      OutlinedButton.icon(
+                        onPressed: (_submitting || _aiBusy) ? null : _getInstantAnswerFromMaster,
+                        icon: _aiBusy
+                            ? const SizedBox(height: 16, width: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                            : const Icon(Icons.auto_awesome_outlined),
+                        label: const Text('Instant AI answer'),
+                      ),
+                      if (_aiSuggestion != null && _aiSuggestion!.trim().isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8),
+                          child: Text(_aiSuggestion!, style: t.bodySmall?.copyWith(height: 1.4)),
+                        ),
                       const SizedBox(height: 12),
                       InputDecorator(
                         decoration: const InputDecoration(
@@ -1056,7 +1202,9 @@ class _HelpdeskNewQueryPageState extends State<HelpdeskNewQueryPage> {
   final _questionCtrl = TextEditingController();
   String _related = 'ASSET_SERVICE';
   bool _submitting = false;
+  bool _aiBusy = false;
   String? _err;
+  String? _aiSuggestion;
 
   static const _services = <String, String>{
     'ASSET_SERVICE': 'Assets',
@@ -1083,6 +1231,10 @@ class _HelpdeskNewQueryPageState extends State<HelpdeskNewQueryPage> {
       _err = null;
     });
     try {
+      final ai = await _instantTicketAnswer(question: q, relatedService: _related);
+      if (mounted && ai != null && ai.isNotEmpty) {
+        setState(() => _aiSuggestion = ai);
+      }
       await widget.api.createQuery({'question': q, 'relatedService': _related});
       if (!mounted) return;
       context.read<AppDataRefreshCubit>().bump(KeeplyDataChannel.helpdesk);
@@ -1095,6 +1247,28 @@ class _HelpdeskNewQueryPageState extends State<HelpdeskNewQueryPage> {
         _submitting = false;
         _err = e is ApiException ? e.message : 'Submit failed';
       });
+    }
+  }
+
+  Future<void> _instantAnswer() async {
+    final q = _questionCtrl.text.trim();
+    if (q.isEmpty) {
+      setState(() => _err = 'Please enter a question.');
+      return;
+    }
+    setState(() {
+      _aiBusy = true;
+      _err = null;
+    });
+    try {
+      final ai = await _instantTicketAnswer(question: q, relatedService: _related);
+      if (!mounted) return;
+      setState(() => _aiSuggestion = ai);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _err = e.toString());
+    } finally {
+      if (mounted) setState(() => _aiBusy = false);
     }
   }
 
@@ -1125,6 +1299,19 @@ class _HelpdeskNewQueryPageState extends State<HelpdeskNewQueryPage> {
               alignLabelWithHint: true,
             ),
           ),
+          const SizedBox(height: 16),
+          OutlinedButton.icon(
+            onPressed: (_submitting || _aiBusy) ? null : _instantAnswer,
+            icon: _aiBusy
+                ? const SizedBox(height: 16, width: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                : const Icon(Icons.auto_awesome_outlined),
+            label: const Text('Instant AI answer'),
+          ),
+          if (_aiSuggestion != null && _aiSuggestion!.trim().isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Text(_aiSuggestion!, style: t.bodySmall?.copyWith(height: 1.4)),
+            ),
           const SizedBox(height: 16),
           InputDecorator(
             decoration: const InputDecoration(

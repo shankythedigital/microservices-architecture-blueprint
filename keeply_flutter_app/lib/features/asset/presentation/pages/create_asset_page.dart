@@ -9,6 +9,7 @@ import 'package:keeply_app/core/api/keeply_api_models.dart';
 import 'package:keeply_app/core/api/keeply_categories_api.dart';
 import 'package:keeply_app/core/api/keeply_master_data_api.dart';
 import 'package:keeply_app/core/exceptions/api_exception.dart';
+import 'package:keeply_app/core/preferences/keeply_app_preferences.dart';
 import 'package:keeply_app/core/sync/app_data_refresh_cubit.dart';
 import 'package:keeply_app/core/theme/keeply_tokens.dart';
 import 'package:keeply_app/core/view_layout/view_layout_scope.dart';
@@ -296,7 +297,16 @@ class _CreateAssetPageState extends State<CreateAssetPage> {
       firstDate: DateTime(1970),
       lastDate: DateTime(now.year + 20),
     );
-    if (d != null) setState(() => _warrantyStart = d);
+    if (d != null) {
+      setState(() {
+        _warrantyStart = d;
+        // Default expiry: one year from start date (user can still override manually).
+        final proposedEnd = DateTime(d.year + 1, d.month, d.day);
+        if (_warrantyEnd == null || _warrantyEnd!.isBefore(d)) {
+          _warrantyEnd = proposedEnd;
+        }
+      });
+    }
   }
 
   Future<void> _pickWarrantyEnd() async {
@@ -345,6 +355,10 @@ class _CreateAssetPageState extends State<CreateAssetPage> {
 
   Future<void> _submit() async {
     _formKey.currentState?.validate();
+    KeeplyAppPreferences? appPrefs;
+    try {
+      appPrefs = KeeplyAppPrefsScope.of(context);
+    } catch (_) {}
     final auth = context.read<AuthBloc>().state;
     if (auth is! AuthAuthenticated) {
       setState(() => _submitError = 'You are not signed in.');
@@ -398,6 +412,10 @@ class _CreateAssetPageState extends State<CreateAssetPage> {
       final savedName = data['assetNameUdv'] as String? ?? assetNameUdv;
       context.read<AppDataRefreshCubit>().bump(KeeplyDataChannel.assets);
       context.read<AssetBloc>().add(LoadAssetsEvent(page: 0, size: 20));
+      try {
+        if (appPrefs != null) await appPrefs.addLoyaltyPoints(40);
+      } catch (_) {}
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Saved: $savedName'), backgroundColor: Colors.green.shade700),
       );

@@ -45,6 +45,9 @@ dependencies:
   retrofit: ^4.0.3
   rflutter_alert: ^2.0.7
   shared_preferences: ^2.2.2
+  speech_to_text: ^7.0.0
+  tutorial_coach_mark: ^1.2.11
+  url_launcher: ^6.3.1
   uuid: ^4.2.1
 
 dev_dependencies:

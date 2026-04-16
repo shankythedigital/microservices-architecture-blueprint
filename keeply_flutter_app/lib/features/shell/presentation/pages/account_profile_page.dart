@@ -1,4 +1,6 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:keeply_app/core/api/keeply_service_url.dart';
 import 'package:keeply_app/core/exceptions/api_exception.dart';
 import 'package:keeply_app/core/theme/keeply_tokens.dart';
 import 'package:keeply_app/features/auth/data/datasources/auth_remote_datasource.dart';
@@ -22,6 +24,16 @@ class _AccountProfilePageState extends State<AccountProfilePage> {
   void initState() {
     super.initState();
     _load();
+  }
+
+  String? _resolvePhoto(String? profilePhotoUrl) {
+    if (profilePhotoUrl == null || profilePhotoUrl.isEmpty) return null;
+    if (profilePhotoUrl.startsWith('http://') || profilePhotoUrl.startsWith('https://')) {
+      return profilePhotoUrl;
+    }
+    final base = keeplyServiceBase(KeeplyApiService.auth);
+    final path = profilePhotoUrl.startsWith('/') ? profilePhotoUrl : '/$profilePhotoUrl';
+    return '$base$path';
   }
 
   Future<void> _load() async {
@@ -65,6 +77,43 @@ class _AccountProfilePageState extends State<AccountProfilePage> {
             else if (_err != null)
               Text(_err!, style: t.bodyMedium?.copyWith(color: KeeplyTokens.danger))
             else if (u != null) ...[
+              Center(
+                child: CircleAvatar(
+                  radius: 52,
+                  backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.15),
+                  child: ClipOval(
+                    child: _resolvePhoto(u.profilePhotoUrl) != null
+                        ? CachedNetworkImage(
+                            imageUrl: _resolvePhoto(u.profilePhotoUrl)!,
+                            width: 104,
+                            height: 104,
+                            fit: BoxFit.cover,
+                            memCacheWidth: 220,
+                            placeholder: (_, __) => const Padding(
+                              padding: EdgeInsets.all(28),
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                            errorWidget: (_, __, ___) => Text(
+                              (u.username ?? 'U').isNotEmpty ? (u.username!.substring(0, 1).toUpperCase()) : 'U',
+                              style: TextStyle(
+                                fontSize: 40,
+                                fontWeight: FontWeight.w800,
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
+                            ),
+                          )
+                        : Text(
+                            (u.username ?? 'U').isNotEmpty ? (u.username!.substring(0, 1).toUpperCase()) : 'U',
+                            style: TextStyle(
+                              fontSize: 40,
+                              fontWeight: FontWeight.w800,
+                              color: Theme.of(context).colorScheme.primary,
+                            ),
+                          ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
               Text('Account', style: t.titleSmall?.copyWith(color: KeeplyTokens.muted)),
               const SizedBox(height: 6),
               Text(u.username ?? '—', style: t.headlineSmall?.copyWith(fontWeight: FontWeight.w800)),

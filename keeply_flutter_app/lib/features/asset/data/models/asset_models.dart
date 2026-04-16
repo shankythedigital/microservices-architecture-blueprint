@@ -2,6 +2,8 @@
 /// Data models for asset management
 library;
 
+import 'package:keeply_app/core/api/keeply_api_models.dart';
+
 class AssetRequest {
   final int categoryId;
   final int subCategoryId;
@@ -50,6 +52,21 @@ class AssetMaster {
   final bool? active;
   final DateTime? createdAt;
   final DateTime? updatedAt;
+  /// Parity with React `AssetRecord` (`keeply_react_app/src/api/assetsApi.ts`).
+  final String? imageUrl;
+  final String? serialNumber;
+  final String? purchaseDate;
+  final String? categoryImageUrl;
+  final String? subCategoryImageUrl;
+  final String? makeImageUrl;
+  final String? modelImageUrl;
+  final int? warrantyDocumentId;
+  final String? warrantyDocumentType;
+  final int? amcDocumentId;
+  final String? amcDocumentType;
+  final int? assetPhotoDocumentId;
+  final String? assetPhotoDocumentType;
+  final List<AssetDocumentSummaryDto> documents;
 
   AssetMaster({
     this.assetId,
@@ -61,16 +78,55 @@ class AssetMaster {
     this.active,
     this.createdAt,
     this.updatedAt,
+    this.imageUrl,
+    this.serialNumber,
+    this.purchaseDate,
+    this.categoryImageUrl,
+    this.subCategoryImageUrl,
+    this.makeImageUrl,
+    this.modelImageUrl,
+    this.warrantyDocumentId,
+    this.warrantyDocumentType,
+    this.amcDocumentId,
+    this.amcDocumentType,
+    this.assetPhotoDocumentId,
+    this.assetPhotoDocumentType,
+    this.documents = const [],
   });
 
+  static String? _str(dynamic v) => v is String && v.trim().isNotEmpty ? v.trim() : null;
+
+  static int? _int(dynamic v) {
+    if (v is num) return v.toInt();
+    if (v is String) return int.tryParse(v);
+    return null;
+  }
+
   factory AssetMaster.fromJson(Map<String, dynamic> json) {
+    final category = json['category'] as Map<String, dynamic>?;
+    final subCategory = json['subCategory'] as Map<String, dynamic>?;
+    final make = json['make'] as Map<String, dynamic>?;
+    final model = json['model'] as Map<String, dynamic>?;
+
+    final docsRaw = json['documents'];
+    final docs = <AssetDocumentSummaryDto>[];
+    if (docsRaw is List) {
+      for (final e in docsRaw) {
+        if (e is Map<String, dynamic>) {
+          docs.add(AssetDocumentSummaryDto.fromJson(e));
+        } else if (e is Map) {
+          docs.add(AssetDocumentSummaryDto.fromJson(Map<String, dynamic>.from(e)));
+        }
+      }
+    }
+
     return AssetMaster(
       assetId: (json['assetId'] as num?)?.toInt(),
       assetNameUdv: json['assetNameUdv'] as String? ?? '',
-      category: json['category'] as Map<String, dynamic>?,
-      subCategory: json['subCategory'] as Map<String, dynamic>?,
-      make: json['make'] as Map<String, dynamic>?,
-      model: json['model'] as Map<String, dynamic>?,
+      category: category,
+      subCategory: subCategory,
+      make: make,
+      model: model,
       active: json['active'] as bool?,
       createdAt: json['createdAt'] != null
           ? DateTime.parse(json['createdAt'] as String)
@@ -78,6 +134,20 @@ class AssetMaster {
       updatedAt: json['updatedAt'] != null
           ? DateTime.parse(json['updatedAt'] as String)
           : null,
+      imageUrl: _str(json['imageUrl']),
+      serialNumber: _str(json['serialNumber']),
+      purchaseDate: _str(json['purchaseDate']),
+      categoryImageUrl: _str(category?['imageUrl']) ?? _str(json['categoryImageUrl']),
+      subCategoryImageUrl: _str(subCategory?['imageUrl']) ?? _str(json['subCategoryImageUrl']),
+      makeImageUrl: _str(make?['imageUrl']) ?? _str(json['makeImageUrl']),
+      modelImageUrl: _str(model?['imageUrl']) ?? _str(json['modelImageUrl']),
+      warrantyDocumentId: _int(json['warrantyDocumentId']),
+      warrantyDocumentType: _str(json['warrantyDocumentType']),
+      amcDocumentId: _int(json['amcDocumentId']),
+      amcDocumentType: _str(json['amcDocumentType']),
+      assetPhotoDocumentId: _int(json['assetPhotoDocumentId']),
+      assetPhotoDocumentType: _str(json['assetPhotoDocumentType']),
+      documents: docs,
     );
   }
 }

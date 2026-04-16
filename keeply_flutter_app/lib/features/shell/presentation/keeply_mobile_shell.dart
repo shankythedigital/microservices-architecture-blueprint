@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:keeply_app/core/api/keeply_service_url.dart';
@@ -68,15 +69,15 @@ class _KeeplyMobileShellState extends State<KeeplyMobileShell> {
         ),
       ],
       child: Scaffold(
-      backgroundColor: KeeplyTokens.surface,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       body: SafeArea(
         bottom: false,
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: KeeplyTokens.maxAppWidth),
             child: Container(
-              decoration: const BoxDecoration(
-                color: KeeplyTokens.surface,
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surface,
                 boxShadow: [
                   BoxShadow(
                     color: Color(0x0F0F172A),
@@ -100,16 +101,22 @@ class _KeeplyMobileShellState extends State<KeeplyMobileShell> {
                   Expanded(
                     child: Container(
                       width: double.infinity,
-                      decoration: const BoxDecoration(
+                      decoration: BoxDecoration(
                         gradient: LinearGradient(
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
-                          colors: [
-                            Color(0xEBF8FAFC),
-                            Color(0xFFF3F6FA),
-                            Color(0xFFF1F5F9),
-                          ],
-                          stops: [0.0, 0.48, 1.0],
+                          colors: Theme.of(context).brightness == Brightness.dark
+                              ? const [
+                                  Color(0xFF1E293B),
+                                  Color(0xFF0F172A),
+                                  Color(0xFF0B1220),
+                                ]
+                              : const [
+                                  Color(0xEBF8FAFC),
+                                  Color(0xFFF3F6FA),
+                                  Color(0xFFF1F5F9),
+                                ],
+                          stops: const [0.0, 0.48, 1.0],
                         ),
                       ),
                       child: IndexedStack(
@@ -118,7 +125,7 @@ class _KeeplyMobileShellState extends State<KeeplyMobileShell> {
                           DashboardPage(),
                           AppliancesPage(),
                           TipsHubPage(),
-                          AlertsHubPage(),
+                          AlertsHubPage(wrapWithScaffold: false),
                         ],
                       ),
                     ),
@@ -168,12 +175,13 @@ class _Header extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     return Material(
-      color: Colors.white.withValues(alpha: 0.86),
+      color: scheme.surface.withValues(alpha: 0.92),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        decoration: const BoxDecoration(
-          border: Border(bottom: BorderSide(color: Color(0xE6E2E8F0))),
+        decoration: BoxDecoration(
+          border: Border(bottom: BorderSide(color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.25))),
         ),
         child: Row(
           children: [
@@ -208,41 +216,47 @@ class _Header extends StatelessWidget {
                 child: Row(
                   children: [
                     Container(
-                      width: 36,
-                      height: 36,
+                      width: 40,
+                      height: 40,
                       alignment: Alignment.center,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: KeeplyTokens.accent.withValues(alpha: 0.14),
-                        border: Border.all(color: KeeplyTokens.line),
+                        color: scheme.primary.withValues(alpha: 0.14),
+                        border: Border.all(color: scheme.outline.withValues(alpha: 0.35)),
                       ),
                       clipBehavior: Clip.antiAlias,
                       child: avatarUrl != null
-                          ? Image.network(
-                              avatarUrl!,
+                          ? CachedNetworkImage(
+                              imageUrl: avatarUrl!,
                               fit: BoxFit.cover,
-                              width: 36,
-                              height: 36,
-                              errorBuilder: (_, __, ___) => Text(
+                              width: 40,
+                              height: 40,
+                              memCacheWidth: 120,
+                              placeholder: (_, __) => const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(strokeWidth: 2),
+                              ),
+                              errorWidget: (_, __, ___) => Text(
                                 avatarLetter,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontWeight: FontWeight.w700,
-                                  color: KeeplyTokens.accentInk,
+                                  color: scheme.primary,
                                 ),
                               ),
                             )
                           : Text(
                               avatarLetter,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontWeight: FontWeight.w700,
-                                color: KeeplyTokens.accentInk,
+                                color: scheme.primary,
                               ),
                             ),
                     ),
                     const SizedBox(width: 8),
                     Text(
                       'Account',
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(color: KeeplyTokens.muted),
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(color: scheme.onSurfaceVariant),
                     ),
                   ],
                 ),
@@ -276,21 +290,23 @@ class _BottomNav extends StatelessWidget {
       alignment: Alignment.bottomCenter,
       children: [
         Container(
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
-              colors: [KeeplyTokens.navBgTop, KeeplyTokens.navBg],
+              colors: Theme.of(context).brightness == Brightness.dark
+                  ? const [Color(0xFF243330), Color(0xFF1A2C28)]
+                  : const [KeeplyTokens.navBgTop, KeeplyTokens.navBg],
             ),
-            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
             boxShadow: [
               BoxShadow(
-                color: Color(0x240F172A),
+                color: Theme.of(context).colorScheme.shadow.withValues(alpha: 0.2),
                 blurRadius: 32,
-                offset: Offset(0, -12),
+                offset: const Offset(0, -12),
               ),
             ],
-            border: Border(top: BorderSide(color: Color(0x0FFFFFFF))),
+            border: Border(top: BorderSide(color: Colors.white.withValues(alpha: 0.06))),
           ),
           padding: EdgeInsets.fromLTRB(10, 10, 10, 12 + bottom),
           child: Row(

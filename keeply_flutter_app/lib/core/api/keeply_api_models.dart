@@ -61,7 +61,7 @@ class NotificationItemDto {
       message: json['message'] as String?,
       templateCode: json['templateCode'] as String?,
       createdAt: json['createdAt'] as String?,
-      read: json['read'] as bool?,
+      read: json['read'] as bool? ?? json['isRead'] as bool?,
       priority: json['priority'] as String?,
     );
   }

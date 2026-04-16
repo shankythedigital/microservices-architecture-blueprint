@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:keeply_app/core/network/api_client.dart';
+import 'package:keeply_app/core/preferences/keeply_app_preferences.dart';
 import 'package:keeply_app/core/sync/app_data_refresh_cubit.dart';
 import 'package:keeply_app/core/utils/logger.dart';
 import 'package:keeply_app/core/view_layout/view_layout_scope.dart';
@@ -16,6 +18,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Hive.initFlutter();
 
   // Initialize API Client
   try {
@@ -37,10 +40,13 @@ class KeeplyApp extends StatefulWidget {
 
 class _KeeplyAppState extends State<KeeplyApp> {
   late final ValueNotifier<ViewLayoutMode> _viewLayoutNotifier;
+  late final KeeplyAppPreferences _appPrefs;
 
   @override
   void initState() {
     super.initState();
+    _appPrefs = KeeplyAppPreferences();
+    _appPrefs.load();
     // Default: list layout everywhere the [ViewLayoutToggle] applies; user choice is persisted.
     _viewLayoutNotifier = ValueNotifier(ViewLayoutMode.list);
     _viewLayoutNotifier.addListener(_persistLayout);
@@ -65,6 +71,7 @@ class _KeeplyAppState extends State<KeeplyApp> {
   void dispose() {
     _viewLayoutNotifier.removeListener(_persistLayout);
     _viewLayoutNotifier.dispose();
+    _appPrefs.dispose();
     super.dispose();
   }
 
@@ -87,15 +94,33 @@ class _KeeplyAppState extends State<KeeplyApp> {
             ),
           ),
         ],
-        child: MaterialApp(
-          title: 'Keeply - Asset Management',
-          debugShowCheckedModeBanner: false,
-          theme: KeeplyTheme.light(),
-          home: const SplashPage(),
-          routes: {
-            '/login': (context) => const LoginPage(),
-            '/register': (context) => const RegisterPage(),
-          },
+        child: KeeplyAppPrefsScope(
+          preferences: _appPrefs,
+          child: ListenableBuilder(
+            listenable: _appPrefs,
+            builder: (context, _) {
+              final density = _appPrefs.compactUi ? VisualDensity.compact : VisualDensity.standard;
+              return MaterialApp(
+                title: 'Keeply - Asset Management',
+                debugShowCheckedModeBanner: false,
+                themeMode: _appPrefs.materialThemeMode,
+                theme: KeeplyTheme.light(visualDensity: density),
+                darkTheme: KeeplyTheme.dark(visualDensity: density),
+                builder: (context, child) {
+                  final mq = MediaQuery.of(context);
+                  return MediaQuery(
+                    data: mq.copyWith(disableAnimations: _appPrefs.reduceMotion),
+                    child: child ?? const SizedBox.shrink(),
+                  );
+                },
+                home: const SplashPage(),
+                routes: {
+                  '/login': (context) => const LoginPage(),
+                  '/register': (context) => const RegisterPage(),
+                },
+              );
+            },
+          ),
         ),
       ),
     );

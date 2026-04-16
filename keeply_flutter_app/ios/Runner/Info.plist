@@ -55,5 +55,7 @@
 	<string>This app uses Face ID for secure biometric authentication.</string>
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>This app needs network access to connect to backend services.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Keeply uses the microphone for voice input to the on-device or local-network assistant.</string>
 </dict>
 </plist>

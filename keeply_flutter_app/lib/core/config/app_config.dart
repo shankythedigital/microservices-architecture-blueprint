@@ -109,5 +109,31 @@ class AppConfig {
 
   // Debug Mode
   static bool get isDebugMode => isDevelopment;
+
+  /// Ollama HTTP API (`/api/chat`). Override with `--dart-define=OLLAMA_BASE_URL=http://host:11434`.
+  /// Android emulator default uses `10.0.2.2` to reach the host machine.
+  static String get ollamaBaseUrl {
+    const envUrl = String.fromEnvironment('OLLAMA_BASE_URL');
+    if (envUrl.isNotEmpty) return envUrl.replaceAll(RegExp(r'/$'), '');
+    if (kIsWeb) return 'http://localhost:11434';
+    if (defaultTargetPlatform == TargetPlatform.android) {
+      return 'http://10.0.2.2:11434';
+    }
+    return 'http://127.0.0.1:11434';
+  }
+
+  /// Model id as known to Ollama (e.g. `llama3.2`, `mistral`). `--dart-define=OLLAMA_MODEL=...`
+  static String get ollamaModel {
+    const m = String.fromEnvironment('OLLAMA_MODEL');
+    if (m.isNotEmpty) return m;
+    return 'llama3.2';
+  }
+
+  /// WhatsApp click-to-chat: country code + number, **no** `+` or spaces (e.g. `15551234567`).
+  /// `--dart-define=WHATSAPP_SUPPORT_E164=15551234567`
+  static String get whatsappSupportE164 {
+    const p = String.fromEnvironment('WHATSAPP_SUPPORT_E164');
+    return p.trim();
+  }
 }
 
