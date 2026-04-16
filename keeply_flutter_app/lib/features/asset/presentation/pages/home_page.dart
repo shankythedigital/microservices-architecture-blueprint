@@ -7,10 +7,13 @@ import 'package:keeply_app/core/widgets/keeply_asset_views.dart';
 import 'package:keeply_app/features/asset/data/datasources/asset_remote_datasource.dart';
 import 'package:keeply_app/features/asset/data/models/asset_models.dart';
 import 'package:keeply_app/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:keeply_app/features/asset/presentation/pages/asset_detail_page.dart';
 import 'package:keeply_app/features/asset/presentation/pages/assets_list_page.dart';
 import 'package:keeply_app/features/asset/presentation/pages/asset_scan_page.dart';
 import 'package:keeply_app/features/asset/presentation/pages/create_asset_page.dart';
 import 'package:keeply_app/features/helpdesk/presentation/pages/helpdesk_hub_page.dart';
+import 'package:keeply_app/features/master_data/presentation/pages/master_data_catalog_page.dart';
+import 'package:keeply_app/features/shell/presentation/pages/alerts_hub_page.dart';
 
 /// Home Page
 /// Main dashboard after authentication
@@ -243,7 +246,7 @@ class _HomePageState extends State<HomePage> {
                                   for (final a in preview)
                                     KeeplyAssetDetailListRow(
                                       asset: a,
-                                      onTap: () {},
+                                      onTap: () => AssetDetailPage.pushIfValid(context, a.assetId),
                                     ),
                                 ],
                               );
@@ -253,7 +256,10 @@ class _HomePageState extends State<HomePage> {
                                 for (final a in preview)
                                   Padding(
                                     padding: const EdgeInsets.only(bottom: 12),
-                                    child: KeeplyAssetDetailCard(asset: a, onTap: () {}),
+                                    child: KeeplyAssetDetailCard(
+                                      asset: a,
+                                      onTap: () => AssetDetailPage.pushIfValid(context, a.assetId),
+                                    ),
                                   ),
                               ],
                             );
@@ -372,7 +378,12 @@ class _HomePageState extends State<HomePage> {
           (
             icon: Icons.category,
             title: 'Categories',
-            onTap: () {},
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute<void>(builder: (_) => const MasterDataCatalogPage()),
+              );
+            },
           ),
           (
             icon: Icons.qr_code_scanner,
@@ -397,7 +408,12 @@ class _HomePageState extends State<HomePage> {
           (
             icon: Icons.assignment,
             title: 'Compliance',
-            onTap: () {},
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute<void>(builder: (_) => const AlertsHubPage()),
+              );
+            },
           ),
         ];
         if (ViewLayoutScope.modeOf(context) == ViewLayoutMode.list) {

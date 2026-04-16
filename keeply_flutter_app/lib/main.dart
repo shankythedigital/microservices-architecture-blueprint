@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:keeply_app/core/network/api_client.dart';
+import 'package:keeply_app/core/sync/app_data_refresh_cubit.dart';
 import 'package:keeply_app/core/utils/logger.dart';
 import 'package:keeply_app/core/view_layout/view_layout_scope.dart';
 import 'package:keeply_app/features/auth/data/datasources/auth_remote_datasource.dart';
@@ -79,6 +80,7 @@ class _KeeplyAppState extends State<KeeplyApp> {
               apiClient: ApiClient(),
             )..add(CheckAuthEvent()),
           ),
+          BlocProvider(create: (_) => AppDataRefreshCubit()),
           BlocProvider(
             create: (context) => AssetBloc(
               assetDataSource: AssetRemoteDataSource(),

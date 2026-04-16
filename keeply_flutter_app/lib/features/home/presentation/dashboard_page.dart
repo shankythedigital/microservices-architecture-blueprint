@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:keeply_app/core/sync/app_data_refresh_cubit.dart';
 import 'package:keeply_app/core/theme/keeply_tokens.dart';
 import 'package:keeply_app/core/view_layout/view_layout_scope.dart';
 import 'package:keeply_app/core/widgets/keeply_asset_views.dart';
@@ -8,8 +9,11 @@ import 'package:keeply_app/features/asset/data/models/asset_models.dart';
 import 'package:keeply_app/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:keeply_app/features/helpdesk/data/datasources/helpdesk_remote_datasource.dart';
 import 'package:keeply_app/features/notification/data/datasources/notification_inbox_remote_datasource.dart';
+import 'package:keeply_app/core/api/keeply_helpdesk_api.dart';
+import 'package:keeply_app/features/asset/presentation/pages/asset_detail_page.dart';
 import 'package:keeply_app/features/asset/presentation/pages/create_asset_page.dart';
 import 'package:keeply_app/features/helpdesk/presentation/pages/helpdesk_hub_page.dart';
+import 'package:keeply_app/features/shell/presentation/pages/alerts_hub_page.dart';
 
 /// Mirrors React `DashboardPage` layout (hero, CTA, reminders, appliance strip).
 class DashboardPage extends StatefulWidget {
@@ -203,7 +207,13 @@ class _DashboardPageState extends State<DashboardPage> {
   Widget build(BuildContext context) {
     final t = Theme.of(context).textTheme;
 
-    return RefreshIndicator(
+    return BlocListener<AppDataRefreshCubit, AppDataRefreshState>(
+      listenWhen: (previous, current) =>
+          previous.assetsTick != current.assetsTick || previous.helpdeskTick != current.helpdeskTick,
+      listener: (context, state) {
+        _load();
+      },
+      child: RefreshIndicator(
       onRefresh: _load,
       child: ListView(
         padding: const EdgeInsets.fromLTRB(18, 18, 18, 28),
@@ -238,6 +248,7 @@ class _DashboardPageState extends State<DashboardPage> {
             alertCount: _alertCount,
             issueOpen: _issueOpen,
             daysLeftLabel: _daysLeftLabel,
+            onOpenAsset: (assetId) => AssetDetailPage.pushIfValid(context, assetId),
           ),
           const SizedBox(height: 12),
           _HelpCard(t: t),
@@ -282,7 +293,11 @@ class _DashboardPageState extends State<DashboardPage> {
                   if (ViewLayoutScope.modeOf(context) == ViewLayoutMode.list) {
                     return Column(
                       children: [
-                        for (final a in preview) KeeplyAssetListRow(asset: a, onTap: () {}),
+                        for (final a in preview)
+                          KeeplyAssetListRow(
+                            asset: a,
+                            onTap: () => AssetDetailPage.pushIfValid(context, a.assetId),
+                          ),
                       ],
                     );
                   }
@@ -296,13 +311,20 @@ class _DashboardPageState extends State<DashboardPage> {
                       childAspectRatio: 0.78,
                     ),
                     itemCount: preview.length,
-                    itemBuilder: (_, i) => KeeplyAssetGridCard(asset: preview[i], onTap: () {}),
+                    itemBuilder: (_, i) {
+                      final a = preview[i];
+                      return KeeplyAssetGridCard(
+                        asset: a,
+                        onTap: () => AssetDetailPage.pushIfValid(context, a.assetId),
+                      );
+                    },
                   );
                 },
               ),
           ],
         ],
       ),
+    ),
     );
   }
 }
@@ -432,6 +454,7 @@ class _RemindersSection extends StatelessWidget {
     required this.alertCount,
     required this.issueOpen,
     required this.daysLeftLabel,
+    required this.onOpenAsset,
   });
 
   final TextTheme t;
@@ -440,6 +463,7 @@ class _RemindersSection extends StatelessWidget {
   final int? alertCount;
   final int? issueOpen;
   final String Function(int) daysLeftLabel;
+  final void Function(int assetId) onOpenAsset;
 
   @override
   Widget build(BuildContext context) {
@@ -473,10 +497,10 @@ class _RemindersSection extends StatelessWidget {
                 Text(' in-app items · ', style: t.bodySmall?.copyWith(color: KeeplyTokens.muted)),
               if (alertCount == null)
                 Text('— · ', style: t.bodySmall?.copyWith(color: KeeplyTokens.muted)),
-              GestureDetector(
+              InkWell(
                 onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Use the bell tab in the bottom bar for alerts.')),
+                  Navigator.of(context).push<void>(
+                    MaterialPageRoute<void>(builder: (_) => const AlertsHubPage()),
                   );
                 },
                 child: Text(
@@ -489,18 +513,21 @@ class _RemindersSection extends StatelessWidget {
           const SizedBox(height: 12),
           if (reminders.isNotEmpty)
             ...reminders.take(8).map(
-                  (r) => Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: Text.rich(
-                      TextSpan(
-                        style: t.bodySmall?.copyWith(height: 1.35),
-                        children: [
-                          TextSpan(text: r.assetName, style: const TextStyle(fontWeight: FontWeight.w700)),
-                          TextSpan(
-                            text:
-                                ' — ${r.kind == 'warranty' ? 'Warranty' : 'AMC'} ends ${r.endDate} (${daysLeftLabel(r.daysLeft)}).',
-                          ),
-                        ],
+                  (r) => InkWell(
+                    onTap: () => onOpenAsset(r.assetId),
+                    child: Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: Text.rich(
+                        TextSpan(
+                          style: t.bodySmall?.copyWith(height: 1.35),
+                          children: [
+                            TextSpan(text: r.assetName, style: const TextStyle(fontWeight: FontWeight.w700)),
+                            TextSpan(
+                              text:
+                                  ' — ${r.kind == 'warranty' ? 'Warranty' : 'AMC'} ends ${r.endDate} (${daysLeftLabel(r.daysLeft)}).',
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
@@ -519,7 +546,13 @@ class _RemindersSection extends StatelessWidget {
             ),
           const SizedBox(height: 12),
           OutlinedButton(
-            onPressed: () {},
+            onPressed: () {
+              Navigator.of(context).push<void>(
+                MaterialPageRoute<void>(
+                  builder: (_) => HelpdeskMyIssuesPage(api: KeeplyHelpdeskApi()),
+                ),
+              );
+            },
             child: Text('Service issues${issueOpen != null ? ' ($issueOpen)' : ''}'),
           ),
         ],

@@ -3,6 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:keeply_app/core/view_layout/view_layout_scope.dart';
 import 'package:keeply_app/core/widgets/keeply_asset_views.dart';
 import 'package:keeply_app/features/asset/presentation/bloc/asset_bloc.dart';
+import 'package:keeply_app/features/asset/presentation/pages/asset_detail_page.dart';
+import 'package:keeply_app/features/asset/presentation/pages/create_asset_page.dart';
 
 /// Assets List Page
 /// Displays list of assets with pagination and error handling
@@ -47,7 +49,16 @@ class _AssetsListPageState extends State<AssetsListPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return BlocListener<AssetBloc, AssetState>(
+      listenWhen: (previous, current) =>
+          current is AssetCreated ||
+          current is AssetUpdated ||
+          current is AssetDeleted,
+      listener: (context, state) {
+        _currentPage = 0;
+        context.read<AssetBloc>().add(LoadAssetsEvent(page: 0, size: _pageSize));
+      },
+      child: Scaffold(
       appBar: AppBar(
         title: const Text('Assets'),
         actions: [
@@ -138,7 +149,7 @@ class _AssetsListPageState extends State<AssetsListPage> {
                           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                           child: KeeplyAssetListRow(
                             asset: asset,
-                            onTap: () {},
+                            onTap: () => AssetDetailPage.pushIfValid(context, asset.assetId),
                           ),
                         );
                       },
@@ -163,7 +174,11 @@ class _AssetsListPageState extends State<AssetsListPage> {
                           ),
                         );
                       }
-                      return KeeplyAssetGridCard(asset: assets[index], onTap: () {});
+                      final asset = assets[index];
+                      return KeeplyAssetGridCard(
+                        asset: asset,
+                        onTap: () => AssetDetailPage.pushIfValid(context, asset.assetId),
+                      );
                     },
                   );
                 },
@@ -176,10 +191,13 @@ class _AssetsListPageState extends State<AssetsListPage> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          // Navigate to create asset
+          Navigator.of(context).push<void>(
+            MaterialPageRoute<void>(builder: (_) => const CreateAssetPage()),
+          );
         },
         child: const Icon(Icons.add),
       ),
+    ),
     );
   }
 }

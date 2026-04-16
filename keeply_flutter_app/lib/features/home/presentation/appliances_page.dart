@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:keeply_app/core/sync/app_data_refresh_cubit.dart';
 import 'package:keeply_app/core/theme/keeply_tokens.dart';
 import 'package:keeply_app/core/view_layout/view_layout_scope.dart';
 import 'package:keeply_app/core/widgets/keeply_asset_views.dart';
 import 'package:keeply_app/features/asset/data/datasources/asset_remote_datasource.dart';
 import 'package:keeply_app/features/asset/data/models/asset_models.dart';
+import 'package:keeply_app/features/asset/presentation/pages/asset_detail_page.dart';
 
 /// Mirrors React `AssetsPage` — search toolbar, category chips, grid cards.
 class AppliancesPage extends StatefulWidget {
@@ -78,7 +81,12 @@ class _AppliancesPageState extends State<AppliancesPage> {
   Widget build(BuildContext context) {
     final t = Theme.of(context).textTheme;
 
-    return ListView(
+    return BlocListener<AppDataRefreshCubit, AppDataRefreshState>(
+      listenWhen: (previous, current) => previous.assetsTick != current.assetsTick,
+      listener: (context, state) {
+        _load();
+      },
+      child: ListView(
       padding: const EdgeInsets.fromLTRB(18, 18, 18, 100),
       children: [
         Row(
@@ -161,7 +169,11 @@ class _AppliancesPageState extends State<AppliancesPage> {
               if (ViewLayoutScope.modeOf(context) == ViewLayoutMode.list) {
                 return Column(
                   children: [
-                    for (final a in _visible) KeeplyAssetListRow(asset: a, onTap: () {}),
+                    for (final a in _visible)
+                      KeeplyAssetListRow(
+                        asset: a,
+                        onTap: () => AssetDetailPage.pushIfValid(context, a.assetId),
+                      ),
                   ],
                 );
               }
@@ -175,11 +187,18 @@ class _AppliancesPageState extends State<AppliancesPage> {
                   childAspectRatio: 0.78,
                 ),
                 itemCount: _visible.length,
-                itemBuilder: (_, i) => KeeplyAssetGridCard(asset: _visible[i], onTap: () {}),
+                itemBuilder: (_, i) {
+                  final a = _visible[i];
+                  return KeeplyAssetGridCard(
+                    asset: a,
+                    onTap: () => AssetDetailPage.pushIfValid(context, a.assetId),
+                  );
+                },
               );
             },
           ),
       ],
+    ),
     );
   }
 }

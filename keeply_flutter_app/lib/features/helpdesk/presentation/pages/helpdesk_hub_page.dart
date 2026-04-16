@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:keeply_app/core/api/keeply_api_models.dart';
 import 'package:keeply_app/core/api/keeply_helpdesk_api.dart';
 import 'package:keeply_app/core/exceptions/api_exception.dart';
+import 'package:keeply_app/core/sync/app_data_refresh_cubit.dart';
 import 'package:keeply_app/core/theme/keeply_tokens.dart';
 import 'package:keeply_app/features/shell/presentation/pages/tips_hub_page.dart';
 
@@ -143,7 +145,12 @@ class _HelpdeskHubPageState extends State<HelpdeskHubPage> {
     final t = Theme.of(context).textTheme;
     final showResults = _searchResults != null;
 
-    return Scaffold(
+    return BlocListener<AppDataRefreshCubit, AppDataRefreshState>(
+      listenWhen: (previous, current) => previous.helpdeskTick != current.helpdeskTick,
+      listener: (context, state) {
+        _load();
+      },
+      child: Scaffold(
       appBar: AppBar(title: const Text('Help & support')),
       body: RefreshIndicator(
         onRefresh: _load,
@@ -276,6 +283,7 @@ class _HelpdeskHubPageState extends State<HelpdeskHubPage> {
           ],
         ),
       ),
+    ),
     );
   }
 
@@ -395,6 +403,20 @@ class _HelpdeskMyIssuesPageState extends State<HelpdeskMyIssuesPage> {
   String? _err;
   List<IssueItemDto> _rows = [];
 
+  Future<void> _openCreateCustom() async {
+    final created = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(builder: (_) => HelpdeskCreateCustomIssuePage(api: widget.api)),
+    );
+    if (created == true && mounted) await _load();
+  }
+
+  Future<void> _openCreateFromCatalog() async {
+    final created = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(builder: (_) => HelpdeskCatalogIssuePage(api: widget.api)),
+    );
+    if (created == true && mounted) await _load();
+  }
+
   @override
   void initState() {
     super.initState();
@@ -427,22 +449,60 @@ class _HelpdeskMyIssuesPageState extends State<HelpdeskMyIssuesPage> {
     final t = Theme.of(context).textTheme;
     return Scaffold(
       appBar: AppBar(title: const Text('My tickets')),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _openCreateCustom,
+        icon: const Icon(Icons.add),
+        label: const Text('New ticket'),
+      ),
       body: RefreshIndicator(
         onRefresh: _load,
         child: ListView(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
           physics: const AlwaysScrollableScrollPhysics(),
           children: [
             if (widget.highlightCreate)
               Padding(
                 padding: const EdgeInsets.only(bottom: 12),
                 child: Text(
-                  'To open a new repair or warranty ticket, use the full Keeply web app (Issues → New) or contact support from here with Ask a question.',
+                  'Open a repair or warranty ticket below—the same helpdesk APIs as the web app. You can still use Ask a question on the hub for general enquiries.',
                   style: t.bodySmall?.copyWith(color: KeeplyTokens.muted, height: 1.4),
                 ),
               ),
+            Text('Start a ticket', style: t.titleSmall?.copyWith(fontWeight: FontWeight.w600)),
+            const SizedBox(height: 8),
+            Card(
+              margin: const EdgeInsets.only(bottom: 10),
+              child: ListTile(
+                leading: const Icon(Icons.edit_note_outlined),
+                title: const Text('Describe a new problem', style: TextStyle(fontWeight: FontWeight.w600)),
+                subtitle: Text(
+                  'Custom ticket with title and details',
+                  style: t.bodySmall?.copyWith(color: KeeplyTokens.muted, height: 1.35),
+                ),
+                trailing: const Icon(Icons.chevron_right_rounded),
+                onTap: _openCreateCustom,
+              ),
+            ),
+            Card(
+              margin: const EdgeInsets.only(bottom: 16),
+              child: ListTile(
+                leading: const Icon(Icons.library_books_outlined),
+                title: const Text('Raise from catalog', style: TextStyle(fontWeight: FontWeight.w600)),
+                subtitle: Text(
+                  'Pick a predefined issue type from the catalog',
+                  style: t.bodySmall?.copyWith(color: KeeplyTokens.muted, height: 1.35),
+                ),
+                trailing: const Icon(Icons.chevron_right_rounded),
+                onTap: _openCreateFromCatalog,
+              ),
+            ),
+            Text('Your tickets', style: t.titleSmall?.copyWith(fontWeight: FontWeight.w600)),
+            const SizedBox(height: 8),
             if (_err != null)
-              Text(_err!, style: t.bodySmall?.copyWith(color: KeeplyTokens.danger)),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Text(_err!, style: t.bodySmall?.copyWith(color: KeeplyTokens.danger)),
+              ),
             if (_loading)
               const Center(child: Padding(padding: EdgeInsets.all(24), child: CircularProgressIndicator(strokeWidth: 2)))
             else if (_rows.isEmpty)
@@ -460,6 +520,442 @@ class _HelpdeskMyIssuesPageState extends State<HelpdeskMyIssuesPage> {
                   ),
                 ),
               ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// `POST /api/helpdesk/issues` — custom issue (`title`, `description`, `priority`, `relatedService`).
+class HelpdeskCreateCustomIssuePage extends StatefulWidget {
+  const HelpdeskCreateCustomIssuePage({super.key, required this.api});
+
+  final KeeplyHelpdeskApi api;
+
+  @override
+  State<HelpdeskCreateCustomIssuePage> createState() => _HelpdeskCreateCustomIssuePageState();
+}
+
+class _HelpdeskCreateCustomIssuePageState extends State<HelpdeskCreateCustomIssuePage> {
+  final _titleCtrl = TextEditingController();
+  final _descCtrl = TextEditingController();
+  final _assetIdCtrl = TextEditingController();
+  String _priority = 'MEDIUM';
+  String _related = 'ASSET_SERVICE';
+  bool _submitting = false;
+  String? _err;
+
+  static const _priorities = <String, String>{
+    'LOW': 'Low',
+    'MEDIUM': 'Medium',
+    'HIGH': 'High',
+    'CRITICAL': 'Critical',
+  };
+
+  static const _services = <String, String>{
+    'ASSET_SERVICE': 'Assets',
+    'AUTH_SERVICE': 'Sign-in & account',
+    'NOTIFICATION_SERVICE': 'Notifications',
+    'HELPDESK_SERVICE': 'Helpdesk',
+    'UPCOMING_PROJECT': 'Other',
+  };
+
+  @override
+  void dispose() {
+    _titleCtrl.dispose();
+    _descCtrl.dispose();
+    _assetIdCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    final title = _titleCtrl.text.trim();
+    final desc = _descCtrl.text.trim();
+    if (title.isEmpty || desc.isEmpty) {
+      setState(() => _err = 'Title and description are required.');
+      return;
+    }
+    setState(() {
+      _submitting = true;
+      _err = null;
+    });
+    try {
+      final body = <String, dynamic>{
+        'title': title,
+        'description': desc,
+        'priority': _priority,
+        'relatedService': _related,
+      };
+      final rawAsset = _assetIdCtrl.text.trim();
+      if (rawAsset.isNotEmpty) {
+        final id = int.tryParse(rawAsset);
+        if (id == null) {
+          setState(() {
+            _submitting = false;
+            _err = 'Asset ID must be a whole number.';
+          });
+          return;
+        }
+        body['assetId'] = id;
+      }
+      await widget.api.createIssue(body);
+      if (!mounted) return;
+      context.read<AppDataRefreshCubit>().bump(KeeplyDataChannel.helpdesk);
+      final messenger = ScaffoldMessenger.maybeOf(context);
+      Navigator.of(context).pop(true);
+      messenger?.showSnackBar(const SnackBar(content: Text('Ticket created.')));
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _submitting = false;
+        _err = e is ApiException ? e.message : 'Could not create ticket';
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final t = Theme.of(context).textTheme;
+    return Scaffold(
+      appBar: AppBar(title: const Text('New ticket')),
+      body: ListView(
+        padding: const EdgeInsets.all(18),
+        children: [
+          Text(
+            'Creates a custom issue via POST /api/helpdesk/issues (same contract as the web app).',
+            style: t.bodySmall?.copyWith(color: KeeplyTokens.muted, height: 1.4),
+          ),
+          const SizedBox(height: 16),
+          if (_err != null)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Text(_err!, style: t.bodySmall?.copyWith(color: KeeplyTokens.danger)),
+            ),
+          TextField(
+            controller: _titleCtrl,
+            decoration: const InputDecoration(
+              labelText: 'Title',
+              border: OutlineInputBorder(),
+            ),
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _descCtrl,
+            maxLines: 5,
+            decoration: const InputDecoration(
+              labelText: 'Description',
+              border: OutlineInputBorder(),
+              alignLabelWithHint: true,
+            ),
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _assetIdCtrl,
+            keyboardType: TextInputType.number,
+            decoration: const InputDecoration(
+              labelText: 'Asset ID (optional)',
+              border: OutlineInputBorder(),
+            ),
+          ),
+          const SizedBox(height: 16),
+          InputDecorator(
+            decoration: const InputDecoration(
+              labelText: 'Priority',
+              border: OutlineInputBorder(),
+            ),
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<String>(
+                isExpanded: true,
+                value: _priority,
+                items: _priorities.entries
+                    .map((e) => DropdownMenuItem(value: e.key, child: Text(e.value)))
+                    .toList(),
+                onChanged: _submitting ? null : (v) => setState(() => _priority = v ?? _priority),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          InputDecorator(
+            decoration: const InputDecoration(
+              labelText: 'Related service',
+              border: OutlineInputBorder(),
+            ),
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<String>(
+                isExpanded: true,
+                value: _related,
+                items: _services.entries
+                    .map((e) => DropdownMenuItem(value: e.key, child: Text(e.value)))
+                    .toList(),
+                onChanged: _submitting ? null : (v) => setState(() => _related = v ?? _related),
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
+          FilledButton(
+            onPressed: _submitting ? null : _submit,
+            child: _submitting
+                ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                : const Text('Create ticket'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// `GET /api/helpdesk/issue-master` + `POST /api/helpdesk/issues` with `issueMasterId`.
+class HelpdeskCatalogIssuePage extends StatefulWidget {
+  const HelpdeskCatalogIssuePage({super.key, required this.api});
+
+  final KeeplyHelpdeskApi api;
+
+  @override
+  State<HelpdeskCatalogIssuePage> createState() => _HelpdeskCatalogIssuePageState();
+}
+
+class _HelpdeskCatalogIssuePageState extends State<HelpdeskCatalogIssuePage> {
+  bool _loading = true;
+  String? _err;
+  List<IssueMasterItemDto> _masters = [];
+  IssueMasterItemDto? _selected;
+  final _extraDescCtrl = TextEditingController();
+  String _priority = 'MEDIUM';
+  String _related = 'ASSET_SERVICE';
+  bool _submitting = false;
+  String? _submitErr;
+
+  static const _priorities = <String, String>{
+    'LOW': 'Low',
+    'MEDIUM': 'Medium',
+    'HIGH': 'High',
+    'CRITICAL': 'Critical',
+  };
+
+  static const _services = <String, String>{
+    'ASSET_SERVICE': 'Assets',
+    'AUTH_SERVICE': 'Sign-in & account',
+    'NOTIFICATION_SERVICE': 'Notifications',
+    'HELPDESK_SERVICE': 'Helpdesk',
+    'UPCOMING_PROJECT': 'Other',
+  };
+
+  @override
+  void dispose() {
+    _extraDescCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    setState(() {
+      _loading = true;
+      _err = null;
+    });
+    try {
+      final list = await widget.api.listIssueMasters();
+      if (!mounted) return;
+      setState(() {
+        _masters = list;
+        _loading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _err = e is ApiException ? e.message : 'Could not load catalog';
+      });
+    }
+  }
+
+  void _select(IssueMasterItemDto m) {
+    _extraDescCtrl.clear();
+    setState(() {
+      _selected = m;
+      _submitErr = null;
+      _priority = 'MEDIUM';
+      _related = 'ASSET_SERVICE';
+    });
+  }
+
+  Future<void> _submitFromMaster() async {
+    final sel = _selected;
+    final id = sel?.id;
+    if (id == null) return;
+    setState(() {
+      _submitting = true;
+      _submitErr = null;
+    });
+    try {
+      final body = <String, dynamic>{
+        'issueMasterId': id,
+        'priority': _priority,
+        'relatedService': _related,
+      };
+      final extra = _extraDescCtrl.text.trim();
+      if (extra.isNotEmpty) {
+        body['description'] = extra;
+      }
+      await widget.api.createIssue(body);
+      if (!mounted) return;
+      context.read<AppDataRefreshCubit>().bump(KeeplyDataChannel.helpdesk);
+      final messenger = ScaffoldMessenger.maybeOf(context);
+      Navigator.of(context).pop(true);
+      messenger?.showSnackBar(const SnackBar(content: Text('Ticket created from catalog.')));
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _submitting = false;
+        _submitErr = e is ApiException ? e.message : 'Could not create ticket';
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final t = Theme.of(context).textTheme;
+    final sel = _selected;
+    return Scaffold(
+      appBar: AppBar(title: const Text('Catalog')),
+      body: RefreshIndicator(
+        onRefresh: _load,
+        child: ListView(
+          padding: const EdgeInsets.all(16),
+          physics: const AlwaysScrollableScrollPhysics(),
+          children: [
+            Text(
+              'Choose an issue type, then confirm priority and service.',
+              style: t.bodySmall?.copyWith(color: KeeplyTokens.muted, height: 1.4),
+            ),
+            const SizedBox(height: 12),
+            if (_err != null)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Text(_err!, style: t.bodySmall?.copyWith(color: KeeplyTokens.danger)),
+              ),
+            if (sel != null) ...[
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(14),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text(sel.issueTitle ?? 'Issue', style: t.titleSmall?.copyWith(fontWeight: FontWeight.w600)),
+                      if (sel.issueDescription != null && sel.issueDescription!.trim().isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 6),
+                          child: Text(
+                            sel.issueDescription!,
+                            style: t.bodySmall?.copyWith(color: KeeplyTokens.muted, height: 1.35),
+                          ),
+                        ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: _extraDescCtrl,
+                        maxLines: 3,
+                        enabled: !_submitting,
+                        decoration: const InputDecoration(
+                          labelText: 'Additional details (optional)',
+                          border: OutlineInputBorder(),
+                          alignLabelWithHint: true,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      InputDecorator(
+                        decoration: const InputDecoration(
+                          labelText: 'Priority',
+                          border: OutlineInputBorder(),
+                        ),
+                        child: DropdownButtonHideUnderline(
+                          child: DropdownButton<String>(
+                            isExpanded: true,
+                            value: _priority,
+                            items: _priorities.entries
+                                .map((e) => DropdownMenuItem(value: e.key, child: Text(e.value)))
+                                .toList(),
+                            onChanged: _submitting ? null : (v) => setState(() => _priority = v ?? _priority),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      InputDecorator(
+                        decoration: const InputDecoration(
+                          labelText: 'Related service',
+                          border: OutlineInputBorder(),
+                        ),
+                        child: DropdownButtonHideUnderline(
+                          child: DropdownButton<String>(
+                            isExpanded: true,
+                            value: _related,
+                            items: _services.entries
+                                .map((e) => DropdownMenuItem(value: e.key, child: Text(e.value)))
+                                .toList(),
+                            onChanged: _submitting ? null : (v) => setState(() => _related = v ?? _related),
+                          ),
+                        ),
+                      ),
+                      if (_submitErr != null)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8),
+                          child: Text(_submitErr!, style: t.bodySmall?.copyWith(color: KeeplyTokens.danger)),
+                        ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          TextButton(
+                            onPressed: _submitting ? null : () => setState(() => _selected = null),
+                            child: const Text('Back to list'),
+                          ),
+                          const Spacer(),
+                          FilledButton(
+                            onPressed: _submitting ? null : _submitFromMaster,
+                            child: _submitting
+                                ? const SizedBox(
+                                    height: 20,
+                                    width: 20,
+                                    child: CircularProgressIndicator(strokeWidth: 2),
+                                  )
+                                : const Text('Create ticket'),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text('Catalog', style: t.labelLarge?.copyWith(color: KeeplyTokens.muted)),
+              const SizedBox(height: 8),
+            ],
+            if (_loading)
+              const Center(child: Padding(padding: EdgeInsets.all(24), child: CircularProgressIndicator(strokeWidth: 2)))
+            else if (_masters.isEmpty && _err == null)
+              Text('No catalog entries yet.', style: t.bodyMedium?.copyWith(color: KeeplyTokens.muted))
+            else
+              ..._masters.where((m) => m.id != null).map(
+                    (m) => Card(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      child: ListTile(
+                        title: Text(m.issueTitle ?? 'Issue #${m.id}', style: const TextStyle(fontWeight: FontWeight.w600)),
+                        subtitle: m.issueDescription != null && m.issueDescription!.trim().isNotEmpty
+                            ? Text(
+                                m.issueDescription!,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(fontSize: 13, color: KeeplyTokens.muted, height: 1.3),
+                              )
+                            : null,
+                        trailing: const Icon(Icons.chevron_right_rounded),
+                        onTap: _submitting ? null : () => _select(m),
+                      ),
+                    ),
+                  ),
           ],
         ),
       ),
@@ -589,6 +1085,7 @@ class _HelpdeskNewQueryPageState extends State<HelpdeskNewQueryPage> {
     try {
       await widget.api.createQuery({'question': q, 'relatedService': _related});
       if (!mounted) return;
+      context.read<AppDataRefreshCubit>().bump(KeeplyDataChannel.helpdesk);
       final messenger = ScaffoldMessenger.maybeOf(context);
       Navigator.of(context).pop(true);
       messenger?.showSnackBar(const SnackBar(content: Text('Your question was submitted.')));

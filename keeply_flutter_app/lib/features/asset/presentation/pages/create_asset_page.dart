@@ -1,19 +1,27 @@
+import 'dart:io' show File;
+
+import 'package:dio/dio.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intl/intl.dart';
 import 'package:keeply_app/core/api/keeply_api_models.dart';
 import 'package:keeply_app/core/api/keeply_categories_api.dart';
 import 'package:keeply_app/core/api/keeply_master_data_api.dart';
+import 'package:keeply_app/core/exceptions/api_exception.dart';
+import 'package:keeply_app/core/sync/app_data_refresh_cubit.dart';
 import 'package:keeply_app/core/theme/keeply_tokens.dart';
-import 'package:keeply_app/core/utils/validation_helper.dart';
 import 'package:keeply_app/core/view_layout/view_layout_scope.dart';
 import 'package:keeply_app/core/widgets/loading_widget.dart';
 import 'package:keeply_app/core/widgets/selectable_option_picker.dart';
+import 'package:keeply_app/features/asset/data/datasources/asset_remote_datasource.dart';
 import 'package:keeply_app/features/asset/data/models/asset_models.dart';
 import 'package:keeply_app/features/asset/presentation/bloc/asset_bloc.dart';
+import 'package:keeply_app/features/auth/data/models/auth_models.dart';
 import 'package:keeply_app/features/auth/presentation/bloc/auth_bloc.dart';
 
-/// Create Asset Page
-/// Form for creating new assets with comprehensive validation
+/// Parity with React [AddAssetManualPage.tsx]: catalog selections, warranty, serial,
+/// invoice + optional photo, `POST /api/asset/v1/assets/complete` (multipart).
 class CreateAssetPage extends StatefulWidget {
   const CreateAssetPage({super.key});
 
@@ -22,15 +30,38 @@ class CreateAssetPage extends StatefulWidget {
 }
 
 class _CreateAssetPageState extends State<CreateAssetPage> {
+  static const int _maxInvoiceBytes = 10 * 1024 * 1024;
+  static const int _maxPhotoBytes = 10 * 1024 * 1024;
+  static const int _assetNameMax = 255;
+  static const int _serialMax = 120;
+  /// React `DEFAULT_PROJECT_TYPE` in `keeply_react_app/src/constants/project.ts`
+  static const String _defaultProjectType = 'ECOM';
+
   final _formKey = GlobalKey<FormState>();
   final _assetNameController = TextEditingController();
+  final _serialCtrl = TextEditingController();
+  final _warrantyProviderCtrl = TextEditingController();
   final KeeplyMasterDataApi _masterApi = KeeplyMasterDataApi();
   final KeeplyCategoriesApi _categoriesApi = KeeplyCategoriesApi();
+  final AssetRemoteDataSource _assetDs = AssetRemoteDataSource();
 
   int? _selectedCategoryId;
   int? _selectedSubCategoryId;
   int? _selectedMakeId;
   int? _selectedModelId;
+
+  DateTime? _warrantyStart;
+  DateTime? _warrantyEnd;
+  /// '' | MANUFACTURER | EXTENDED | AMC — optional; sent as `warrantyStatus` when set.
+  String _warrantyType = '';
+
+  String? _invoicePath;
+  String? _invoiceName;
+  String? _photoPath;
+  String? _photoName;
+
+  bool _submitting = false;
+  String? _submitError;
 
   List<Category> _categories = [];
   List<SubCategoryDto> _allSubCategories = [];
@@ -69,9 +100,6 @@ class _CreateAssetPageState extends State<CreateAssetPage> {
       setState(() {
         _categories = list;
         _categoriesLoading = false;
-        if (!_masterLoading && _masterError == null) {
-          _fillCascadeDefaults();
-        }
       });
     } catch (e) {
       if (!mounted) return;
@@ -108,32 +136,119 @@ class _CreateAssetPageState extends State<CreateAssetPage> {
     return rows;
   }
 
-  /// When a parent id is set and master data lists are available, pick the first
-  /// valid child at each level so Category → Subcategory → Make → Model stays aligned.
-  void _fillCascadeDefaults() {
-    if (_selectedCategoryId != null && _selectedSubCategoryId == null) {
-      final subs = _subcategoriesForCategory;
-      if (subs.isNotEmpty) {
-        _selectedSubCategoryId = subs.first.subCategoryId;
+  String get _suggestedName {
+    var makeName = '';
+    for (final m in _makesForSubcategory) {
+      if (m.makeId == _selectedMakeId) {
+        makeName = (m.makeName ?? '').trim();
+        break;
       }
     }
-    if (_selectedSubCategoryId != null && _selectedMakeId == null) {
-      final ms = _makesForSubcategory;
-      if (ms.isNotEmpty) {
-        _selectedMakeId = ms.first.makeId;
+    var modelName = '';
+    for (final m in _modelsForMake) {
+      if (m.modelId == _selectedModelId) {
+        modelName = (m.modelName ?? '').trim();
+        break;
       }
     }
-    if (_selectedMakeId != null && _selectedModelId == null) {
-      final mods = _modelsForMake;
-      if (mods.isNotEmpty) {
-        _selectedModelId = mods.first.modelId;
+    var base = '$makeName $modelName'.trim();
+    final ser = _serialCtrl.text.trim();
+    if (base.isEmpty && ser.isEmpty) return '';
+    if (ser.isNotEmpty) {
+      base = base.isEmpty ? ser : '$base ($ser)';
+    }
+    return base.trim();
+  }
+
+  String _fileExt(String path) {
+    final i = path.lastIndexOf('.');
+    if (i < 0 || i >= path.length - 1) return '';
+    return path.substring(i + 1).toLowerCase();
+  }
+
+  String _docTypeFromInvoicePath(String path) {
+    final e = _fileExt(path);
+    if (e == 'jpg') return 'jpeg';
+    return e.isNotEmpty ? e : 'pdf';
+  }
+
+  bool _allowedInvoicePath(String path) {
+    final e = _fileExt(path);
+    return e == 'pdf' || e == 'jpeg' || e == 'jpg' || e == 'png' || e == 'gif' || e == 'webp';
+  }
+
+  bool _allowedPhotoPath(String path) {
+    final e = _fileExt(path);
+    return e == 'jpeg' || e == 'jpg' || e == 'png' || e == 'gif' || e == 'webp';
+  }
+
+  String _resolveUsername(UserDto u) {
+    final fromProfile = u.username?.trim();
+    if (fromProfile != null && fromProfile.isNotEmpty) return fromProfile;
+    if (u.userId > 0) return 'user_${u.userId}';
+    return '';
+  }
+
+  String? _validateForSubmit(UserDto u) {
+    if (_selectedCategoryId == null) return 'Please select a category.';
+    if (_selectedSubCategoryId == null) return 'Please select a subcategory.';
+    if (_selectedMakeId == null) return 'Please select a brand (make).';
+    if (_selectedModelId == null) {
+      return 'Please select a model. Full registration requires a catalog model ID.';
+    }
+    if (u.userId <= 0) {
+      return 'Your account ID is missing — sign out and sign in again, then retry.';
+    }
+    final display = _assetNameController.text.trim();
+    final suggested = _suggestedName.trim();
+    final name = display.isNotEmpty ? display : suggested;
+    if (name.length < 2) {
+      return 'Enter a display name (at least 2 characters), or finish selecting model and serial.';
+    }
+    if (name.length > _assetNameMax) return 'Display name must be at most $_assetNameMax characters.';
+    final serialTrim = _serialCtrl.text.trim();
+    if (serialTrim.isEmpty) return 'Serial number is required.';
+    if (serialTrim.length > _serialMax) return 'Serial number must be at most $_serialMax characters.';
+    if (_warrantyStart == null) return 'Warranty start date (purchase / installation) is required.';
+    if (_warrantyEnd == null) return 'Warranty end date is required.';
+    final start = DateTime(_warrantyStart!.year, _warrantyStart!.month, _warrantyStart!.day);
+    final end = DateTime(_warrantyEnd!.year, _warrantyEnd!.month, _warrantyEnd!.day);
+    if (!end.isAfter(start)) return 'Warranty end date must be after the start date.';
+    final inv = _invoicePath;
+    if (inv == null || inv.isEmpty) return 'Purchase invoice or proof document is required for full registration.';
+    if (!_allowedInvoicePath(inv)) {
+      return 'Invoice must be a PDF or an image (JPEG, PNG, GIF, or WebP).';
+    }
+    try {
+      final invLen = File(inv).lengthSync();
+      if (invLen > _maxInvoiceBytes) return 'Invoice file is too large (maximum 10 MB).';
+    } catch (_) {
+      return 'Could not read the invoice file. Try picking it again.';
+    }
+    final photo = _photoPath;
+    if (photo != null && photo.isNotEmpty) {
+      if (!_allowedPhotoPath(photo)) {
+        return 'Appliance photo must be an image (JPEG, PNG, GIF, or WebP).';
+      }
+      try {
+        if (File(photo).lengthSync() > _maxPhotoBytes) {
+          return 'Appliance photo is too large (maximum 10 MB).';
+        }
+      } catch (_) {
+        return 'Could not read the appliance photo. Try picking it again.';
       }
     }
+    final uname = _resolveUsername(u);
+    if (uname.isEmpty) {
+      return 'Username could not be determined — update your profile or sign in again.';
+    }
+    return null;
   }
 
   @override
   void initState() {
     super.initState();
+    _serialCtrl.addListener(() => setState(() {}));
     _loadCategories();
     _loadMasterData();
   }
@@ -155,7 +270,6 @@ class _CreateAssetPageState extends State<CreateAssetPage> {
         _allSubCategories = results[0] as List<SubCategoryDto>;
         _allMakes = results[1] as List<MakeDto>;
         _allModels = results[2] as List<ModelDto>;
-        _fillCascadeDefaults();
       });
     } catch (e) {
       if (!mounted) return;
@@ -169,66 +283,142 @@ class _CreateAssetPageState extends State<CreateAssetPage> {
   @override
   void dispose() {
     _assetNameController.dispose();
+    _serialCtrl.dispose();
+    _warrantyProviderCtrl.dispose();
     super.dispose();
   }
 
-  void _handleCreate() {
-    if (!_formKey.currentState!.validate()) {
+  Future<void> _pickWarrantyStart() async {
+    final now = DateTime.now();
+    final d = await showDatePicker(
+      context: context,
+      initialDate: _warrantyStart ?? now,
+      firstDate: DateTime(1970),
+      lastDate: DateTime(now.year + 20),
+    );
+    if (d != null) setState(() => _warrantyStart = d);
+  }
+
+  Future<void> _pickWarrantyEnd() async {
+    final now = DateTime.now();
+    final d = await showDatePicker(
+      context: context,
+      initialDate: _warrantyEnd ?? _warrantyStart ?? now,
+      firstDate: DateTime(1970),
+      lastDate: DateTime(now.year + 30),
+    );
+    if (d != null) setState(() => _warrantyEnd = d);
+  }
+
+  Future<void> _pickInvoice() async {
+    final r = await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ['pdf', 'jpg', 'jpeg', 'png', 'gif', 'webp']);
+    if (r == null || r.files.isEmpty) return;
+    final f = r.files.single;
+    final path = f.path;
+    if (path == null) return;
+    setState(() {
+      _invoicePath = path;
+      _invoiceName = f.name;
+      _submitError = null;
+    });
+  }
+
+  Future<void> _pickPhoto() async {
+    final r = await FilePicker.platform.pickFiles(type: FileType.image);
+    if (r == null || r.files.isEmpty) return;
+    final f = r.files.single;
+    final path = f.path;
+    if (path == null) return;
+    setState(() {
+      _photoPath = path;
+      _photoName = f.name;
+      _submitError = null;
+    });
+  }
+
+  void _clearPhoto() {
+    setState(() {
+      _photoPath = null;
+      _photoName = null;
+    });
+  }
+
+  Future<void> _submit() async {
+    _formKey.currentState?.validate();
+    final auth = context.read<AuthBloc>().state;
+    if (auth is! AuthAuthenticated) {
+      setState(() => _submitError = 'You are not signed in.');
       return;
     }
-
-    // Edge case: Validate all selections
-    if (_selectedCategoryId == null) {
+    final user = auth.user;
+    final err = _validateForSubmit(user);
+    if (err != null) {
+      setState(() => _submitError = err);
+      return;
+    }
+    setState(() {
+      _submitting = true;
+      _submitError = null;
+    });
+    final uname = _resolveUsername(user);
+    final display = _assetNameController.text.trim();
+    final suggested = _suggestedName.trim();
+    final assetNameUdv = display.isNotEmpty ? display : suggested;
+    final ymd = DateFormat('yyyy-MM-dd');
+    final inv = _invoicePath!;
+    final map = <String, dynamic>{
+      'userId': user.userId,
+      'username': uname,
+      'projectType': (user.projectType != null && user.projectType!.trim().isNotEmpty)
+          ? user.projectType!.trim()
+          : _defaultProjectType,
+      'assetNameUdv': assetNameUdv,
+      'modelId': _selectedModelId,
+      'serialNumber': _serialCtrl.text.trim(),
+      'warrantyStartDate': ymd.format(_warrantyStart!),
+      'warrantyEndDate': ymd.format(_warrantyEnd!),
+      'targetUserId': user.userId,
+      'targetUsername': uname,
+      'document': await MultipartFile.fromFile(inv, filename: _invoiceName ?? 'invoice'),
+      'docType': _docTypeFromInvoicePath(inv),
+    };
+    if (_selectedCategoryId != null) map['categoryId'] = _selectedCategoryId;
+    if (_selectedSubCategoryId != null) map['subCategoryId'] = _selectedSubCategoryId;
+    if (_selectedMakeId != null) map['makeId'] = _selectedMakeId;
+    final wp = _warrantyProviderCtrl.text.trim();
+    if (wp.isNotEmpty) map['warrantyProvider'] = wp;
+    if (_warrantyType.isNotEmpty) map['warrantyStatus'] = _warrantyType;
+    final photo = _photoPath;
+    if (photo != null && photo.isNotEmpty) {
+      map['assetImage'] = await MultipartFile.fromFile(photo, filename: _photoName ?? 'photo');
+    }
+    try {
+      final data = await _assetDs.createAssetComplete(FormData.fromMap(map));
+      if (!mounted) return;
+      final savedName = data['assetNameUdv'] as String? ?? assetNameUdv;
+      context.read<AppDataRefreshCubit>().bump(KeeplyDataChannel.assets);
+      context.read<AssetBloc>().add(LoadAssetsEvent(page: 0, size: 20));
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a category')),
+        SnackBar(content: Text('Saved: $savedName'), backgroundColor: Colors.green.shade700),
       );
-      return;
+      Navigator.of(context).pop();
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _submitting = false;
+        _submitError = e is ApiException ? e.userMessage : 'Could not save asset';
+      });
     }
-
-    if (_selectedSubCategoryId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a subcategory')),
-      );
-      return;
-    }
-
-    if (_selectedMakeId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a make')),
-      );
-      return;
-    }
-
-    if (_selectedModelId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a model')),
-      );
-      return;
-    }
-
-    final user = (context.read<AuthBloc>().state as AuthAuthenticated).user;
-
-    context.read<AssetBloc>().add(
-          CreateAssetEvent(
-            AssetRequest(
-              categoryId: _selectedCategoryId!,
-              subCategoryId: _selectedSubCategoryId!,
-              makeId: _selectedMakeId!,
-              modelId: _selectedModelId!,
-              assetNameUdv: _assetNameController.text.trim(),
-              userId: user.userId,
-              username: user.username,
-              projectType: user.projectType ?? 'ASSET',
-            ),
-          ),
-        );
   }
 
   @override
   Widget build(BuildContext context) {
+    final t = Theme.of(context).textTheme;
+    final suggested = _suggestedName;
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Create Asset'),
+        title: const Text('Manual entry'),
         actions: const [
           Padding(
             padding: EdgeInsets.only(right: 8),
@@ -236,38 +426,22 @@ class _CreateAssetPageState extends State<CreateAssetPage> {
           ),
         ],
       ),
-      body: BlocListener<AssetBloc, AssetState>(
-        listener: (context, state) {
-          if (state is AssetCreated) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Asset created successfully'),
-                backgroundColor: Colors.green,
-              ),
-            );
-            Navigator.of(context).pop();
-          } else if (state is AssetError) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.message),
-                backgroundColor: Colors.red,
-              ),
-            );
-          }
-        },
-        child: BlocBuilder<AssetBloc, AssetState>(
-          builder: (context, state) {
-            if (_categoriesLoading && _categories.isEmpty) {
-              return const AppLoadingWidget(message: 'Loading categories...');
-            }
-
-            return SingleChildScrollView(
+      body: _categoriesLoading && _categories.isEmpty
+          ? const AppLoadingWidget(message: 'Loading categories…')
+          : SingleChildScrollView(
               padding: const EdgeInsets.all(24.0),
               child: Form(
                 key: _formKey,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+                    Text(
+                      'Registers the appliance in one step (asset, warranty, proof document, and assignment to your account). '
+                      'You need catalog category → brand → model, warranty dates, serial number, and an invoice or image of proof. '
+                      'You may add an optional appliance photo.',
+                      style: t.bodySmall?.copyWith(color: KeeplyTokens.muted, height: 1.45),
+                    ),
+                    const SizedBox(height: 20),
                     if (_categoriesError != null) ...[
                       Container(
                         padding: const EdgeInsets.all(12),
@@ -349,18 +523,6 @@ class _CreateAssetPageState extends State<CreateAssetPage> {
                       ),
                       const SizedBox(height: 16),
                     ],
-                    // Asset Name
-                    TextFormField(
-                      controller: _assetNameController,
-                      decoration: const InputDecoration(
-                        labelText: 'Asset Name *',
-                        prefixIcon: Icon(Icons.inventory_2),
-                        border: OutlineInputBorder(),
-                      ),
-                      validator: (value) =>
-                          ValidationHelper.validateRequired(value, 'Asset name'),
-                    ),
-                    const SizedBox(height: 16),
                     _CategoryBottomSheetField(
                       label: 'Category *',
                       prefixIcon: Icons.category,
@@ -380,7 +542,6 @@ class _CreateAssetPageState extends State<CreateAssetPage> {
                           _selectedSubCategoryId = null;
                           _selectedMakeId = null;
                           _selectedModelId = null;
-                          _fillCascadeDefaults();
                         });
                       },
                       validator: (value) => value == null ? 'Category is required' : null,
@@ -408,7 +569,6 @@ class _CreateAssetPageState extends State<CreateAssetPage> {
                           _selectedSubCategoryId = value;
                           _selectedMakeId = null;
                           _selectedModelId = null;
-                          _fillCascadeDefaults();
                         });
                       },
                       validator: (value) => value == null ? 'SubCategory is required' : null,
@@ -442,7 +602,6 @@ class _CreateAssetPageState extends State<CreateAssetPage> {
                         setState(() {
                           _selectedMakeId = value;
                           _selectedModelId = null;
-                          _fillCascadeDefaults();
                         });
                       },
                       validator: (value) => value == null ? 'Make is required' : null,
@@ -475,33 +634,174 @@ class _CreateAssetPageState extends State<CreateAssetPage> {
                       onChanged: (value) => setState(() => _selectedModelId = value),
                       validator: (value) => value == null ? 'Model is required' : null,
                     ),
-                    const SizedBox(height: 24),
-                    // Create Button
-                    BlocBuilder<AssetBloc, AssetState>(
-                      builder: (context, state) {
-                        final isLoading = state is AssetLoading;
-                        return ElevatedButton(
-                          onPressed: isLoading ? null : _handleCreate,
-                          style: ElevatedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                          ),
-                          child: isLoading
-                              ? const SizedBox(
-                                  height: 20,
-                                  width: 20,
-                                  child: CircularProgressIndicator(strokeWidth: 2),
-                                )
-                              : const Text('Create Asset'),
-                        );
-                      },
+                    const SizedBox(height: 20),
+                    TextFormField(
+                      controller: _assetNameController,
+                      maxLength: _assetNameMax,
+                      decoration: InputDecoration(
+                        labelText: 'Display name',
+                        hintText: suggested.isNotEmpty ? suggested : 'Shown in your appliance list',
+                        prefixIcon: const Icon(Icons.badge_outlined),
+                        border: const OutlineInputBorder(),
+                        counterText: '',
+                      ),
+                      onChanged: (_) => setState(() {}),
                     ),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 6, left: 4),
+                      child: Text(
+                        suggested.isNotEmpty
+                            ? 'If you leave this blank, we use: $suggested'
+                            : 'Select make and model (and serial) to suggest a name, or type your own.',
+                        style: t.bodySmall?.copyWith(color: KeeplyTokens.muted, height: 1.35),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _serialCtrl,
+                      maxLength: _serialMax,
+                      decoration: const InputDecoration(
+                        labelText: 'Serial number',
+                        prefixIcon: Icon(Icons.numbers),
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Text('Warranty start (purchase / installation)', style: t.titleSmall?.copyWith(fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 8),
+                    OutlinedButton.icon(
+                      onPressed: _pickWarrantyStart,
+                      icon: const Icon(Icons.calendar_today_outlined, size: 18),
+                      label: Text(
+                        _warrantyStart == null
+                            ? 'Select date'
+                            : DateFormat.yMMMd().format(_warrantyStart!),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Text('Warranty end', style: t.titleSmall?.copyWith(fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 8),
+                    OutlinedButton.icon(
+                      onPressed: _pickWarrantyEnd,
+                      icon: const Icon(Icons.event_outlined, size: 18),
+                      label: Text(
+                        _warrantyEnd == null
+                            ? 'Select date'
+                            : DateFormat.yMMMd().format(_warrantyEnd!),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _warrantyProviderCtrl,
+                      decoration: const InputDecoration(
+                        labelText: 'Warranty provider (optional)',
+                        hintText: 'e.g. Manufacturer, retailer',
+                        prefixIcon: Icon(Icons.storefront_outlined),
+                        border: OutlineInputBorder(),
+                        counterText: '',
+                      ),
+                      maxLength: 200,
+                    ),
+                    const SizedBox(height: 12),
+                    Text('Warranty type (optional)', style: t.titleSmall?.copyWith(fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Optional — sent as warranty status when selected.',
+                      style: t.bodySmall?.copyWith(color: KeeplyTokens.muted),
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        ChoiceChip(
+                          label: const Text('Manufacturer'),
+                          selected: _warrantyType == 'MANUFACTURER',
+                          onSelected: (v) {
+                            if (v) setState(() => _warrantyType = 'MANUFACTURER');
+                          },
+                        ),
+                        ChoiceChip(
+                          label: const Text('Extended'),
+                          selected: _warrantyType == 'EXTENDED',
+                          onSelected: (v) {
+                            if (v) setState(() => _warrantyType = 'EXTENDED');
+                          },
+                        ),
+                        ChoiceChip(
+                          label: const Text('AMC'),
+                          selected: _warrantyType == 'AMC',
+                          onSelected: (v) {
+                            if (v) setState(() => _warrantyType = 'AMC');
+                          },
+                        ),
+                        ActionChip(
+                          label: const Text('Clear'),
+                          onPressed: () => setState(() => _warrantyType = ''),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                    Text('Invoice or proof (required)', style: t.titleSmall?.copyWith(fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 6),
+                    Text('PDF or image, up to 10 MB.', style: t.bodySmall?.copyWith(color: KeeplyTokens.muted)),
+                    const SizedBox(height: 8),
+                    OutlinedButton.icon(
+                      onPressed: _submitting ? null : _pickInvoice,
+                      icon: const Icon(Icons.upload_file_outlined),
+                      label: Text(_invoiceName ?? 'Choose file'),
+                    ),
+                    const SizedBox(height: 20),
+                    Text('Appliance photo (optional)', style: t.titleSmall?.copyWith(fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 6),
+                    Text(
+                      'Image only, up to 10 MB. Shown on your asset card when catalog art is missing.',
+                      style: t.bodySmall?.copyWith(color: KeeplyTokens.muted),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        OutlinedButton.icon(
+                          onPressed: _submitting ? null : _pickPhoto,
+                          icon: const Icon(Icons.photo_camera_outlined),
+                          label: Text(_photoName ?? 'Choose image'),
+                        ),
+                        if (_photoPath != null) ...[
+                          const SizedBox(width: 8),
+                          TextButton(onPressed: _submitting ? null : _clearPhoto, child: const Text('Remove')),
+                        ],
+                      ],
+                    ),
+                    if (_submitError != null) ...[
+                      const SizedBox(height: 16),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: KeeplyTokens.danger.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(KeeplyTokens.radiusXs),
+                          border: Border.all(color: KeeplyTokens.danger.withValues(alpha: 0.25)),
+                        ),
+                        child: Text(_submitError!, style: t.bodySmall?.copyWith(color: KeeplyTokens.danger)),
+                      ),
+                    ],
+                    const SizedBox(height: 24),
+                    FilledButton(
+                      onPressed: _submitting ? null : _submit,
+                      style: FilledButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
+                      child: _submitting
+                          ? const SizedBox(
+                              height: 22,
+                              width: 22,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Text('Save asset'),
+                    ),
+                    const SizedBox(height: 24),
                   ],
                 ),
               ),
-            );
-          },
-        ),
-      ),
+            ),
     );
   }
 }

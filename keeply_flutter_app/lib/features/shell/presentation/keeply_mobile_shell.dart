@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:keeply_app/core/api/keeply_service_url.dart';
+import 'package:keeply_app/core/sync/app_data_refresh_cubit.dart';
 import 'package:keeply_app/core/theme/keeply_tokens.dart';
 import 'package:keeply_app/core/view_layout/view_layout_scope.dart';
+import 'package:keeply_app/features/asset/presentation/bloc/asset_bloc.dart';
 import 'package:keeply_app/features/asset/presentation/pages/create_asset_page.dart';
 import 'package:keeply_app/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:keeply_app/features/home/presentation/dashboard_page.dart';
@@ -50,7 +52,22 @@ class _KeeplyMobileShellState extends State<KeeplyMobileShell> {
     final auth = context.watch<AuthBloc>().state;
     final user = auth is AuthAuthenticated ? auth.user : null;
 
-    return Scaffold(
+    return MultiBlocListener(
+      listeners: [
+        BlocListener<AssetBloc, AssetState>(
+          listenWhen: (previous, current) =>
+              current is AssetCreated ||
+              current is AssetUpdated ||
+              current is AssetDeleted ||
+              current is CategoryCreated ||
+              current is CategoriesBulkCreated ||
+              current is CategoriesExcelUploaded,
+          listener: (context, state) {
+            context.read<AppDataRefreshCubit>().bump(KeeplyDataChannel.assets);
+          },
+        ),
+      ],
+      child: Scaffold(
       backgroundColor: KeeplyTokens.surface,
       body: SafeArea(
         bottom: false,
@@ -126,6 +143,7 @@ class _KeeplyMobileShellState extends State<KeeplyMobileShell> {
           ),
         ),
       ),
+    ),
     );
   }
 

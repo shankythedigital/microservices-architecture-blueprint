@@ -6,6 +6,9 @@ import 'package:keeply_app/features/auth/presentation/pages/welcome_page.dart';
 import 'package:keeply_app/features/auth/presentation/pages/register_page.dart';
 import 'package:keeply_app/features/helpdesk/presentation/pages/helpdesk_hub_page.dart';
 import 'package:keeply_app/features/master_data/presentation/pages/master_data_catalog_page.dart';
+import 'package:keeply_app/features/shell/presentation/pages/account_profile_page.dart';
+import 'package:keeply_app/features/shell/presentation/pages/account_settings_page.dart';
+import 'package:keeply_app/features/shell/presentation/pages/alerts_hub_page.dart';
 
 /// React `/home/account` hub — profile, settings, notifications links + sign out.
 class AccountHubPage extends StatelessWidget {
@@ -36,19 +39,31 @@ class AccountHubPage extends StatelessWidget {
             title: const Text('Profile'),
             subtitle: const Text('View and edit your profile'),
             trailing: const Icon(Icons.chevron_right_rounded),
-            onTap: () {},
+            onTap: () {
+              Navigator.of(context).push<void>(
+                MaterialPageRoute<void>(builder: (_) => const AccountProfilePage()),
+              );
+            },
           ),
           ListTile(
             leading: const Icon(Icons.settings_outlined),
             title: const Text('Settings'),
             trailing: const Icon(Icons.chevron_right_rounded),
-            onTap: () {},
+            onTap: () {
+              Navigator.of(context).push<void>(
+                MaterialPageRoute<void>(builder: (_) => const AccountSettingsPage()),
+              );
+            },
           ),
           ListTile(
             leading: const Icon(Icons.notifications_none_rounded),
             title: const Text('Notifications'),
             trailing: const Icon(Icons.chevron_right_rounded),
-            onTap: () {},
+            onTap: () {
+              Navigator.of(context).push<void>(
+                MaterialPageRoute<void>(builder: (_) => const AlertsHubPage()),
+              );
+            },
           ),
           ListTile(
             leading: const Icon(Icons.support_agent_outlined),
