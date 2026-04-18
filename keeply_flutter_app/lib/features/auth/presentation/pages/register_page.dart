@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:keeply_app/core/config/app_config.dart';
+import 'package:keeply_app/core/theme/keeply_tokens.dart';
 import 'package:keeply_app/core/utils/validation_helper.dart';
+import 'package:keeply_app/core/widgets/keeply_auth_screen_background.dart';
 import 'package:keeply_app/core/view_layout/view_layout_scope.dart';
 import 'package:keeply_app/core/widgets/selectable_option_picker.dart';
 import 'package:keeply_app/features/auth/presentation/bloc/auth_bloc.dart';
@@ -86,9 +88,12 @@ class _RegisterPageState extends State<RegisterPage> {
 
     if (_passwordController.text != _confirmPasswordController.text) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Passwords do not match'),
-          backgroundColor: Colors.red,
+        SnackBar(
+          content: Text(
+            'Passwords do not match',
+            style: TextStyle(color: Theme.of(context).colorScheme.onError),
+          ),
+          backgroundColor: Theme.of(context).colorScheme.error,
         ),
       );
       return;
@@ -96,9 +101,12 @@ class _RegisterPageState extends State<RegisterPage> {
 
     if (!_acceptTc) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please accept the Terms & Conditions'),
-          backgroundColor: Colors.red,
+        SnackBar(
+          content: Text(
+            'Please accept the Terms & Conditions',
+            style: TextStyle(color: Theme.of(context).colorScheme.onError),
+          ),
+          backgroundColor: Theme.of(context).colorScheme.error,
         ),
       );
       return;
@@ -131,15 +139,19 @@ class _RegisterPageState extends State<RegisterPage> {
   @override
   Widget build(BuildContext context) {
     final t = Theme.of(context).textTheme;
+    final scheme = Theme.of(context).colorScheme;
 
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
         if (state is RegistrationSuccess) {
           setState(() => _isLoading = false);
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Account created. Please sign in.'),
-              backgroundColor: Colors.green,
+            SnackBar(
+              content: const Text(
+                'Account created. Please sign in.',
+                style: TextStyle(color: Colors.white),
+              ),
+              backgroundColor: KeeplyTokens.accent,
             ),
           );
           Navigator.of(context).pushAndRemoveUntil(
@@ -152,8 +164,11 @@ class _RegisterPageState extends State<RegisterPage> {
           setState(() => _isLoading = false);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(state.message),
-              backgroundColor: Colors.red,
+              content: Text(
+                state.message,
+                style: TextStyle(color: Theme.of(context).colorScheme.onError),
+              ),
+              backgroundColor: Theme.of(context).colorScheme.error,
             ),
           );
         } else if (state is AuthLoading) {
@@ -161,8 +176,13 @@ class _RegisterPageState extends State<RegisterPage> {
         }
       },
       child: Scaffold(
+        backgroundColor: scheme.surface,
         appBar: AppBar(
           title: const Text('Register'),
+          scrolledUnderElevation: 0,
+          elevation: 0,
+          backgroundColor: scheme.surface.withValues(alpha: 0.92),
+          foregroundColor: scheme.onSurface,
           actions: const [
             Padding(
               padding: EdgeInsets.only(right: 8),
@@ -170,20 +190,24 @@ class _RegisterPageState extends State<RegisterPage> {
             ),
           ],
         ),
-        body: SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24.0),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  const SizedBox(height: 8),
-                  Text(
-                    'Create Account',
-                    style: t.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
-                    textAlign: TextAlign.center,
-                  ),
+        body: KeeplyAuthBackground(
+          child: SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24.0),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const SizedBox(height: 8),
+                    Text(
+                      'Create Account',
+                      style: t.headlineMedium?.copyWith(
+                        fontWeight: FontWeight.w800,
+                        color: scheme.onSurface,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
                   const SizedBox(height: 24),
                   Text('Account', style: t.titleSmall?.copyWith(fontWeight: FontWeight.w600)),
                   const SizedBox(height: 12),
@@ -192,7 +216,6 @@ class _RegisterPageState extends State<RegisterPage> {
                     decoration: const InputDecoration(
                       labelText: 'Username *',
                       prefixIcon: Icon(Icons.person),
-                      border: OutlineInputBorder(),
                     ),
                     validator: ValidationHelper.validateUsername,
                     textInputAction: TextInputAction.next,
@@ -204,7 +227,6 @@ class _RegisterPageState extends State<RegisterPage> {
                     decoration: const InputDecoration(
                       labelText: 'Email (optional)',
                       prefixIcon: Icon(Icons.email),
-                      border: OutlineInputBorder(),
                     ),
                     validator: (value) => ValidationHelper.validateEmail(value, required: false),
                     textInputAction: TextInputAction.next,
@@ -220,7 +242,6 @@ class _RegisterPageState extends State<RegisterPage> {
                         icon: Icon(_obscurePassword ? Icons.visibility : Icons.visibility_off),
                         onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                       ),
-                      border: const OutlineInputBorder(),
                     ),
                     validator: ValidationHelper.validatePassword,
                     textInputAction: TextInputAction.next,
@@ -236,7 +257,6 @@ class _RegisterPageState extends State<RegisterPage> {
                         icon: Icon(_obscureConfirmPassword ? Icons.visibility : Icons.visibility_off),
                         onPressed: () => setState(() => _obscureConfirmPassword = !_obscureConfirmPassword),
                       ),
-                      border: const OutlineInputBorder(),
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
@@ -269,7 +289,6 @@ class _RegisterPageState extends State<RegisterPage> {
                     decoration: const InputDecoration(
                       labelText: 'Mobile * (without country code)',
                       prefixIcon: Icon(Icons.phone),
-                      border: OutlineInputBorder(),
                       helperText: 'Example for +91: 10 digits starting with 6–9',
                     ),
                     validator: (value) => ValidationHelper.validateNationalMobile(value, _countryCode),
@@ -306,7 +325,6 @@ class _RegisterPageState extends State<RegisterPage> {
                         controller: _firstNameController,
                         decoration: const InputDecoration(
                           labelText: 'First name',
-                          border: OutlineInputBorder(),
                         ),
                         textInputAction: TextInputAction.next,
                       ),
@@ -315,7 +333,6 @@ class _RegisterPageState extends State<RegisterPage> {
                         controller: _lastNameController,
                         decoration: const InputDecoration(
                           labelText: 'Last name',
-                          border: OutlineInputBorder(),
                         ),
                         textInputAction: TextInputAction.next,
                       ),
@@ -331,7 +348,6 @@ class _RegisterPageState extends State<RegisterPage> {
                         controller: _address1Controller,
                         decoration: const InputDecoration(
                           labelText: 'Address line 1',
-                          border: OutlineInputBorder(),
                         ),
                         textInputAction: TextInputAction.next,
                       ),
@@ -340,7 +356,6 @@ class _RegisterPageState extends State<RegisterPage> {
                         controller: _address2Controller,
                         decoration: const InputDecoration(
                           labelText: 'Address line 2',
-                          border: OutlineInputBorder(),
                         ),
                         textInputAction: TextInputAction.next,
                       ),
@@ -349,7 +364,6 @@ class _RegisterPageState extends State<RegisterPage> {
                         controller: _address3Controller,
                         decoration: const InputDecoration(
                           labelText: 'Address line 3',
-                          border: OutlineInputBorder(),
                         ),
                         textInputAction: TextInputAction.next,
                       ),
@@ -358,7 +372,6 @@ class _RegisterPageState extends State<RegisterPage> {
                         controller: _pincodeController,
                         decoration: const InputDecoration(
                           labelText: 'Pincode',
-                          border: OutlineInputBorder(),
                         ),
                         textInputAction: TextInputAction.next,
                       ),
@@ -367,7 +380,6 @@ class _RegisterPageState extends State<RegisterPage> {
                         controller: _cityController,
                         decoration: const InputDecoration(
                           labelText: 'City',
-                          border: OutlineInputBorder(),
                         ),
                         textInputAction: TextInputAction.next,
                       ),
@@ -376,7 +388,6 @@ class _RegisterPageState extends State<RegisterPage> {
                         controller: _stateController,
                         decoration: const InputDecoration(
                           labelText: 'State',
-                          border: OutlineInputBorder(),
                         ),
                         textInputAction: TextInputAction.next,
                       ),
@@ -385,7 +396,6 @@ class _RegisterPageState extends State<RegisterPage> {
                         controller: _countryController,
                         decoration: const InputDecoration(
                           labelText: 'Country',
-                          border: OutlineInputBorder(),
                         ),
                         textInputAction: TextInputAction.done,
                         onFieldSubmitted: (_) => _handleRegister(),
@@ -394,16 +404,19 @@ class _RegisterPageState extends State<RegisterPage> {
                     ],
                   ),
                   const SizedBox(height: 24),
-                  ElevatedButton(
+                  FilledButton(
                     onPressed: _isLoading ? null : _handleRegister,
-                    style: ElevatedButton.styleFrom(
+                    style: FilledButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),
                     ),
                     child: _isLoading
-                        ? const SizedBox(
+                        ? SizedBox(
                             height: 20,
                             width: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2),
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: scheme.onPrimary,
+                            ),
                           )
                         : const Text('Register'),
                   ),
@@ -417,6 +430,7 @@ class _RegisterPageState extends State<RegisterPage> {
             ),
           ),
         ),
+      ),
       ),
     );
   }

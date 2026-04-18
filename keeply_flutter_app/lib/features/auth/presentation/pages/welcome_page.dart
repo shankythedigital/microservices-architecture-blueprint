@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:keeply_app/core/theme/keeply_tokens.dart';
+import 'package:keeply_app/core/widgets/keeply_auth_screen_background.dart';
 import 'package:keeply_app/features/auth/presentation/pages/login_page.dart';
 import 'package:keeply_app/features/auth/presentation/pages/register_page.dart';
 
@@ -10,23 +11,11 @@ class WelcomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = Theme.of(context).textTheme;
+    final scheme = Theme.of(context).colorScheme;
 
     return Scaffold(
-      body: Container(
-        width: double.infinity,
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Color(0x1F0D9488),
-              Color(0x0D6366F1),
-              Color(0xD9E2E8F0),
-              KeeplyTokens.bg,
-            ],
-            stops: [0.0, 0.2, 0.45, 0.65],
-          ),
-        ),
+      backgroundColor: scheme.surface,
+      body: KeeplyAuthBackground(
         child: SafeArea(
           child: Center(
             child: ConstrainedBox(
@@ -35,7 +24,7 @@ class WelcomePage extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
                 child: DecoratedBox(
                   decoration: BoxDecoration(
-                    color: KeeplyTokens.surface,
+                    color: scheme.surface,
                     borderRadius: BorderRadius.circular(KeeplyTokens.radius),
                     boxShadow: const [
                       BoxShadow(
@@ -44,7 +33,7 @@ class WelcomePage extends StatelessWidget {
                         offset: Offset(0, 12),
                       ),
                     ],
-                    border: Border.all(color: const Color(0xFFE6EAF0)),
+                    border: Border.all(color: scheme.outline.withValues(alpha: 0.22)),
                   ),
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(22, 28, 22, 24),
@@ -57,28 +46,44 @@ class WelcomePage extends StatelessWidget {
                             Container(
                               width: 44,
                               height: 44,
+                              alignment: Alignment.center,
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(14),
                                 gradient: const LinearGradient(
                                   colors: [Color(0xFF0F7669), KeeplyTokens.accent],
                                 ),
                               ),
+                              child: const Icon(Icons.inventory_2_rounded, color: Colors.white, size: 24),
                             ),
                             const SizedBox(width: 12),
-                            Text('Keeply', style: t.headlineSmall?.copyWith(fontWeight: FontWeight.w800)),
+                            Expanded(
+                              child: Text(
+                                'Keeply',
+                                style: t.headlineSmall?.copyWith(
+                                  fontWeight: FontWeight.w800,
+                                  color: scheme.onSurface,
+                                ),
+                              ),
+                            ),
                           ],
                         ),
                         const SizedBox(height: 18),
                         Text(
                           'Keep track of appliances, invoices, warranties, and service reminders—'
                           'so you never miss an expiry.',
-                          style: t.bodyMedium?.copyWith(color: KeeplyTokens.muted, height: 1.45),
+                          style: t.bodyMedium?.copyWith(
+                            color: scheme.onSurfaceVariant,
+                            height: 1.45,
+                          ),
                         ),
                         const SizedBox(height: 12),
                         Text(
                           'New here? Create a free account first. Already registered? Sign in to open '
                           'your home dashboard.',
-                          style: t.bodySmall?.copyWith(color: KeeplyTokens.muted, height: 1.45),
+                          style: t.bodySmall?.copyWith(
+                            color: scheme.onSurfaceVariant,
+                            height: 1.45,
+                          ),
                         ),
                         const SizedBox(height: 16),
                         ...[
@@ -92,11 +97,11 @@ class WelcomePage extends StatelessWidget {
                             child: Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text('• ', style: t.bodySmall?.copyWith(color: KeeplyTokens.muted)),
+                                Text('• ', style: t.bodySmall?.copyWith(color: scheme.onSurfaceVariant)),
                                 Expanded(
                                   child: Text(
                                     s,
-                                    style: t.bodySmall?.copyWith(color: KeeplyTokens.muted, height: 1.35),
+                                    style: t.bodySmall?.copyWith(color: scheme.onSurfaceVariant, height: 1.35),
                                   ),
                                 ),
                               ],
@@ -125,7 +130,7 @@ class WelcomePage extends StatelessWidget {
                         Text(
                           'Registration verifies your mobile (OTP). Password login is available for '
                           'admin/dev accounts after you register.',
-                          style: t.labelSmall?.copyWith(color: KeeplyTokens.muted, height: 1.4),
+                          style: t.labelSmall?.copyWith(color: scheme.onSurfaceVariant, height: 1.4),
                           textAlign: TextAlign.center,
                         ),
                       ],

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:keeply_app/core/theme/keeply_tokens.dart';
+import 'package:keeply_app/core/widgets/keeply_auth_screen_background.dart';
 import 'package:keeply_app/features/auth/data/datasources/auth_remote_datasource.dart';
 import 'package:keeply_app/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:keeply_app/features/shell/presentation/keeply_mobile_shell.dart';
@@ -119,6 +120,7 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     final t = Theme.of(context).textTheme;
+    final scheme = Theme.of(context).colorScheme;
 
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
@@ -138,21 +140,8 @@ class _LoginPageState extends State<LoginPage> {
         }
       },
       child: Scaffold(
-        body: Container(
-          width: double.infinity,
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-                Color(0x1F0D9488),
-                Color(0x0D6366F1),
-                Color(0xD9E2E8F0),
-                KeeplyTokens.bg,
-              ],
-              stops: [0.0, 0.2, 0.45, 0.65],
-            ),
-          ),
+        backgroundColor: scheme.surface,
+        body: KeeplyAuthBackground(
           child: SafeArea(
             child: Center(
               child: SingleChildScrollView(
@@ -161,9 +150,9 @@ class _LoginPageState extends State<LoginPage> {
                   constraints: const BoxConstraints(maxWidth: KeeplyTokens.maxAppWidth),
                   child: DecoratedBox(
                     decoration: BoxDecoration(
-                      color: KeeplyTokens.surface,
+                      color: scheme.surface,
                       borderRadius: BorderRadius.circular(KeeplyTokens.radius),
-                      border: Border.all(color: const Color(0xFFE6EAF0)),
+                      border: Border.all(color: scheme.outline.withValues(alpha: 0.22)),
                       boxShadow: const [
                         BoxShadow(color: Color(0x140F172A), blurRadius: 28, offset: Offset(0, 12)),
                       ],
@@ -173,11 +162,26 @@ class _LoginPageState extends State<LoginPage> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          Text('Sign in', style: t.headlineSmall?.copyWith(fontWeight: FontWeight.w800)),
+                          if (Navigator.of(context).canPop())
+                            Align(
+                              alignment: Alignment.centerLeft,
+                              child: IconButton(
+                                tooltip: 'Back',
+                                onPressed: () => Navigator.of(context).maybePop(),
+                                icon: Icon(Icons.arrow_back_rounded, color: scheme.onSurface),
+                              ),
+                            ),
+                          Text(
+                            'Sign in',
+                            style: t.headlineSmall?.copyWith(
+                              fontWeight: FontWeight.w800,
+                              color: scheme.onSurface,
+                            ),
+                          ),
                           const SizedBox(height: 8),
                           Text(
                             'Enter your mobile number to get a one-time passcode.',
-                            style: t.bodySmall?.copyWith(color: KeeplyTokens.muted, height: 1.4),
+                            style: t.bodySmall?.copyWith(color: scheme.onSurfaceVariant, height: 1.4),
                           ),
                           const SizedBox(height: 18),
                           _Segmented(
@@ -200,7 +204,7 @@ class _LoginPageState extends State<LoginPage> {
                             const SizedBox(height: 8),
                             Text(
                               'Country-aware formatting can mirror KeeplyV1.pdf; API expects digits only.',
-                              style: t.labelSmall?.copyWith(color: KeeplyTokens.muted, height: 1.35),
+                              style: t.labelSmall?.copyWith(color: scheme.onSurfaceVariant, height: 1.35),
                             ),
                             if (_sendErr != null) ...[
                               const SizedBox(height: 10),
@@ -295,12 +299,13 @@ class _Segmented extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: KeeplyTokens.surfaceMuted,
+        color: scheme.surfaceContainerHighest.withValues(alpha: 0.45),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: KeeplyTokens.line),
+        border: Border.all(color: scheme.outline.withValues(alpha: 0.28)),
       ),
       child: Row(
         children: [
@@ -333,8 +338,9 @@ class _SegBtn extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     return Material(
-      color: selected ? KeeplyTokens.surface : Colors.transparent,
+      color: selected ? scheme.surface : Colors.transparent,
       borderRadius: BorderRadius.circular(10),
       child: InkWell(
         onTap: onTap,
@@ -346,7 +352,7 @@ class _SegBtn extends StatelessWidget {
             label,
             style: TextStyle(
               fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-              color: selected ? KeeplyTokens.ink : KeeplyTokens.muted,
+              color: selected ? scheme.onSurface : scheme.onSurfaceVariant,
               fontSize: 13,
             ),
           ),
