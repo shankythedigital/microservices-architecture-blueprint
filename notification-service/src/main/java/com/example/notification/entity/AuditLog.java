@@ -3,6 +3,8 @@ package com.example.notification.entity;
 import com.example.common.converter.JpaAttributeEncryptor;
 import jakarta.persistence.*;
 import com.example.common.jpa.BaseEntity;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 /**
  * 🔐 DPDPA Compliance: All PII data (username, userId) is encrypted at rest.
@@ -28,10 +30,12 @@ public class AuditLog extends BaseEntity {
 
     private String action; // CREATE, UPDATE, DELETE, READ
 
-    @Column(columnDefinition = "JSON")
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "json")
     private String oldValue;
 
-    @Column(columnDefinition = "JSON")
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "json")
     private String newValue;
 
     @Column(name = "ip_address")

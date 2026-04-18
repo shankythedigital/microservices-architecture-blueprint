@@ -24,7 +24,11 @@ import 'package:keeply_app/features/auth/presentation/bloc/auth_bloc.dart';
 /// Parity with React [AddAssetManualPage.tsx]: catalog selections, warranty, serial,
 /// invoice + optional photo, `POST /api/asset/v1/assets/complete` (multipart).
 class CreateAssetPage extends StatefulWidget {
-  const CreateAssetPage({super.key});
+  const CreateAssetPage({super.key, this.embeddedDismiss});
+
+  /// When this page sits inside a tab (no pushed route), call this instead of
+  /// [Navigator.pop] after a successful save, and wire the AppBar back button.
+  final VoidCallback? embeddedDismiss;
 
   @override
   State<CreateAssetPage> createState() => _CreateAssetPageState();
@@ -419,7 +423,13 @@ class _CreateAssetPageState extends State<CreateAssetPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Saved: $savedName'), backgroundColor: Colors.green.shade700),
       );
-      Navigator.of(context).pop();
+      final leave = widget.embeddedDismiss;
+      if (leave != null) {
+        setState(() => _submitting = false);
+        leave();
+      } else {
+        Navigator.of(context).pop();
+      }
     } catch (e) {
       if (!mounted) return;
       setState(() {
@@ -434,9 +444,17 @@ class _CreateAssetPageState extends State<CreateAssetPage> {
     final t = Theme.of(context).textTheme;
     final suggested = _suggestedName;
 
+    final embedded = widget.embeddedDismiss;
     return Scaffold(
       appBar: AppBar(
         title: const Text('Manual entry'),
+        automaticallyImplyLeading: embedded == null,
+        leading: embedded == null
+            ? null
+            : IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: embedded,
+              ),
         actions: const [
           Padding(
             padding: EdgeInsets.only(right: 8),

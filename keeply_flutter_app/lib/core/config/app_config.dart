@@ -8,8 +8,18 @@ import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform, Tar
 /// `VITE_NOTIFICATION_BASE` → `NOTIFICATION_SERVICE_URL`, `VITE_HELPDESK_BASE` → `HELPDESK_SERVICE_URL`.
 /// Prefer `keeplyApiUrl` / `keeplyServiceBase` from `core/api/keeply_service_url.dart` (React `url()` / `getServiceBase()`).
 class AppConfig {
+  /// Optional host for **all** service base URLs (non-web). Use on a **physical** phone/tablet
+  /// on the same Wi‑Fi as your laptop (e.g. `192.168.1.42`). Emulator ignores this and uses `10.0.2.2`.
+  ///
+  /// `flutter run --dart-define=KEEPLY_DEV_HOST=192.168.1.42`
+  static const String _devHostOverride = String.fromEnvironment('KEEPLY_DEV_HOST');
+
   // Detect platform and set appropriate base URLs
   static String get _defaultHost {
+    final override = _devHostOverride.trim();
+    if (override.isNotEmpty) {
+      return override.replaceFirst(RegExp(r'^https?://'), '');
+    }
     if (kIsWeb) {
       // Flutter Web: localhost works when backend is on same machine
       // CORS: backends use shared KeeplyCorsConfiguration (common-service) via each *-service CorsConfig.
@@ -25,6 +35,7 @@ class AppConfig {
   }
 
   // API Base URLs - Can be overridden via environment variables.
+  // Physical Android on LAN: `--dart-define=KEEPLY_DEV_HOST=192.168.1.42` (same Wi‑Fi as dev machine).
   // Flutter web from another machine / LAN: use full URLs, e.g.
   // `--dart-define=AUTH_SERVICE_URL=http://192.168.1.5:8081` (must match CORS allowed patterns on services).
   static String get authServiceBaseUrl {

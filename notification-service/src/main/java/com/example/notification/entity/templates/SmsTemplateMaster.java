@@ -3,6 +3,8 @@ package com.example.notification.entity.templates;
 
 import jakarta.persistence.*;
 import com.example.common.jpa.BaseEntity;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 @Entity
 @Table(name = "sms_template_master")
@@ -22,7 +24,8 @@ public class SmsTemplateMaster extends BaseEntity {
     @Column(columnDefinition = "TEXT")
     private String body;
 
-    @Column(columnDefinition = "JSON")
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "json")
     private String placeholders;
 
     private Boolean active;

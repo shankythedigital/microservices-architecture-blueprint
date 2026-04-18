@@ -223,7 +223,7 @@ public class DataInitializer implements CommandLineRunner {
         try {
             // Generate user details
             String email = username + "@example.com";
-            String mobile = generateMobileNumber();
+            String mobile = adminSeedMobile(projectType);
             String employeeId = "EMP_ADMIN_" + projectType.toUpperCase();
 
             // Compute HMACs for composite key
@@ -307,11 +307,15 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     /**
-     * Generates a random mobile number for admin users
+     * Synthetic E.164-style mobile unique per seeded project type.
+     * {@link UserDetailMaster} enforces a global unique constraint on {@code mobile_hash}; a small random
+     * range caused collisions when several admins were persisted in one transaction.
      */
-    private String generateMobileNumber() {
-        Random random = new Random();
-        int suffix = 10 + random.nextInt(89); // Random number between 10 and 98
-        return "+9112345678" + suffix;
+    private static String adminSeedMobile(String projectType) {
+        int idx = PROJECT_TYPES.indexOf(projectType);
+        if (idx < 0) {
+            idx = 0;
+        }
+        return String.format("+919876500%02d", idx);
     }
 }

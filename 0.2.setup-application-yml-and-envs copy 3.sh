@@ -9,7 +9,6 @@
 #   - Helpdesk Service
 #
 # Supports: local, cloud_local, cloud, OWN_SERVER
-# Database (all modes): Supabase Postgres — see SUPABASE_* vars below; modes only differ in service URLs/ports/IPs.
 # ======================================================
 
 set -euo pipefail
@@ -24,41 +23,28 @@ NOTIF_DIR="$ROOT_DIR/notification-service"
 COMMON_DIR="$ROOT_DIR/common-service"
 HELPDESK_DIR="$ROOT_DIR/helpdesk-service"
 
-# ----- Supabase Postgres (database layer for every MODE; schemas isolate services) -----
-SUPABASE_DB_HOST="db.sefwxyysecmfeawhvlbu.supabase.co"
-SUPABASE_DB_PORT="5432"
-SUPABASE_DB_NAME="postgres"
-SUPABASE_DB_USER="postgres"
-SUPABASE_DB_PASS="iK9IASi97UEnZIpf"
-
-  RDS_AUTH_SCHEMA_NAME="authdb"
-  RDS_ASSET_SCHEMA_NAME="assetdb"
-  RDS_NOTIFY_SCHEMA_NAME="notificationdb"
-  RDS_HELPDESK_SCHEMA_NAME="helpdeskdb"
 # ======================================================
 # 🔧 CONFIGURATION SWITCH
 # ======================================================
 if [ "$MODE" = "cloud" ]; then
   echo "🌩️ Generating Cloud YAML..."
 
-  # RDS_HOST="db-auth.c5csym0gc4my.ap-south-1.rds.amazonaws.com"
-  RDS_HOST="${SUPABASE_DB_HOST}"
-  RDS_DB_PORT="${SUPABASE_DB_PORT}"
-  RDS_DB_NAME="${SUPABASE_DB_NAME}"
-  RDS_AUTH_DB="jdbc:postgresql://${RDS_HOST}:${RDS_DB_PORT}/${RDS_DB_NAME}?sslmode=require&currentSchema=${RDS_AUTH_SCHEMA_NAME}"
-  RDS_ASSET_DB="jdbc:postgresql://${RDS_HOST}:${RDS_DB_PORT}/${RDS_DB_NAME}?sslmode=require&currentSchema=${RDS_ASSET_SCHEMA_NAME}"
-  RDS_NOTIFY_DB="jdbc:postgresql://${RDS_HOST}:${RDS_DB_PORT}/${RDS_DB_NAME}?sslmode=require&currentSchema=${RDS_NOTIFY_SCHEMA_NAME}"
-  RDS_HELPDESK_DB="jdbc:postgresql://${RDS_HOST}:${RDS_DB_PORT}/${RDS_DB_NAME}?sslmode=require&currentSchema=${RDS_HELPDESK_SCHEMA_NAME}"
+  RDS_HOST="db-auth.c5csym0gc4my.ap-south-1.rds.amazonaws.com"
 
-  RDS_AUTH_USER="${SUPABASE_DB_USER}"
-  RDS_ASSET_USER="${SUPABASE_DB_USER}"
-  RDS_NOTIFY_USER="${SUPABASE_DB_USER}"
-  RDS_HELPDESK_USER="${SUPABASE_DB_USER}"
+  RDS_AUTH_DB="jdbc:mysql://${RDS_HOST}:3306/authdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
+  RDS_ASSET_DB="jdbc:mysql://${RDS_HOST}:3306/assetdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
+  RDS_NOTIFY_DB="jdbc:mysql://${RDS_HOST}:3306/notificationdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8&connectionCollation=utf8mb4_unicode_ci"
+  RDS_HELPDESK_DB="jdbc:mysql://${RDS_HOST}:3306/helpdeskdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
 
-  RDS_AUTH_PASS="${SUPABASE_DB_PASS}"
-  RDS_ASSET_PASS="${SUPABASE_DB_PASS}"
-  RDS_NOTIFY_PASS="${SUPABASE_DB_PASS}"
-  RDS_HELPDESK_PASS="${SUPABASE_DB_PASS}"
+  RDS_AUTH_USER="admin"
+  RDS_ASSET_USER="admin"
+  RDS_NOTIFY_USER="admin"
+  RDS_HELPDESK_USER="admin"
+
+  RDS_AUTH_PASS="AuthPass123"
+  RDS_ASSET_PASS="AuthPass123"
+  RDS_NOTIFY_PASS="AuthPass123"
+  RDS_HELPDESK_PASS="AuthPass123"
 
   # ===== Cloud ports (local debug mode of EB) =====
   COMMON_PORT="6000"
@@ -83,23 +69,22 @@ if [ "$MODE" = "cloud" ]; then
 elif [ "$MODE" = "cloud_local" ]; then
   echo "🌥️ Generating Cloud DB + Local Services..."
 
-  RDS_HOST="${SUPABASE_DB_HOST}"
-  RDS_DB_PORT="${SUPABASE_DB_PORT}"
-  RDS_DB_NAME="${SUPABASE_DB_NAME}"
-  RDS_AUTH_DB="jdbc:postgresql://${RDS_HOST}:${RDS_DB_PORT}/${RDS_DB_NAME}?sslmode=require&currentSchema=authdb"
-  RDS_ASSET_DB="jdbc:postgresql://${RDS_HOST}:${RDS_DB_PORT}/${RDS_DB_NAME}?sslmode=require&currentSchema=assetdb"
-  RDS_NOTIFY_DB="jdbc:postgresql://${RDS_HOST}:${RDS_DB_PORT}/${RDS_DB_NAME}?sslmode=require&currentSchema=notificationdb"
-  RDS_HELPDESK_DB="jdbc:postgresql://${RDS_HOST}:${RDS_DB_PORT}/${RDS_DB_NAME}?sslmode=require&currentSchema=helpdeskdb"
+  RDS_HOST="db-auth.c5csym0gc4my.ap-south-1.rds.amazonaws.com"
 
-  RDS_AUTH_USER="${SUPABASE_DB_USER}"
-  RDS_ASSET_USER="${SUPABASE_DB_USER}"
-  RDS_NOTIFY_USER="${SUPABASE_DB_USER}"
-  RDS_HELPDESK_USER="${SUPABASE_DB_USER}"
+  RDS_AUTH_DB="jdbc:mysql://${RDS_HOST}:3306/authdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
+  RDS_ASSET_DB="jdbc:mysql://${RDS_HOST}:3306/assetdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
+  RDS_NOTIFY_DB="jdbc:mysql://${RDS_HOST}:3306/notificationdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8&connectionCollation=utf8mb4_unicode_ci"
+  RDS_HELPDESK_DB="jdbc:mysql://${RDS_HOST}:3306/helpdeskdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
 
-  RDS_AUTH_PASS="${SUPABASE_DB_PASS}"
-  RDS_ASSET_PASS="${SUPABASE_DB_PASS}"
-  RDS_NOTIFY_PASS="${SUPABASE_DB_PASS}"
-  RDS_HELPDESK_PASS="${SUPABASE_DB_PASS}"
+  RDS_AUTH_USER="admin"
+  RDS_ASSET_USER="admin"
+  RDS_NOTIFY_USER="admin"
+  RDS_HELPDESK_USER="admin"
+
+  RDS_AUTH_PASS="AuthPass123"
+  RDS_ASSET_PASS="AuthPass123"
+  RDS_NOTIFY_PASS="AuthPass123"
+  RDS_HELPDESK_PASS="AuthPass123"
 
   AUTH_PORT="8081"
   NOTIF_PORT="8082"
@@ -116,23 +101,22 @@ elif [ "$MODE" = "cloud_local" ]; then
 elif [ "$MODE" = "OWN_SERVER" ]; then
   echo "🌥️ Generating Own Server DB + Local Services..."
 
-  RDS_HOST="${SUPABASE_DB_HOST}"
-  RDS_DB_PORT="${SUPABASE_DB_PORT}"
-  RDS_DB_NAME="${SUPABASE_DB_NAME}"
-  RDS_AUTH_DB="jdbc:postgresql://${RDS_HOST}:${RDS_DB_PORT}/${RDS_DB_NAME}?sslmode=require&currentSchema=${RDS_AUTH_SCHEMA_NAME}"
-  RDS_ASSET_DB="jdbc:postgresql://${RDS_HOST}:${RDS_DB_PORT}/${RDS_DB_NAME}?sslmode=require&currentSchema=${RDS_ASSET_SCHEMA_NAME}"
-  RDS_NOTIFY_DB="jdbc:postgresql://${RDS_HOST}:${RDS_DB_PORT}/${RDS_DB_NAME}?sslmode=require&currentSchema=${RDS_NOTIFY_SCHEMA_NAME}"
-  RDS_HELPDESK_DB="jdbc:postgresql://${RDS_HOST}:${RDS_DB_PORT}/${RDS_DB_NAME}?sslmode=require&currentSchema=${RDS_HELPDESK_SCHEMA_NAME}"
+  RDS_HOST="194.163.173.37"
 
-  RDS_AUTH_USER="${SUPABASE_DB_USER}"
-  RDS_ASSET_USER="${SUPABASE_DB_USER}"
-  RDS_NOTIFY_USER="${SUPABASE_DB_USER}"
-  RDS_HELPDESK_USER="${SUPABASE_DB_USER}"
+  RDS_AUTH_DB="jdbc:mysql://${RDS_HOST}:3306/authdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
+  RDS_ASSET_DB="jdbc:mysql://${RDS_HOST}:3306/assetdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
+  RDS_NOTIFY_DB="jdbc:mysql://${RDS_HOST}:3306/notificationdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8&connectionCollation=utf8mb4_unicode_ci"
+  RDS_HELPDESK_DB="jdbc:mysql://${RDS_HOST}:3306/helpdeskdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
 
-  RDS_AUTH_PASS="${SUPABASE_DB_PASS}"
-  RDS_ASSET_PASS="${SUPABASE_DB_PASS}"
-  RDS_NOTIFY_PASS="${SUPABASE_DB_PASS}"
-  RDS_HELPDESK_PASS="${SUPABASE_DB_PASS}"
+  RDS_AUTH_USER="authdb"
+  RDS_ASSET_USER="assetdb"
+  RDS_NOTIFY_USER="notificationdb"
+  RDS_HELPDESK_USER="helpdeskdb"
+
+  RDS_AUTH_PASS="authdb"
+  RDS_ASSET_PASS="assetdb"
+  RDS_NOTIFY_PASS="notificationdb"
+  RDS_HELPDESK_PASS="helpdeskdb"
 
   AUTH_PORT="8081"
   NOTIF_PORT="8082"
@@ -155,23 +139,20 @@ elif [ "$MODE" = "OWN_SERVER" ]; then
 else
   echo "💻 Generating Local YAML..."
 
-  RDS_HOST="${SUPABASE_DB_HOST}"
-  RDS_DB_PORT="${SUPABASE_DB_PORT}"
-  RDS_DB_NAME="${SUPABASE_DB_NAME}"
-  RDS_AUTH_DB="jdbc:postgresql://${RDS_HOST}:${RDS_DB_PORT}/${RDS_DB_NAME}?sslmode=require&currentSchema=${RDS_AUTH_SCHEMA_NAME}"
-  RDS_ASSET_DB="jdbc:postgresql://${RDS_HOST}:${RDS_DB_PORT}/${RDS_DB_NAME}?sslmode=require&currentSchema=${RDS_ASSET_SCHEMA_NAME}"
-  RDS_NOTIFY_DB="jdbc:postgresql://${RDS_HOST}:${RDS_DB_PORT}/${RDS_DB_NAME}?sslmode=require&currentSchema=${RDS_NOTIFY_SCHEMA_NAME}"
-  RDS_HELPDESK_DB="jdbc:postgresql://${RDS_HOST}:${RDS_DB_PORT}/${RDS_DB_NAME}?sslmode=require&currentSchema=${RDS_HELPDESK_SCHEMA_NAME}"
+  RDS_AUTH_DB="jdbc:mysql://localhost:3306/authdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
+  RDS_ASSET_DB="jdbc:mysql://localhost:3306/assetdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
+  RDS_NOTIFY_DB="jdbc:mysql://localhost:3306/notificationdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8&connectionCollation=utf8mb4_unicode_ci"
+  RDS_HELPDESK_DB="jdbc:mysql://localhost:3306/helpdeskdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
 
-  RDS_AUTH_USER="${SUPABASE_DB_USER}"
-  RDS_ASSET_USER="${SUPABASE_DB_USER}"
-  RDS_NOTIFY_USER="${SUPABASE_DB_USER}"
-  RDS_HELPDESK_USER="${SUPABASE_DB_USER}"
+  RDS_AUTH_USER="root"
+  RDS_ASSET_USER="root"
+  RDS_NOTIFY_USER="root"
+  RDS_HELPDESK_USER="root"
 
-  RDS_AUTH_PASS="${SUPABASE_DB_PASS}"
-  RDS_ASSET_PASS="${SUPABASE_DB_PASS}"
-  RDS_NOTIFY_PASS="${SUPABASE_DB_PASS}"
-  RDS_HELPDESK_PASS="${SUPABASE_DB_PASS}"
+  RDS_AUTH_PASS="Snmysql@1110"
+  RDS_ASSET_PASS="Snmysql@1110"
+  RDS_NOTIFY_PASS="Snmysql@1110"
+  RDS_HELPDESK_PASS="Snmysql@1110"
 
   AUTH_PORT="8081"
   NOTIF_PORT="8082"
@@ -231,12 +212,7 @@ spring:
     show-sql: false
     properties:
       hibernate:
-        # Keep app tables out of Supabase's reserved `auth` schema (search_path / metadata clashes).
-        default_schema: ${RDS_AUTH_SCHEMA_NAME}
-        hbm2ddl:
-          create_namespaces: true
-
-
+        dialect: org.hibernate.dialect.MySQLDialect
 
 common:
   notification:
@@ -324,10 +300,7 @@ spring:
     show-sql: false
     properties:
       hibernate:
-        # Keep app tables out of Supabase's reserved `asset` schema (search_path / metadata clashes).
-        default_schema: ${RDS_ASSET_SCHEMA_NAME}
-        hbm2ddl:
-          create_namespaces: true
+        dialect: org.hibernate.dialect.MySQLDialect
   servlet:
     multipart:
       enabled: true
@@ -456,10 +429,7 @@ spring:
     show-sql: false
     properties:
       hibernate:
-        # Keep app tables out of Supabase's reserved `notification` schema (search_path / metadata clashes).
-        default_schema: ${RDS_NOTIFY_SCHEMA_NAME}
-        hbm2ddl:
-          create_namespaces: true
+        dialect: org.hibernate.dialect.MySQLDialect
 
 auth:
   service:
@@ -597,10 +567,7 @@ spring:
     show-sql: false
     properties:
       hibernate:
-        # Keep app tables out of Supabase's reserved `helpdesk` schema (search_path / metadata clashes).
-        default_schema: ${RDS_HELPDESK_SCHEMA_NAME}
-        hbm2ddl:
-          create_namespaces: true
+        dialect: org.hibernate.dialect.MySQLDialect
   servlet:
     multipart:
       enabled: true

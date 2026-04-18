@@ -27,9 +27,9 @@ spring:
     deserialization:
       adjust-dates-to-context-time-zone: false
   datasource:
-    url: jdbc:mysql://localhost:3306/assetdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
-    username: root
-    password: Snmysql@1110
+    url: jdbc:postgresql://db.sefwxyysecmfeawhvlbu.supabase.co:5432/postgres?sslmode=require&currentSchema=assetdb
+    username: postgres
+    password: iK9IASi97UEnZIpf
     hikari:
       max-lifetime: 300000   # 5 min - recycle before server closes (avoids "connection closed" validation failures)
       connection-timeout: 20000
@@ -41,7 +41,10 @@ spring:
     show-sql: false
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.MySQLDialect
+        # Keep app tables out of Supabase's reserved  schema (search_path / metadata clashes).
+        default_schema: assetdb
+        hbm2ddl:
+          create_namespaces: true
   servlet:
     multipart:
       enabled: true

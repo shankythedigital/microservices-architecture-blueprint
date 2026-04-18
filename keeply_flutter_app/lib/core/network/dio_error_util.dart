@@ -1,6 +1,28 @@
 import 'package:dio/dio.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart'
+    show kIsWeb, defaultTargetPlatform, TargetPlatform;
 import 'package:keeply_app/core/exceptions/api_exception.dart';
+
+bool _looksLikeConnectionRefused(DioException e) {
+  final m = '${e.message} $e ${e.error}'.toLowerCase();
+  return m.contains('connection refused') ||
+      m.contains('connection reset') ||
+      m.contains('failed host lookup');
+}
+
+String _keeplyNativeConnectionHelp() {
+  if (defaultTargetPlatform == TargetPlatform.android) {
+    return 'Start the Keeply microservices on your computer (auth 8081, notification 8082, asset 8085, helpdesk 8084). '
+        'Android emulator uses 10.0.2.2 to reach your PC. On a **physical** Android device, run: '
+        'flutter run --dart-define=KEEPLY_DEV_HOST=<your-PC-LAN-IP> (phone and PC on same Wi‑Fi), '
+        'or per-service --dart-define=AUTH_SERVICE_URL=http://...:8081 etc.';
+  }
+  if (defaultTargetPlatform == TargetPlatform.iOS) {
+    return 'Start the Keeply microservices on your computer. The iOS **Simulator** can use localhost; a **physical** iPhone '
+        'needs your Mac\'s LAN IP, e.g. --dart-define=KEEPLY_DEV_HOST=192.168.1.42 or AUTH_SERVICE_URL=http://...:8081.';
+  }
+  return 'Start the Keeply microservices on this machine (auth 8081, notification 8082, asset 8085, helpdesk 8084).';
+}
 
 bool _isBlankOrLiteralNull(String s) {
   final t = s.trim();
@@ -174,6 +196,9 @@ String describeDioException(DioException e, {int unwrapDepth = 0}) {
     case DioExceptionType.connectionError:
       if (kIsWeb && e.response == null) {
         return keeplyWebNetworkAndCorsHelp();
+      }
+      if (!kIsWeb && e.response == null && _looksLikeConnectionRefused(e)) {
+        return '${_keeplyNativeConnectionHelp()} Underlying error: ${e.message ?? e.error ?? 'connection refused'}';
       }
       return 'Could not connect to the server. Check that it is running and that you are online.';
     case DioExceptionType.badCertificate:

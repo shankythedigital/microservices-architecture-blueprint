@@ -23,16 +23,21 @@ spring:
     deserialization:
       adjust-dates-to-context-time-zone: false
   datasource:
-    url: jdbc:mysql://localhost:3306/authdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
-    username: root
-    password: Snmysql@1110
+    url: jdbc:postgresql://db.sefwxyysecmfeawhvlbu.supabase.co:5432/postgres?sslmode=require&currentSchema=authdb
+    username: postgres
+    password: iK9IASi97UEnZIpf
   jpa:
     hibernate:
       ddl-auto: update
     show-sql: false
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.MySQLDialect
+        # Keep app tables out of Supabase's reserved  schema (search_path / metadata clashes).
+        default_schema: authdb
+        hbm2ddl:
+          create_namespaces: true
+
+
 
 common:
   notification:

@@ -33,16 +33,19 @@ spring:
     deserialization:
       adjust-dates-to-context-time-zone: false
   datasource:
-    url: jdbc:mysql://localhost:3306/notificationdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8&connectionCollation=utf8mb4_unicode_ci
-    username: root
-    password: Snmysql@1110
+    url: jdbc:postgresql://db.sefwxyysecmfeawhvlbu.supabase.co:5432/postgres?sslmode=require&currentSchema=notificationdb
+    username: postgres
+    password: iK9IASi97UEnZIpf
   jpa:
     hibernate:
       ddl-auto: update
     show-sql: false
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.MySQLDialect
+        # Keep app tables out of Supabase's reserved  schema (search_path / metadata clashes).
+        default_schema: notificationdb
+        hbm2ddl:
+          create_namespaces: true
 
 auth:
   service:

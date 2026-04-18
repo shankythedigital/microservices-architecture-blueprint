@@ -35,34 +35,8 @@ class ErrorInterceptor extends Interceptor {
         break;
 
       case DioExceptionType.connectionError:
-        // Enhanced connection error handling
-        String errorMessage = 'Connection failed. ';
-        final error = err.error;
-
-        if (error != null) {
-          final errorString = error.toString().toLowerCase();
-
-          if (errorString.contains('xmlhttprequest') ||
-              errorString.contains('cors') ||
-              errorString.contains('network')) {
-            errorMessage += 'Please ensure:\n'
-                '1. Backend services are running\n'
-                '2. CORS is enabled on the server\n'
-                '3. Using correct API endpoint (not localhost for web)\n'
-                '4. Network connectivity is available';
-          } else if (errorString.contains('localhost') ||
-              errorString.contains('127.0.0.1')) {
-            errorMessage += 'Cannot connect to localhost. '
-                'For web platform, use your machine\'s IP address or hostname instead of localhost.';
-          } else {
-            errorMessage += 'Network error: ${describeDioException(err)}';
-          }
-        } else {
-          errorMessage += 'Please check your network connection and ensure backend services are running.';
-        }
-
         apiException = ApiException(
-          message: errorMessage,
+          message: describeDioException(err),
           type: ApiExceptionType.network,
           statusCode: err.response?.statusCode,
         );

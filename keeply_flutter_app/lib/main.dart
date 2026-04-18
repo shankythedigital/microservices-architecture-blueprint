@@ -1,7 +1,12 @@
+import 'dart:async';
+
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:keeply_app/core/config/app_config.dart';
 import 'package:keeply_app/core/network/api_client.dart';
+import 'package:keeply_app/core/network/dev_api_reachability.dart';
 import 'package:keeply_app/core/preferences/keeply_app_preferences.dart';
 import 'package:keeply_app/core/sync/app_data_refresh_cubit.dart';
 import 'package:keeply_app/core/utils/logger.dart';
@@ -24,6 +29,15 @@ void main() async {
   try {
     await ApiClient().initialize();
     AppLogger.info('Application initialized');
+    if (kDebugMode) {
+      AppLogger.info(
+        'Debug API bases — auth: ${AppConfig.authServiceBaseUrl}, '
+        'notification: ${AppConfig.notificationServiceBaseUrl}, '
+        'asset: ${AppConfig.assetServiceBaseUrl}, '
+        'helpdesk: ${AppConfig.helpdeskServiceBaseUrl}',
+      );
+      unawaited(logDevApiReachabilityHint());
+    }
   } catch (e) {
     AppLogger.error('Failed to initialize API Client: $e');
   }
