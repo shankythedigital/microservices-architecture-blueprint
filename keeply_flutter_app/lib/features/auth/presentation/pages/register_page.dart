@@ -209,7 +209,10 @@ class _RegisterPageState extends State<RegisterPage> {
                       textAlign: TextAlign.center,
                     ),
                   const SizedBox(height: 24),
-                  Text('Account', style: t.titleSmall?.copyWith(fontWeight: FontWeight.w600)),
+                  Text(
+                    'Account',
+                    style: t.titleSmall?.copyWith(fontWeight: FontWeight.w600, color: scheme.onSurface),
+                  ),
                   const SizedBox(height: 12),
                   TextFormField(
                     controller: _usernameController,
@@ -270,7 +273,10 @@ class _RegisterPageState extends State<RegisterPage> {
                     textInputAction: TextInputAction.next,
                   ),
                   const SizedBox(height: 24),
-                  Text('Mobile', style: t.titleSmall?.copyWith(fontWeight: FontWeight.w600)),
+                  Text(
+                    'Mobile',
+                    style: t.titleSmall?.copyWith(fontWeight: FontWeight.w600, color: scheme.onSurface),
+                  ),
                   const SizedBox(height: 12),
                   SelectableOptionPicker<String>(
                     label: 'Country code *',
@@ -295,7 +301,10 @@ class _RegisterPageState extends State<RegisterPage> {
                     textInputAction: TextInputAction.next,
                   ),
                   const SizedBox(height: 24),
-                  Text('Project', style: t.titleSmall?.copyWith(fontWeight: FontWeight.w600)),
+                  Text(
+                    'Project',
+                    style: t.titleSmall?.copyWith(fontWeight: FontWeight.w600, color: scheme.onSurface),
+                  ),
                   const SizedBox(height: 12),
                   SelectableOptionPicker<String>(
                     label: 'Project type *',
@@ -313,12 +322,18 @@ class _RegisterPageState extends State<RegisterPage> {
                     onChanged: (v) => setState(() => _acceptTc = v ?? false),
                     controlAffinity: ListTileControlAffinity.leading,
                     contentPadding: EdgeInsets.zero,
-                    title: Text('I accept the Terms & Conditions *', style: t.bodyMedium),
+                    title: Text(
+                      'I accept the Terms & Conditions *',
+                      style: t.bodyMedium?.copyWith(color: scheme.onSurface),
+                    ),
                   ),
                   const SizedBox(height: 8),
                   ExpansionTile(
                     tilePadding: EdgeInsets.zero,
-                    title: Text('Profile (optional)', style: t.titleSmall?.copyWith(fontWeight: FontWeight.w600)),
+                    title: Text(
+                      'Profile (optional)',
+                      style: t.titleSmall?.copyWith(fontWeight: FontWeight.w600, color: scheme.onSurface),
+                    ),
                     children: [
                       const SizedBox(height: 8),
                       TextFormField(
@@ -341,7 +356,10 @@ class _RegisterPageState extends State<RegisterPage> {
                   ),
                   ExpansionTile(
                     tilePadding: EdgeInsets.zero,
-                    title: Text('Address (optional)', style: t.titleSmall?.copyWith(fontWeight: FontWeight.w600)),
+                    title: Text(
+                      'Address (optional)',
+                      style: t.titleSmall?.copyWith(fontWeight: FontWeight.w600, color: scheme.onSurface),
+                    ),
                     children: [
                       const SizedBox(height: 8),
                       TextFormField(
