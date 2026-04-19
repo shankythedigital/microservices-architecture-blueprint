@@ -12,7 +12,7 @@ import com.example.asset.service.OcrService;
 import com.example.asset.service.OcrTrainingService;
 import com.example.asset.service.ProductOcrAiAgentService;
 import com.example.common.util.ResponseWrapper;
-import net.sourceforge.tess4j.TesseractException;
+import com.example.asset.service.OcrException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
@@ -84,7 +84,7 @@ public class ProductOcrController {
             try {
                 ocrText = ocrService.extractText(file);
                 log.info("✅ OCR extraction completed. Extracted {} characters", ocrText.length());
-            } catch (TesseractException e) {
+            } catch (OcrException e) {
                 log.error("❌ OCR extraction failed: {}", e.getMessage(), e);
                 return ResponseEntity.internalServerError()
                         .body(new ResponseWrapper<>(false, 

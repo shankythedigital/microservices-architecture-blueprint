@@ -79,8 +79,8 @@ public class ProductScanPreviewService {
                 );
                 response.setProcessingTimeMs(System.currentTimeMillis() - startTime);
                 return response;
-            } catch (net.sourceforge.tess4j.TesseractException e) {
-                log.error("❌ TesseractException during OCR: {}", e.getMessage(), e);
+            } catch (OcrException e) {
+                log.error("❌ OcrException during OCR: {}", e.getMessage(), e);
                 // Use the detailed error message from OcrService (includes installation instructions)
                 response.setStatus("ERROR");
                 String errorMessage = e.getMessage();

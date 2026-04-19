@@ -12,7 +12,6 @@ import com.example.asset.repository.ProductSubCategoryRepository;
 import com.example.asset.util.ByteArrayMultipartFile;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import net.sourceforge.tess4j.TesseractException;
 import org.imgscalr.Scalr;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -216,7 +215,7 @@ public class CategoryClassificationService {
                     }
                 }
             }
-        } catch (IOException | TesseractException e) {
+        } catch (IOException | OcrException e) {
             log.warn("OCR extraction failed: {}", e.getMessage());
         }
 
@@ -227,7 +226,7 @@ public class CategoryClassificationService {
      * Extract text from image using multi-scale zoom (1x, 1.5x, 2x) for better logo and name reading.
      * Tries each scale and returns the result with the most extracted text.
      */
-    private String extractTextWithMultiScaleZoom(MultipartFile image) throws IOException, TesseractException {
+    private String extractTextWithMultiScaleZoom(MultipartFile image) throws IOException, OcrException {
         byte[] bytes = image.getBytes();
         BufferedImage original = ImageIO.read(new java.io.ByteArrayInputStream(bytes));
         if (original == null) return ocrService.extractText(image);
