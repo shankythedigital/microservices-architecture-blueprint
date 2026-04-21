@@ -32,6 +32,7 @@ spring:
     url: "${SPRING_DATASOURCE_URL}"
     username: "${SPRING_DATASOURCE_USERNAME}"
     password: "${SPRING_DATASOURCE_PASSWORD}"
+    driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
       ddl-auto: update
@@ -40,6 +41,7 @@ spring:
       hibernate:
         # Keep app tables out of Supabase's reserved  schema (search_path / metadata clashes).
         default_schema: "${SUPABASE_AUTH_SCHEMA}"
+        dialect: org.hibernate.dialect.PostgreSQLDialect
         hbm2ddl:
           create_namespaces: true
 
