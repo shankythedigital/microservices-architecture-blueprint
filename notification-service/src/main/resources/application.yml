@@ -1,6 +1,7 @@
 # Notification-service
+# Render: PORT, SPRING_DATASOURCE_* ; pooler host recommended (IPv4). See SUPABASE_PROJECT_REF on auth-service comments.
 server:
-  port: 8082
+  port: ${PORT:8082}
 
 notification:
   service:
@@ -33,10 +34,12 @@ spring:
     deserialization:
       adjust-dates-to-context-time-zone: false
   datasource:
-    url: jdbc:postgresql://db.sefwxyysecmfeawhvlbu.supabase.co:5432/postgres?sslmode=require&currentSchema=notificationdb
-    username: postgres
-    password: iK9IASi97UEnZIpf
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://db.sefwxyysecmfeawhvlbu.supabase.co:5432/postgres?sslmode=require&currentSchema=notificationdb}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:iK9IASi97UEnZIpf}
+    driver-class-name: org.postgresql.Driver
   jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
       ddl-auto: update
     show-sql: false

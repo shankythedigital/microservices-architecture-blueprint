@@ -1,18 +1,20 @@
 # Auth-service
+# Render: PORT, SPRING_DATASOURCE_* ; pooler URL (IPv4). If Render sets SPRING_DATASOURCE_USERNAME=postgres
+# against a pooler host, set SUPABASE_PROJECT_REF=<ref> or use a JDBC URL that includes db.<ref>.supabase.co.
 server:
-  port: 8081
+  port: ${PORT:8081}
 
 auth:
   service:
-    url: http://localhost:8081
+    url: ${AUTH_SERVICE_URL:http://localhost:8081}
 
 notification:
   service:
-    url: http://localhost:8082/api/notifications
+    url: ${NOTIFICATION_SERVICE_URL:http://localhost:8082/api/notifications}
 
 asset:
   service:
-    url: http://localhost:8085
+    url: ${ASSET_SERVICE_URL:http://localhost:8085}
 
 spring:
   application:
@@ -23,10 +25,12 @@ spring:
     deserialization:
       adjust-dates-to-context-time-zone: false
   datasource:
-    url: jdbc:postgresql://db.sefwxyysecmfeawhvlbu.supabase.co:5432/postgres?sslmode=require&currentSchema=authdb
-    username: postgres
-    password: iK9IASi97UEnZIpf
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://db.sefwxyysecmfeawhvlbu.supabase.co:5432/postgres?sslmode=require&currentSchema=authdb}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:iK9IASi97UEnZIpf}
+    driver-class-name: org.postgresql.Driver
   jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
       ddl-auto: update
     show-sql: false

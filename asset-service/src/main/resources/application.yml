@@ -1,6 +1,7 @@
 # Asset-service
+# Render: PORT, SPRING_DATASOURCE_* ; pooler host recommended (IPv4).
 server:
-  port: 8085
+  port: ${PORT:8085}
 
 auth:
   service:
@@ -27,15 +28,17 @@ spring:
     deserialization:
       adjust-dates-to-context-time-zone: false
   datasource:
-    url: jdbc:postgresql://db.sefwxyysecmfeawhvlbu.supabase.co:5432/postgres?sslmode=require&currentSchema=assetdb
-    username: postgres
-    password: iK9IASi97UEnZIpf
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://db.sefwxyysecmfeawhvlbu.supabase.co:5432/postgres?sslmode=require&currentSchema=assetdb}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:iK9IASi97UEnZIpf}
+    driver-class-name: org.postgresql.Driver
     hikari:
       max-lifetime: 300000   # 5 min - recycle before server closes (avoids "connection closed" validation failures)
       connection-timeout: 20000
       keepalive-time: 60000   # 1 min - keep connections alive during long operations
   
   jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
       ddl-auto: update
     show-sql: false
