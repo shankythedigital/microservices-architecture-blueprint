@@ -3,19 +3,19 @@
 # Service URLs: defaults are literals; set AUTH_SERVICE_URL / NOTIFICATION_SERVICE_URL / ASSET_SERVICE_URL in the
 # environment to override (do not use ${AUTH_SERVICE_URL:...} on auth.service.url — same-name relaxed binding is circular).
 server:
-  port: "${PORT:8081}"
+  port: "${PORT}"
 
 auth:
   service:
-    url: ${AUTH_SERVICE_URL:http://localhost:8081}
+    url: ${AUTH_SERVICE_URL}
 
 notification:
   service:
-    url: ${NOTIFICATION_SERVICE_URL:http://localhost:8082/api/notifications}
+    url: ${NOTIFICATION_SERVICE_URL}/api/notifications
 
 asset:
   service:
-    url: ${ASSET_SERVICE_URL:http://localhost:8085}
+    url: ${ASSET_SERVICE_URL}
 
 spring:
   application:
@@ -26,9 +26,9 @@ spring:
     deserialization:
       adjust-dates-to-context-time-zone: false
   datasource:
-    url: "${SPRING_DATASOURCE_URL:jdbc:postgresql://db.sefwxyysecmfeawhvlbu.supabase.co:5432/postgres?sslmode=require&currentSchema=authdb}"
-    username: "${SPRING_DATASOURCE_USERNAME:postgres}"
-    password: "${SPRING_DATASOURCE_PASSWORD:iK9IASi97UEnZIpf}"
+    url: "${SPRING_DATASOURCE_URL}"
+    username: "${SPRING_DATASOURCE_USERNAME}"
+    password: "${SPRING_DATASOURCE_PASSWORD}"
   jpa:
     hibernate:
       ddl-auto: update
@@ -36,7 +36,7 @@ spring:
     properties:
       hibernate:
         # Keep app tables out of Supabase's reserved  schema (search_path / metadata clashes).
-        default_schema: "${SUPABASE_AUTH_SCHEMA:authdb}"
+        default_schema: "${SUPABASE_AUTH_SCHEMA}"
         hbm2ddl:
           create_namespaces: true
 
