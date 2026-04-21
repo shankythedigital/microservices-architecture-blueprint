@@ -71,6 +71,7 @@ public class FixSupabasePoolerDatasourceEnvironmentPostProcessor implements Envi
 
   @Override
   public int getOrder() {
-    return Ordered.HIGHEST_PRECEDENCE;
+    // After MapPostgresDatabaseUrlEnvironmentPostProcessor (DATABASE_URL → datasource)
+    return Ordered.HIGHEST_PRECEDENCE + 1;
   }
 }

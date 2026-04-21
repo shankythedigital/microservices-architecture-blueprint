@@ -1,5 +1,8 @@
 # Auth-service
-# Render.com / cloud: PORT, SPRING_DATASOURCE_*, JWT_SECRET, AUTH_ENC_KEY, …
+# Render.com / cloud: PORT, JWT_SECRET, AUTH_ENC_KEY, …
+# Database: set SPRING_DATASOURCE_URL, USERNAME, PASSWORD — or rely on Render's DATABASE_URL
+# (mapped automatically from common-service when SPRING_DATASOURCE_URL is unset).
+# Supabase pooler: set SUPABASE_PROJECT_REF if needed (see FixSupabasePoolerDatasourceEnvironmentPostProcessor).
 # Service URLs: defaults are literals; set AUTH_SERVICE_URL / NOTIFICATION_SERVICE_URL / ASSET_SERVICE_URL in the
 # environment to override (do not use ${AUTH_SERVICE_URL:...} on auth.service.url — same-name relaxed binding is circular).
 server:
