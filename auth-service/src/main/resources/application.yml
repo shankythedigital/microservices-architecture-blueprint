@@ -11,11 +11,11 @@ auth:
 
 notification:
   service:
-    url: ${NOTIFICATION_SERVICE_URL}/api/notifications
+    url: ${AUTH_SERVICE_URL}
 
 asset:
   service:
-    url: ${ASSET_SERVICE_URL}
+    url: ${AUTH_SERVICE_URL}
 
 spring:
   application:
