@@ -1,0 +1,10 @@
+# Keep `docker build -f auth-service/Dockerfile` context small (multi-stage COPY . .)
+.git
+**/.git
+.idea
+**/.DS_Store
+**/target
+**/node_modules
+deploy-logs
+keeply_flutter_app
+*.iml

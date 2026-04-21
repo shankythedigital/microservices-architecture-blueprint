@@ -1,8 +1,9 @@
 # Auth-service
-# Render: PORT, SPRING_DATASOURCE_* ; pooler URL (IPv4). If Render sets SPRING_DATASOURCE_USERNAME=postgres
-# against a pooler host, set SUPABASE_PROJECT_REF=<ref> or use a JDBC URL that includes db.<ref>.supabase.co.
+# Render.com / cloud: PORT, SPRING_DATASOURCE_*, JWT_SECRET, AUTH_ENC_KEY, …
+# Service URLs: defaults are literals; set AUTH_SERVICE_URL / NOTIFICATION_SERVICE_URL / ASSET_SERVICE_URL in the
+# environment to override (do not use ${AUTH_SERVICE_URL:...} on auth.service.url — same-name relaxed binding is circular).
 server:
-  port: ${PORT:8081}
+  port: "${PORT:8081}"
 
 auth:
   service:
@@ -25,19 +26,17 @@ spring:
     deserialization:
       adjust-dates-to-context-time-zone: false
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://db.sefwxyysecmfeawhvlbu.supabase.co:5432/postgres?sslmode=require&currentSchema=authdb}
-    username: ${SPRING_DATASOURCE_USERNAME:postgres}
-    password: ${SPRING_DATASOURCE_PASSWORD:iK9IASi97UEnZIpf}
-    driver-class-name: org.postgresql.Driver
+    url: "${SPRING_DATASOURCE_URL:jdbc:postgresql://db.sefwxyysecmfeawhvlbu.supabase.co:5432/postgres?sslmode=require&currentSchema=authdb}"
+    username: "${SPRING_DATASOURCE_USERNAME:postgres}"
+    password: "${SPRING_DATASOURCE_PASSWORD:iK9IASi97UEnZIpf}"
   jpa:
-    database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
       ddl-auto: update
     show-sql: false
     properties:
       hibernate:
         # Keep app tables out of Supabase's reserved  schema (search_path / metadata clashes).
-        default_schema: authdb
+        default_schema: "${SUPABASE_AUTH_SCHEMA:authdb}"
         hbm2ddl:
           create_namespaces: true
 
@@ -49,18 +48,18 @@ common:
 
 JWT_PRIVATE_KEY_PATH: classpath:keys/jwt-private.pem
 JWT_PUBLIC_KEY_PATH: classpath:keys/jwt-public.pem
-JWT_SECRET: yNnC7M3ZqgV4bD0lFJm9Q2w5tSe8XpR1pWc7UjK4oHs=
+JWT_SECRET: "yNnC7M3ZqgV4bD0lFJm9Q2w5tSe8XpR1pWc7UjK4oHs="
 JWT_ACCESS_TOKEN_VALIDITY_SECONDS: 900
 JWT_REFRESH_TOKEN_VALIDITY_SECONDS: 1209600
-AUTH_ENC_KEY: SLOqKf8lS2hidTDsXQe25ZSaoaGcczUX6gySXUxjE1M=
-AUTH_HMAC_KEY: krFcA7/MYPXQWbtSGMM87Dzxu2euOsRckVFeUyOC6dw=
-ENCRYPTION_KEY: SLOqKf8lS2hidTDsXQe25ZSaoaGcczUX6gySXUxjE1M=
+AUTH_ENC_KEY: "SLOqKf8lS2hidTDsXQe25ZSaoaGcczUX6gySXUxjE1M="
+AUTH_HMAC_KEY: "krFcA7/MYPXQWbtSGMM87Dzxu2euOsRckVFeUyOC6dw="
+ENCRYPTION_KEY: "SLOqKf8lS2hidTDsXQe25ZSaoaGcczUX6gySXUxjE1M="
 ACCESS_TOKEN: change_this_token
-FEIGN_ACCESS_TOKEN:
+FEIGN_ACCESS_TOKEN: ""
 
 logging:
   level:
-    com.example: DEBUG
+    com.example: "${LOGGING_LEVEL_COM_EXAMPLE:DEBUG}"
 
 # Swagger/OpenAPI Configuration
 springdoc:
