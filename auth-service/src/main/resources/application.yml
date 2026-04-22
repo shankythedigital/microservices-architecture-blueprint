@@ -2,23 +2,27 @@
 # Render.com / cloud: PORT, JWT_SECRET, AUTH_ENC_KEY, …
 # Database: set SPRING_DATASOURCE_URL, USERNAME, PASSWORD — or rely on Render's DATABASE_URL
 # (mapped automatically from common-service when SPRING_DATASOURCE_URL is unset).
-# Supabase pooler: set SUPABASE_PROJECT_REF if needed (see FixSupabasePoolerDatasourceEnvironmentPostProcessor).
-# Service URLs: defaults are literals; set AUTH_SERVICE_URL / NOTIFICATION_SERVICE_URL / ASSET_SERVICE_URL in the
-# environment to override (do not use ${AUTH_SERVICE_URL:...} on auth.service.url — same-name relaxed binding is circular).
+# Supabase on Render: direct db.<ref>.supabase.co often fails with "Network is unreachable" (IPv6).
+# Set SUPABASE_REGION (e.g. ap-northeast-1 from Supabase Settings → Database) when RENDER is true so the
+# common-service rewriter can switch the JDBC URL to the IPv4 transaction pooler (port 6543 by default).
+# Or paste the pooler JDBC URL from Supabase Connect and set SUPABASE_PROJECT_REF if the username must be postgres.<ref>.
+# Service URLs: literals below are local defaults. On Render, set AUTH_SERVICE_URL, NOTIFICATION_SERVICE_URL,
+# ASSET_SERVICE_URL — they override via relaxed binding (no ${AUTH_SERVICE_URL} placeholder needed).
 server:
-  port: "${PORT}"
+  port: ${PORT:8080}
+  address: 0.0.0.0
 
 auth:
   service:
-    url: ${AUTH_SERVICE_URL}
+    url: http://127.0.0.1:8080
 
 notification:
   service:
-    url: ${AUTH_SERVICE_URL}
+    url: http://127.0.0.1:8082
 
 asset:
   service:
-    url: ${AUTH_SERVICE_URL}
+    url: http://127.0.0.1:8083
 
 spring:
   application:
@@ -29,9 +33,9 @@ spring:
     deserialization:
       adjust-dates-to-context-time-zone: false
   datasource:
-    url: "${SPRING_DATASOURCE_URL}"
-    username: "${SPRING_DATASOURCE_USERNAME}"
-    password: "${SPRING_DATASOURCE_PASSWORD}"
+    url: ${SPRING_DATASOURCE_URL:}
+    username: ${SPRING_DATASOURCE_USERNAME:}
+    password: ${SPRING_DATASOURCE_PASSWORD:}
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
@@ -39,9 +43,8 @@ spring:
     show-sql: false
     properties:
       hibernate:
-        # Keep app tables out of Supabase's reserved  schema (search_path / metadata clashes).
-        default_schema: "${SUPABASE_AUTH_SCHEMA}"
-        dialect: org.hibernate.dialect.PostgreSQLDialect
+        # Keep app tables out of Supabase's reserved schema (search_path / metadata clashes).
+        default_schema: ${SUPABASE_AUTH_SCHEMA:public}
         hbm2ddl:
           create_namespaces: true
 
