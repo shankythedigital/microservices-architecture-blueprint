@@ -1,18 +1,18 @@
 # Auth-service
 server:
-  port: 8080
+  port: ${PORT:8080}
 
 auth:
   service:
-    url: https://auth-service-ddhb.onrender.com:8080
+    url: ${AUTH_SERVICE_URL}
 
 notification:
   service:
-    url: http://194.163.173.37:8082/api/notifications
+    url: ${AUTH_SERVICE_URL}/api/notifications
 
 asset:
   service:
-    url: http://194.163.173.37:8085
+    url: ${AUTH_SERVICE_URL}
 
 spring:
   application:
@@ -23,9 +23,9 @@ spring:
     deserialization:
       adjust-dates-to-context-time-zone: false
   datasource:
-    url: jdbc:postgresql://aws-1-ap-northeast-1.pooler.supabase.com:6543/postgres?sslmode=require
-    username: postgres.sefwxyysecmfeawhvlbu
-    password: BYQnqzYByLGv1DtF
+    url: ${SPRING_DATASOURCE_URL} 
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
@@ -35,6 +35,7 @@ spring:
       hibernate:
         # Keep app tables out of Supabase's reserved  schema (search_path / metadata clashes).
         default_schema: authdb
+        dialect: org.hibernate.dialect.PostgreSQLDialect
         hbm2ddl:
           create_namespaces: true
 
