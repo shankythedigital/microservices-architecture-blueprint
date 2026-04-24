@@ -1,11 +1,10 @@
 # Notification-service
-# Render: PORT, SPRING_DATASOURCE_* ; pooler host recommended (IPv4). See SUPABASE_PROJECT_REF on auth-service comments.
 server:
-  port: ${PORT:8082}
+  port: 8082
 
 notification:
   service:
-    url: http://localhost:8082/api/notifications
+    url: http://194.163.173.37:8082/api/notifications
   # When true and userId + Bearer token are present, skips sending if user opted out of that channel (auth-service).
   opt-out-check:
     enabled: true
@@ -18,7 +17,7 @@ notification:
 
 asset:
   service:
-    url: http://localhost:8085
+    url: http://194.163.173.37:8085
   upload:
     dir: /asset-uploads/amc-docs
 
@@ -34,12 +33,11 @@ spring:
     deserialization:
       adjust-dates-to-context-time-zone: false
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://db.sefwxyysecmfeawhvlbu.supabase.co:5432/postgres?sslmode=require&currentSchema=notificationdb}
-    username: ${SPRING_DATASOURCE_USERNAME:postgres}
-    password: ${SPRING_DATASOURCE_PASSWORD:iK9IASi97UEnZIpf}
+    url: jdbc:postgresql://db.sefwxyysecmfeawhvlbu.supabase.co:5432/postgres?sslmode=require
+    username: postgres
+    password: BYQnqzYByLGv1DtF
     driver-class-name: org.postgresql.Driver
   jpa:
-    database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
       ddl-auto: update
     show-sql: false
@@ -52,7 +50,7 @@ spring:
 
 auth:
   service:
-    url: http://localhost:8081/api/
+    url: https://auth-service-ddhb.onrender.com:8080/api/
   client-id: notification-service
   client-secret: notify-secret
 

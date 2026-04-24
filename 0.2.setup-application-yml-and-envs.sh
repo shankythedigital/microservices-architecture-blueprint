@@ -29,7 +29,7 @@ SUPABASE_DB_HOST="db.sefwxyysecmfeawhvlbu.supabase.co"
 SUPABASE_DB_PORT="5432"
 SUPABASE_DB_NAME="postgres"
 SUPABASE_DB_USER="postgres"
-SUPABASE_DB_PASS="iK9IASi97UEnZIpf"
+SUPABASE_DB_PASS="BYQnqzYByLGv1DtF"
 
   RDS_AUTH_SCHEMA_NAME="authdb"
   RDS_ASSET_SCHEMA_NAME="assetdb"
@@ -45,10 +45,11 @@ if [ "$MODE" = "cloud" ]; then
   RDS_HOST="${SUPABASE_DB_HOST}"
   RDS_DB_PORT="${SUPABASE_DB_PORT}"
   RDS_DB_NAME="${SUPABASE_DB_NAME}"
-  RDS_AUTH_DB="jdbc:postgresql://${RDS_HOST}:${RDS_DB_PORT}/${RDS_DB_NAME}?sslmode=require&currentSchema=${RDS_AUTH_SCHEMA_NAME}"
-  RDS_ASSET_DB="jdbc:postgresql://${RDS_HOST}:${RDS_DB_PORT}/${RDS_DB_NAME}?sslmode=require&currentSchema=${RDS_ASSET_SCHEMA_NAME}"
-  RDS_NOTIFY_DB="jdbc:postgresql://${RDS_HOST}:${RDS_DB_PORT}/${RDS_DB_NAME}?sslmode=require&currentSchema=${RDS_NOTIFY_SCHEMA_NAME}"
-  RDS_HELPDESK_DB="jdbc:postgresql://${RDS_HOST}:${RDS_DB_PORT}/${RDS_DB_NAME}?sslmode=require&currentSchema=${RDS_HELPDESK_SCHEMA_NAME}"
+  
+  RDS_AUTH_DB="jdbc:postgresql://${RDS_HOST}:${RDS_DB_PORT}/${RDS_DB_NAME}?sslmode=require"
+  RDS_ASSET_DB="jdbc:postgresql://${RDS_HOST}:${RDS_DB_PORT}/${RDS_DB_NAME}?sslmode=require"
+  RDS_NOTIFY_DB="jdbc:postgresql://${RDS_HOST}:${RDS_DB_PORT}/${RDS_DB_NAME}?sslmode=require"
+  RDS_HELPDESK_DB="jdbc:postgresql://${RDS_HOST}:${RDS_DB_PORT}/${RDS_DB_NAME}?sslmode=require"
 
   RDS_AUTH_USER="${SUPABASE_DB_USER}"
   RDS_ASSET_USER="${SUPABASE_DB_USER}"
@@ -59,6 +60,7 @@ if [ "$MODE" = "cloud" ]; then
   RDS_ASSET_PASS="${SUPABASE_DB_PASS}"
   RDS_NOTIFY_PASS="${SUPABASE_DB_PASS}"
   RDS_HELPDESK_PASS="${SUPABASE_DB_PASS}"
+
 
   # ===== Cloud ports (local debug mode of EB) =====
   COMMON_PORT=${PORT:-6000}
@@ -86,10 +88,11 @@ elif [ "$MODE" = "cloud_local" ]; then
   RDS_HOST="${SUPABASE_DB_HOST}"
   RDS_DB_PORT="${SUPABASE_DB_PORT}"
   RDS_DB_NAME="${SUPABASE_DB_NAME}"
-  RDS_AUTH_DB="jdbc:postgresql://${RDS_HOST}:${RDS_DB_PORT}/${RDS_DB_NAME}?sslmode=require&currentSchema=authdb"
-  RDS_ASSET_DB="jdbc:postgresql://${RDS_HOST}:${RDS_DB_PORT}/${RDS_DB_NAME}?sslmode=require&currentSchema=assetdb"
-  RDS_NOTIFY_DB="jdbc:postgresql://${RDS_HOST}:${RDS_DB_PORT}/${RDS_DB_NAME}?sslmode=require&currentSchema=notificationdb"
-  RDS_HELPDESK_DB="jdbc:postgresql://${RDS_HOST}:${RDS_DB_PORT}/${RDS_DB_NAME}?sslmode=require&currentSchema=helpdeskdb"
+
+  RDS_AUTH_DB="jdbc:postgresql://${RDS_HOST}:${RDS_DB_PORT}/${RDS_DB_NAME}?sslmode=require"
+  RDS_ASSET_DB="jdbc:postgresql://${RDS_HOST}:${RDS_DB_PORT}/${RDS_DB_NAME}?sslmode=require"
+  RDS_NOTIFY_DB="jdbc:postgresql://${RDS_HOST}:${RDS_DB_PORT}/${RDS_DB_NAME}?sslmode=require"
+  RDS_HELPDESK_DB="jdbc:postgresql://${RDS_HOST}:${RDS_DB_PORT}/${RDS_DB_NAME}?sslmode=require"
 
   RDS_AUTH_USER="${SUPABASE_DB_USER}"
   RDS_ASSET_USER="${SUPABASE_DB_USER}"
@@ -119,10 +122,11 @@ elif [ "$MODE" = "OWN_SERVER" ]; then
   RDS_HOST="${SUPABASE_DB_HOST}"
   RDS_DB_PORT="${SUPABASE_DB_PORT}"
   RDS_DB_NAME="${SUPABASE_DB_NAME}"
-  RDS_AUTH_DB="jdbc:postgresql://${RDS_HOST}:${RDS_DB_PORT}/${RDS_DB_NAME}?sslmode=require&currentSchema=${RDS_AUTH_SCHEMA_NAME}"
-  RDS_ASSET_DB="jdbc:postgresql://${RDS_HOST}:${RDS_DB_PORT}/${RDS_DB_NAME}?sslmode=require&currentSchema=${RDS_ASSET_SCHEMA_NAME}"
-  RDS_NOTIFY_DB="jdbc:postgresql://${RDS_HOST}:${RDS_DB_PORT}/${RDS_DB_NAME}?sslmode=require&currentSchema=${RDS_NOTIFY_SCHEMA_NAME}"
-  RDS_HELPDESK_DB="jdbc:postgresql://${RDS_HOST}:${RDS_DB_PORT}/${RDS_DB_NAME}?sslmode=require&currentSchema=${RDS_HELPDESK_SCHEMA_NAME}"
+
+  RDS_AUTH_DB="jdbc:postgresql://${RDS_HOST}:${RDS_DB_PORT}/${RDS_DB_NAME}?sslmode=require"
+  RDS_ASSET_DB="jdbc:postgresql://${RDS_HOST}:${RDS_DB_PORT}/${RDS_DB_NAME}?sslmode=require"
+  RDS_NOTIFY_DB="jdbc:postgresql://${RDS_HOST}:${RDS_DB_PORT}/${RDS_DB_NAME}?sslmode=require"
+  RDS_HELPDESK_DB="jdbc:postgresql://${RDS_HOST}:${RDS_DB_PORT}/${RDS_DB_NAME}?sslmode=require"
 
   RDS_AUTH_USER="${SUPABASE_DB_USER}"
   RDS_ASSET_USER="${SUPABASE_DB_USER}"
@@ -134,20 +138,20 @@ elif [ "$MODE" = "OWN_SERVER" ]; then
   RDS_NOTIFY_PASS="${SUPABASE_DB_PASS}"
   RDS_HELPDESK_PASS="${SUPABASE_DB_PASS}"
 
-  AUTH_PORT=${PORT:-8081}
+  AUTH_PORT=${PORT:-8080}
   NOTIF_PORT=${PORT:-8082}
   ASSET_PORT=${PORT:-8085}
   HELPDESK_PORT=${PORT:-8084}
 
 
   COMMON_AUTH_IP="194.163.173.37"
-  AUTH_IP="194.163.173.37"
+  AUTH_IP="https://auth-service-ddhb.onrender.com"
   ASSET_IP="194.163.173.37"
   NOTIF_IP="194.163.173.37"
   HELPDESK_IP="194.163.173.37"
 
 
-  AUTH_URL="http://${AUTH_IP}:${AUTH_PORT}"
+  AUTH_URL="${AUTH_IP}:${AUTH_PORT}"
   ASSET_URL="http://${ASSET_IP}:${ASSET_PORT}"
   NOTIF_URL="http://${NOTIF_IP}:${NOTIF_PORT}"
   HELPDESK_URL="http://${HELPDESK_IP}:${HELPDESK_PORT}"
@@ -158,10 +162,10 @@ else
   RDS_HOST="${SUPABASE_DB_HOST}"
   RDS_DB_PORT="${SUPABASE_DB_PORT}"
   RDS_DB_NAME="${SUPABASE_DB_NAME}"
-  RDS_AUTH_DB="jdbc:postgresql://${RDS_HOST}:${RDS_DB_PORT}/${RDS_DB_NAME}?sslmode=require&currentSchema=${RDS_AUTH_SCHEMA_NAME}"
-  RDS_ASSET_DB="jdbc:postgresql://${RDS_HOST}:${RDS_DB_PORT}/${RDS_DB_NAME}?sslmode=require&currentSchema=${RDS_ASSET_SCHEMA_NAME}"
-  RDS_NOTIFY_DB="jdbc:postgresql://${RDS_HOST}:${RDS_DB_PORT}/${RDS_DB_NAME}?sslmode=require&currentSchema=${RDS_NOTIFY_SCHEMA_NAME}"
-  RDS_HELPDESK_DB="jdbc:postgresql://${RDS_HOST}:${RDS_DB_PORT}/${RDS_DB_NAME}?sslmode=require&currentSchema=${RDS_HELPDESK_SCHEMA_NAME}"
+  RDS_AUTH_DB="jdbc:postgresql://${RDS_HOST}:${RDS_DB_PORT}/${RDS_DB_NAME}?sslmode=require"
+  RDS_ASSET_DB="jdbc:postgresql://${RDS_HOST}:${RDS_DB_PORT}/${RDS_DB_NAME}?sslmode=require"
+  RDS_NOTIFY_DB="jdbc:postgresql://${RDS_HOST}:${RDS_DB_PORT}/${RDS_DB_NAME}?sslmode=require"
+  RDS_HELPDESK_DB="jdbc:postgresql://${RDS_HOST}:${RDS_DB_PORT}/${RDS_DB_NAME}?sslmode=require"
 
   RDS_AUTH_USER="${SUPABASE_DB_USER}"
   RDS_ASSET_USER="${SUPABASE_DB_USER}"
@@ -225,6 +229,7 @@ spring:
     url: ${RDS_AUTH_DB}
     username: ${RDS_AUTH_USER}
     password: ${RDS_AUTH_PASS}
+    driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
       ddl-auto: update
@@ -312,7 +317,8 @@ spring:
   datasource:
     url: ${RDS_ASSET_DB}
     username: ${RDS_ASSET_USER}
-    password: ${RDS_ASSET_PASS}
+    password: ${RDS_ASSET_PASS} 
+    driver-class-name: org.postgresql.Driver
     hikari:
       max-lifetime: 300000   # 5 min - recycle before server closes (avoids "connection closed" validation failures)
       connection-timeout: 20000
@@ -450,6 +456,7 @@ spring:
     url: ${RDS_NOTIFY_DB}
     username: ${RDS_NOTIFY_USER}
     password: ${RDS_NOTIFY_PASS}
+    driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
       ddl-auto: update
@@ -583,6 +590,7 @@ spring:
     url: ${RDS_HELPDESK_DB}
     username: ${RDS_HELPDESK_USER}
     password: ${RDS_HELPDESK_PASS}
+    driver-class-name: org.postgresql.Driver
     hikari:
       minimum-idle: 5
       maximum-pool-size: 20

@@ -1,28 +1,18 @@
 # Auth-service
-# Render.com / cloud: PORT, JWT_SECRET, AUTH_ENC_KEY, …
-# Database: set SPRING_DATASOURCE_URL, USERNAME, PASSWORD — or rely on Render's DATABASE_URL
-# (mapped automatically from common-service when SPRING_DATASOURCE_URL is unset).
-# Supabase on Render: direct db.<ref>.supabase.co often fails with "Network is unreachable" (IPv6).
-# Set SUPABASE_REGION (e.g. ap-northeast-1 from Supabase Settings → Database) when RENDER is true so the
-# common-service rewriter can switch the JDBC URL to the IPv4 transaction pooler (port 6543 by default).
-# Or paste the pooler JDBC URL from Supabase Connect and set SUPABASE_PROJECT_REF if the username must be postgres.<ref>.
-# Service URLs: literals below are local defaults. On Render, set AUTH_SERVICE_URL, NOTIFICATION_SERVICE_URL,
-# ASSET_SERVICE_URL — they override via relaxed binding (no ${AUTH_SERVICE_URL} placeholder needed).
 server:
-  port: ${PORT:8080}
-  address: 0.0.0.0
+  port: 8080
 
 auth:
   service:
-    url: http://127.0.0.1:8080
+    url: https://auth-service-ddhb.onrender.com:8080
 
 notification:
   service:
-    url: http://127.0.0.1:8082
+    url: http://194.163.173.37:8082/api/notifications
 
 asset:
   service:
-    url: http://127.0.0.1:8083
+    url: http://194.163.173.37:8085
 
 spring:
   application:
@@ -33,9 +23,9 @@ spring:
     deserialization:
       adjust-dates-to-context-time-zone: false
   datasource:
-    url: ${SPRING_DATASOURCE_URL:}
-    username: ${SPRING_DATASOURCE_USERNAME:}
-    password: ${SPRING_DATASOURCE_PASSWORD:}
+    url: jdbc:postgresql://db.sefwxyysecmfeawhvlbu.supabase.co:5432/postgres?sslmode=require
+    username: postgres
+    password: BYQnqzYByLGv1DtF
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
@@ -43,8 +33,8 @@ spring:
     show-sql: false
     properties:
       hibernate:
-        # Keep app tables out of Supabase's reserved schema (search_path / metadata clashes).
-        default_schema: ${SUPABASE_AUTH_SCHEMA:public}
+        # Keep app tables out of Supabase's reserved  schema (search_path / metadata clashes).
+        default_schema: authdb
         hbm2ddl:
           create_namespaces: true
 
@@ -56,18 +46,18 @@ common:
 
 JWT_PRIVATE_KEY_PATH: classpath:keys/jwt-private.pem
 JWT_PUBLIC_KEY_PATH: classpath:keys/jwt-public.pem
-JWT_SECRET: "yNnC7M3ZqgV4bD0lFJm9Q2w5tSe8XpR1pWc7UjK4oHs="
+JWT_SECRET: yNnC7M3ZqgV4bD0lFJm9Q2w5tSe8XpR1pWc7UjK4oHs=
 JWT_ACCESS_TOKEN_VALIDITY_SECONDS: 900
 JWT_REFRESH_TOKEN_VALIDITY_SECONDS: 1209600
-AUTH_ENC_KEY: "SLOqKf8lS2hidTDsXQe25ZSaoaGcczUX6gySXUxjE1M="
-AUTH_HMAC_KEY: "krFcA7/MYPXQWbtSGMM87Dzxu2euOsRckVFeUyOC6dw="
-ENCRYPTION_KEY: "SLOqKf8lS2hidTDsXQe25ZSaoaGcczUX6gySXUxjE1M="
+AUTH_ENC_KEY: SLOqKf8lS2hidTDsXQe25ZSaoaGcczUX6gySXUxjE1M=
+AUTH_HMAC_KEY: krFcA7/MYPXQWbtSGMM87Dzxu2euOsRckVFeUyOC6dw=
+ENCRYPTION_KEY: SLOqKf8lS2hidTDsXQe25ZSaoaGcczUX6gySXUxjE1M=
 ACCESS_TOKEN: change_this_token
-FEIGN_ACCESS_TOKEN: ""
+FEIGN_ACCESS_TOKEN:
 
 logging:
   level:
-    com.example: "${LOGGING_LEVEL_COM_EXAMPLE:DEBUG}"
+    com.example: DEBUG
 
 # Swagger/OpenAPI Configuration
 springdoc:
