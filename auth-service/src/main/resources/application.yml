@@ -23,8 +23,8 @@ spring:
     deserialization:
       adjust-dates-to-context-time-zone: false
   datasource:
-    url: jdbc:postgresql://db.sefwxyysecmfeawhvlbu.supabase.co:5432/postgres?sslmode=require
-    username: postgres
+    url: jdbc:postgresql://aws-1-ap-northeast-1.pooler.supabase.com:6543/postgres?sslmode=require
+    username: postgres.sefwxyysecmfeawhvlbu
     password: BYQnqzYByLGv1DtF
     driver-class-name: org.postgresql.Driver
   jpa:
