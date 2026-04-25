@@ -48,8 +48,9 @@ spring:
     show-sql: false
     properties:
       hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
         # Keep app tables out of Supabase's reserved  schema (search_path / metadata clashes).
-        default_schema: helpdeskdb
+        default_schema: ${HELPDESK_DB_SCHEMA}
         hbm2ddl:
           create_namespaces: true
   servlet:

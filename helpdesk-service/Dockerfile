@@ -29,11 +29,11 @@ WORKDIR /app
 COPY --from=builder /build/helpdesk-service/target/*.jar app.jar
 
 USER app
-EXPOSE 8084
+EXPOSE 8083
 
 ENV TZ=UTC
 ENV JAVA_OPTS="-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -Djava.security.egd=file:/dev/./urandom"
-ENV PORT=8084
+ENV PORT=8083
 
 LABEL org.opencontainers.image.title="helpdesk-service" \
     org.opencontainers.image.description="Helpdesk microservice (Spring Boot 3, Java 17)"
