@@ -49,6 +49,7 @@ spring:
     show-sql: false
     properties:
       hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
         # Keep app tables out of Supabase's reserved  schema (search_path / metadata clashes).
         default_schema: ${NOTIFICATION_DB_SCHEMA}
         hbm2ddl:
