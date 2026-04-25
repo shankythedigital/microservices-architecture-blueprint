@@ -1,22 +1,22 @@
 # Helpdesk-service
 server:
-  port: 8084
+  port: ${PORT}
 
 auth:
   service:
-    url: https://auth-service-ddhb.onrender.com:8080
+    url: ${AUTH_SERVICE_URL}
 
 notification:
   service:
-    url: http://194.163.173.37:8082/api/notifications
+    url: ${NOTIFICATION_SERVICE_URL}/api/notifications
 
 asset:
   service:
-    url: http://194.163.173.37:8085
+    url: ${ASSET_SERVICE_URL}
 
 helpdesk:
   service:
-    url: http://194.163.173.37:8084
+    url: ${HELPDESK_SERVICE_URL}
   chatbot:
     enabled: true
     max-context-length: 1000
@@ -30,7 +30,7 @@ spring:
     deserialization:
       adjust-dates-to-context-time-zone: false
   datasource:
-    url:  ${SPRING_DATASOURCE_URL}
+    url: ${SPRING_DATASOURCE_URL}
     username: ${SPRING_DATASOURCE_USERNAME}
     password: ${SPRING_DATASOURCE_PASSWORD}
     driver-class-name: org.postgresql.Driver
