@@ -1,0 +1,17 @@
+# From notification-service/ (create .env with SPRING_DATASOURCE_*, URLs, etc.):
+#   docker compose --env-file .env up --build
+#
+# build.dockerfile is notification-service/Dockerfile — use that exact name (not DockerFile).
+
+services:
+  notification-service:
+    build:
+      context: ..
+      dockerfile: notification-service/Dockerfile
+    image: notification-service:latest
+    env_file:
+      - .env
+    ports:
+      - "${PORT:-8082}:${PORT:-8082}"
+    environment:
+      PORT: ${PORT:-8082}

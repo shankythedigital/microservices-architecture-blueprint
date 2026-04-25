@@ -9,4 +9,6 @@ keeply_flutter_app
 keeply_react_app
 .elasticbeanstalk
 **/*.zip
+**/*.pkg
+AWSCLIV2.pkg
 *.iml
