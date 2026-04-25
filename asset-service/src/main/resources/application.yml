@@ -1,6 +1,6 @@
 # Asset-service
 server:
-  port: 8085
+  port: ${PORT:8085}
 
 auth:
   service:
@@ -14,15 +14,13 @@ asset:
   service:
     url: ${ASSET_SERVICE_URL}
   upload:
-    # Upload directory - use relative path (project/uploads/amc-docs) or absolute path
-    # If the configured path is not writable, the code will fallback to project/uploads/amc-docs
-    dir: uploads/amc-docs
+   
     # Supabase Storage (optional). When enabled with valid url + service-role-key, uploads use Storage API;
     # filePath is stored as supabase://{bucket}/{objectKey}. When disabled, behavior is unchanged (local disk).
     supabase:
       enabled: false
       url: ${SUPABASE_IMAGES_URL}
-      service-role-key: ${SUPABASE_IMAGES_SERVICE_ROLE_KEY:}
+      service-role-key: ${SUPABASE_IMAGES_SERVICE_ROLE_KEY}
       bucket: ${SUPABASE_IMAGES_BUCKET}
 
 spring:
