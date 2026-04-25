@@ -1,6 +1,6 @@
 # Auth-service
 server:
-  port: ${PORT:8080}
+  port: ${PORT}
 
 auth:
   service:
@@ -8,11 +8,11 @@ auth:
 
 notification:
   service:
-    url: ${AUTH_SERVICE_URL}/api/notifications
+    url: ${NOTIFICATION_SERVICE_URL}/api/notifications
 
 asset:
   service:
-    url: ${AUTH_SERVICE_URL}
+    url: ${ASSET_SERVICE_URL}
 
 spring:
   application:
@@ -34,7 +34,7 @@ spring:
     properties:
       hibernate:
         # Keep app tables out of Supabase's reserved  schema (search_path / metadata clashes).
-        default_schema: authdb
+        default_schema: ${SUPABASE_AUTH_SCHEMA}
         dialect: org.hibernate.dialect.PostgreSQLDialect
         hbm2ddl:
           create_namespaces: true
