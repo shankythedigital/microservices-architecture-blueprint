@@ -1,10 +1,10 @@
 # Notification-service
 server:
-  port: 8082
+  port: ${PORT}
 
 notification:
   service:
-    url: http://194.163.173.37:8082/api/notifications
+    url: ${NOTIFICATION_SERVICE_URL}/api/notifications
   # When true and userId + Bearer token are present, skips sending if user opted out of that channel (auth-service).
   opt-out-check:
     enabled: true
@@ -17,25 +17,31 @@ notification:
 
 asset:
   service:
-    url: http://194.163.173.37:8085
+    url: ${ASSET_SERVICE_URL}
   upload:
-    dir: /asset-uploads/amc-docs
+    # Supabase Storage (optional). When enabled with valid url + service-role-key, uploads use Storage API;
+    # filePath is stored as supabase://{bucket}/{objectKey}. When disabled, behavior is unchanged (local disk).
+    supabase:
+      enabled: false
+      url: ${SUPABASE_IMAGES_URL}
+      service-role-key: ${SUPABASE_IMAGES_SERVICE_ROLE_KEY}
+      bucket: ${SUPABASE_IMAGES_BUCKET}
 
 fileupload:
   type: standard
 
 spring:
   application:
-    name: notification-service
+    name: ${SPRING_APPLICATION_NAME}
   jackson:
     serialization:
       write-dates-as-timestamps: false
     deserialization:
       adjust-dates-to-context-time-zone: false
   datasource:
-    url: jdbc:postgresql://db.sefwxyysecmfeawhvlbu.supabase.co:5432/postgres?sslmode=require
-    username: postgres
-    password: BYQnqzYByLGv1DtF
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
@@ -44,13 +50,13 @@ spring:
     properties:
       hibernate:
         # Keep app tables out of Supabase's reserved  schema (search_path / metadata clashes).
-        default_schema: notificationdb
+        default_schema: ${NOTIFICATION_DB_SCHEMA}
         hbm2ddl:
           create_namespaces: true
 
 auth:
   service:
-    url: https://auth-service-ddhb.onrender.com:8080/api/
+    url: ${AUTH_SERVICE_URL}/api/
   client-id: notification-service
   client-secret: notify-secret
 
