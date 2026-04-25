@@ -17,6 +17,13 @@ asset:
     # Upload directory - use relative path (project/uploads/amc-docs) or absolute path
     # If the configured path is not writable, the code will fallback to project/uploads/amc-docs
     dir: uploads/amc-docs
+    # Supabase Storage (optional). When enabled with valid url + service-role-key, uploads use Storage API;
+    # filePath is stored as supabase://{bucket}/{objectKey}. When disabled, behavior is unchanged (local disk).
+    supabase:
+      enabled: false
+      url: ${SUPABASE_IMAGES_URL}
+      service-role-key: ${SUPABASE_IMAGES_SERVICE_ROLE_KEY:}
+      bucket: ${SUPABASE_IMAGES_BUCKET}
 
 spring:
   application:
@@ -42,6 +49,7 @@ spring:
     show-sql: false
     properties:
       hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
         # Keep app tables out of Supabase's reserved  schema (search_path / metadata clashes).
         default_schema: ${SUPABASE_ASSET_SCHEMA}
         hbm2ddl:
@@ -61,8 +69,8 @@ services:
 security:
   jwt:
     public-key-path: classpath:keys/jwt-public.pem
-    issuer: "auth-service"
-    audience: "asset-service"
+    issuer: ${issuer}
+    audience: ${asset_audience}
 
 common:
   notification:
