@@ -1,14 +1,14 @@
 # syntax=docker/dockerfile:1
-# Asset Service — Spring Boot 3, Java 17, Tesseract OCR
+# asset-service-lxip — same app as asset-service; use for Render (e.g. asset-service-lxip.onrender.com)
+# or any host that sets PORT, SPRING_DATASOURCE_URL, AUTH_SERVICE_URL, etc.
 #
-# Build (from repo root; needs parent POM + common-service):
-#   docker build -f asset-service/Dockerfile -t asset-service:latest .
+# Build from repository root:
+#   docker build -f asset-service/Dockerfile.lxip -t asset-service-lxip:latest .
 #
 # From asset-service/:
-#   docker build -f Dockerfile -t asset-service:latest ..
+#   docker build -f Dockerfile.lxip -t asset-service-lxip:latest ..
 #
-# Run (host does not need Tesseract; set env for DB and service URLs):
-#   docker run --rm -p 8085:8085 -e SPRING_DATASOURCE_URL -e AUTH_SERVICE_URL asset-service:latest
+# Runtime: server.port uses ${PORT:8085} in application.yml — Render injects PORT automatically.
 
 FROM maven:3.9-eclipse-temurin-17 AS builder
 WORKDIR /build
@@ -17,7 +17,6 @@ RUN mvn -B -DskipTests clean package -pl asset-service -am
 
 FROM eclipse-temurin:17-jre-jammy
 
-# OCR for product flows (Tesseract in-image; not required on the host)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     tesseract-ocr \
     tesseract-ocr-eng \
