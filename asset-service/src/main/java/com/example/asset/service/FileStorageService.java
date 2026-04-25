@@ -1,6 +1,7 @@
 
 package com.example.asset.service;
 
+import com.example.asset.config.AssetStorageProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
@@ -28,10 +29,69 @@ public class FileStorageService {
     // ============================================================
     // 🔧 Constructor
     // ============================================================
-    public FileStorageService() throws IOException {
-        this.root = Paths.get("uploads").toAbsolutePath().normalize();
-        Files.createDirectories(this.root);
+    public FileStorageService(AssetStorageProperties assetStorageProperties) {
+        this.root = resolveWritableRoot(assetStorageProperties);
         log.info("📁 File storage directory initialized at: {}", this.root);
+    }
+
+    /**
+     * Prefer {@code asset.upload.dir} (after {@link AssetStorageProperties} init), then {@code ./uploads},
+     * then Java temp — never fail startup if the filesystem is read-only or permissions are tight (e.g. some containers).
+     */
+    private static Path resolveWritableRoot(AssetStorageProperties assetStorageProperties) {
+        List<Path> candidates = new ArrayList<>();
+        if (assetStorageProperties != null && assetStorageProperties.getDir() != null
+                && !assetStorageProperties.getDir().isBlank()) {
+            try {
+                candidates.add(
+                        Path.of(assetStorageProperties.getDir().trim()).toAbsolutePath().normalize());
+            } catch (RuntimeException e) {
+                log.warn("⚠️ Ignoring invalid asset.upload.dir '{}': {}", assetStorageProperties.getDir(), e.getMessage());
+            }
+        }
+        String tmp = System.getProperty("java.io.tmpdir");
+        if (tmp == null || tmp.isBlank()) {
+            tmp = "/tmp";
+        }
+        try {
+            candidates.add(Paths.get("uploads").toAbsolutePath().normalize());
+        } catch (RuntimeException e) {
+            log.warn("⚠️ Cannot resolve ./uploads: {}", e.getMessage());
+        }
+        try {
+            candidates.add(Paths.get(tmp, "asset-service", "file-storage").toAbsolutePath().normalize());
+        } catch (RuntimeException e) {
+            log.warn("⚠️ Cannot resolve temp file storage path: {}", e.getMessage());
+        }
+
+        for (Path candidate : candidates) {
+            if (tryPrepareDirectory(candidate)) {
+                return candidate;
+            }
+        }
+
+        if (candidates.isEmpty()) {
+            Path fallback = Path.of("/tmp", "asset-service", "file-storage");
+            if (tryPrepareDirectory(fallback)) {
+                return fallback;
+            }
+            log.error("❌ No writable file storage directory; using /tmp — uploads/downloads may fail");
+            return Path.of("/tmp");
+        }
+
+        Path last = candidates.get(candidates.size() - 1);
+        log.error("❌ Could not create a writable file storage directory; using {} — downloads/uploads may fail", last);
+        return last;
+    }
+
+    private static boolean tryPrepareDirectory(Path dir) {
+        try {
+            Files.createDirectories(dir);
+            return Files.isWritable(dir);
+        } catch (IOException e) {
+            log.warn("⚠️ Cannot use directory {} for file storage: {}", dir, e.getMessage());
+            return false;
+        }
     }
 
     // ============================================================

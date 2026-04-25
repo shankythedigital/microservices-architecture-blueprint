@@ -2,9 +2,11 @@
 server:
   port: ${PORT:8085}
 
+# Use literals for service URLs — env vars (AUTH_SERVICE_URL, etc.) still override these via Spring Boot.
+# Do not use ${AUTH_SERVICE_URL:...} here: AUTH_SERVICE_URL binds to auth.service.url and causes a circular placeholder.
 auth:
   service:
-    url: ${AUTH_SERVICE_URL}
+    url: ${AUTH_SERVICE_URL} 
 
 notification:
   service:
@@ -14,7 +16,6 @@ asset:
   service:
     url: ${ASSET_SERVICE_URL}
   upload:
-   
     # Supabase Storage (optional). When enabled with valid url + service-role-key, uploads use Storage API;
     # filePath is stored as supabase://{bucket}/{objectKey}. When disabled, behavior is unchanged (local disk).
     supabase:
@@ -26,13 +27,19 @@ asset:
 spring:
   application:
     name: ${SPRING_APPLICATION_NAME}
+  # No Spring Cloud Config /refresh: avoids refresh scope + extra listeners that can
+  # log WARNs when the context is torn down after a *failed* startup (e.g. Feign child contexts).
+  cloud:
+    refresh:
+      enabled: false
   jackson:
     serialization:
       write-dates-as-timestamps: false
     deserialization:
       adjust-dates-to-context-time-zone: false
   datasource:
-    url: ${SPRING_DATASOURCE_URL} 
+    # Defaults for local dev; SPRING_DATASOURCE_URL / USERNAME / PASSWORD env vars override without ${...} here (avoids circular placeholders).
+    url: ${SPRING_DATASOURCE_URL}
     username: ${SPRING_DATASOURCE_USERNAME}
     password: ${SPRING_DATASOURCE_PASSWORD}
     driver-class-name: org.postgresql.Driver
@@ -49,7 +56,7 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         # Keep app tables out of Supabase's reserved  schema (search_path / metadata clashes).
-        default_schema: ${SUPABASE_ASSET_SCHEMA}
+        default_schema: ${ASSET_DB_SCHEMA}
         hbm2ddl:
           create_namespaces: true
   servlet:
@@ -67,8 +74,8 @@ services:
 security:
   jwt:
     public-key-path: classpath:keys/jwt-public.pem
-    issuer: ${issuer}
-    audience: ${asset_audience}
+    issuer: ${AUTH_JWT_ISSUER}
+    audience: ${AUTH_JWT_AUDIENCE}
 
 common:
   notification:
@@ -78,10 +85,10 @@ JWT_PUBLIC_KEY_PATH: classpath:keys/jwt-public.pem
 JWT_SECRET: yNnC7M3ZqgV4bD0lFJm9Q2w5tSe8XpR1pWc7UjK4oHs=
 AUTH_ENC_KEY: SLOqKf8lS2hidTDsXQe25ZSaoaGcczUX6gySXUxjE1M=
 AUTH_HMAC_KEY: krFcA7/MYPXQWbtSGMM87Dzxu2euOsRckVFeUyOC6dw=
-AUTH_SERVICE_URL: ${AUTH_SERVICE_URL}
-NOTIFICATION_SERVICE_URL: ${NOTIFICATION_SERVICE_URL}
 
-
+logging:
+  level:
+    com.example: DEBUG
 # Tesseract OCR Configuration
 tesseract:
   enabled: true
