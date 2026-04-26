@@ -810,9 +810,13 @@ public class AuthServiceImpl {
     }
 
     public AuthResponse loginWithOtp(String mobilePlain, String otp, String deviceInfo, String projectType) {
+        if (mobilePlain == null || otp == null)
+            throw new IllegalArgumentException("Mobile and OTP are required");
         String mobileHash = EncryptDecryptUtil.hmac(mobilePlain);
+        if (mobileHash == null)
+            throw new IllegalArgumentException("Invalid or unsupported mobile number");
         boolean ok = otpRepo.findAll().stream()
-                .anyMatch(log -> mobileHash.equals(log.getMobileHash())
+                .anyMatch(log -> Objects.equals(mobileHash, log.getMobileHash())
                         && !Boolean.TRUE.equals(log.isUsed())
                         && log.getExpiresAt().isAfter(LocalDateTime.now())
                         && EncryptDecryptUtil.verify(otp, log.getOtpHash()));
