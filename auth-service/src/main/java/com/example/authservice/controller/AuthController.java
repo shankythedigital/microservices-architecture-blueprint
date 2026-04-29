@@ -39,6 +39,11 @@ public class AuthController {
     private FileStorageUtil fileStorageUtil;
 
     @PostMapping(value = "/register", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(
+            summary = "Register user (JSON)",
+            description = "Public registration — no Authorization header. Send JSON body with required fields.",
+            security = {}
+    )
     public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest req) {
         try {
             // Validate Terms & Conditions acceptance
@@ -88,6 +93,11 @@ public class AuthController {
      * {@link RegisterRequest}).
      */
     @PostMapping(value = "/register", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(
+            summary = "Register user (multipart)",
+            description = "Public registration with optional profile photo — no Authorization header.",
+            security = {}
+    )
     public ResponseEntity<?> registerWithPhoto(
             @RequestParam String username,
             @RequestParam(required = false) String password,
@@ -157,6 +167,11 @@ public class AuthController {
     }
 
     @PostMapping("/adminregister")
+    @Operation(
+            summary = "Register admin user",
+            description = "Public admin-registration endpoint — no Authorization header.",
+            security = {}
+    )
     public ResponseEntity<?> adminregister(@Valid @RequestBody RegisterRequest req) {
         try {
             // Validate Terms & Conditions acceptance

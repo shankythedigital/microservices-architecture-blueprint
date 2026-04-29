@@ -4,7 +4,6 @@ import 'package:keeply_app/core/config/app_config.dart';
 import 'package:keeply_app/core/theme/keeply_tokens.dart';
 import 'package:keeply_app/core/utils/validation_helper.dart';
 import 'package:keeply_app/core/widgets/keeply_auth_screen_background.dart';
-import 'package:keeply_app/core/view_layout/view_layout_scope.dart';
 import 'package:keeply_app/core/widgets/selectable_option_picker.dart';
 import 'package:keeply_app/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:keeply_app/features/auth/presentation/pages/login_page.dart';
@@ -146,8 +145,8 @@ class _RegisterPageState extends State<RegisterPage> {
         if (state is RegistrationSuccess) {
           setState(() => _isLoading = false);
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Text(
+            const SnackBar(
+              content: Text(
                 'Account created. Please sign in.',
                 style: TextStyle(color: Colors.white),
               ),
@@ -177,19 +176,6 @@ class _RegisterPageState extends State<RegisterPage> {
       },
       child: Scaffold(
         backgroundColor: scheme.surface,
-        appBar: AppBar(
-          title: const Text('Register'),
-          scrolledUnderElevation: 0,
-          elevation: 0,
-          backgroundColor: scheme.surface.withValues(alpha: 0.92),
-          foregroundColor: scheme.onSurface,
-          actions: const [
-            Padding(
-              padding: EdgeInsets.only(right: 8),
-              child: ViewLayoutToggle(compact: true),
-            ),
-          ],
-        ),
         body: KeeplyAuthBackground(
           child: SafeArea(
             child: SingleChildScrollView(

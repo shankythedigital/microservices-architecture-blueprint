@@ -211,10 +211,10 @@ class _AlertsHubPageState extends State<AlertsHubPage> {
             color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
             child: Row(
               children: [
-                Expanded(
+                const Expanded(
                   child: TabBar(
-                    labelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
-                    tabs: const [
+                    labelStyle: TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+                    tabs: [
                       Tab(text: 'All'),
                       Tab(text: 'Unread'),
                       Tab(text: 'Read'),

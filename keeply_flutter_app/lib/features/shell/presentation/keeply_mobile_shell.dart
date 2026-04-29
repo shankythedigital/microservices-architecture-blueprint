@@ -78,7 +78,7 @@ class _KeeplyMobileShellState extends State<KeeplyMobileShell> {
             child: Container(
               decoration: BoxDecoration(
                 color: Theme.of(context).colorScheme.surface,
-                boxShadow: [
+                boxShadow: const [
                   BoxShadow(
                     color: Color(0x0F0F172A),
                     blurRadius: 48,
