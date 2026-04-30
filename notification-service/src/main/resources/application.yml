@@ -1,38 +1,32 @@
-# Notification-service
+# Notification-service (cloud-local)
 server:
-  port: ${PORT}
+  port: ${PORT:8082}
 
 notification:
   service:
-    url: ${NOTIFICATION_SERVICE_URL}/api/notifications
-  # When true and userId + Bearer token are present, skips sending if user opted out of that channel (auth-service).
+    url: ${NOTIFICATION_SERVICE_URL:http://localhost:8082}/api/notifications
   opt-out-check:
     enabled: true
   list:
-    # Number of days to display notifications in notification icons
-    # Default: 30 days (notifications older than 30 days will not be shown)
     display-days: 30
-    # Maximum number of notifications to return (for pagination/performance)
     max-results: 100
 
 asset:
   service:
-    url: ${ASSET_SERVICE_URL}
+    url: ${ASSET_SERVICE_URL:http://localhost:8085}
   upload:
-    # Supabase Storage (optional). When enabled with valid url + service-role-key, uploads use Storage API;
-    # filePath is stored as supabase://{bucket}/{objectKey}. When disabled, behavior is unchanged (local disk).
     supabase:
       enabled: false
-      url: ${SUPABASE_IMAGES_URL}
-      service-role-key: ${SUPABASE_IMAGES_SERVICE_ROLE_KEY}
-      bucket: ${SUPABASE_IMAGES_BUCKET}
+      url: ${SUPABASE_IMAGES_URL:}
+      service-role-key: ${SUPABASE_IMAGES_SERVICE_ROLE_KEY:}
+      bucket: ${SUPABASE_IMAGES_BUCKET:}
 
 fileupload:
   type: standard
 
 spring:
   application:
-    name: ${SPRING_APPLICATION_NAME}
+    name: ${SPRING_APPLICATION_NAME:notification-service}
   jackson:
     serialization:
       write-dates-as-timestamps: false
@@ -40,8 +34,8 @@ spring:
       adjust-dates-to-context-time-zone: false
   datasource:
     url: ${SPRING_DATASOURCE_URL}
-    username: ${SPRING_DATASOURCE_USERNAME}
-    password: ${SPRING_DATASOURCE_PASSWORD}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:postgres}
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
@@ -50,27 +44,26 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
-        # Keep app tables out of Supabase's reserved  schema (search_path / metadata clashes).
-        default_schema: ${NOTIFICATION_DB_SCHEMA}
+        default_schema: ${NOTIFICATION_DB_SCHEMA:notificationdb}
         hbm2ddl:
           create_namespaces: true
 
 auth:
   service:
-    url: ${AUTH_SERVICE_URL}/api/
+    url: ${AUTH_SERVICE_URL:http://localhost:8081}/api/
   client-id: notification-service
   client-secret: notify-secret
 
 notify:
   enc:
-    key: yfwZM8WwHraV8LhcSNFZ7UuIpLwxpX6lthpH4CflI3U=
+    key: ${AUTH_ENC_KEY:SLOqKf8lS2hidTDsXQe25ZSaoaGcczUX6gySXUxjE1M=}
   hmac:
-    key: SyHeAe8KeKETQihKAGFfpKipF9mysIjTsh01NaDiDpc=
+    key: ${AUTH_HMAC_KEY:krFcA7/MYPXQWbtSGMM87Dzxu2euOsRckVFeUyOC6dw=}
 
 jwt:
   public-key-path: classpath:keys/jwt-public.pem
 
-JWT_SECRET: yNnC7M3ZqgV4bD0lFJm9Q2w5tSe8XpR1pWc7UjK4oHs=
+JWT_SECRET: ${JWT_SECRET:yNnC7M3ZqgV4bD0lFJm9Q2w5tSe8XpR1pWc7UjK4oHs=}
 JWT_PUBLIC_KEY_PATH: classpath:keys/jwt-public.pem
 JWT_ACCESS_TOKEN_VALIDITY_SECONDS: 900
 JWT_REFRESH_TOKEN_VALIDITY_SECONDS: 1209600
