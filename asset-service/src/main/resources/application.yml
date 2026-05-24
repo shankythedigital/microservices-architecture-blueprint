@@ -1,38 +1,38 @@
-# Asset-service (cloud-local)
+# Asset-service (local)
 server:
-  port: ${PORT:8085}
+  port: 8085
 
 auth:
   service:
-    url: ${AUTH_SERVICE_URL:http://localhost:8081}
+    url: http://localhost:8081
 
 notification:
   service:
-    url: ${NOTIFICATION_SERVICE_URL:http://localhost:8082}/api/notifications
+    url: http://localhost:8082/api/notifications
 
 asset:
   service:
-    url: ${ASSET_SERVICE_URL:http://localhost:8085}
+    url: http://localhost:8085
   upload:
     dir: uploads/amc-docs
     supabase:
       enabled: false
-      url: ${SUPABASE_IMAGES_URL:}
-      service-role-key: ${SUPABASE_IMAGES_SERVICE_ROLE_KEY:}
-      bucket: ${SUPABASE_IMAGES_BUCKET:}
+      url: 
+      service-role-key: 
+      bucket: 
 
 spring:
   application:
-    name: ${SPRING_APPLICATION_NAME:asset-service}
+    name: asset-service
   jackson:
     serialization:
       write-dates-as-timestamps: false
     deserialization:
       adjust-dates-to-context-time-zone: false
   datasource:
-    url: ${SPRING_DATASOURCE_URL}
-    username: ${SPRING_DATASOURCE_USERNAME:postgres}
-    password: ${SPRING_DATASOURCE_PASSWORD:postgres}
+    url: jdbc:postgresql://localhost:5432/postgres
+    username: postgres
+    password: postgres
     driver-class-name: org.postgresql.Driver
     hikari:
       max-lifetime: 300000
@@ -46,7 +46,7 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
-        default_schema: "${ASSET_DB_SCHEMA:assetdb}"
+        default_schema: "assetdb"
         hbm2ddl:
           create_namespaces: true
   servlet:
@@ -57,26 +57,26 @@ spring:
 
 services:
   auth:
-    base-url: ${AUTH_SERVICE_URL:http://localhost:8081}
+    base-url: http://localhost:8081
   notification:
-    base-url: ${NOTIFICATION_SERVICE_URL:http://localhost:8082}
+    base-url: http://localhost:8082
 
 security:
   jwt:
     public-key-path: classpath:keys/jwt-public.pem
-    issuer: ${issuer:auth-service}
-    audience: ${asset_audience:asset-service}
+    issuer: auth-service
+    audience: asset-service
 
 common:
   notification:
     enabled: true
 
 JWT_PUBLIC_KEY_PATH: classpath:keys/jwt-public.pem
-JWT_SECRET: ${JWT_SECRET:yNnC7M3ZqgV4bD0lFJm9Q2w5tSe8XpR1pWc7UjK4oHs=}
-AUTH_ENC_KEY: ${AUTH_ENC_KEY:SLOqKf8lS2hidTDsXQe25ZSaoaGcczUX6gySXUxjE1M=}
-AUTH_HMAC_KEY: ${AUTH_HMAC_KEY:krFcA7/MYPXQWbtSGMM87Dzxu2euOsRckVFeUyOC6dw=}
-AUTH_SERVICE_URL: ${AUTH_SERVICE_URL:http://localhost:8081}
-NOTIFICATION_SERVICE_URL: ${NOTIFICATION_SERVICE_URL:http://localhost:8082}
+JWT_SECRET: yNnC7M3ZqgV4bD0lFJm9Q2w5tSe8XpR1pWc7UjK4oHs=
+AUTH_ENC_KEY: SLOqKf8lS2hidTDsXQe25ZSaoaGcczUX6gySXUxjE1M=
+AUTH_HMAC_KEY: krFcA7/MYPXQWbtSGMM87Dzxu2euOsRckVFeUyOC6dw=
+AUTH_SERVICE_URL: http://localhost:8081
+NOTIFICATION_SERVICE_URL: http://localhost:8082
 
 
 logging:
@@ -97,7 +97,7 @@ app:
   llm:
     enabled: true
     api-url: https://api.openai.com/v1
-    api-key: ${OPENAI_API_KEY:-}
+    api-key: ""
     model: gpt-4o-mini
     max-tokens: 4096
     timeout-seconds: 60

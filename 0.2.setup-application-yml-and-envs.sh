@@ -25,10 +25,10 @@ COMMON_DIR="$ROOT_DIR/common-service"
 HELPDESK_DIR="$ROOT_DIR/helpdesk-service"
 
 # ----- Supabase Postgres (database layer for every MODE; schemas isolate services) -----
-SUPABASE_DB_HOST="db.sefwxyysecmfeawhvlbu.supabase.co"
-SUPABASE_DB_PORT="5432"
+SUPABASE_DB_HOST="aws-1-ap-northeast-1.pooler.supabase.com"
+SUPABASE_DB_PORT="6543"
 SUPABASE_DB_NAME="postgres"
-SUPABASE_DB_USER="postgres"
+SUPABASE_DB_USER="postgres.sefwxyysecmfeawhvlbu"
 SUPABASE_DB_PASS="BYQnqzYByLGv1DtF"
 
   RDS_AUTH_SCHEMA_NAME="authdb"
@@ -46,10 +46,10 @@ if [ "$MODE" = "cloud" ]; then
   RDS_DB_PORT="${SUPABASE_DB_PORT}"
   RDS_DB_NAME="${SUPABASE_DB_NAME}"
   
-  RDS_AUTH_DB="jdbc:postgresql://${RDS_HOST}:${RDS_DB_PORT}/${RDS_DB_NAME}?sslmode=require"
-  RDS_ASSET_DB="jdbc:postgresql://${RDS_HOST}:${RDS_DB_PORT}/${RDS_DB_NAME}?sslmode=require"
-  RDS_NOTIFY_DB="jdbc:postgresql://${RDS_HOST}:${RDS_DB_PORT}/${RDS_DB_NAME}?sslmode=require"
-  RDS_HELPDESK_DB="jdbc:postgresql://${RDS_HOST}:${RDS_DB_PORT}/${RDS_DB_NAME}?sslmode=require"
+  RDS_AUTH_DB="jdbc:postgresql://${RDS_HOST}:${RDS_DB_PORT}/${RDS_DB_NAME}?sslmode=require&prepareThreshold=0"
+  RDS_ASSET_DB="jdbc:postgresql://${RDS_HOST}:${RDS_DB_PORT}/${RDS_DB_NAME}?sslmode=require&prepareThreshold=0"
+  RDS_NOTIFY_DB="jdbc:postgresql://${RDS_HOST}:${RDS_DB_PORT}/${RDS_DB_NAME}?sslmode=require&prepareThreshold=0"
+  RDS_HELPDESK_DB="jdbc:postgresql://${RDS_HOST}:${RDS_DB_PORT}/${RDS_DB_NAME}?sslmode=require&prepareThreshold=0"
 
   RDS_AUTH_USER="${SUPABASE_DB_USER}"
   RDS_ASSET_USER="${SUPABASE_DB_USER}"
@@ -89,10 +89,10 @@ elif [ "$MODE" = "cloud_local" ]; then
   RDS_DB_PORT="${SUPABASE_DB_PORT}"
   RDS_DB_NAME="${SUPABASE_DB_NAME}"
 
-  RDS_AUTH_DB="jdbc:postgresql://${RDS_HOST}:${RDS_DB_PORT}/${RDS_DB_NAME}?sslmode=require"
-  RDS_ASSET_DB="jdbc:postgresql://${RDS_HOST}:${RDS_DB_PORT}/${RDS_DB_NAME}?sslmode=require"
-  RDS_NOTIFY_DB="jdbc:postgresql://${RDS_HOST}:${RDS_DB_PORT}/${RDS_DB_NAME}?sslmode=require"
-  RDS_HELPDESK_DB="jdbc:postgresql://${RDS_HOST}:${RDS_DB_PORT}/${RDS_DB_NAME}?sslmode=require"
+  RDS_AUTH_DB="jdbc:postgresql://${RDS_HOST}:${RDS_DB_PORT}/${RDS_DB_NAME}?sslmode=require&prepareThreshold=0"
+  RDS_ASSET_DB="jdbc:postgresql://${RDS_HOST}:${RDS_DB_PORT}/${RDS_DB_NAME}?sslmode=require&prepareThreshold=0"
+  RDS_NOTIFY_DB="jdbc:postgresql://${RDS_HOST}:${RDS_DB_PORT}/${RDS_DB_NAME}?sslmode=require&prepareThreshold=0"
+  RDS_HELPDESK_DB="jdbc:postgresql://${RDS_HOST}:${RDS_DB_PORT}/${RDS_DB_NAME}?sslmode=require&prepareThreshold=0"
 
   RDS_AUTH_USER="${SUPABASE_DB_USER}"
   RDS_ASSET_USER="${SUPABASE_DB_USER}"
@@ -123,10 +123,10 @@ elif [ "$MODE" = "OWN_SERVER" ]; then
   RDS_DB_PORT="${SUPABASE_DB_PORT}"
   RDS_DB_NAME="${SUPABASE_DB_NAME}"
 
-  RDS_AUTH_DB="jdbc:postgresql://${RDS_HOST}:${RDS_DB_PORT}/${RDS_DB_NAME}?sslmode=require"
-  RDS_ASSET_DB="jdbc:postgresql://${RDS_HOST}:${RDS_DB_PORT}/${RDS_DB_NAME}?sslmode=require"
-  RDS_NOTIFY_DB="jdbc:postgresql://${RDS_HOST}:${RDS_DB_PORT}/${RDS_DB_NAME}?sslmode=require"
-  RDS_HELPDESK_DB="jdbc:postgresql://${RDS_HOST}:${RDS_DB_PORT}/${RDS_DB_NAME}?sslmode=require"
+  RDS_AUTH_DB="jdbc:postgresql://${RDS_HOST}:${RDS_DB_PORT}/${RDS_DB_NAME}?sslmode=require&prepareThreshold=0"
+  RDS_ASSET_DB="jdbc:postgresql://${RDS_HOST}:${RDS_DB_PORT}/${RDS_DB_NAME}?sslmode=require&prepareThreshold=0"
+  RDS_NOTIFY_DB="jdbc:postgresql://${RDS_HOST}:${RDS_DB_PORT}/${RDS_DB_NAME}?sslmode=require&prepareThreshold=0"
+  RDS_HELPDESK_DB="jdbc:postgresql://${RDS_HOST}:${RDS_DB_PORT}/${RDS_DB_NAME}?sslmode=require&prepareThreshold=0"
 
   RDS_AUTH_USER="${SUPABASE_DB_USER}"
   RDS_ASSET_USER="${SUPABASE_DB_USER}"
@@ -162,10 +162,10 @@ else
   RDS_HOST="${SUPABASE_DB_HOST}"
   RDS_DB_PORT="${SUPABASE_DB_PORT}"
   RDS_DB_NAME="${SUPABASE_DB_NAME}"
-  RDS_AUTH_DB="jdbc:postgresql://${RDS_HOST}:${RDS_DB_PORT}/${RDS_DB_NAME}?sslmode=require"
-  RDS_ASSET_DB="jdbc:postgresql://${RDS_HOST}:${RDS_DB_PORT}/${RDS_DB_NAME}?sslmode=require"
-  RDS_NOTIFY_DB="jdbc:postgresql://${RDS_HOST}:${RDS_DB_PORT}/${RDS_DB_NAME}?sslmode=require"
-  RDS_HELPDESK_DB="jdbc:postgresql://${RDS_HOST}:${RDS_DB_PORT}/${RDS_DB_NAME}?sslmode=require"
+  RDS_AUTH_DB="jdbc:postgresql://${RDS_HOST}:${RDS_DB_PORT}/${RDS_DB_NAME}?sslmode=require&prepareThreshold=0"
+  RDS_ASSET_DB="jdbc:postgresql://${RDS_HOST}:${RDS_DB_PORT}/${RDS_DB_NAME}?sslmode=require&prepareThreshold=0"
+  RDS_NOTIFY_DB="jdbc:postgresql://${RDS_HOST}:${RDS_DB_PORT}/${RDS_DB_NAME}?sslmode=require&prepareThreshold=0"
+  RDS_HELPDESK_DB="jdbc:postgresql://${RDS_HOST}:${RDS_DB_PORT}/${RDS_DB_NAME}?sslmode=require&prepareThreshold=0"
 
   RDS_AUTH_USER="${SUPABASE_DB_USER}"
   RDS_ASSET_USER="${SUPABASE_DB_USER}"

@@ -4,7 +4,7 @@
 # Writes application.yml for auth, asset, notification, and helpdesk services.
 #
 # Modes (first argument, default: local):
-#   local        — local JDBC URL inlined; service URLs use ${ENV:http://localhost:…}; PORT/schema/JWT use ${ENV:default}
+#   local        — hardcoded ports, URLs, JDBC, schemas, JWT, app names (no ${…} placeholders)
 #   cloud-cloud  — YAML uses env placeholders for cloud deploy (DB + service URLs + secrets)
 #   cloud-local  — YAML uses env placeholders; point SPRING_DATASOURCE_* at cloud DB and
 #                  AUTH_SERVICE_URL etc. at http://localhost:...
@@ -28,10 +28,10 @@
 #
 # --- Local mode: optional overrides ---
 #   LOCAL_DB_HOST, LOCAL_DB_PORT, LOCAL_DB_NAME, LOCAL_DB_USER, LOCAL_DB_PASS
-#   AUTH_PORT_LOCAL, NOTIF_PORT_LOCAL, ASSET_PORT_LOCAL, HELPDESK_PORT_LOCAL
+#   AUTH_PORT_LOCAL, NOTIF_PORT_LOCAL, ASSET_PORT_LOCAL, HELPDESK_PORT_LOCAL (defaults 8081/8082/8085/8084)
 #   SCHEMA_AUTH, SCHEMA_ASSET, SCHEMA_NOTIFICATION, SCHEMA_HELPDESK
-#   Generated YAML uses ${SPRING_DATASOURCE_USERNAME:postgres} / …; service URLs ${*_SERVICE_URL:http://localhost:PORT}
-#   JWT / schema / PORT use ${ENV:local-default} as noted — explicit env wins.
+#   JWT_SECRET, AUTH_ENC_KEY, AUTH_HMAC_KEY (optional; else script dev defaults are baked in)
+#   Non-local modes: YAML uses ${SPRING_DATASOURCE_*} , ${*_SERVICE_URL:…}, ${JWT_SECRET:…}, etc.
 #
 # Optional before run:  set -a; source ./.env.applicationyml; set +a
 # ======================================================
@@ -84,45 +84,76 @@ JWT_SECRET="${JWT_SECRET:-yNnC7M3ZqgV4bD0lFJm9Q2w5tSe8XpR1pWc7UjK4oHs=}"
 AUTH_ENC_KEY="${AUTH_ENC_KEY:-SLOqKf8lS2hidTDsXQe25ZSaoaGcczUX6gySXUxjE1M=}"
 AUTH_HMAC_KEY="${AUTH_HMAC_KEY:-krFcA7/MYPXQWbtSGMM87Dzxu2euOsRckVFeUyOC6dw=}"
 
+issuer="${issuer:-auth-service}"
+asset_audience="${asset_audience:-asset-service}"
+helpdesk_audience="${helpdesk_audience:-helpdesk-service}"
+
+# SPRING_DATASOURCE_PASSWORD="${SPRING_DATASOURCE_PASSWORD:-yjLOMdVdPhv9qKpO8qKLqwKUTIRlDp51}"
+# SPRING_DATASOURCE_URL="${SPRING_DATASOURCE_URL:-jdbc:postgresql://dpg-d894iv5ckfvc73884ngg-a.oregon-postgres.render.com/authdb_a3qi}"
+# SPRING_DATASOURCE_USERNAME="${SPRING_DATASOURCE_USERNAME:-asset}"
+
 if [ "$MODE" = "local" ]; then
+  # Fully hardcoded YAML (resolved when this script runs; optional env overrides via LOCAL_*, SCHEMA_*, JWT_* before invoke)
   DS_URL_YML="$LOCAL_JDBC"
+  DS_USER_YML="$LOCAL_DB_USER"
+  DS_PASS_YML="$LOCAL_DB_PASS"
+  AUTH_PORT_YML="$AUTH_PORT_LOCAL"
+  NOTIF_PORT_YML="$NOTIF_PORT_LOCAL"
+  ASSET_PORT_YML="$ASSET_PORT_LOCAL"
+  HELPDESK_PORT_YML="$HELPDESK_PORT_LOCAL"
+  AUTH_URL_YML="http://localhost:${AUTH_PORT_LOCAL}"
+  ASSET_URL_YML="http://localhost:${ASSET_PORT_LOCAL}"
+  NOTIF_URL_YML="http://localhost:${NOTIF_PORT_LOCAL}"
+  HELPDESK_URL_YML="http://localhost:${HELPDESK_PORT_LOCAL}"
+  SCHEMA_AUTH_YML="$SCHEMA_AUTH"
+  SCHEMA_ASSET_YML="$SCHEMA_ASSET"
+  SCHEMA_NOTIFICATION_YML="$SCHEMA_NOTIFICATION"
+  SCHEMA_HELPDESK_YML="$SCHEMA_HELPDESK"
+  JWT_SECRET_YML="$JWT_SECRET"
+  AUTH_ENC_KEY_YML="$AUTH_ENC_KEY"
+  AUTH_HMAC_KEY_YML="$AUTH_HMAC_KEY"
+  JWT_ISSUER_YML="auth-service"
+  JWT_AUDIENCE_ASSET_YML="asset-service"
+  JWT_AUDIENCE_HELPDESK_YML="helpdesk-service"
+  SUPABASE_IMAGES_URL_YML=""
+  SUPABASE_IMAGES_KEY_YML=""
+  SUPABASE_IMAGES_BUCKET_YML=""
+  OPENAI_API_KEY_YML='""'
+  SPRING_APP_NAME_AUTH_YML="auth-service"
+  SPRING_APP_NAME_ASSET_YML="asset-service"
+  SPRING_APP_NAME_NOTIFICATION_YML="notification-service"
+  SPRING_APP_NAME_HELPDESK_YML="helpdesk-service"
 else
-  DS_URL_YML='${SPRING_DATASOURCE_URL}'
+  DS_URL_YML="\${SPRING_DATASOURCE_URL:${LOCAL_JDBC}}"
+  DS_USER_YML="\${SPRING_DATASOURCE_USERNAME:${LOCAL_DB_USER}}"
+  DS_PASS_YML="\${SPRING_DATASOURCE_PASSWORD:${LOCAL_DB_PASS}}"
+  AUTH_PORT_YML="\${PORT:${AUTH_PORT_LOCAL}}"
+  NOTIF_PORT_YML="\${PORT:${NOTIF_PORT_LOCAL}}"
+  ASSET_PORT_YML="\${PORT:${ASSET_PORT_LOCAL}}"
+  HELPDESK_PORT_YML="\${PORT:${HELPDESK_PORT_LOCAL}}"
+  AUTH_URL_YML="\${AUTH_SERVICE_URL:http://localhost:${AUTH_PORT_LOCAL}}"
+  ASSET_URL_YML="\${ASSET_SERVICE_URL:http://localhost:${ASSET_PORT_LOCAL}}"
+  NOTIF_URL_YML="\${NOTIFICATION_SERVICE_URL:http://localhost:${NOTIF_PORT_LOCAL}}"
+  HELPDESK_URL_YML="\${HELPDESK_SERVICE_URL:http://localhost:${HELPDESK_PORT_LOCAL}}"
+  SCHEMA_AUTH_YML="\${SUPABASE_AUTH_SCHEMA:${SCHEMA_AUTH}}"
+  SCHEMA_ASSET_YML="\${ASSET_DB_SCHEMA:${SCHEMA_ASSET}}"
+  SCHEMA_NOTIFICATION_YML="\${NOTIFICATION_DB_SCHEMA:${SCHEMA_NOTIFICATION}}"
+  SCHEMA_HELPDESK_YML="\${HELPDESK_DB_SCHEMA:${SCHEMA_HELPDESK}}"
+  JWT_SECRET_YML="\${JWT_SECRET:${JWT_SECRET}}"
+  AUTH_ENC_KEY_YML="\${AUTH_ENC_KEY:${AUTH_ENC_KEY}}"
+  AUTH_HMAC_KEY_YML="\${AUTH_HMAC_KEY:${AUTH_HMAC_KEY}}"
+  JWT_ISSUER_YML="\${issuer:${issuer}}"
+  JWT_AUDIENCE_ASSET_YML="\${asset_audience:${asset_audience}}"
+  JWT_AUDIENCE_HELPDESK_YML="\${helpdesk_audience:${helpdesk_audience}}"
+  SUPABASE_IMAGES_URL_YML='${SUPABASE_IMAGES_URL:}'
+  SUPABASE_IMAGES_KEY_YML='${SUPABASE_IMAGES_SERVICE_ROLE_KEY:}'
+  SUPABASE_IMAGES_BUCKET_YML='${SUPABASE_IMAGES_BUCKET:}'
+  OPENAI_API_KEY_YML='${OPENAI_API_KEY:}'
+  SPRING_APP_NAME_AUTH_YML='${SPRING_APPLICATION_NAME:auth-service}'
+  SPRING_APP_NAME_ASSET_YML='${SPRING_APPLICATION_NAME:asset-service}'
+  SPRING_APP_NAME_NOTIFICATION_YML='${SPRING_APPLICATION_NAME:notification-service}'
+  SPRING_APP_NAME_HELPDESK_YML='${SPRING_APPLICATION_NAME:helpdesk-service}'
 fi
-
-# Inter-service base URLs: Spring ${ENV:http://localhost:port}; explicit env wins (use for cloud).
-AUTH_URL_YML="\${AUTH_SERVICE_URL:http://localhost:${AUTH_PORT_LOCAL}}"
-ASSET_URL_YML="\${ASSET_SERVICE_URL:http://localhost:${ASSET_PORT_LOCAL}}"
-NOTIF_URL_YML="\${NOTIFICATION_SERVICE_URL:http://localhost:${NOTIF_PORT_LOCAL}}"
-HELPDESK_URL_YML="\${HELPDESK_SERVICE_URL:http://localhost:${HELPDESK_PORT_LOCAL}}"
-
-# Datasource user/pass: Spring ${ENV:default}; explicit env overrides (local default postgres).
-DS_USER_YML='${SPRING_DATASOURCE_USERNAME:postgres}'
-DS_PASS_YML='${SPRING_DATASOURCE_PASSWORD:postgres}'
-
-# server.port: ${PORT} if set (e.g. Render), else service’s usual local port.
-AUTH_PORT_YML="\${PORT:${AUTH_PORT_LOCAL}}"
-NOTIF_PORT_YML="\${PORT:${NOTIF_PORT_LOCAL}}"
-ASSET_PORT_YML="\${PORT:${ASSET_PORT_LOCAL}}"
-HELPDESK_PORT_YML="\${PORT:${HELPDESK_PORT_LOCAL}}"
-
-# Hibernate default_schema per service
-SCHEMA_AUTH_YML="\${SUPABASE_AUTH_SCHEMA:${SCHEMA_AUTH}}"
-SCHEMA_ASSET_YML="\${ASSET_DB_SCHEMA:${SCHEMA_ASSET}}"
-SCHEMA_NOTIFICATION_YML="\${NOTIFICATION_DB_SCHEMA:${SCHEMA_NOTIFICATION}}"
-SCHEMA_HELPDESK_YML="\${HELPDESK_DB_SCHEMA:${SCHEMA_HELPDESK}}"
-
-JWT_SECRET_YML="\${JWT_SECRET:${JWT_SECRET}}"
-AUTH_ENC_KEY_YML="\${AUTH_ENC_KEY:${AUTH_ENC_KEY}}"
-AUTH_HMAC_KEY_YML="\${AUTH_HMAC_KEY:${AUTH_HMAC_KEY}}"
-
-JWT_ISSUER_YML="\${issuer:auth-service}"
-JWT_AUDIENCE_ASSET_YML="\${asset_audience:asset-service}"
-JWT_AUDIENCE_HELPDESK_YML="\${helpdesk_audience:helpdesk-service}"
-
-SUPABASE_IMAGES_URL_YML='${SUPABASE_IMAGES_URL:}'
-SUPABASE_IMAGES_KEY_YML='${SUPABASE_IMAGES_SERVICE_ROLE_KEY:}'
-SUPABASE_IMAGES_BUCKET_YML='${SUPABASE_IMAGES_BUCKET:}'
 
 mkdir -p "$AUTH_DIR/src/main/resources" "$ASSET_DIR/src/main/resources" "$NOTIF_DIR/src/main/resources" "$HELPDESK_DIR/src/main/resources"
 
@@ -150,7 +181,7 @@ asset:
 
 spring:
   application:
-    name: \${SPRING_APPLICATION_NAME:auth-service}
+    name: ${SPRING_APP_NAME_AUTH_YML}
   jackson:
     serialization:
       write-dates-as-timestamps: false
@@ -240,7 +271,7 @@ asset:
 
 spring:
   application:
-    name: \${SPRING_APPLICATION_NAME:asset-service}
+    name: ${SPRING_APP_NAME_ASSET_YML}
   jackson:
     serialization:
       write-dates-as-timestamps: false
@@ -314,7 +345,7 @@ app:
   llm:
     enabled: true
     api-url: https://api.openai.com/v1
-    api-key: \${OPENAI_API_KEY:-}
+    api-key: ${OPENAI_API_KEY_YML}
     model: gpt-4o-mini
     max-tokens: 4096
     timeout-seconds: 60
@@ -370,7 +401,7 @@ fileupload:
 
 spring:
   application:
-    name: \${SPRING_APPLICATION_NAME:notification-service}
+    name: ${SPRING_APP_NAME_NOTIFICATION_YML}
   jackson:
     serialization:
       write-dates-as-timestamps: false
@@ -467,7 +498,7 @@ helpdesk:
 
 spring:
   application:
-    name: \${SPRING_APPLICATION_NAME:helpdesk-service}
+    name: ${SPRING_APP_NAME_HELPDESK_YML}
   jackson:
     serialization:
       write-dates-as-timestamps: false
