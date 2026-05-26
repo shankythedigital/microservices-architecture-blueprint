@@ -134,9 +134,9 @@ lib/
 Update API endpoints in `lib/core/config/app_config.dart`:
 
 ```dart
-static const String authServiceBaseUrl = 'http://localhost:8081';
-static const String notificationServiceBaseUrl = 'http://localhost:8082';
-static const String assetServiceBaseUrl = 'http://localhost:8083';
+static const String authServiceBaseUrl = 'http://localhost:7071';
+static const String notificationServiceBaseUrl = 'http://localhost:7072';
+static const String assetServiceBaseUrl = 'http://localhost:7073';
 ```
 
 ## Running Tests
@@ -178,9 +178,9 @@ flutter clean
 ## Next Steps
 
 1. Ensure all three microservices are running:
-   - Auth Service: http://localhost:8081
-   - Notification Service: http://localhost:8082
-   - Asset Service: http://localhost:8083
+   - Auth Service: http://localhost:7071
+   - Notification Service: http://localhost:7072
+   - Asset Service: http://localhost:7073
 
 2. Update API endpoints if services are on different ports
 

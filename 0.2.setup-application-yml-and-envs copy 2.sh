@@ -75,9 +75,9 @@ elif [ "$MODE" = "cloud_local" ]; then
   RDS_ASSET_PASS="AuthPass123"
   RDS_NOTIFY_PASS="AuthPass123"
 
-  AUTH_PORT="8081"
-  NOTIF_PORT="8082"
-  ASSET_PORT="8083"
+  AUTH_PORT="7071"
+  NOTIF_PORT="7072"
+  ASSET_PORT="7073"
 
   AUTH_URL="http://localhost:${AUTH_PORT}"
   ASSET_URL="http://localhost:${ASSET_PORT}"
@@ -98,9 +98,9 @@ else
   RDS_ASSET_PASS="Snmysql@1110"
   RDS_NOTIFY_PASS="Snmysql@1110"
 
-  AUTH_PORT="8081"
-  NOTIF_PORT="8082"
-  ASSET_PORT="8083"
+  AUTH_PORT="7071"
+  NOTIF_PORT="7072"
+  ASSET_PORT="7073"
 
   AUTH_URL="http://localhost:${AUTH_PORT}"
   ASSET_URL="http://localhost:${ASSET_PORT}"

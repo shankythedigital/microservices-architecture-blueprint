@@ -294,7 +294,7 @@ def generate_collection():
         "info": {
             "_postman_id": "notification-service-api-complete",
             "name": "Notification Service API - Complete Collection",
-            "description": "Comprehensive Postman collection for Notification Service API based on entity models and seed templates.\n\n**Key Features:**\n- Multi-channel notification support (SMS, Email, WhatsApp, In-App)\n- Template-based notifications with dynamic variable substitution\n- Priority levels (LOW, NORMAL, HIGH, URGENT)\n- Asynchronous processing\n- Metadata support\n- Organized by channel, project type, and entity\n\n**Environment Variables Required:**\n- notificationbaseUrl: Base URL (default: http://localhost:8082)\n- accessToken: JWT Bearer token from auth-service\n- projectType: Project type (ASSET_MGMT or ECOM)\n- Various entity-specific variables (assetId, assetName, etc.)",
+            "description": "Comprehensive Postman collection for Notification Service API based on entity models and seed templates.\n\n**Key Features:**\n- Multi-channel notification support (SMS, Email, WhatsApp, In-App)\n- Template-based notifications with dynamic variable substitution\n- Priority levels (LOW, NORMAL, HIGH, URGENT)\n- Asynchronous processing\n- Metadata support\n- Organized by channel, project type, and entity\n\n**Environment Variables Required:**\n- notificationbaseUrl: Base URL (default: http://localhost:7072)\n- accessToken: JWT Bearer token from auth-service\n- projectType: Project type (ASSET_MGMT or ECOM)\n- Various entity-specific variables (assetId, assetName, etc.)",
             "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
             "_exporter_id": "32725094"
         },
@@ -302,7 +302,7 @@ def generate_collection():
         "variable": [
             {
                 "key": "notificationbaseUrl",
-                "value": "http://localhost:8082",
+                "value": "http://localhost:7072",
                 "type": "string",
                 "description": "Base URL for Notification Service API"
             },

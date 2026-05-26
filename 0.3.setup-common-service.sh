@@ -16,9 +16,9 @@ mkdir -p "$COMMON_DIR/src/test/java"
 
 # ---------- Defaults (customize by editing the script or environment variables) ----------
 
-AUTH_SERVER_PORT=${AUTH_SERVER_PORT:-8081}
-ASSET_SERVER_PORT=${ASSET_SERVER_PORT:-8085}
-NOTIFICATION_SERVER_PORT=${NOTIFICATION_SERVER_PORT:-8082}
+AUTH_SERVER_PORT=${AUTH_SERVER_PORT:-7071}
+ASSET_SERVER_PORT=${ASSET_SERVER_PORT:-7075}
+NOTIFICATION_SERVER_PORT=${NOTIFICATION_SERVER_PORT:-7072}
 : "${AUTH_SERVICE_URL:=http://localhost:$AUTH_SERVER_PORT}"
 : "${NOTIFICATION_SERVICE_URL:=http://localhost:$NOTIFICATION_SERVER_PORT}"
 : "${JWT_PUBLIC_KEY_CLASSPATH:=classpath:keys/jwt-public.pem}"
@@ -4567,9 +4567,9 @@ JAVA
 # # # # DOTENV_FILE="$ENV_DIR/.env"
 
 # # # # # Ports (override via env if desired)
-# # # # AUTH_SERVER_PORT="${AUTH_SERVER_PORT:-8081}"
-# # # # NOTIFICATION_SERVER_PORT="${NOTIFICATION_SERVER_PORT:-8082}"
-# # # # ASSET_SERVER_PORT="${ASSET_SERVER_PORT:-8083}"
+# # # # AUTH_SERVER_PORT="${AUTH_SERVER_PORT:-7071}"
+# # # # NOTIFICATION_SERVER_PORT="${NOTIFICATION_SERVER_PORT:-7072}"
+# # # # ASSET_SERVER_PORT="${ASSET_SERVER_PORT:-7073}"
 
 # # # # # Allow users to predefine keys in the environment; otherwise generate them
 # # # # AUTH_ENC_KEY="${AUTH_ENC_KEY:-}"

@@ -43,9 +43,9 @@ This guide helps resolve common issues with Swagger/OpenAPI integration.
    ```
 
 4. **Verify Port:**
-   - Auth Service: http://localhost:8081/swagger-ui.html
-   - Notification Service: http://localhost:8082/swagger-ui.html
-   - Asset Service: http://localhost:8083/swagger-ui.html
+   - Auth Service: http://localhost:7071/swagger-ui.html
+   - Notification Service: http://localhost:7072/swagger-ui.html
+   - Asset Service: http://localhost:7073/swagger-ui.html
 
 ### 2. Duplicate Dependencies
 
@@ -111,12 +111,12 @@ Remove duplicate springdoc dependencies. Keep only:
 2. **Get Valid Token:**
    ```bash
    # Register user
-   curl -X POST http://localhost:8081/api/auth/register \
+   curl -X POST http://localhost:7071/api/auth/register \
      -H "Content-Type: application/json" \
      -d '{"username":"test","password":"Test123!","projectType":"ECOM"}'
    
    # Login to get token
-   curl -X POST http://localhost:8081/api/auth/login \
+   curl -X POST http://localhost:7071/api/auth/login \
      -H "Content-Type: application/json" \
      -d '{"loginType":"PASSWORD","username":"test","password":"Test123!"}'
    ```
@@ -185,15 +185,15 @@ Update OpenApiConfig with correct port:
 ```java
 .servers(List.of(
     new Server()
-        .url("http://localhost:8081")  // Correct port for auth-service
+        .url("http://localhost:7071")  // Correct port for auth-service
         .description("Local development server")
 ))
 ```
 
 **Correct Ports:**
-- Auth Service: 8081
-- Notification Service: 8082
-- Asset Service: 8083
+- Auth Service: 7071
+- Notification Service: 7072
+- Asset Service: 7073
 
 ### 8. Missing Request/Response Schemas
 
@@ -292,7 +292,7 @@ Update OpenApiConfig with correct port:
 2. **Verify Endpoints:**
    Test OpenAPI JSON directly:
    ```bash
-   curl http://localhost:8081/v3/api-docs
+   curl http://localhost:7071/v3/api-docs
    ```
 
 3. **Check Dependencies:**
@@ -309,7 +309,7 @@ Update OpenApiConfig with correct port:
 5. **Test Security:**
    ```bash
    # Test if Swagger paths are accessible
-   curl http://localhost:8081/swagger-ui.html
+   curl http://localhost:7071/swagger-ui.html
    ```
 
 ## Quick Checklist

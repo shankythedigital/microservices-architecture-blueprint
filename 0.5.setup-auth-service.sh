@@ -329,11 +329,11 @@ EOF
 # # # # # -------------------------
 # # # # cat > $RES/application.yml <<'YML'
 # # # # server:
-# # # #   port: 8081
+# # # #   port: 7071
 
 # # # # notification:
 # # # #   service:
-# # # #     url: http://localhost:8082/api/notifications
+# # # #     url: http://localhost:7072/api/notifications
 
 # # # # spring:
 # # # #   datasource:

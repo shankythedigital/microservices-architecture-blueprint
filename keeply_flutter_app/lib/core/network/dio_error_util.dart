@@ -12,16 +12,16 @@ bool _looksLikeConnectionRefused(DioException e) {
 
 String _keeplyNativeConnectionHelp() {
   if (defaultTargetPlatform == TargetPlatform.android) {
-    return 'Start the Keeply microservices on your computer (auth 8081, notification 8082, asset 8085, helpdesk 8084). '
+    return 'Start the Keeply microservices on your computer (auth 7071, notification 7072, asset 7075, helpdesk 7074). '
         'Android emulator uses 10.0.2.2 to reach your PC. On a **physical** Android device, run: '
         'flutter run --dart-define=KEEPLY_DEV_HOST=<your-PC-LAN-IP> (phone and PC on same Wi‑Fi), '
-        'or per-service --dart-define=AUTH_SERVICE_URL=http://...:8081 etc.';
+        'or per-service --dart-define=AUTH_SERVICE_URL=http://...:7071 etc.';
   }
   if (defaultTargetPlatform == TargetPlatform.iOS) {
     return 'Start the Keeply microservices on your computer. The iOS **Simulator** can use localhost; a **physical** iPhone '
-        'needs your Mac\'s LAN IP, e.g. --dart-define=KEEPLY_DEV_HOST=192.168.1.42 or AUTH_SERVICE_URL=http://...:8081.';
+        'needs your Mac\'s LAN IP, e.g. --dart-define=KEEPLY_DEV_HOST=192.168.1.42 or AUTH_SERVICE_URL=http://...:7071.';
   }
-  return 'Start the Keeply microservices on this machine (auth 8081, notification 8082, asset 8085, helpdesk 8084).';
+  return 'Start the Keeply microservices on this machine (auth 7071, notification 7072, asset 7075, helpdesk 7074).';
 }
 
 bool _isBlankOrLiteralNull(String s) {
@@ -51,7 +51,7 @@ String keeplyWebNetworkAndCorsHelp() {
   return 'Could not reach the API from this browser (common causes: CORS, wrong URL, or service not running). '
       'Run all Keeply microservices; ensure CORS uses KeeplyCorsConfiguration (allowed origins include localhost '
       'and typical LAN patterns). For Flutter web on another machine, set '
-      '--dart-define=AUTH_SERVICE_URL=http://<host-ip>:8081 (and matching URLs for other ports).';
+      '--dart-define=AUTH_SERVICE_URL=http://<host-ip>:7071 (and matching URLs for other ports).';
 }
 
 /// Human-readable type label (matches Dio’s default style without importing private extensions).

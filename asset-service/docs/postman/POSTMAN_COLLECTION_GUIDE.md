@@ -26,7 +26,7 @@ Update the following variables in the environment:
 
 #### Required Variables
 
-- **assetbaseUrl**: Base URL for Asset Service (default: `http://localhost:8083`)
+- **assetbaseUrl**: Base URL for Asset Service (default: `http://localhost:7073`)
 - **accessToken**: JWT Bearer token from auth-service login endpoint
 
 #### User Context Variables

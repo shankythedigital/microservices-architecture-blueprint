@@ -9,11 +9,11 @@
 # From helpdesk-service/:
 #   DOCKER_BUILDKIT=1 docker build -f Dockerfile -t helpdesk-service:latest ..
 #
-# Default port 8084 matches application.yml (server.port). Set PORT at run time if you
-# switch config to ${PORT:8084} for cloud hosts.
+# Default port 7074 matches application.yml (server.port). Set PORT at run time if you
+# switch config to ${PORT:7074} for cloud hosts.
 #
 # Run (override DB and service URLs via env or profile; do not bake secrets into the image):
-#   docker run --rm -p 8084:8084 helpdesk-service:latest
+#   docker run --rm -p 7074:7074 helpdesk-service:latest
 
 FROM maven:3.9-eclipse-temurin-17 AS builder
 WORKDIR /build
@@ -29,11 +29,11 @@ WORKDIR /app
 COPY --from=builder /build/helpdesk-service/target/*.jar app.jar
 
 USER app
-EXPOSE 8083
+EXPOSE 7073
 
 ENV TZ=UTC
 ENV JAVA_OPTS="-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -Djava.security.egd=file:/dev/./urandom"
-ENV PORT=8083
+ENV PORT=7073
 
 LABEL org.opencontainers.image.title="helpdesk-service" \
     org.opencontainers.image.description="Helpdesk microservice (Spring Boot 3, Java 17)"

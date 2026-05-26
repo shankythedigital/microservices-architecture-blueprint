@@ -138,9 +138,9 @@ def ensure_global_variables(collection):
     required_variables = {
         "assetbaseUrl": {
             "key": "assetbaseUrl",
-            "value": "http://localhost:8083",
+            "value": "http://localhost:7073",
             "type": "string",
-            "description": "Base URL for Asset Service API. Default: http://localhost:8083"
+            "description": "Base URL for Asset Service API. Default: http://localhost:7073"
         },
         "accessToken": {
             "key": "accessToken",

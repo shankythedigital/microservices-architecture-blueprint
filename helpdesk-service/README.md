@@ -99,7 +99,7 @@ helpdesk-service/
 
 ### Application Properties
 Key configuration in `application.yml`:
-- Server port: `8084`
+- Server port: `7074`
 - Database connection settings
 - JWT security configuration
 - Service URLs for auth-service, notification-service, asset-service
@@ -118,14 +118,14 @@ Key configuration in `application.yml`:
 
 3. **Access Swagger UI:**
    ```
-   http://localhost:8084/swagger-ui.html
+   http://localhost:7074/swagger-ui.html
    ```
 
 ## Authentication
 
 Most endpoints require JWT authentication. Obtain a token from the auth-service:
 ```
-POST http://localhost:8081/api/auth/login
+POST http://localhost:7071/api/auth/login
 ```
 
 Include the token in the Authorization header:

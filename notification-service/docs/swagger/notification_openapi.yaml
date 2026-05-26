@@ -12,7 +12,7 @@ info:
     email: support@example.com
 
 servers:
-  - url: http://localhost:8081
+  - url: http://localhost:7071
     description: Local development server
   - url: https://api.example.com/notification-service
     description: Production server

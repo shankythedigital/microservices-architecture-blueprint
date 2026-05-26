@@ -12,10 +12,10 @@
 # From notification-service/:
 #   DOCKER_BUILDKIT=1 docker build -f Dockerfile -t notification-service:latest ..
 #
-# application.yml: server.port: ${PORT} — default 8082 here; Render et al. override PORT.
+# application.yml: server.port: ${PORT} — default 7072 here; Render et al. override PORT.
 #
 # Run (see application.yml for required env):
-#   docker run --rm -p 8082:8082 --env-file .env notification-service:latest
+#   docker run --rm -p 7072:7072 --env-file .env notification-service:latest
 
 FROM maven:3.9-eclipse-temurin-17 AS builder
 WORKDIR /build
@@ -31,11 +31,11 @@ WORKDIR /app
 COPY --from=builder /build/notification-service/target/*.jar app.jar
 
 USER app
-EXPOSE 8082
+EXPOSE 7072
 
 ENV TZ=UTC
 ENV JAVA_OPTS="-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -Djava.security.egd=file:/dev/./urandom"
-ENV PORT=8082
+ENV PORT=7072
 
 LABEL org.opencontainers.image.title="notification-service" \
     org.opencontainers.image.description="Notification microservice (Spring Boot 3, Java 17)"

@@ -12,9 +12,9 @@ from datetime import datetime
 # Base URLs (localhost for local dev)
 BASE_URLS = {
     "auth": "http://localhost:8080",
-    "asset": "http://localhost:8082",
-    "notification": "http://localhost:8081",
-    "helpdesk": "http://localhost:8084",
+    "asset": "http://localhost:7072",
+    "notification": "http://localhost:7071",
+    "helpdesk": "http://localhost:7074",
 }
 
 def create_env_value(key, value, desc="", secret=False):
@@ -1489,9 +1489,9 @@ Consolidated Postman collection for all microservices with Swagger/OpenAPI examp
 
 ## Services Included
 1. **Auth Service** - auth_openapi.yaml (localhost:8080)
-2. **Notification Service** - notification_openapi.yaml (localhost:8081)
-3. **Asset Service** - asset_openapi.yaml (localhost:8082)
-4. **Helpdesk Service** - helpdesk_openapi.yaml (localhost:8084)
+2. **Notification Service** - notification_openapi.yaml (localhost:7071)
+3. **Asset Service** - asset_openapi.yaml (localhost:7072)
+4. **Helpdesk Service** - helpdesk_openapi.yaml (localhost:7074)
 
 ## Swagger/OpenAPI Specs
 - asset-service/docs/swagger/asset_openapi.yaml
@@ -1564,12 +1564,12 @@ def create_auth_environment():
     }
 
 def create_asset_environment():
-    """Asset Service environment - Consolidated (localhost:8082)."""
+    """Asset Service environment - Consolidated (localhost:7072)."""
     return {
         "id": str(uuid.uuid4()),
         "name": "Asset Service - Consolidated Environment",
         "values": [
-            create_env_value("assetbaseUrl", BASE_URLS["asset"], "Asset Service base URL (localhost:8082)"),
+            create_env_value("assetbaseUrl", BASE_URLS["asset"], "Asset Service base URL (localhost:7072)"),
             create_env_value("bearerToken", "", "JWT from auth login", secret=True),
             create_env_value("accessToken", "", "Same as bearerToken", secret=True),
             create_env_value("userId", "1", "User ID"),
@@ -1603,12 +1603,12 @@ def create_asset_environment():
     }
 
 def create_notification_environment():
-    """Notification Service environment - Local (localhost:8081)."""
+    """Notification Service environment - Local (localhost:7071)."""
     return {
         "id": str(uuid.uuid4()),
         "name": "Notification Service - Local",
         "values": [
-            create_env_value("notificationbaseUrl", BASE_URLS["notification"], "Notification Service base URL (localhost:8081)"),
+            create_env_value("notificationbaseUrl", BASE_URLS["notification"], "Notification Service base URL (localhost:7071)"),
             create_env_value("bearerToken", "", "JWT from auth login", secret=True),
             create_env_value("accessToken", "", "Same as bearerToken", secret=True),
             create_env_value("userId", "1", "User ID"),
@@ -1628,12 +1628,12 @@ def create_notification_environment():
     }
 
 def create_helpdesk_environment():
-    """Helpdesk Service environment - Local (localhost:8084)."""
+    """Helpdesk Service environment - Local (localhost:7074)."""
     return {
         "id": str(uuid.uuid4()),
         "name": "Helpdesk Service - Local",
         "values": [
-            create_env_value("helpdeskbaseUrl", BASE_URLS["helpdesk"], "Helpdesk Service base URL (localhost:8084)"),
+            create_env_value("helpdeskbaseUrl", BASE_URLS["helpdesk"], "Helpdesk Service base URL (localhost:7074)"),
             create_env_value("bearerToken", "", "JWT from auth login", secret=True),
             create_env_value("authbaseUrl", BASE_URLS["auth"], "Auth Service URL (for login)"),
             create_env_value("issueId", "1", "Issue ID"),
@@ -1674,7 +1674,7 @@ def create_individual_collections():
         "info": {
             "_postman_id": str(uuid.uuid4()),
             "name": "2. Asset Service - Complete API Collection",
-            "description": "Complete Postman collection for Asset Management Service. Swagger: asset-service/docs/swagger/asset_openapi.yaml. Base URL: localhost:8082",
+            "description": "Complete Postman collection for Asset Management Service. Swagger: asset-service/docs/swagger/asset_openapi.yaml. Base URL: localhost:7072",
             "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
         },
         "item": build_asset_modules(),
@@ -1689,7 +1689,7 @@ def create_individual_collections():
         "info": {
             "_postman_id": str(uuid.uuid4()),
             "name": "3. Notification Service API - Complete Collection",
-            "description": "Postman collection for Notification Service. Swagger: notification-service/docs/swagger/notification_openapi.yaml. Base URL: localhost:8081. Use bearerToken or accessToken.",
+            "description": "Postman collection for Notification Service. Swagger: notification-service/docs/swagger/notification_openapi.yaml. Base URL: localhost:7071. Use bearerToken or accessToken.",
             "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
         },
         "item": build_notification_modules(),
@@ -1704,7 +1704,7 @@ def create_individual_collections():
         "info": {
             "_postman_id": str(uuid.uuid4()),
             "name": "4. Helpdesk Service - Complete API Collection",
-            "description": "Complete Postman collection for Helpdesk Service. Swagger: helpdesk-service/docs/swagger/helpdesk_openapi.yaml. Base URL: localhost:8084",
+            "description": "Complete Postman collection for Helpdesk Service. Swagger: helpdesk-service/docs/swagger/helpdesk_openapi.yaml. Base URL: localhost:7074",
             "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
         },
         "item": build_helpdesk_modules(),

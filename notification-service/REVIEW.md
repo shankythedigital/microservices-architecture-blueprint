@@ -4,7 +4,7 @@
 
 **Service Name:** Notification Service  
 **Version:** 0.0.5-SNAPSHOT  
-**Port:** 8082  
+**Port:** 7072  
 **Status:** ✅ Production Ready
 
 ## 🏗️ Architecture
@@ -52,8 +52,8 @@ notification-service/
 ## 🔌 API Endpoints
 
 ### Base URL
-- **Local:** http://localhost:8082
-- **Swagger UI:** http://localhost:8082/swagger-ui.html
+- **Local:** http://localhost:7072
+- **Swagger UI:** http://localhost:7072/swagger-ui.html
 
 ### Main Controllers
 1. **NotificationController** - Notification endpoints
@@ -150,7 +150,7 @@ notification-service/
 ### Application Properties
 ```yaml
 server:
-  port: 8082
+  port: 7072
 
 spring:
   datasource:
@@ -161,11 +161,11 @@ spring:
 
 notification:
   service:
-    url: http://localhost:8082/api/notifications
+    url: http://localhost:7072/api/notifications
 
 auth:
   service:
-    url: http://localhost:8081/api/
+    url: http://localhost:7071/api/
 ```
 
 ## 🔧 Build & Deploy
@@ -183,7 +183,7 @@ mvn spring-boot:run
 ### Docker
 ```bash
 docker build -t notification-service .
-docker run -p 8082:8082 notification-service
+docker run -p 7072:7072 notification-service
 ```
 
 ## 📈 Performance
@@ -231,8 +231,8 @@ None currently identified.
 
 ## 🔗 Related Services
 
-- **Auth Service** (8081) - Validates JWT tokens
-- **Asset Service** (8083) - Sends asset-related notifications
+- **Auth Service** (7071) - Validates JWT tokens
+- **Asset Service** (7073) - Sends asset-related notifications
 - **Common Service** - Shared utilities and notification helpers
 
 ## 📧 Notification Flow

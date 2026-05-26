@@ -4,7 +4,7 @@
 
 **Service Name:** Authentication & Authorization Service  
 **Version:** 0.0.5-SNAPSHOT  
-**Port:** 8081  
+**Port:** 7071  
 **Status:** ✅ Production Ready
 
 ## 🏗️ Architecture
@@ -55,8 +55,8 @@ auth-service/
 ## 🔌 API Endpoints
 
 ### Base URL
-- **Local:** http://localhost:8081
-- **Swagger UI:** http://localhost:8081/swagger-ui.html
+- **Local:** http://localhost:7071
+- **Swagger UI:** http://localhost:7071/swagger-ui.html
 
 ### Main Controllers
 1. **AuthController** - Authentication endpoints
@@ -176,7 +176,7 @@ auth-service/
 ### Application Properties
 ```yaml
 server:
-  port: 8081
+  port: 7071
 
 spring:
   datasource:
@@ -207,7 +207,7 @@ mvn spring-boot:run
 ### Docker
 ```bash
 docker build -t auth-service .
-docker run -p 8081:8081 auth-service
+docker run -p 7071:7071 auth-service
 ```
 
 ## 📈 Performance
@@ -253,8 +253,8 @@ docker run -p 8081:8081 auth-service
 
 ## 🔗 Related Services
 
-- **Asset Service** (8083) - Uses auth for asset operations
-- **Notification Service** (8082) - Sends auth-related notifications
+- **Asset Service** (7073) - Uses auth for asset operations
+- **Notification Service** (7072) - Sends auth-related notifications
 - **Common Service** - Shared utilities and JWT verification
 
 ---

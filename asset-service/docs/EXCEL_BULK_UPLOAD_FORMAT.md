@@ -25,7 +25,7 @@ All Excel upload endpoints use `multipart/form-data` with the following paramete
 
 **Example using cURL:**
 ```bash
-curl -X POST "http://localhost:8083/api/asset/v1/vendors/bulk/excel" \
+curl -X POST "http://localhost:7073/api/asset/v1/vendors/bulk/excel" \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -F "file=@vendors.xlsx" \
   -F "userId=1" \

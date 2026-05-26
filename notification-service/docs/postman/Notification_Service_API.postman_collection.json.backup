@@ -2,7 +2,7 @@
 	"info": {
 		"_postman_id": "notification-service-api-collection",
 		"name": "Notification Service API - Complete Collection",
-		"description": "Postman collection for Notification Service API endpoints.\n\n**Key Features:**\n- Multi-channel notification support (SMS, Email, WhatsApp, In-App)\n- Template-based notifications with dynamic variable substitution\n- Priority levels (LOW, NORMAL, HIGH, URGENT)\n- Asynchronous processing\n- Metadata support\n\n**Environment Variables Required:**\n- notificationbaseUrl: Base URL (default: http://localhost:8082)\n- accessToken: JWT Bearer token from auth-service\n- templateCode: Template code for notifications\n- recipient: Recipient address (phone/email/userId)",
+		"description": "Postman collection for Notification Service API endpoints.\n\n**Key Features:**\n- Multi-channel notification support (SMS, Email, WhatsApp, In-App)\n- Template-based notifications with dynamic variable substitution\n- Priority levels (LOW, NORMAL, HIGH, URGENT)\n- Asynchronous processing\n- Metadata support\n\n**Environment Variables Required:**\n- notificationbaseUrl: Base URL (default: http://localhost:7072)\n- accessToken: JWT Bearer token from auth-service\n- templateCode: Template code for notifications\n- recipient: Recipient address (phone/email/userId)",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
 		"_exporter_id": "32725094"
 	},
@@ -577,9 +577,9 @@
 	"variable": [
 		{
 			"key": "notificationbaseUrl",
-			"value": "http://localhost:8082",
+			"value": "http://localhost:7072",
 			"type": "string",
-			"description": "Base URL for Notification Service API. Default: http://localhost:8082\n\n**Common Values:**\n- Local: http://localhost:8082\n- Development: http://dev-notification-service.example.com\n- Production: https://api.example.com/notification-service"
+			"description": "Base URL for Notification Service API. Default: http://localhost:7072\n\n**Common Values:**\n- Local: http://localhost:7072\n- Development: http://dev-notification-service.example.com\n- Production: https://api.example.com/notification-service"
 		},
 		{
 			"key": "accessToken",

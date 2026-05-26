@@ -8,15 +8,15 @@ spring:
       adjust-dates-to-context-time-zone: false
 auth:
   service:
-    url: https://auth-service-ddhb.onrender.com:8080
+    url: https://auth-service-7qm8.onrender.com:8080
 
 asset:
   service:
-    url: http://194.163.173.37:8085
+    url: http://194.163.173.37:7075
 
 notification:
   service:
-    url: http://194.163.173.37:8082/api/notifications
+    url: http://194.163.173.37:7072/api/notifications
 
 JWT_PRIVATE_KEY_PATH: classpath:keys/jwt-private.pem
 JWT_PUBLIC_KEY_PATH: classpath:keys/jwt-public.pem

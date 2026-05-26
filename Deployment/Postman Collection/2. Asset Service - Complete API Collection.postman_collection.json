@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "4fb6d5c5-5379-4006-bbdb-fdf739c5162a",
     "name": "2. Asset Service - Complete API Collection",
-    "description": "Complete Postman collection for Asset Management Service. Swagger: asset-service/docs/swagger/asset_openapi.yaml. Base URL: localhost:8085\n\n**Structure (23 folders):**\n1. Asset Scanning | 2. Assets | 3-9. Master Data (Categories, SubCategories, Makes, Models, Vendors, Outlets, Components) | 10. User Links | 11. Documents | 12. Warranty | 13. AMC | 14. Compliance | 15. Compliance Rules | 16. Master Data Agent | 17. Audit Agent | 18. User Asset Link Agent | 19. LLM & Extraction | 20. File Download | 21. Statuses | 22. Entity Types | 23. Document Types\n\n**Component-Asset Linking:** Use optional assetId in Create/Update Component to link component to asset.",
+    "description": "Complete Postman collection for Asset Management Service. Swagger: asset-service/docs/swagger/asset_openapi.yaml. Base URL: localhost:7075\n\n**Structure (23 folders):**\n1. Asset Scanning | 2. Assets | 3-9. Master Data (Categories, SubCategories, Makes, Models, Vendors, Outlets, Components) | 10. User Links | 11. Documents | 12. Warranty | 13. AMC | 14. Compliance | 15. Compliance Rules | 16. Master Data Agent | 17. Audit Agent | 18. User Asset Link Agent | 19. LLM & Extraction | 20. File Download | 21. Statuses | 22. Entity Types | 23. Document Types\n\n**Component-Asset Linking:** Use optional assetId in Create/Update Component to link component to asset.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
@@ -9087,7 +9087,7 @@
   "variable": [
     {
       "key": "assetbaseUrl",
-      "value": "http://localhost:8085",
+      "value": "http://localhost:7075",
       "type": "string"
     },
     {

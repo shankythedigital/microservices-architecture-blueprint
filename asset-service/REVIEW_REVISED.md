@@ -4,7 +4,7 @@
 
 **Service Name:** Asset Management Service  
 **Version:** 0.0.5-SNAPSHOT  
-**Port:** 8083  
+**Port:** 7073  
 **Status:** ✅ Production Ready  
 **Last Updated:** 2025-12-11
 
@@ -162,9 +162,9 @@ asset-service/
 ## 🔌 Complete API Endpoints
 
 ### Base URL
-- **Local:** http://localhost:8083
-- **Swagger UI:** http://localhost:8083/swagger-ui.html
-- **API Docs:** http://localhost:8083/api-docs
+- **Local:** http://localhost:7073
+- **Swagger UI:** http://localhost:7073/swagger-ui.html
+- **API Docs:** http://localhost:7073/api-docs
 
 ### 1. Asset Management (`/api/assets`)
 - `GET /api/assets` - List all assets (with pagination)
@@ -543,7 +543,7 @@ asset-service/
 ### Application Properties
 ```yaml
 server:
-  port: 8083
+  port: 7073
 
 spring:
   datasource:
@@ -581,7 +581,7 @@ mvn spring-boot:run
 ### Docker
 ```bash
 docker build -t asset-service .
-docker run -p 8083:8083 asset-service
+docker run -p 7073:7073 asset-service
 ```
 
 ## 📈 Performance
@@ -640,8 +640,8 @@ docker run -p 8083:8083 asset-service
 
 ## 🔗 Related Services
 
-- **Auth Service** (8081) - Authentication and authorization
-- **Notification Service** (8082) - Notifications for asset events
+- **Auth Service** (7071) - Authentication and authorization
+- **Notification Service** (7072) - Notifications for asset events
 - **Common Service** - Shared utilities and base classes
 
 ## 📊 Statistics

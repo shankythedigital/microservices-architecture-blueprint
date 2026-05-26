@@ -1,4 +1,5 @@
-import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform, TargetPlatform;
+import 'package:flutter/foundation.dart'
+    show kIsWeb, defaultTargetPlatform, TargetPlatform;
 
 /// App Configuration
 /// Centralized configuration for API endpoints and app settings.
@@ -12,7 +13,8 @@ class AppConfig {
   /// on the same Wi‑Fi as your laptop (e.g. `192.168.1.42`). Emulator ignores this and uses `10.0.2.2`.
   ///
   /// `flutter run --dart-define=KEEPLY_DEV_HOST=192.168.1.42`
-  static const String _devHostOverride = String.fromEnvironment('KEEPLY_DEV_HOST');
+  static const String _devHostOverride =
+      String.fromEnvironment('KEEPLY_DEV_HOST');
 
   // Detect platform and set appropriate base URLs
   static String get _defaultHost {
@@ -37,29 +39,29 @@ class AppConfig {
   // API Base URLs - Can be overridden via environment variables.
   // Physical Android on LAN: `--dart-define=KEEPLY_DEV_HOST=192.168.1.42` (same Wi‑Fi as dev machine).
   // Flutter web from another machine / LAN: use full URLs, e.g.
-  // `--dart-define=AUTH_SERVICE_URL=http://192.168.1.5:8081` (must match CORS allowed patterns on services).
+  // `--dart-define=AUTH_SERVICE_URL=http://192.168.1.5:7071` (must match CORS allowed patterns on services).
   static String get authServiceBaseUrl {
     const envUrl = String.fromEnvironment('AUTH_SERVICE_URL');
     if (envUrl.isNotEmpty) return envUrl;
-    return 'http://$_defaultHost:8081';
+    return 'http://$_defaultHost:7071';
   }
 
   static String get notificationServiceBaseUrl {
     const envUrl = String.fromEnvironment('NOTIFICATION_SERVICE_URL');
     if (envUrl.isNotEmpty) return envUrl;
-    return 'http://$_defaultHost:8082';
+    return 'http://$_defaultHost:7072';
   }
 
   static String get assetServiceBaseUrl {
     const envUrl = String.fromEnvironment('ASSET_SERVICE_URL');
     if (envUrl.isNotEmpty) return envUrl;
-    return 'http://$_defaultHost:8085';
+    return 'http://$_defaultHost:7075';
   }
 
   static String get helpdeskServiceBaseUrl {
     const envUrl = String.fromEnvironment('HELPDESK_SERVICE_URL');
     if (envUrl.isNotEmpty) return envUrl;
-    return 'http://$_defaultHost:8084';
+    return 'http://$_defaultHost:7074';
   }
 
   // API Endpoints
@@ -83,7 +85,11 @@ class AppConfig {
 
   // File Upload
   static const int maxFileSize = 50 * 1024 * 1024; // 50MB
-  static const List<String> allowedImageTypes = ['image/jpeg', 'image/png', 'image/jpg'];
+  static const List<String> allowedImageTypes = [
+    'image/jpeg',
+    'image/png',
+    'image/jpg'
+  ];
   static const List<String> allowedDocumentTypes = [
     'application/pdf',
     'application/msword',
@@ -97,7 +103,8 @@ class AppConfig {
   static const int maxCacheSize = 100 * 1024 * 1024; // 100MB
 
   // Security
-  static const int tokenRefreshThreshold = 300; // Refresh 5 minutes before expiry
+  static const int tokenRefreshThreshold =
+      300; // Refresh 5 minutes before expiry
   static const int maxLoginAttempts = 5;
   static const Duration lockoutDuration = Duration(minutes: 15);
 
@@ -147,4 +154,3 @@ class AppConfig {
     return p.trim();
   }
 }
-

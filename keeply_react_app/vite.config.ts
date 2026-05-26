@@ -8,10 +8,10 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
   /** Same names as Spring `application.yml`; optional lines in `.env` / shell. */
   const microservicePorts = {
-    auth: env.AUTH_SERVICE_PORT || process.env.AUTH_SERVICE_PORT || '8081',
-    notification: env.NOTIFICATION_SERVICE_PORT || process.env.NOTIFICATION_SERVICE_PORT || '8082',
-    asset: env.ASSET_SERVICE_PORT || process.env.ASSET_SERVICE_PORT || '8085',
-    helpdesk: env.HELPDESK_SERVICE_PORT || process.env.HELPDESK_SERVICE_PORT || '8084',
+    auth: env.AUTH_SERVICE_PORT || process.env.AUTH_SERVICE_PORT || '7071',
+    notification: env.NOTIFICATION_SERVICE_PORT || process.env.NOTIFICATION_SERVICE_PORT || '7072',
+    asset: env.ASSET_SERVICE_PORT || process.env.ASSET_SERVICE_PORT || '7075',
+    helpdesk: env.HELPDESK_SERVICE_PORT || process.env.HELPDESK_SERVICE_PORT || '7074',
   }
 
   return {

@@ -143,7 +143,7 @@ echo ""
 echo "Option C: Server deployment WITHOUT installing Tesseract on the host"
 echo "   Use the asset-service Dockerfile (includes tesseract in the image):"
 echo "   cd asset-service && docker build -f Dockerfile -t asset-service:latest ."
-echo "   docker run -p 8083:8083 asset-service:latest"
+echo "   docker run -p 7073:7073 asset-service:latest"
 echo "   See docs/TESSERACT_INSTALLATION.md#server-deployment-with-docker"
 echo ""
 

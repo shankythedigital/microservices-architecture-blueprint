@@ -27,12 +27,12 @@ mkdir -p "$KEYS_DIR"
 : "${GROUP_ID:=com.example}"
 : "${ARTIFACT_ID:=asset-service}"
 : "${BASE_PACKAGE:=com.example.asset}"
-: "${SERVER_PORT:=8083}"
+: "${SERVER_PORT:=7073}"
 : "${MYSQL_URL:=jdbc:mysql://localhost:3306/assetdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC}"
 : "${MYSQL_USER:=root}"
 : "${MYSQL_PASS:=Snmysql@1110}"
-: "${AUTH_SERVICE_URL:=http://localhost:8081}"
-: "${NOTIFICATION_SERVICE_URL:=http://localhost:8082}"
+: "${AUTH_SERVICE_URL:=http://localhost:7071}"
+: "${NOTIFICATION_SERVICE_URL:=http://localhost:7072}"
 : "${JWT_PUBLIC_KEY_CLASSPATH:=classpath:keys/jwt-public.pem}"
 
 echo "Using defaults:"
@@ -1219,7 +1219,7 @@ import java.util.Map;
 @Service
 public class AuthTokenService {
 
-    @Value("${services.auth.base-url:http://localhost:8081}")
+    @Value("${services.auth.base-url:http://localhost:7071}")
     private String authBaseUrl;
 
     @Value("${auth.client-id:asset-service}")

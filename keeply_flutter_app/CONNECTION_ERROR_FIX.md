@@ -70,9 +70,9 @@ You can override URLs using environment variables:
 
 ```bash
 # Run with custom URLs
-flutter run --dart-define=AUTH_SERVICE_URL=http://192.168.1.100:8081 \
-           --dart-define=ASSET_SERVICE_URL=http://192.168.1.100:8083 \
-           --dart-define=NOTIFICATION_SERVICE_URL=http://192.168.1.100:8082
+flutter run --dart-define=AUTH_SERVICE_URL=http://192.168.1.100:7071 \
+           --dart-define=ASSET_SERVICE_URL=http://192.168.1.100:7073 \
+           --dart-define=NOTIFICATION_SERVICE_URL=http://192.168.1.100:7072
 ```
 
 ### 5. Verify Backend Services
@@ -81,9 +81,9 @@ Ensure all services are running:
 
 ```bash
 # Check if services are running
-curl http://localhost:8081/actuator/health  # Auth Service
-curl http://localhost:8082/actuator/health  # Notification Service
-curl http://localhost:8083/actuator/health  # Asset Service
+curl http://localhost:7071/actuator/health  # Auth Service
+curl http://localhost:7072/actuator/health  # Notification Service
+curl http://localhost:7073/actuator/health  # Asset Service
 ```
 
 ### 6. Check CORS Configuration

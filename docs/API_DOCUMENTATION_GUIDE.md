@@ -24,13 +24,13 @@ When services are running, access Swagger UI at:
    - OpenAPI YAML: `auth-service/docs/swagger/openapi.yaml`
 
 2. **Asset Service**
-   - URL: `http://localhost:8083/swagger-ui.html`
-   - API Docs: `http://localhost:8083/api-docs`
+   - URL: `http://localhost:7073/swagger-ui.html`
+   - API Docs: `http://localhost:7073/api-docs`
    - OpenAPI YAML: `asset-service/docs/swagger/openapi.yaml`
 
 3. **Notification Service**
-   - URL: `http://localhost:8082/swagger-ui.html`
-   - API Docs: `http://localhost:8082/api-docs`
+   - URL: `http://localhost:7072/swagger-ui.html`
+   - API Docs: `http://localhost:7072/api-docs`
    - OpenAPI YAML: `notification-service/docs/swagger/openapi.yaml`
 
 ### OpenAPI Specification Files
@@ -127,7 +127,7 @@ Or create manually with:
 
 ```json
 {
-  "assetbaseUrl": "http://localhost:8083",
+  "assetbaseUrl": "http://localhost:7073",
   "accessToken": "",
   "userId": "123",
   "username": "john.doe",
@@ -147,7 +147,7 @@ Create a new environment with:
 
 ```json
 {
-  "notificationbaseUrl": "http://localhost:8082",
+  "notificationbaseUrl": "http://localhost:7072",
   "accessToken": "",
   "templateCode": "OTP_SMS",
   "recipient": "+1234567890"

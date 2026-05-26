@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "e2c12d66-fa95-4f71-b6fd-c86c430e74bd",
     "name": "Microservices - Complete API Collection",
-    "description": "# Microservices Complete API Collection\n\nConsolidated Postman collection for all microservices with Swagger/OpenAPI examples.\n\n## Services Included\n1. **Auth Service** - auth_openapi.yaml (localhost:8080)\n2. **Notification Service** - notification_openapi.yaml (localhost:8081)\n3. **Asset Service** - asset_openapi.yaml (localhost:8082)\n4. **Helpdesk Service** - helpdesk_openapi.yaml (localhost:8084)\n\n## Swagger/OpenAPI Specs\n- asset-service/docs/swagger/asset_openapi.yaml\n- auth-service/docs/swagger/auth_openapi.yaml\n- notification-service/docs/swagger/notification_openapi.yaml\n- helpdesk-service/docs/swagger/helpdesk_openapi.yaml\n\n## Setup\n1. Import the **Microservices - Consolidated Environment** file\n2. Run **Auth Service > Login** to get bearerToken\n3. Copy accessToken from response to bearerToken in environment\n4. All other requests will use the token automatically\n\n## Environment Variables\n- authbaseUrl, assetbaseUrl, notificationbaseUrl, helpdeskbaseUrl\n- bearerToken (from login)\n- userId, username, projectType, etc.\n",
+    "description": "# Microservices Complete API Collection\n\nConsolidated Postman collection for all microservices with Swagger/OpenAPI examples.\n\n## Services Included\n1. **Auth Service** - auth_openapi.yaml (localhost:8080)\n2. **Notification Service** - notification_openapi.yaml (localhost:7071)\n3. **Asset Service** - asset_openapi.yaml (localhost:7072)\n4. **Helpdesk Service** - helpdesk_openapi.yaml (localhost:7074)\n\n## Swagger/OpenAPI Specs\n- asset-service/docs/swagger/asset_openapi.yaml\n- auth-service/docs/swagger/auth_openapi.yaml\n- notification-service/docs/swagger/notification_openapi.yaml\n- helpdesk-service/docs/swagger/helpdesk_openapi.yaml\n\n## Setup\n1. Import the **Microservices - Consolidated Environment** file\n2. Run **Auth Service > Login** to get bearerToken\n3. Copy accessToken from response to bearerToken in environment\n4. All other requests will use the token automatically\n\n## Environment Variables\n- authbaseUrl, assetbaseUrl, notificationbaseUrl, helpdeskbaseUrl\n- bearerToken (from login)\n- userId, username, projectType, etc.\n",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
     "_exporter_id": "microservices"
   },
@@ -13629,17 +13629,17 @@
     },
     {
       "key": "assetbaseUrl",
-      "value": "http://localhost:8082",
+      "value": "http://localhost:7072",
       "type": "string"
     },
     {
       "key": "notificationbaseUrl",
-      "value": "http://localhost:8081",
+      "value": "http://localhost:7071",
       "type": "string"
     },
     {
       "key": "helpdeskbaseUrl",
-      "value": "http://localhost:8084",
+      "value": "http://localhost:7074",
       "type": "string"
     },
     {

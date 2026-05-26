@@ -203,7 +203,7 @@ To run the asset service on a server **without** installing Tesseract on the hos
    ```
 3. **Run the container.** Tesseract is inside the image; the host does not need it:
    ```bash
-   docker run -p 8083:8083 -e SPRING_DATASOURCE_URL=... asset-service:latest
+   docker run -p 7073:7073 -e SPRING_DATASOURCE_URL=... asset-service:latest
    ```
 
 The Dockerfile installs `tesseract-ocr` in the image, so the server only needs Docker—no Tesseract install on the host.

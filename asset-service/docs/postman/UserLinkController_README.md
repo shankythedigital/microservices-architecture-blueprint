@@ -169,7 +169,7 @@ Get all users linked to assets in a specific subcategory.
 
 ### Required Variables
 
-- **assetbaseUrl**: Base URL for Asset Service (default: `http://localhost:8083`)
+- **assetbaseUrl**: Base URL for Asset Service (default: `http://localhost:7073`)
 - **accessToken**: JWT Bearer token from auth-service login endpoint
 
 ### User Context Variables

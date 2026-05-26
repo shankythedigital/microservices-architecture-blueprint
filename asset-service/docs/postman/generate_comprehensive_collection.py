@@ -275,7 +275,7 @@ if __name__ == "__main__":
         "variable": [
             {
                 "key": "assetbaseUrl",
-                "value": "http://localhost:8083",
+                "value": "http://localhost:7073",
                 "type": "string"
             },
             {

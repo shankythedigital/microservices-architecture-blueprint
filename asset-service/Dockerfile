@@ -8,7 +8,7 @@
 # From asset-service/:
 #   docker build -f Dockerfile.lxip -t asset-service-lxip:latest ..
 #
-# Runtime: server.port uses ${PORT:8085} in application.yml — Render injects PORT automatically.
+# Runtime: server.port uses ${PORT:7075} in application.yml — Render injects PORT automatically.
 
 FROM maven:3.9-eclipse-temurin-17 AS builder
 WORKDIR /build
@@ -28,10 +28,10 @@ WORKDIR /app
 COPY --from=builder /build/asset-service/target/*.jar app.jar
 
 USER app
-EXPOSE 8085
+EXPOSE 7075
 
 ENV TESSDATA_PREFIX=/usr/share/tesseract-ocr/4.00/tessdata
 ENV JAVA_OPTS="-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0"
-ENV PORT=8085
+ENV PORT=7075
 
 ENTRYPOINT exec java $JAVA_OPTS -jar app.jar

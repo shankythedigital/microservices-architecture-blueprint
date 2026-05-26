@@ -9854,7 +9854,7 @@
   "variable": [
     {
       "key": "assetbaseUrl",
-      "value": "http://localhost:8085"
+      "value": "http://localhost:7075"
     },
     {
       "key": "bearerToken",

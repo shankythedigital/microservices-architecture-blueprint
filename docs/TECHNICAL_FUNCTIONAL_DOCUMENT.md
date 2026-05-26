@@ -66,14 +66,14 @@ The Asset Lifecycle Management System is designed to:
 
 ### System Components
 
-1. **Auth Service** (Port 8080/8081)
+1. **Auth Service** (Port 8080/7071)
    - User registration and authentication
    - Credential management (RSA, WebAuthn, MPIN)
    - Terms and Conditions management
    - Project type management
    - Audit logging
 
-2. **Asset Service** (Port 8082/8083)
+2. **Asset Service** (Port 7072/7073)
    - Asset CRUD operations
    - Master data management
    - User-Asset linking
@@ -81,7 +81,7 @@ The Asset Lifecycle Management System is designed to:
    - Document management
    - Compliance checking
 
-3. **Notification Service** (Port 8081/8082)
+3. **Notification Service** (Port 7071/7072)
    - Multi-channel notification delivery
    - Template-based notifications
    - Asynchronous processing
@@ -95,7 +95,7 @@ The Asset Lifecycle Management System is designed to:
 ```
 ┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
 │   Auth Service  │     │  Asset Service  │     │Notification Svc │
-│   (Port 8080)   │     │   (Port 8083)   │     │   (Port 8082)   │
+│   (Port 8080)   │     │   (Port 7073)   │     │   (Port 7072)   │
 └────────┬────────┘     └────────┬────────┘     └────────┬────────┘
          │                       │                       │
          └───────────────────────┴───────────────────────┘
@@ -208,7 +208,7 @@ See [Auth Service API Documentation](#auth-service-api-documentation) for comple
 The Asset Service manages the complete asset lifecycle, including asset creation, master data management, user-asset linking, warranty/AMC management, and compliance checking.
 
 #### Base URL
-- **Local**: `http://localhost:8083`
+- **Local**: `http://localhost:7073`
 - **Production**: `https://api.example.com/asset-service`
 
 #### Key Features
@@ -289,7 +289,7 @@ See [Asset Service API Documentation](#asset-service-api-documentation) for comp
 The Notification Service provides multi-channel notification capabilities with template-based content and asynchronous processing.
 
 #### Base URL
-- **Local**: `http://localhost:8082`
+- **Local**: `http://localhost:7072`
 - **Production**: `https://api.example.com/notification-service`
 
 #### Key Features
@@ -934,17 +934,17 @@ jwt.public-key-path=classpath:keys/jwt-public.pem
 
 #### Asset Service
 ```properties
-server.port=8083
+server.port=7073
 spring.datasource.url=jdbc:mysql://localhost:3306/assetdb
 spring.datasource.username=root
 spring.datasource.password=password
 auth.service.url=http://localhost:8080
-notification.service.url=http://localhost:8082
+notification.service.url=http://localhost:7072
 ```
 
 #### Notification Service
 ```properties
-server.port=8082
+server.port=7072
 spring.datasource.url=jdbc:mysql://localhost:3306/notificationdb
 spring.datasource.username=root
 spring.datasource.password=password
@@ -1056,8 +1056,8 @@ GET /actuator/health
 ### Swagger/OpenAPI Documentation
 
 - **Auth Service**: `http://localhost:8080/swagger-ui.html`
-- **Asset Service**: `http://localhost:8083/swagger-ui.html`
-- **Notification Service**: `http://localhost:8082/swagger-ui.html`
+- **Asset Service**: `http://localhost:7073/swagger-ui.html`
+- **Notification Service**: `http://localhost:7072/swagger-ui.html`
 
 ### Postman Collections
 

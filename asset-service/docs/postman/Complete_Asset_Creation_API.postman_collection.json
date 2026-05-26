@@ -2,7 +2,7 @@
 	"info": {
 		"_postman_id": "complete-asset-creation-collection",
 		"name": "Complete Asset Creation API - All-in-One Endpoint",
-		"description": "Postman collection for Complete Asset Creation API endpoint.\n\n**Endpoint:**\n- POST /api/asset/v1/assets/complete - Create asset with all related information in one request\n\n**Features:**\n- Create asset with basic info (Title/UI Name, Model Number, Serial Number)\n- Create warranty (Purchase/Installation Date, Limited Warranty)\n- Upload purchase invoice document\n- Assign asset to user (Added to)\n- All operations in a single atomic transaction\n\n**Request Format:**\n- Content-Type: multipart/form-data\n- All parameters as separate form-data fields\n- `purchaseInvoice` (File) - Optional purchase invoice document\n\n**Environment Variables Required:**\n- assetbaseUrl: Base URL (default: http://localhost:8083)\n- accessToken: JWT Bearer token from auth-service\n- userId, username: Caller user context\n- targetUserId, targetUsername: Target user for asset assignment",
+		"description": "Postman collection for Complete Asset Creation API endpoint.\n\n**Endpoint:**\n- POST /api/asset/v1/assets/complete - Create asset with all related information in one request\n\n**Features:**\n- Create asset with basic info (Title/UI Name, Model Number, Serial Number)\n- Create warranty (Purchase/Installation Date, Limited Warranty)\n- Upload purchase invoice document\n- Assign asset to user (Added to)\n- All operations in a single atomic transaction\n\n**Request Format:**\n- Content-Type: multipart/form-data\n- All parameters as separate form-data fields\n- `purchaseInvoice` (File) - Optional purchase invoice document\n\n**Environment Variables Required:**\n- assetbaseUrl: Base URL (default: http://localhost:7073)\n- accessToken: JWT Bearer token from auth-service\n- userId, username: Caller user context\n- targetUserId, targetUsername: Target user for asset assignment",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
 		"_exporter_id": "32725094"
 	},
@@ -447,9 +447,9 @@
 	"variable": [
 		{
 			"key": "assetbaseUrl",
-			"value": "http://localhost:8083",
+			"value": "http://localhost:7073",
 			"type": "string",
-			"description": "Base URL for Asset Service API. Default: http://localhost:8083\n\n**Common Values:**\n- Local: http://localhost:8083\n- Development: http://dev-asset-service.example.com\n- Production: https://api.example.com/asset-service"
+			"description": "Base URL for Asset Service API. Default: http://localhost:7073\n\n**Common Values:**\n- Local: http://localhost:7073\n- Development: http://dev-asset-service.example.com\n- Production: https://api.example.com/asset-service"
 		},
 		{
 			"key": "accessToken",

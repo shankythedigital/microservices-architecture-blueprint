@@ -25,7 +25,7 @@ def update_environment_file():
     # Define all environment variables with descriptions
     variables = {
         "assetbaseUrl": {
-            "value": "http://localhost:8083",
+            "value": "http://localhost:7073",
             "type": "default",
             "description": "Base URL for Asset Service API"
         },

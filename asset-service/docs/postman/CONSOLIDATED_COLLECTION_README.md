@@ -51,7 +51,7 @@ The collection is organized by **20 controllers** in the following order:
 ## 🔑 Environment Variables
 
 ### Base Configuration
-- `assetbaseUrl` - Base URL (default: `http://localhost:8083`)
+- `assetbaseUrl` - Base URL (default: `http://localhost:7073`)
 - `accessToken` - JWT Bearer token from auth-service (secret)
 
 ### User Context
@@ -118,7 +118,7 @@ These are defined at the collection level and can be overridden by environment v
 ### 2. Configure Environment
 
 **Set Base URL:**
-- Update `assetbaseUrl` to your service URL (default: `http://localhost:8083`)
+- Update `assetbaseUrl` to your service URL (default: `http://localhost:7073`)
 
 **Set Access Token:**
 1. Login to auth-service using the Auth Service collection

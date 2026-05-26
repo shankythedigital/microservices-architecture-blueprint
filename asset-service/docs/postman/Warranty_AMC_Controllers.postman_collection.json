@@ -2,7 +2,7 @@
 	"info": {
 		"_postman_id": "warranty-amc-controllers-collection",
 		"name": "Warranty & AMC Controllers - Complete API Collection",
-		"description": "Complete API collection for AssetWarrantyController and AssetAmcController with detailed environment and body variables.\n\n**Controllers:**\n- AssetWarrantyController: `/api/asset/v1/warranty`\n- AssetAmcController: `/api/asset/v1/amc`\n\n**Features:**\n- Full CRUD operations for Warranty and AMC entities\n- JSON-only requests (document uploads handled separately via DocumentController)\n- Comprehensive validation and error handling\n\n**Environment Variables Required:**\n- assetbaseUrl: Base URL (default: http://localhost:8083)\n- accessToken: JWT Bearer token from auth-service\n- userId, username: User context for operations\n- assetId, componentId: Asset/Component IDs for linking\n- warrantyId, amcId: Warranty/AMC IDs for operations\n- warrantyStatus, amcStatus: Status values\n- warrantyProvider: Warranty provider name\n- warrantyTerms: Warranty terms description\n- startDate, endDate: Date values (format: yyyy-MM-dd)\n- documentId, docType: Optional document linkage",
+		"description": "Complete API collection for AssetWarrantyController and AssetAmcController with detailed environment and body variables.\n\n**Controllers:**\n- AssetWarrantyController: `/api/asset/v1/warranty`\n- AssetAmcController: `/api/asset/v1/amc`\n\n**Features:**\n- Full CRUD operations for Warranty and AMC entities\n- JSON-only requests (document uploads handled separately via DocumentController)\n- Comprehensive validation and error handling\n\n**Environment Variables Required:**\n- assetbaseUrl: Base URL (default: http://localhost:7073)\n- accessToken: JWT Bearer token from auth-service\n- userId, username: User context for operations\n- assetId, componentId: Asset/Component IDs for linking\n- warrantyId, amcId: Warranty/AMC IDs for operations\n- warrantyStatus, amcStatus: Status values\n- warrantyProvider: Warranty provider name\n- warrantyTerms: Warranty terms description\n- startDate, endDate: Date values (format: yyyy-MM-dd)\n- documentId, docType: Optional document linkage",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
 		"_exporter_id": "32725094"
 	},
@@ -327,9 +327,9 @@
 	"variable": [
 		{
 			"key": "assetbaseUrl",
-			"value": "http://localhost:8083",
+			"value": "http://localhost:7073",
 			"type": "string",
-			"description": "Base URL for Asset Service API. Default: http://localhost:8083"
+			"description": "Base URL for Asset Service API. Default: http://localhost:7073"
 		},
 		{
 			"key": "accessToken",

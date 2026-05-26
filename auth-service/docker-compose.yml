@@ -1,0 +1,19 @@
+# Auth service — build image and run with env from this directory.
+# Usage (from auth-service/):
+#   docker compose --env-file .env up --build
+#
+# First time: cp .env.example .env && edit .env
+
+services:
+  auth-service:
+    build:
+      context: ..
+      dockerfile: auth-service/Dockerfile
+    image: auth-service:latest
+    env_file:
+      - .env
+    ports:
+      - "${PORT:-7071}:${PORT:-7071}"
+    environment:
+      # Ensure container listens on the same port as mapped (override in .env if needed)
+      PORT: ${PORT:-7071}

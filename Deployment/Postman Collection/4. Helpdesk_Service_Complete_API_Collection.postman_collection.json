@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "642caab8-dba1-4ff4-b1b5-7df332a1ff73",
     "name": "4. Helpdesk Service - Complete API Collection",
-    "description": "Helpdesk Service API - Organized by modules:\n1. Issue Master - Predefined issue types (category/subcategory/component/spare part)\n2. Issue Tickets - Create/raise and manage tickets\n3. Queries - User queries\n4. FAQs - Frequently asked questions\n5. Escalation Matrix - SLA configuration\n6. Knowledge Base - Service knowledge\n7. Escalations & SLA - Issue escalation and SLA tracking\n8. Chatbot - AI chatbot\n\nSwagger: helpdesk-service/docs/swagger/helpdesk_openapi.yaml. Base URL: localhost:8084",
+    "description": "Helpdesk Service API - Organized by modules:\n1. Issue Master - Predefined issue types (category/subcategory/component/spare part)\n2. Issue Tickets - Create/raise and manage tickets\n3. Queries - User queries\n4. FAQs - Frequently asked questions\n5. Escalation Matrix - SLA configuration\n6. Knowledge Base - Service knowledge\n7. Escalations & SLA - Issue escalation and SLA tracking\n8. Chatbot - AI chatbot\n\nSwagger: helpdesk-service/docs/swagger/helpdesk_openapi.yaml. Base URL: localhost:7074",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
@@ -2272,7 +2272,7 @@
   "variable": [
     {
       "key": "helpdeskbaseUrl",
-      "value": "http://localhost:8084",
+      "value": "http://localhost:7074",
       "type": "string"
     },
     {

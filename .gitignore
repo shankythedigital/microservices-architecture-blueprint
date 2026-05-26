@@ -1,3 +1,6 @@
 target/
 **/target/
 *.jar
+
+# Auth service local secrets (template is auth-service/.env.example)
+auth-service/.env

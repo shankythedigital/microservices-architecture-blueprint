@@ -266,7 +266,7 @@ if __name__ == "__main__":
         for var in collection.get('variable', []):
             if var.get('key') == 'baseUrl':
                 var['key'] = 'assetbaseUrl'
-                var['value'] = 'http://localhost:8083'
+                var['value'] = 'http://localhost:7073'
                 var['description'] = 'Base URL for Asset Service API'
         
         # Ensure assetbaseUrl variable exists
@@ -274,7 +274,7 @@ if __name__ == "__main__":
         if 'assetbaseUrl' not in var_keys:
             collection.setdefault('variable', []).append({
                 "key": "assetbaseUrl",
-                "value": "http://localhost:8083",
+                "value": "http://localhost:7073",
                 "type": "string",
                 "description": "Base URL for Asset Service API"
             })

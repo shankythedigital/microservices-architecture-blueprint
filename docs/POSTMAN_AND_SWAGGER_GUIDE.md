@@ -23,9 +23,9 @@ This guide covers the consolidated Postman collection and Swagger/OpenAPI specif
 |------|-------------|
 | `Auth Service - Local.postman_environment.json` | Auth Service (localhost:8080) |
 | `Auth_Service_Environment.postman_environment.json` | Auth Service (same as Local) |
-| `Asset Service - Consolidated Environment.postman_environment.json` | Asset Service (localhost:8082) |
-| `Notification Service - Local.postman_environment.json` | Notification Service (localhost:8081) |
-| `Helpdesk Service - Local.postman_environment.json` | Helpdesk Service (localhost:8084) |
+| `Asset Service - Consolidated Environment.postman_environment.json` | Asset Service (localhost:7072) |
+| `Notification Service - Local.postman_environment.json` | Notification Service (localhost:7071) |
+| `Helpdesk Service - Local.postman_environment.json` | Helpdesk Service (localhost:7074) |
 
 ### Import Instructions
 
@@ -45,9 +45,9 @@ This guide covers the consolidated Postman collection and Swagger/OpenAPI specif
 | Folder | Base URL (Local) | Port |
 |--------|------------------|------|
 | 1. Auth Service | http://localhost:8080 | 8080 |
-| 2. Notification Service | http://localhost:8081 | 8081 |
-| 3. Asset Service | http://localhost:8082 | 8082 |
-| 4. Helpdesk Service | http://localhost:8084 | 8084 |
+| 2. Notification Service | http://localhost:7071 | 7071 |
+| 3. Asset Service | http://localhost:7072 | 7072 |
+| 4. Helpdesk Service | http://localhost:7074 | 7074 |
 
 ---
 
@@ -58,9 +58,9 @@ All OpenAPI specs include request/response examples from the Swagger definitions
 | Service | OpenAPI File | Swagger UI (when service running) |
 |---------|--------------|----------------------------------|
 | **Auth Service** | `auth-service/docs/swagger/auth_openapi.yaml` | http://localhost:8080/swagger-ui.html |
-| **Notification Service** | `notification-service/docs/swagger/notification_openapi.yaml` | http://localhost:8081/swagger-ui.html |
-| **Asset Service** | `asset-service/docs/swagger/asset_openapi.yaml` | http://localhost:8082/swagger-ui.html |
-| **Helpdesk Service** | `helpdesk-service/docs/swagger/helpdesk_openapi.yaml` | http://localhost:8084/swagger-ui.html |
+| **Notification Service** | `notification-service/docs/swagger/notification_openapi.yaml` | http://localhost:7071/swagger-ui.html |
+| **Asset Service** | `asset-service/docs/swagger/asset_openapi.yaml` | http://localhost:7072/swagger-ui.html |
+| **Helpdesk Service** | `helpdesk-service/docs/swagger/helpdesk_openapi.yaml` | http://localhost:7074/swagger-ui.html |
 
 ### OpenAPI Spec Paths (Relative to Project Root)
 
@@ -246,9 +246,9 @@ helpdesk-service/docs/swagger/helpdesk_openapi.yaml
 | Variable | Default | Description |
 |----------|---------|-------------|
 | authbaseUrl | http://localhost:8080 | Auth Service URL |
-| assetbaseUrl | http://localhost:8082 | Asset Service URL |
-| notificationbaseUrl | http://localhost:8081 | Notification Service URL |
-| helpdeskbaseUrl | http://localhost:8084 | Helpdesk Service URL |
+| assetbaseUrl | http://localhost:7072 | Asset Service URL |
+| notificationbaseUrl | http://localhost:7071 | Notification Service URL |
+| helpdeskbaseUrl | http://localhost:7074 | Helpdesk Service URL |
 | bearerToken | (empty) | JWT from login - set after Login |
 | accessToken | (empty) | Same as bearerToken |
 | refreshToken | (empty) | For token refresh |

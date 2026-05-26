@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "f0ba2755-77ef-44bf-8e36-45da85098fb9",
     "name": "3. Notification Service API - Complete Collection",
-    "description": "Postman collection for Notification Service. Swagger: notification-service/docs/swagger/notification_openapi.yaml. Base URL: localhost:8081. Use bearerToken or accessToken.",
+    "description": "Postman collection for Notification Service. Swagger: notification-service/docs/swagger/notification_openapi.yaml. Base URL: localhost:7071. Use bearerToken or accessToken.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
@@ -661,7 +661,7 @@
   "variable": [
     {
       "key": "notificationbaseUrl",
-      "value": "http://localhost:8081",
+      "value": "http://localhost:7071",
       "type": "string"
     },
     {

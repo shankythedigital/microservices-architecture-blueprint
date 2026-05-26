@@ -42,7 +42,7 @@ Comprehensive Postman collection for Notification Service API based on entity mo
 All requests use environment variables from `Notification_Service_Environment.postman_environment.json`:
 
 ### Base Variables
-- `notificationbaseUrl`: http://localhost:8082
+- `notificationbaseUrl`: http://localhost:7072
 - `accessToken`: JWT Bearer token
 - `projectType`: ASSET_MGMT or ECOM
 - `channel`: SMS, EMAIL, WHATSAPP, INAPP

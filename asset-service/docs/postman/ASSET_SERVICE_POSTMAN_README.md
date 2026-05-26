@@ -31,7 +31,7 @@ Update the following variables in the environment:
 
 | Variable | Description | Example Value |
 |----------|-------------|---------------|
-| `baseUrl` | Asset service base URL | `http://localhost:8083` |
+| `baseUrl` | Asset service base URL | `http://localhost:7073` |
 | `authToken` | JWT authentication token | `Bearer token from auth service` |
 | `userId` | Current user ID | `1` |
 | `username` | Current username | `admin` |
@@ -229,7 +229,7 @@ All requests require JWT authentication. The token is automatically included via
 
 1. Use Auth Service to login:
    ```
-   POST http://localhost:8081/api/auth/login
+   POST http://localhost:7071/api/auth/login
    ```
 2. Copy the `accessToken` from response
 3. Update `authToken` variable in environment
@@ -347,8 +347,8 @@ All responses follow this format:
 
 ## 📚 Additional Resources
 
-- **Swagger UI**: http://localhost:8083/swagger-ui.html
-- **API Docs**: http://localhost:8083/api-docs
+- **Swagger UI**: http://localhost:7073/swagger-ui.html
+- **API Docs**: http://localhost:7073/api-docs
 - **Service Review**: See `REVIEW_REVISED.md`
 
 ## ✅ Collection Features

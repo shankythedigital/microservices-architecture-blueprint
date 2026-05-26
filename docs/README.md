@@ -54,14 +54,14 @@ Complete guide for using Swagger/OpenAPI and Postman collections:
 - **API Docs**: `http://localhost:8080/api-docs`
 
 #### Asset Service
-- **Swagger UI**: `http://localhost:8083/swagger-ui.html`
+- **Swagger UI**: `http://localhost:7073/swagger-ui.html`
 - **OpenAPI YAML**: `../asset-service/docs/swagger/openapi.yaml`
-- **API Docs**: `http://localhost:8083/api-docs`
+- **API Docs**: `http://localhost:7073/api-docs`
 
 #### Notification Service
-- **Swagger UI**: `http://localhost:8082/swagger-ui.html`
+- **Swagger UI**: `http://localhost:7072/swagger-ui.html`
 - **OpenAPI YAML**: `../notification-service/docs/swagger/openapi.yaml`
-- **API Docs**: `http://localhost:8082/api-docs`
+- **API Docs**: `http://localhost:7072/api-docs`
 
 **Use these for:**
 - Interactive API exploration

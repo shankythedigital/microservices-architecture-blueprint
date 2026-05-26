@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "5f0d976e-2c98-40ec-be61-ab4ffc97a04e",
     "name": "M3 v2.5 Asset Service - Complete API Collection",
-    "description": "Complete API collection for Asset Management Service with detailed environment and body variables.\n\n**Environment Variables:**\n- assetbaseUrl: Base URL (default: http://localhost:8083)\n- accessToken: JWT Bearer token from auth-service\n- userId, username, projectType: User context\n- categoryId, subCategoryId, makeId, modelId, vendorId, outletId, componentId, assetId, warrantyId, amcId, documentId: Entity IDs\n- targetUserId, targetUsername: Target user for linking operations\n- entityType, entityId: Entity type and ID for compliance/document operations\n- searchKeyword: Search keyword for asset search\n- filename: File name for download operations\n\n**Body Variables:**\nAll request bodies use environment variables for dynamic values. Examples are provided with {{variableName}} syntax.\n\n**Features:**\n- All endpoints use /api/asset/v1 base path\n- Bulk upload endpoints for all master data entities\n- Excel bulk upload with column name-based parsing\n- Document bulk upload with entity linkage\n- Asset bulk upload with component row-based handling\n- Comprehensive error handling and validation",
+    "description": "Complete API collection for Asset Management Service with detailed environment and body variables.\n\n**Environment Variables:**\n- assetbaseUrl: Base URL (default: http://localhost:7073)\n- accessToken: JWT Bearer token from auth-service\n- userId, username, projectType: User context\n- categoryId, subCategoryId, makeId, modelId, vendorId, outletId, componentId, assetId, warrantyId, amcId, documentId: Entity IDs\n- targetUserId, targetUsername: Target user for linking operations\n- entityType, entityId: Entity type and ID for compliance/document operations\n- searchKeyword: Search keyword for asset search\n- filename: File name for download operations\n\n**Body Variables:**\nAll request bodies use environment variables for dynamic values. Examples are provided with {{variableName}} syntax.\n\n**Features:**\n- All endpoints use /api/asset/v1 base path\n- Bulk upload endpoints for all master data entities\n- Excel bulk upload with column name-based parsing\n- Document bulk upload with entity linkage\n- Asset bulk upload with component row-based handling\n- Comprehensive error handling and validation",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
     "_exporter_id": "32725094"
   },
@@ -4672,9 +4672,9 @@
   "variable": [
     {
       "key": "assetbaseUrl",
-      "value": "http://localhost:8083",
+      "value": "http://localhost:7073",
       "type": "string",
-      "description": "Base URL for Asset Service API. Default: http://localhost:8083"
+      "description": "Base URL for Asset Service API. Default: http://localhost:7073"
     },
     {
       "key": "accessToken",

@@ -7,9 +7,9 @@ This document provides a comprehensive review summary of all microservices in th
 ## 🏗️ Architecture Overview
 
 ### Services
-1. **Auth Service** (Port 8081) - Authentication & Authorization
-2. **Notification Service** (Port 8082) - Multi-channel Notifications
-3. **Asset Service** (Port 8083) - Asset Management
+1. **Auth Service** (Port 7071) - Authentication & Authorization
+2. **Notification Service** (Port 7072) - Multi-channel Notifications
+3. **Asset Service** (Port 7073) - Asset Management
 4. **Common Service** - Shared Library
 
 ### Technology Stack
@@ -24,9 +24,9 @@ This document provides a comprehensive review summary of all microservices in th
 
 | Service | Status | Port | Swagger UI |
 |---------|--------|------|------------|
-| Auth Service | ✅ Ready | 8081 | http://localhost:8081/swagger-ui.html |
-| Notification Service | ✅ Ready | 8082 | http://localhost:8082/swagger-ui.html |
-| Asset Service | ✅ Ready | 8083 | http://localhost:8083/swagger-ui.html |
+| Auth Service | ✅ Ready | 7071 | http://localhost:7071/swagger-ui.html |
+| Notification Service | ✅ Ready | 7072 | http://localhost:7072/swagger-ui.html |
+| Asset Service | ✅ Ready | 7073 | http://localhost:7073/swagger-ui.html |
 | Common Service | ✅ Ready | N/A | N/A (Library) |
 
 ## 🔐 Security

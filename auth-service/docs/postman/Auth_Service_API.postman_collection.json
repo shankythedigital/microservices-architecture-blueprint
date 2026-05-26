@@ -2890,7 +2890,7 @@
   "variable": [
     {
       "key": "authbaseUrl",
-      "value": "http://localhost:8081",
+      "value": "http://localhost:7071",
       "description": "Base URL for Auth Service API. Default: http://localhost:8080\n\n**Common Values:**\n- Local: http://localhost:8080\n- Development: http://dev-auth-service.example.com\n- Production: https://api.example.com/auth-service"
     },
     {

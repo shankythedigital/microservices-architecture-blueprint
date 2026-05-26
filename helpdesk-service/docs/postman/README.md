@@ -28,7 +28,7 @@ Before making API calls, you need to authenticate and get a JWT token:
 
 1. Use the Auth Service login endpoint:
    ```
-   POST http://localhost:8081/api/auth/login
+   POST http://localhost:7071/api/auth/login
    Body: {
      "username": "your-username",
      "password": "your-password"
@@ -52,8 +52,8 @@ Now you can use any request in the collection. The `bearerToken` will be automat
 The environment includes the following variables:
 
 ### Service URLs
-- `helpdeskbaseUrl` - Base URL for Helpdesk Service (default: http://localhost:8084)
-- `authbaseUrl` - Base URL for Auth Service (default: http://localhost:8081)
+- `helpdeskbaseUrl` - Base URL for Helpdesk Service (default: http://localhost:7074)
+- `authbaseUrl` - Base URL for Auth Service (default: http://localhost:7071)
 
 ### Authentication
 - `bearerToken` - JWT Bearer token (set this after login)
@@ -106,8 +106,8 @@ The collection is organized into the following folders:
 
 ## Prerequisites
 
-- Helpdesk Service running on `http://localhost:8084`
-- Auth Service running on `http://localhost:8081` (for authentication)
+- Helpdesk Service running on `http://localhost:7074`
+- Auth Service running on `http://localhost:7071` (for authentication)
 - Valid user credentials for login
 
 ## Notes
@@ -124,7 +124,7 @@ The collection is organized into the following folders:
 - Check if the token has expired (tokens typically expire after a certain time)
 
 ### Connection Refused
-- Verify that the Helpdesk Service is running on port 8084
+- Verify that the Helpdesk Service is running on port 7074
 - Check the `helpdeskbaseUrl` variable is correct
 
 ### 404 Not Found

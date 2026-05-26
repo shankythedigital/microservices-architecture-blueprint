@@ -151,7 +151,7 @@ Content-Type: application/json
 
 | Variable | Default Value | Description |
 |----------|--------------|-------------|
-| `assetbaseUrl` | `http://localhost:8083` | Base URL for Asset Service |
+| `assetbaseUrl` | `http://localhost:7073` | Base URL for Asset Service |
 | `accessToken` | *(empty)* | JWT token from auth-service |
 | `userId` | `1` | Current user ID |
 | `username` | `admin` | Current username |
@@ -305,7 +305,7 @@ Authorization: Bearer {{accessToken}}
 
 | Variable | Default Value | Description |
 |----------|--------------|-------------|
-| `notificationbaseUrl` | `http://localhost:8082` | Base URL for Notification Service |
+| `notificationbaseUrl` | `http://localhost:7072` | Base URL for Notification Service |
 | `accessToken` | *(empty)* | JWT token from auth-service |
 | `templateCode` | `OTP_SMS` | Template code |
 | `recipient` | `+919876543210` | Recipient address |
@@ -420,18 +420,18 @@ INAPP Notification accepted
 All collections include global variables at the collection level:
 
 ### Auth Service
-- `authbaseUrl`: `http://localhost:8081`
+- `authbaseUrl`: `http://localhost:7071`
 - `accessToken`: *(empty)*
 - `refreshToken`: *(empty)*
 - `projectType`: `ASSET_SERVICE`
 
 ### Asset Service
-- `assetbaseUrl`: `http://localhost:8083`
+- `assetbaseUrl`: `http://localhost:7073`
 - `accessToken`: *(empty)*
 - Various entity IDs
 
 ### Notification Service
-- `notificationbaseUrl`: `http://localhost:8082`
+- `notificationbaseUrl`: `http://localhost:7072`
 - `accessToken`: *(empty)*
 - `templateCode`: `OTP_SMS`
 - `recipient`: `+919876543210`

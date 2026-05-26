@@ -369,7 +369,7 @@
 	"variable": [
 		{
 			"key": "assetassetbaseUrl",
-			"value": "http://localhost:8083",
+			"value": "http://localhost:7073",
 			"type": "string"
 		},
 		{

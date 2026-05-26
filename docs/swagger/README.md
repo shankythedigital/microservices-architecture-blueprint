@@ -51,8 +51,8 @@ This directory contains OpenAPI 3.0 specification files for all microservices in
 If SpringDoc OpenAPI is integrated in the services, you can access the documentation at:
 
 - **Auth Service**: `http://localhost:8080/swagger-ui.html`
-- **Notification Service**: `http://localhost:8081/swagger-ui.html`
-- **Asset Service**: `http://localhost:8082/swagger-ui.html`
+- **Notification Service**: `http://localhost:7071/swagger-ui.html`
+- **Asset Service**: `http://localhost:7072/swagger-ui.html`
 
 ## Service Overview
 
@@ -78,7 +78,7 @@ If SpringDoc OpenAPI is integrated in the services, you can access the documenta
 
 ### Notification Service
 
-**Base URL**: `http://localhost:8081`
+**Base URL**: `http://localhost:7071`
 
 **Main Endpoints**:
 - `/api/notifications` - Send notifications
@@ -97,7 +97,7 @@ If SpringDoc OpenAPI is integrated in the services, you can access the documenta
 
 ### Asset Service
 
-**Base URL**: `http://localhost:8082`
+**Base URL**: `http://localhost:7072`
 
 **Main Endpoints**:
 - `/api/asset/v1/assets` - Asset CRUD operations

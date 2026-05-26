@@ -1,10 +1,10 @@
 # Notification-service (local)
 server:
-  port: 8082
+  port: 7072
 
 notification:
   service:
-    url: http://localhost:8082/api/notifications
+    url: http://localhost:7072/api/notifications
   opt-out-check:
     enabled: true
   list:
@@ -13,7 +13,7 @@ notification:
 
 asset:
   service:
-    url: http://localhost:8085
+    url: http://localhost:7075
   upload:
     supabase:
       enabled: false
@@ -50,7 +50,7 @@ spring:
 
 auth:
   service:
-    url: http://localhost:8081/api/
+    url: http://localhost:7071/api/
   client-id: notification-service
   client-secret: notify-secret
 

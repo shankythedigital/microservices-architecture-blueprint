@@ -267,7 +267,7 @@ JAVA
 # # # #   access-token: ${ACCESS_TOKEN:change_this_token}
 
 # # # # server:
-# # # #   port: 8082
+# # # #   port: 7072
   
 # # # # jwt:
 # # # #   public-key-path: classpath:keys/jwt-public.pem
@@ -276,7 +276,7 @@ JAVA
 
 # # # # auth:
 # # # #   service:
-# # # #     url: http://localhost:8081/api/
+# # # #     url: http://localhost:7071/api/
 # # # #   client-id: notification-service
 # # # #   client-secret: notify-secret
 

@@ -18,7 +18,7 @@ See [POSTMAN_AND_SWAGGER_GUIDE.md](POSTMAN_AND_SWAGGER_GUIDE.md) for import inst
 ## 1. Asset Service API
 
 **File:** `asset-service/docs/swagger/openapi.yaml`  
-**Base URL:** `http://localhost:8082`  
+**Base URL:** `http://localhost:7072`  
 **Version:** 1.0.0
 
 ### Overview
@@ -107,7 +107,7 @@ Authentication and authorization with multiple methods: password, OTP, MPIN, RSA
 ## 3. Notification Service API
 
 **File:** `notification-service/docs/swagger/openapi.yaml`  
-**Base URL:** `http://localhost:8081`  
+**Base URL:** `http://localhost:7071`  
 **Version:** 1.0.0
 
 ### Overview
@@ -154,7 +154,7 @@ Multi-channel notification service supporting SMS, Email, WhatsApp, and In-App n
 ## 4. Helpdesk Service API
 
 **File:** `helpdesk-service/docs/swagger/openapi.yaml` *(newly created)*  
-**Base URL:** `http://localhost:8084`  
+**Base URL:** `http://localhost:7074`  
 **Version:** 1.0.0
 
 ### Overview
@@ -226,14 +226,14 @@ PII fields (reportedBy, assignedTo, askedBy, answeredBy, escalatedBy) are automa
 ## Viewing Swagger UI
 
 When services are running, Swagger UI is typically available at:
-- **Asset Service**: `http://localhost:8082/swagger-ui.html`
+- **Asset Service**: `http://localhost:7072/swagger-ui.html`
 - **Auth Service**: `http://localhost:8080/swagger-ui.html`
-- **Notification Service**: `http://localhost:8081/swagger-ui.html`
-- **Helpdesk Service**: `http://localhost:8084/swagger-ui.html` (SpringDoc configured)
+- **Notification Service**: `http://localhost:7071/swagger-ui.html`
+- **Helpdesk Service**: `http://localhost:7074/swagger-ui.html` (SpringDoc configured)
 
 ## OpenAPI Docs (JSON)
 
-- **Asset Service**: `http://localhost:8082/v3/api-docs`
+- **Asset Service**: `http://localhost:7072/v3/api-docs`
 - **Auth Service**: `http://localhost:8080/v3/api-docs`
-- **Notification Service**: `http://localhost:8081/v3/api-docs`
-- **Helpdesk Service**: `http://localhost:8084/api-docs`
+- **Notification Service**: `http://localhost:7071/v3/api-docs`
+- **Helpdesk Service**: `http://localhost:7074/api-docs`

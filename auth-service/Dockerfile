@@ -7,8 +7,10 @@
 # From auth-service/:
 #   docker build -f Dockerfile -t auth-service:latest ..
 #
-# Run:
-#   docker run --rm -p 8081:8081 -e SPRING_DATASOURCE_URL -e JWT_SECRET auth-service:latest
+# Run (from auth-service/ with env file):
+#   cp .env.example .env && docker compose --env-file .env up --build
+# Or:
+#   docker run --rm -p 7071:7071 --env-file auth-service/.env auth-service:latest
 
 FROM maven:3.9-eclipse-temurin-17 AS builder
 WORKDIR /build
@@ -23,9 +25,9 @@ WORKDIR /app
 COPY --from=builder /build/auth-service/target/*.jar app.jar
 
 USER app
-EXPOSE 8081
+EXPOSE 7071
 
 ENV JAVA_OPTS="-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0"
-ENV PORT=8081
+ENV PORT=7071
 
 ENTRYPOINT exec java $JAVA_OPTS -jar app.jar

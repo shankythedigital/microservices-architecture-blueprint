@@ -12,6 +12,6 @@ services:
     env_file:
       - .env
     ports:
-      - "${PORT:-8082}:${PORT:-8082}"
+      - "${PORT:-7072}:${PORT:-7072}"
     environment:
-      PORT: ${PORT:-8082}
+      PORT: ${PORT:-7072}

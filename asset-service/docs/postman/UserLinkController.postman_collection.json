@@ -2,7 +2,7 @@
 	"info": {
 		"_postman_id": "user-link-controller-collection",
 		"name": "User Link Controller - Complete API Collection",
-		"description": "Complete API collection for UserLinkController with detailed environment and body variables.\n\n**Controller**: `/api/asset/v1/userlinks`\n\n**Features:**\n- Universal link/delink operations for any entity type (ASSET, COMPONENT, MODEL, MAKE, AMC, WARRANTY, DOCUMENT)\n- Multi-entity link/delink in single request\n- Query operations for assigned assets and users\n\n**Environment Variables Required:**\n- assetbaseUrl: Base URL (default: http://localhost:8083)\n- accessToken: JWT Bearer token from auth-service\n- userId, username: Caller user context\n- targetUserId, targetUsername: Target user for linking operations\n- entityType: Entity type (ASSET, COMPONENT, MODEL, MAKE, AMC, WARRANTY, DOCUMENT)\n- entityId: Entity ID to link/delink\n- assetId, componentId, modelId, makeId, amcId, warrantyId, documentId: Specific entity IDs\n- subCategoryId: SubCategory ID for query operations",
+		"description": "Complete API collection for UserLinkController with detailed environment and body variables.\n\n**Controller**: `/api/asset/v1/userlinks`\n\n**Features:**\n- Universal link/delink operations for any entity type (ASSET, COMPONENT, MODEL, MAKE, AMC, WARRANTY, DOCUMENT)\n- Multi-entity link/delink in single request\n- Query operations for assigned assets and users\n\n**Environment Variables Required:**\n- assetbaseUrl: Base URL (default: http://localhost:7073)\n- accessToken: JWT Bearer token from auth-service\n- userId, username: Caller user context\n- targetUserId, targetUsername: Target user for linking operations\n- entityType: Entity type (ASSET, COMPONENT, MODEL, MAKE, AMC, WARRANTY, DOCUMENT)\n- entityId: Entity ID to link/delink\n- assetId, componentId, modelId, makeId, amcId, warrantyId, documentId: Specific entity IDs\n- subCategoryId: SubCategory ID for query operations",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
 		"_exporter_id": "32725094"
 	},
@@ -817,9 +817,9 @@
 	"variable": [
 		{
 			"key": "assetbaseUrl",
-			"value": "http://localhost:8083",
+			"value": "http://localhost:7073",
 			"type": "string",
-			"description": "Base URL for Asset Service API. Default: http://localhost:8083"
+			"description": "Base URL for Asset Service API. Default: http://localhost:7073"
 		},
 		{
 			"key": "accessToken",

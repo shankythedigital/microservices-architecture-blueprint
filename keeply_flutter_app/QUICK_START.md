@@ -46,9 +46,9 @@ The following issues have been fixed:
 ## 📱 Before Running
 
 1. **Start Microservices:**
-   - Auth Service: `http://localhost:8081`
-   - Notification Service: `http://localhost:8082`
-   - Asset Service: `http://localhost:8083`
+   - Auth Service: `http://localhost:7071`
+   - Notification Service: `http://localhost:7072`
+   - Asset Service: `http://localhost:7073`
 
 2. **Connect Device:**
    - Android Emulator, OR

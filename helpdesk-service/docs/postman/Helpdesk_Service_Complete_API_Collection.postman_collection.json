@@ -2066,7 +2066,7 @@
   "variable": [
     {
       "key": "helpdeskbaseUrl",
-      "value": "http://localhost:8084",
+      "value": "http://localhost:7074",
       "type": "string"
     },
     {

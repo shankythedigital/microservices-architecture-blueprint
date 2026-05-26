@@ -274,9 +274,9 @@ if __name__ == "__main__":
         "variable": [
             {
                 "key": "assetbaseUrl",
-                "value": "http://localhost:8083",
+                "value": "http://localhost:7073",
                 "type": "string",
-                "description": "Base URL for Asset Service API. Default: http://localhost:8083"
+                "description": "Base URL for Asset Service API. Default: http://localhost:7073"
             },
             {
                 "key": "accessToken",

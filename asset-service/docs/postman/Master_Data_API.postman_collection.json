@@ -2,7 +2,7 @@
 	"info": {
 		"_postman_id": "master-data-api-collection",
 		"name": "Master Data API - Complete Collection",
-		"description": "Postman collection for Master Data API endpoints.\n\n**Endpoints:**\n- GET /api/asset/v1/userlinks/master-data/all - Get all master data\n- GET /api/asset/v1/userlinks/master-data/all?userId={userId} - Get master data filtered by user ID\n- GET /api/asset/v1/userlinks/need-your-attention - Get comprehensive 'Need Your Attention' data with all entities and attention indicators\n\n**Features:**\n- Comprehensive master data retrieval including users, assets, components, warranties, AMCs, makes, models, categories, sub-categories, vendors, outlets, and statuses\n- Optional filtering by userId\n- Audit information (login userId and username) included in response\n- Attention indicators: expiring warranties, expiring AMCs, assets without warranty/AMC, unassigned assets\n\n**Environment Variables Required:**\n- assetbaseUrl: Base URL (default: http://localhost:8083)\n- accessToken: JWT Bearer token from auth-service\n- userId: Optional user ID to filter data (for query parameter)",
+		"description": "Postman collection for Master Data API endpoints.\n\n**Endpoints:**\n- GET /api/asset/v1/userlinks/master-data/all - Get all master data\n- GET /api/asset/v1/userlinks/master-data/all?userId={userId} - Get master data filtered by user ID\n- GET /api/asset/v1/userlinks/need-your-attention - Get comprehensive 'Need Your Attention' data with all entities and attention indicators\n\n**Features:**\n- Comprehensive master data retrieval including users, assets, components, warranties, AMCs, makes, models, categories, sub-categories, vendors, outlets, and statuses\n- Optional filtering by userId\n- Audit information (login userId and username) included in response\n- Attention indicators: expiring warranties, expiring AMCs, assets without warranty/AMC, unassigned assets\n\n**Environment Variables Required:**\n- assetbaseUrl: Base URL (default: http://localhost:7073)\n- accessToken: JWT Bearer token from auth-service\n- userId: Optional user ID to filter data (for query parameter)",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
 		"_exporter_id": "32725094"
 	},
@@ -145,9 +145,9 @@
 	"variable": [
 		{
 			"key": "assetbaseUrl",
-			"value": "http://localhost:8083",
+			"value": "http://localhost:7073",
 			"type": "string",
-			"description": "Base URL for Asset Service API. Default: http://localhost:8083\n\n**Common Values:**\n- Local: http://localhost:8083\n- Development: http://dev-asset-service.example.com\n- Production: https://api.example.com/asset-service"
+			"description": "Base URL for Asset Service API. Default: http://localhost:7073\n\n**Common Values:**\n- Local: http://localhost:7073\n- Development: http://dev-asset-service.example.com\n- Production: https://api.example.com/asset-service"
 		},
 		{
 			"key": "accessToken",

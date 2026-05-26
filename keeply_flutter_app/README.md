@@ -100,16 +100,16 @@ lib/
 
 ### API Endpoints
 Update base URLs in `lib/core/config/app_config.dart`:
-- Auth Service: Default `http://localhost:8081`
-- Notification Service: Default `http://localhost:8082`
-- Asset Service: Default `http://localhost:8083`
+- Auth Service: Default `http://localhost:7071`
+- Notification Service: Default `http://localhost:7072`
+- Asset Service: Default `http://localhost:7073`
 
 ### Environment Variables
 For production, use environment variables or a config file:
 ```dart
 // Example: Use different URLs for production
 static const String authServiceBaseUrl = 
-    kDebugMode ? 'http://localhost:8081' : 'https://api.production.com/auth';
+    kDebugMode ? 'http://localhost:7071' : 'https://api.production.com/auth';
 ```
 
 ## Architecture

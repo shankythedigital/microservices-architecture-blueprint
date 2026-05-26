@@ -19,7 +19,7 @@ def create_asset_service_collection():
         },
         "item": [],
         "variable": [
-            {"key": "assetbaseUrl", "value": "http://localhost:8083", "type": "string"},
+            {"key": "assetbaseUrl", "value": "http://localhost:7073", "type": "string"},
             {"key": "bearerToken", "value": "your-jwt-token-here", "type": "string"},
             {"key": "userId", "value": "1", "type": "string"},
             {"key": "username", "value": "admin", "type": "string"},
@@ -932,7 +932,7 @@ def create_helpdesk_service_collection():
         },
         "item": [],
         "variable": [
-            {"key": "helpdeskbaseUrl", "value": "http://localhost:8084", "type": "string"},
+            {"key": "helpdeskbaseUrl", "value": "http://localhost:7074", "type": "string"},
             {"key": "bearerToken", "value": "your-jwt-token-here", "type": "string"}
         ]
     }
