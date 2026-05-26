@@ -1,10 +1,10 @@
-# Notification-service (local)
+# Notification-service (cloud-cloud)
 server:
-  port: 7072
+  port: ${PORT:7072}
 
 notification:
   service:
-    url: http://localhost:7072/api/notifications
+    url: ${NOTIFICATION_SERVICE_URL:http://localhost:7072}/api/notifications
   opt-out-check:
     enabled: true
   list:
@@ -13,29 +13,29 @@ notification:
 
 asset:
   service:
-    url: http://localhost:7075
+    url: ${ASSET_SERVICE_URL:http://localhost:7075}
   upload:
     supabase:
       enabled: false
-      url: 
-      service-role-key: 
-      bucket: 
+      url: ${SUPABASE_IMAGES_URL:}
+      service-role-key: ${SUPABASE_IMAGES_SERVICE_ROLE_KEY:}
+      bucket: ${SUPABASE_IMAGES_BUCKET:}
 
 fileupload:
   type: standard
 
 spring:
   application:
-    name: notification-service
+    name: ${SPRING_APPLICATION_NAME:notification-service}
   jackson:
     serialization:
       write-dates-as-timestamps: false
     deserialization:
       adjust-dates-to-context-time-zone: false
   datasource:
-    url: jdbc:postgresql://localhost:5432/postgres
-    username: postgres
-    password: postgres
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/postgres}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:postgres}
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
@@ -44,26 +44,26 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
-        default_schema: notificationdb
+        default_schema: ${NOTIFICATION_DB_SCHEMA:notificationdb}
         hbm2ddl:
           create_namespaces: true
 
 auth:
   service:
-    url: http://localhost:7071/api/
+    url: ${AUTH_SERVICE_URL:http://localhost:7071}/api/
   client-id: notification-service
   client-secret: notify-secret
 
 notify:
   enc:
-    key: SLOqKf8lS2hidTDsXQe25ZSaoaGcczUX6gySXUxjE1M=
+    key: ${AUTH_ENC_KEY:SLOqKf8lS2hidTDsXQe25ZSaoaGcczUX6gySXUxjE1M=}
   hmac:
-    key: krFcA7/MYPXQWbtSGMM87Dzxu2euOsRckVFeUyOC6dw=
+    key: ${AUTH_HMAC_KEY:krFcA7/MYPXQWbtSGMM87Dzxu2euOsRckVFeUyOC6dw=}
 
 jwt:
   public-key-path: classpath:keys/jwt-public.pem
 
-JWT_SECRET: yNnC7M3ZqgV4bD0lFJm9Q2w5tSe8XpR1pWc7UjK4oHs=
+JWT_SECRET: ${JWT_SECRET:yNnC7M3ZqgV4bD0lFJm9Q2w5tSe8XpR1pWc7UjK4oHs=}
 JWT_PUBLIC_KEY_PATH: classpath:keys/jwt-public.pem
 JWT_ACCESS_TOKEN_VALIDITY_SECONDS: 900
 JWT_REFRESH_TOKEN_VALIDITY_SECONDS: 1209600

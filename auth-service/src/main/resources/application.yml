@@ -1,31 +1,31 @@
-# Auth-service (local)
+# Auth-service (cloud-cloud)
 server:
-  port: 7071
+  port: ${PORT:7071}
 
 auth:
   service:
-    url: http://localhost:7071
+    url: ${AUTH_SERVICE_URL:http://localhost:7071}
 
 notification:
   service:
-    url: http://localhost:7072/api/notifications
+    url: ${NOTIFICATION_SERVICE_URL:http://localhost:7072}/api/notifications
 
 asset:
   service:
-    url: http://localhost:7075
+    url: ${ASSET_SERVICE_URL:http://localhost:7075}
 
 spring:
   application:
-    name: auth-service
+    name: ${SPRING_APPLICATION_NAME:auth-service}
   jackson:
     serialization:
       write-dates-as-timestamps: false
     deserialization:
       adjust-dates-to-context-time-zone: false
   datasource:
-    url: jdbc:postgresql://localhost:5432/postgres
-    username: postgres
-    password: postgres
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/postgres}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:postgres}
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
@@ -34,7 +34,7 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
-        default_schema: authdb
+        default_schema: ${SUPABASE_AUTH_SCHEMA:authdb}
         hbm2ddl:
           create_namespaces: true
 
@@ -46,12 +46,12 @@ common:
 
 JWT_PRIVATE_KEY_PATH: classpath:keys/jwt-private.pem
 JWT_PUBLIC_KEY_PATH: classpath:keys/jwt-public.pem
-JWT_SECRET: yNnC7M3ZqgV4bD0lFJm9Q2w5tSe8XpR1pWc7UjK4oHs=
+JWT_SECRET: ${JWT_SECRET:yNnC7M3ZqgV4bD0lFJm9Q2w5tSe8XpR1pWc7UjK4oHs=}
 JWT_ACCESS_TOKEN_VALIDITY_SECONDS: 900
 JWT_REFRESH_TOKEN_VALIDITY_SECONDS: 1209600
-AUTH_ENC_KEY: SLOqKf8lS2hidTDsXQe25ZSaoaGcczUX6gySXUxjE1M=
-AUTH_HMAC_KEY: krFcA7/MYPXQWbtSGMM87Dzxu2euOsRckVFeUyOC6dw=
-ENCRYPTION_KEY: SLOqKf8lS2hidTDsXQe25ZSaoaGcczUX6gySXUxjE1M=
+AUTH_ENC_KEY: ${AUTH_ENC_KEY:SLOqKf8lS2hidTDsXQe25ZSaoaGcczUX6gySXUxjE1M=}
+AUTH_HMAC_KEY: ${AUTH_HMAC_KEY:krFcA7/MYPXQWbtSGMM87Dzxu2euOsRckVFeUyOC6dw=}
+ENCRYPTION_KEY: ${AUTH_ENC_KEY:SLOqKf8lS2hidTDsXQe25ZSaoaGcczUX6gySXUxjE1M=}
 ACCESS_TOKEN: change_this_token
 FEIGN_ACCESS_TOKEN:
 
