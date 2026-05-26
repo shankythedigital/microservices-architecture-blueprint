@@ -33,7 +33,6 @@ spring:
     show-sql: false
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
         default_schema: ${SUPABASE_AUTH_SCHEMA:authdb}
         hbm2ddl:
           create_namespaces: true
