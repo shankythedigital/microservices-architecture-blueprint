@@ -14,6 +14,7 @@
 
 **Related Documents:**
 - [EPICS_FEATURES_USER_STORIES.md](./EPICS_FEATURES_USER_STORIES.md) — Product backlog (epics, features, user stories)
+- [SOFTWARE_REQUIREMENTS_SPECIFICATION_FRD.md](./SOFTWARE_REQUIREMENTS_SPECIFICATION_FRD.md) — Combined SRS/FRD
 - [TECHNICAL_FUNCTIONAL_DOCUMENT.md](./TECHNICAL_FUNCTIONAL_DOCUMENT.md) — Technical specification
 - [Technical Functionality Documentation](../Technical%20Functionality%20Documentation.md) — Detailed functional guide
 - [COMMUNICATION_OPT_OUT.md](./COMMUNICATION_OPT_OUT.md) — Communication preferences policy

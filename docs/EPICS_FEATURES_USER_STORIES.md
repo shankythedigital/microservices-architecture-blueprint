@@ -6,6 +6,7 @@
 **Document Type:** Product Backlog & Requirements Specification  
 **Related Documents:**
 - [BUSINESS_REQUIREMENTS_DOCUMENT.md](./BUSINESS_REQUIREMENTS_DOCUMENT.md) — Business requirements (BRD)
+- [SOFTWARE_REQUIREMENTS_SPECIFICATION_FRD.md](./SOFTWARE_REQUIREMENTS_SPECIFICATION_FRD.md) — Combined SRS/FRD
 - [Technical Functionality Documentation](../Technical%20Functionality%20Documentation.md)
 - [TECHNICAL_FUNCTIONAL_DOCUMENT.md](./TECHNICAL_FUNCTIONAL_DOCUMENT.md)
 - [COMMUNICATION_OPT_OUT.md](./COMMUNICATION_OPT_OUT.md)

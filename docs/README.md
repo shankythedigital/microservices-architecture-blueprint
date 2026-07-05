@@ -42,12 +42,12 @@ Detailed product backlog covering all platform components:
 - Requirements traceability from business goals to APIs
 - Onboarding product owners, BA, QA, and developers
 
-**Related:** [BUSINESS_REQUIREMENTS_DOCUMENT.md](./BUSINESS_REQUIREMENTS_DOCUMENT.md)
+**Related:** [BUSINESS_REQUIREMENTS_DOCUMENT.md](./BUSINESS_REQUIREMENTS_DOCUMENT.md) | Word: [📘 BRD.docx](./📘%20Business%20Requirements%20Document%20(BRD).docx)
 
 ---
 
 ### 3. Business Requirements Document (BRD)
-**File:** `BUSINESS_REQUIREMENTS_DOCUMENT.md`
+**File:** `BUSINESS_REQUIREMENTS_DOCUMENT.md` | **Word:** `📘 Business Requirements Document (BRD).docx`
 
 Authoritative business requirements for the Keeply platform:
 - Executive summary, problem statement, business objectives & KPIs
@@ -60,11 +60,30 @@ Authoritative business requirements for the Keeply platform:
 - Compliance and legal review
 - BRD → epic → story traceability for BA and product owners
 
-**Related:** [EPICS_FEATURES_USER_STORIES.md](./EPICS_FEATURES_USER_STORIES.md)
+**Related:** [EPICS_FEATURES_USER_STORIES.md](./EPICS_FEATURES_USER_STORIES.md) | [SRS/FRD](./SOFTWARE_REQUIREMENTS_SPECIFICATION_FRD.md)
 
 ---
 
-### 4. API Documentation Guide
+### 4. Software Requirements Specification (SRS / FRD)
+**File:** `SOFTWARE_REQUIREMENTS_SPECIFICATION_FRD.md` | **Word:** `📘 Software Requirements Specification (SRS _ FRD).docx`
+
+Combined SRS and Functional Requirements Document:
+- System overview, architecture, BR-xxx summary, FR-xxx by service
+- Interface, data, security, NFR, and compliance requirements
+- Traceability matrix (BR → FR → user stories), implementation phases
+
+**Use this for:**
+- Single reference for BA, QA, and engineering sign-off
+- Test planning from FR-xxx requirements
+- Linking business needs to technical delivery
+
+**Related:** [BRD](./BUSINESS_REQUIREMENTS_DOCUMENT.md) | [Epics & Stories](./EPICS_FEATURES_USER_STORIES.md)
+
+**Regenerate Word files:** `python3 docs/scripts/md_to_docx.py <input.md> <output.docx>`
+
+---
+
+### 5. API Documentation Guide
 **File:** `API_DOCUMENTATION_GUIDE.md`
 
 Complete guide for using Swagger/OpenAPI and Postman collections:
@@ -81,7 +100,7 @@ Complete guide for using Swagger/OpenAPI and Postman collections:
 
 ---
 
-### 5. Swagger/OpenAPI Documentation
+### 6. Swagger/OpenAPI Documentation
 
 #### Auth Service
 - **Swagger UI**: `http://localhost:8080/swagger-ui.html`
@@ -105,7 +124,7 @@ Complete guide for using Swagger/OpenAPI and Postman collections:
 
 ---
 
-### 6. Postman Collections
+### 7. Postman Collections
 
 #### Auth Service
 - **Collection**: `../auth-service/docs/postman/Auth_Service_API.postman_collection.json`
