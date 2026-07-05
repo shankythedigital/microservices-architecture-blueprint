@@ -12,10 +12,10 @@ set -euo pipefail
 cd "$(dirname "$0")"
 
 RENDER_DEFINES=(
-  --dart-define=AUTH_SERVICE_URL=https://auth-service-7qm8.onrender.com
-  --dart-define=NOTIFICATION_SERVICE_URL=https://notification-service-ckqu.onrender.com
-  --dart-define=ASSET_SERVICE_URL=https://asset-service-y2xk.onrender.com
-  --dart-define=HELPDESK_SERVICE_URL=https://helpdesk-service-2pfu.onrender.com
+  --dart-define=AUTH_SERVICE_URL=https://auth-service-7fmo.onrender.com
+  --dart-define=NOTIFICATION_SERVICE_URL=https://notification-service-yabp.onrender.com
+  --dart-define=ASSET_SERVICE_URL=https://asset-service-hydc.onrender.com
+  --dart-define=HELPDESK_SERVICE_URL=https://helpdesk-service-skmz.onrender.com
 )
 
 if [ "${1:-}" = "run" ]; then

@@ -29,7 +29,42 @@ Comprehensive technical and functional documentation covering:
 
 ---
 
-### 2. API Documentation Guide
+### 2. Epics, Features & User Stories
+**File:** `EPICS_FEATURES_USER_STORIES.md`
+
+Detailed product backlog covering all platform components:
+- common-service, auth-service, notification-service, helpdesk-service, asset-service, keeply_flutter_app
+- 7 epics, 47 features, 152 user stories with acceptance criteria
+- Personas, architecture context, implementation roadmap, traceability matrix
+
+**Use this for:**
+- Sprint planning and backlog grooming
+- Requirements traceability from business goals to APIs
+- Onboarding product owners, BA, QA, and developers
+
+**Related:** [BUSINESS_REQUIREMENTS_DOCUMENT.md](./BUSINESS_REQUIREMENTS_DOCUMENT.md)
+
+---
+
+### 3. Business Requirements Document (BRD)
+**File:** `BUSINESS_REQUIREMENTS_DOCUMENT.md`
+
+Authoritative business requirements for the Keeply platform:
+- Executive summary, problem statement, business objectives & KPIs
+- Stakeholders, scope, personas, 60+ numbered business requirements (BR-xxx)
+- Business rules, non-functional requirements, compliance (DPDPA/PDPA)
+- User journeys, roadmap phasing, risks, traceability to epics
+
+**Use this for:**
+- Executive and stakeholder alignment
+- Compliance and legal review
+- BRD → epic → story traceability for BA and product owners
+
+**Related:** [EPICS_FEATURES_USER_STORIES.md](./EPICS_FEATURES_USER_STORIES.md)
+
+---
+
+### 4. API Documentation Guide
 **File:** `API_DOCUMENTATION_GUIDE.md`
 
 Complete guide for using Swagger/OpenAPI and Postman collections:
@@ -46,7 +81,7 @@ Complete guide for using Swagger/OpenAPI and Postman collections:
 
 ---
 
-### 3. Swagger/OpenAPI Documentation
+### 5. Swagger/OpenAPI Documentation
 
 #### Auth Service
 - **Swagger UI**: `http://localhost:8080/swagger-ui.html`
@@ -70,7 +105,7 @@ Complete guide for using Swagger/OpenAPI and Postman collections:
 
 ---
 
-### 4. Postman Collections
+### 6. Postman Collections
 
 #### Auth Service
 - **Collection**: `../auth-service/docs/postman/Auth_Service_API.postman_collection.json`

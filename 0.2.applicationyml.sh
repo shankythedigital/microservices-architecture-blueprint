@@ -83,6 +83,9 @@ SCHEMA_HELPDESK="${SCHEMA_HELPDESK:-helpdeskdb}"
 JWT_SECRET="${JWT_SECRET:-yNnC7M3ZqgV4bD0lFJm9Q2w5tSe8XpR1pWc7UjK4oHs=}"
 AUTH_ENC_KEY="${AUTH_ENC_KEY:-SLOqKf8lS2hidTDsXQe25ZSaoaGcczUX6gySXUxjE1M=}"
 AUTH_HMAC_KEY="${AUTH_HMAC_KEY:-krFcA7/MYPXQWbtSGMM87Dzxu2euOsRckVFeUyOC6dw=}"
+SUPABASE_IMAGES_URL="${SUPABASE_IMAGES_URL:-}"
+SUPABASE_IMAGES_SERVICE_ROLE_KEY="${SUPABASE_IMAGES_SERVICE_ROLE_KEY:-}"
+SUPABASE_IMAGES_BUCKET="${SUPABASE_IMAGES_BUCKET:-images-storage}"
 
 issuer="${issuer:-auth-service}"
 asset_audience="${asset_audience:-asset-service}"
@@ -115,9 +118,9 @@ if [ "$MODE" = "local" ]; then
   JWT_ISSUER_YML="auth-service"
   JWT_AUDIENCE_ASSET_YML="asset-service"
   JWT_AUDIENCE_HELPDESK_YML="helpdesk-service"
-  SUPABASE_IMAGES_URL_YML=""
-  SUPABASE_IMAGES_KEY_YML=""
-  SUPABASE_IMAGES_BUCKET_YML=""
+  SUPABASE_IMAGES_URL_YML="$SUPABASE_IMAGES_URL"
+  SUPABASE_IMAGES_KEY_YML="$SUPABASE_IMAGES_SERVICE_ROLE_KEY"
+  SUPABASE_IMAGES_BUCKET_YML="$SUPABASE_IMAGES_BUCKET"
   OPENAI_API_KEY_YML='""'
   SPRING_APP_NAME_AUTH_YML="auth-service"
   SPRING_APP_NAME_ASSET_YML="asset-service"
@@ -198,7 +201,6 @@ spring:
     show-sql: false
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
         default_schema: ${SCHEMA_AUTH_YML}
         hbm2ddl:
           create_namespaces: true
